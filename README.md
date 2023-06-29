@@ -1,7 +1,6 @@
 <div align="center">
 
-# Advanced RVC Inference
-
+# Simple RVC Inference
 
 [![GitHub](https://img.shields.io/github/license/arkandash/Multi-Model-RVC-Inference)](https://github.com/ArkanDash/Multi-Model-RVC-Inference/blob/master/LICENSE)
 </div>

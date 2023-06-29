@@ -167,7 +167,7 @@ def vc_single(
     except:
         info = traceback.format_exc()
         print(info)
-        return info, (None, None)
+        return info, None
 
 def get_vc(sid, to_return_protect0):
     global n_spk, tgt_sr, net_g, vc, cpt, version
