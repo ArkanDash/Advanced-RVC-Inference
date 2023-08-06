@@ -1,39 +1,39 @@
 <div align="center">
 
-# Simple RVC Inference
+# Advanced RVC Inference
 
-[![GitHub](https://img.shields.io/github/license/arkandash/Multi-Model-RVC-Inference)](https://github.com/ArkanDash/Multi-Model-RVC-Inference/blob/master/LICENSE)
 </div>
 
 ### Information
-Support V1 Model and V2 Model
-
-Original Repository: [Retrieval-based-Voice-Conversion-WebUI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
+Please support the original RVC. without it, this inference wont be possible to make.<br />
+[![Original RVC Repository](https://img.shields.io/badge/Github-Original%20RVC%20Repository-blue?style=for-the-badge&logo=github)](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
 
 #### Features
+- Support V1 & V2 Model ✅
 - Youtube Audio Downloader ✅
 - Demucs (Voice Splitter) [Internet required for downloading model] ✅
+- Microphone Support ✅
 - TTS Support ✅
 - Model Downloader ✅
 
 #### Currently Working
 - Batch Inference 🛠
 
-#### Plans
-- UVR
-
 ### Installation
 
-1. Install Requirement <br />
+1. Install Dependencies <br />
 ```bash
 pip install torch torchvision torchaudio
 
 pip install -r requirements.txt
 ```
+2. Install [ffmpeg](https://ffmpeg.org/)
 
-2. Download [Hubert Model](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/hubert_base.pt)
+3. Download [Hubert Model](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/hubert_base.pt)
 
-3. Run WebUI <br />
+4. [OPTIONAL] To use rmvpe pitch extraction, download this [rvmpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/rmvpe.pt)
+
+5. Run WebUI <br />
 ```bash
 python infer.py
 ```
