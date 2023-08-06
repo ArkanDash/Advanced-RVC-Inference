@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: 3.10
 
       - name: Install torch, torchvision, torchaudio
         run: |
@@ -41,8 +41,8 @@ jobs:
       - name: Download Hubert & RMVPE
         run: |
           sudo apt-get install -qq -y aria2
-          aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt
-          aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt
+          aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt -d /home/runner/work/rvc-simple-inference/rvc-simple-inference -o hubert_base.pt
+          aria2c --console-log-level=error -c -x 16 -s 16 -k 1M https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt -d /home/runner/work/rvc-simple-inference/rvc-simple-inference -o rmvpe.pt
 
       - name: Test application
         run: |
