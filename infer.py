@@ -545,7 +545,7 @@ with gr.Blocks() as app:
         selected_model = gr.Markdown(value="# <center> No model selected")
         with gr.Row():
             with gr.Column():
-                vc_audio_mode = gr.Dropdown(label="Input voice", choices=audio_mode, allow_custom_value=False, value="Upload audio")
+                vc_audio_mode = gr.Dropdown(label="Input voice", choices=["Input path", "Upload audio", "Youtube", "TTS Audio"], allow_custom_value=False, value="Upload audio")
                 # Input
                 vc_input = gr.Textbox(label="Input audio path", visible=False)
                 # Upload
