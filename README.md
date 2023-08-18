@@ -2,7 +2,7 @@
 
 # Advanced RVC Inference
 
-[![Colab](https://img.shields.io/badge/Colab-Advanced%20RVC%20Inference-blue?style=for-the-badge&logo=googlecolab)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/main/Advanced-RVC.ipynb)
+[![Colab](https://img.shields.io/badge/Colab-Advanced%20RVC%20Inference-blue?style=for-the-badge&logo=googlecolab)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 </div>
 
 ### Information

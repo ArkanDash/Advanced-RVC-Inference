@@ -287,7 +287,7 @@ def get_vc(sid, to_return_protect0):
 
 def download_audio(url, audio_provider):
     logs = []
-    os.mkdir("dl_audio", exist_ok=True)
+    os.makedirs("dl_audio", exist_ok=True)
     if url == "":
         logs.append("URL required!")
         yield None, "\n".join(logs)
@@ -310,34 +310,34 @@ def download_audio(url, audio_provider):
         logs.append("Download Complete.")
         yield audio_path, "\n".join(logs)
 
-def cut_vocal_and_inst(split_model, audio_mode):
+def cut_vocal_and_inst_yt(split_model):
     logs = []
     logs.append("Starting the audio splitting process...")
-    if audio_mode == "Upload audio":
+    yield "\n".join(logs), None, None, None
+    command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+    result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
+    for line in result.stdout:
+        logs.append(line)
         yield "\n".join(logs), None, None, None
-        command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
-        result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
-        for line in result.stdout:
-            logs.append(line)
-            yield "\n".join(logs), None, None, None
-        print(result.stdout)
-        vocal = f"output/{split_model}/audio/vocals.wav"
-        inst = f"output/{split_model}/audio/no_vocals.wav"
-        logs.append("Audio splitting complete.")
-        yield "\n".join(logs), vocal, inst, vocal
-    else:
-        yield "\n".join(logs), None, None
-        command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
-        result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
-        for line in result.stdout:
-            logs.append(line)
-            yield "\n".join(logs), None, None
-        print(result.stdout)
-        vocal = f"output/{split_model}/audio/vocals.wav"
-        inst = f"output/{split_model}/audio/no_vocals.wav"
-        logs.append("Audio splitting complete.")
-        yield "\n".join(logs), vocal, inst
+    print(result.stdout)
+    vocal = f"output/{split_model}/audio/vocals.wav"
+    inst = f"output/{split_model}/audio/no_vocals.wav"
+    logs.append("Audio splitting complete.")
+    yield "\n".join(logs), vocal, inst, vocal
 
+def cut_vocal_and_inst(split_model):
+    yield "\n".join(logs), None, None
+    command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+    result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
+    for line in result.stdout:
+        logs.append(line)
+        yield "\n".join(logs), None, None
+    print(result.stdout)
+    vocal = f"output/{split_model}/audio/vocals.wav"
+    inst = f"output/{split_model}/audio/no_vocals.wav"
+    logs.append("Audio splitting complete.")
+    yield "\n".join(logs), vocal, inst
+    
 def combine_vocal_and_inst(audio_data, vocal_volume, inst_volume, split_model):
     if not os.path.exists("output/result"):
         os.mkdir("output/result")
@@ -702,13 +702,13 @@ with gr.Blocks() as app:
             outputs=[vc_audio_preview, vc_log_yt]
         )
         vc_split_yt.click(
-            fn=cut_vocal_and_inst, 
-            inputs=[vc_split_model, vc_audio_mode], 
+            fn=cut_vocal_and_inst_yt, 
+            inputs=[vc_split_model], 
             outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview, vc_input]
         )
         vc_split.click(
             fn=cut_vocal_and_inst, 
-            inputs=[vc_split_model, vc_audio_mode],
+            inputs=[vc_split_model],
             outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview]
         )
         vc_combine.click(
