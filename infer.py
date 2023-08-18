@@ -8,6 +8,7 @@ import yt_dlp
 import ffmpeg
 import gdown
 import subprocess
+import wave
 from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
@@ -112,6 +113,10 @@ def vc_single(
 ):  # spk_item, input_audio0, vc_transform0,f0_file,f0method0
     global tgt_sr, net_g, vc, hubert_model, version, cpt
     try:
+        logs = []
+        print(f"Converting...")
+        logs.append(f"Converting...")
+        yield "\n".join(logs), None
         if vc_audio_mode == "Input path" or "Youtube" and input_audio_path != "":
             audio, sr = librosa.load(input_audio_path, sr=16000, mono=True)
         elif vc_audio_mode == "Upload audio":
@@ -157,7 +162,6 @@ def vc_single(
             rms_mix_rate,
             version,
             protect,
-            crepe_hop_length=64,
             f0_file=f0_file
         )
         if resample_sr >= 16000 and tgt_sr != resample_sr:
@@ -174,11 +178,13 @@ def vc_single(
             times[2],
         ))
         info = f"{index_info}\n[{datetime.now().strftime('%Y-%m-%d %H:%M')}]: npy: {times[0]}, f0: {times[1]}s, infer: {times[2]}s"
-        return info, (tgt_sr, audio_opt)
+        logs.append(info)
+        yield "\n".join(logs), (tgt_sr, audio_opt)
     except:
         info = traceback.format_exc()
         print(info)
-        return info, None
+        logs.append(info)
+        yield "\n".join(logs), None
 
 def get_vc(sid, to_return_protect0):
     global n_spk, tgt_sr, net_g, vc, cpt, version
@@ -217,6 +223,8 @@ def get_vc(sid, to_return_protect0):
             gr.Dropdown.update(choices=[], value=""),
             gr.Markdown.update(value="# <cover> No model selected")
         )
+    current_model = ""
+    current_model_path = ""
     for i, path in enumerate(weights_path):
         file_path = os.path.join(path, weights_file[i])
         if os.path.exists(file_path) and sid[:-4] in file_path:
@@ -325,9 +333,18 @@ def cut_vocal_and_inst_yt(split_model):
     logs.append("Audio splitting complete.")
     yield "\n".join(logs), vocal, inst, vocal
 
-def cut_vocal_and_inst(split_model):
+def cut_vocal_and_inst(split_model, audio_data):
+    logs = []
+    vocal_path = "output/result/audio.wav"
+    os.makedirs("output/result", exist_ok=True)
+    with wave.open(vocal_path, "w") as wave_file:
+        wave_file.setnchannels(1) 
+        wave_file.setsampwidth(2)
+        wave_file.setframerate(audio_data[0])
+        wave_file.writeframes(audio_data[1].tobytes())
+    logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None
-    command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+    command = f"demucs --two-stems=vocals -n {split_model} {vocal_path} -o output"
     result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
     for line in result.stdout:
         logs.append(line)
@@ -339,8 +356,7 @@ def cut_vocal_and_inst(split_model):
     yield "\n".join(logs), vocal, inst
     
 def combine_vocal_and_inst(audio_data, vocal_volume, inst_volume, split_model):
-    if not os.path.exists("output/result"):
-        os.mkdir("output/result")
+    os.makedirs("output/result", exist_ok=True)
     vocal_path = "output/result/output.wav"
     output_path = "output/result/combine.mp3"
     inst_path = f"output/{split_model}/audio/no_vocals.wav"
@@ -585,8 +601,8 @@ with gr.Blocks() as app:
                 # Splitter
                 vc_split_model = gr.Dropdown(label="Splitter Model", choices=["hdemucs_mmi", "htdemucs", "htdemucs_ft", "mdx", "mdx_q", "mdx_extra_q"], allow_custom_value=False, visible=True, value="htdemucs", info="Select the splitter model (Default: htdemucs)")
                 vc_split_log = gr.Textbox(label="Output Information", visible=True, interactive=False)
-                vc_split_yt = gr.Button("Split Audio", variant="primary", visible=True)
-                vc_split = gr.Button("Split Audio", variant="primary", visible=False)
+                vc_split_yt = gr.Button("Split Audio", variant="primary", visible=False)
+                vc_split = gr.Button("Split Audio", variant="primary", visible=True)
                 vc_vocal_preview = gr.Audio(label="Vocal Preview", interactive=False, visible=True)
                 vc_inst_preview = gr.Audio(label="Instrumental Preview", interactive=False, visible=True)
             with gr.Column():
@@ -606,7 +622,7 @@ with gr.Blocks() as app:
                     minimum=0,
                     maximum=1,
                     label="Retrieval feature ratio",
-                    value=0.65,
+                    value=0.7,
                     interactive=True,
                 )
                 filter_radius0 = gr.Slider(
@@ -708,7 +724,7 @@ with gr.Blocks() as app:
         )
         vc_split.click(
             fn=cut_vocal_and_inst, 
-            inputs=[vc_split_model],
+            inputs=[vc_split_model, vc_upload],
             outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview]
         )
         vc_combine.click(
