@@ -34,9 +34,11 @@ voices = [f"{v['ShortName']}-{v['Gender']}" for v in tts_voice_list]
 hubert_model = None
 
 f0method_mode = ["pm", "harvest", "crepe"]
-f0method_info = "PM is fast, Harvest is good but extremely slow, Rvmpe is alternative to harvest (might be better), and Crepe effect is good but requires GPU (Default: PM)"
+f0method_info = "PM is fast, Harvest is good but extremely slow, and Crepe effect is good but requires GPU (Default: PM)"
+
 if os.path.isfile("rmvpe.pt"):
     f0method_mode.insert(2, "rmvpe")
+    f0method_info = "PM is fast, Harvest is good but extremely slow, Rvmpe is alternative to harvest (might be better), and Crepe effect is good but requires GPU (Default: PM)"
 
 def load_hubert():
     global hubert_model
@@ -94,6 +96,9 @@ def vc_single(
     vc_audio_mode,
     input_audio_path,
     input_upload_audio,
+    vocal_audio,
+    tts_text,
+    tts_voice,
     f0_up_key,
     f0_file,
     f0_method,
@@ -103,18 +108,19 @@ def vc_single(
     filter_radius,
     resample_sr,
     rms_mix_rate,
-    protect,
-    tts_text,
-    tts_voice
+    protect
 ):  # spk_item, input_audio0, vc_transform0,f0_file,f0method0
     global tgt_sr, net_g, vc, hubert_model, version, cpt
     try:
         if vc_audio_mode == "Input path" or "Youtube" and input_audio_path != "":
             audio, sr = librosa.load(input_audio_path, sr=16000, mono=True)
         elif vc_audio_mode == "Upload audio":
-            if input_upload_audio is None:
-                return "You need to upload an audio", None
-            sampling_rate, audio = input_upload_audio
+            selected_audio = input_upload_audio
+            if vocal_audio:
+                selected_audio = vocal_audio
+            elif input_upload_audio:
+                selected_audio = input_upload_audio
+            sampling_rate, audio = selected_audio
             duration = audio.shape[0] / sampling_rate
             audio = (audio / np.iinfo(audio.dtype).max).astype(np.float32)
             if len(audio.shape) > 1:
@@ -280,12 +286,15 @@ def get_vc(sid, to_return_protect0):
     )
 
 def download_audio(url, audio_provider):
+    logs = []
+    os.mkdir("dl_audio", exist_ok=True)
     if url == "":
-        raise gr.Error("URL Required!")
-        return "URL Required"
-    if not os.path.exists("dl_audio"):
-        os.mkdir("dl_audio")
+        logs.append("URL required!")
+        yield None, "\n".join(logs)
+        return None, "\n".join(logs)
     if audio_provider == "Youtube":
+        logs.append("Downloading the audio...")
+        yield None, "\n".join(logs)
         ydl_opts = {
             'noplaylist': True,
             'format': 'bestaudio/best',
@@ -295,24 +304,41 @@ def download_audio(url, audio_provider):
             }],
             "outtmpl": 'dl_audio/audio',
         }
+        audio_path = "dl_audio/audio.wav"
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-        return "Download Complete"
+        logs.append("Download Complete.")
+        yield audio_path, "\n".join(logs)
 
-def cut_vocal_and_inst(split_model):
+def cut_vocal_and_inst(split_model, audio_mode):
     logs = []
-    audio_path = "dl_audio/audio.wav"
-    command = f"demucs --two-stems=vocals -n {split_model} {audio_path} -o output"
-    result = subprocess.run(command.split(), stdout=subprocess.PIPE)
-    vocal = f"output/{split_model}/audio/vocals.wav"
-    inst = f"output/{split_model}/audio/no_vocals.wav"
-    print(result.stdout.decode())
-    logs.append(result.stdout.decode())
-    yield "\n".join(logs), None, None, None, None
-    logs.append("Splitter Complete")
-    yield "\n".join(logs), vocal, inst, audio_path, vocal
+    logs.append("Starting the audio splitting process...")
+    if audio_mode == "Upload audio":
+        yield "\n".join(logs), None, None, None
+        command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+        result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
+        for line in result.stdout:
+            logs.append(line)
+            yield "\n".join(logs), None, None, None
+        print(result.stdout)
+        vocal = f"output/{split_model}/audio/vocals.wav"
+        inst = f"output/{split_model}/audio/no_vocals.wav"
+        logs.append("Audio splitting complete.")
+        yield "\n".join(logs), vocal, inst, vocal
+    else:
+        yield "\n".join(logs), None, None
+        command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+        result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
+        for line in result.stdout:
+            logs.append(line)
+            yield "\n".join(logs), None, None
+        print(result.stdout)
+        vocal = f"output/{split_model}/audio/vocals.wav"
+        inst = f"output/{split_model}/audio/no_vocals.wav"
+        logs.append("Audio splitting complete.")
+        yield "\n".join(logs), vocal, inst
 
-def combine_vocal_and_inst(audio_data, audio_volume, split_model):
+def combine_vocal_and_inst(audio_data, vocal_volume, inst_volume, split_model):
     if not os.path.exists("output/result"):
         os.mkdir("output/result")
     vocal_path = "output/result/output.wav"
@@ -323,25 +349,7 @@ def combine_vocal_and_inst(audio_data, audio_volume, split_model):
         wave_file.setsampwidth(2)
         wave_file.setframerate(audio_data[0])
         wave_file.writeframes(audio_data[1].tobytes())
-    command =  f'ffmpeg -y -i {inst_path} -i {vocal_path} -filter_complex [1:a]volume={audio_volume}dB[v];[0:a][v]amix=inputs=2:duration=longest -b:a 320k -c:a libmp3lame {output_path}'
-    result = subprocess.run(command.split(), stdout=subprocess.PIPE)
-    print(result.stdout.decode())
-    return output_path
-
-def combine_audio(audio_data, audio_volume, split_model):
-    os.makedirs(os.path.join("output", "result"), exist_ok=True)
-    vocal_path = "output/result/output.wav"
-    output_path = "output/result/combine.mp3"
-    if split_model == "htdemucs":
-        inst_path = "output/htdemucs/youtube_audio/no_vocals.wav"
-    else:
-        inst_path = "output/mdx_extra_q/youtube_audio/no_vocals.wav"
-    with wave.open(vocal_path, "w") as wave_file:
-        wave_file.setnchannels(1) 
-        wave_file.setsampwidth(2)
-        wave_file.setframerate(audio_data[0])
-        wave_file.writeframes(audio_data[1].tobytes())
-    command =  f'ffmpeg -y -i {inst_path} -i {vocal_path} -filter_complex [1:a]volume={audio_volume}dB[v];[0:a][v]amix=inputs=2:duration=longest -b:a 320k -c:a libmp3lame {output_path}'
+    command =  f'ffmpeg -y -i {inst_path} -i {vocal_path} -filter_complex [0:a]volume={inst_volume}[i];[1:a]volume={vocal_volume}[v];[i][v]amix=inputs=2:duration=longest[a] -map [a] -b:a 320k -c:a libmp3lame {output_path}'
     result = subprocess.run(command.split(), stdout=subprocess.PIPE)
     print(result.stdout.decode())
     return output_path
@@ -410,6 +418,12 @@ def download_and_extract_models(urls):
     logs.append("Successfully download all models! Refresh your model list to load the model")
     yield "\n".join(logs)
 
+def use_microphone(microphone):
+    if microphone == True:
+        return gr.Audio.update(source="microphone")
+    else:
+        return gr.Audio.update(source="upload")
+
 def change_audio_mode(vc_audio_mode):
     if vc_audio_mode == "Input path":
         return (
@@ -423,15 +437,17 @@ def change_audio_mode(vc_audio_mode):
             gr.Textbox.update(visible=False),
             gr.Button.update(visible=False),
             # Splitter
-            gr.Dropdown.update(visible=False),
-            gr.Textbox.update(visible=False),
+            gr.Dropdown.update(visible=True),
+            gr.Textbox.update(visible=True),
+            gr.Button.update(visible=True),
             gr.Button.update(visible=False),
             gr.Audio.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Slider.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Button.update(visible=False),
+            gr.Audio.update(visible=True),
+            gr.Audio.update(visible=True),
+            gr.Slider.update(visible=True),
+            gr.Slider.update(visible=True),
+            gr.Audio.update(visible=True),
+            gr.Button.update(visible=True),
             # TTS
             gr.Textbox.update(visible=False),
             gr.Dropdown.update(visible=False)
@@ -448,15 +464,17 @@ def change_audio_mode(vc_audio_mode):
             gr.Textbox.update(visible=False),
             gr.Button.update(visible=False),
             # Splitter
-            gr.Dropdown.update(visible=False),
-            gr.Textbox.update(visible=False),
+            gr.Dropdown.update(visible=True),
+            gr.Textbox.update(visible=True),
             gr.Button.update(visible=False),
+            gr.Button.update(visible=True),
             gr.Audio.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Slider.update(visible=False),
-            gr.Audio.update(visible=False),
-            gr.Button.update(visible=False),
+            gr.Audio.update(visible=True),
+            gr.Audio.update(visible=True),
+            gr.Slider.update(visible=True),
+            gr.Slider.update(visible=True),
+            gr.Audio.update(visible=True),
+            gr.Button.update(visible=True),
             # TTS
             gr.Textbox.update(visible=False),
             gr.Dropdown.update(visible=False)
@@ -476,9 +494,11 @@ def change_audio_mode(vc_audio_mode):
             gr.Dropdown.update(visible=True),
             gr.Textbox.update(visible=True),
             gr.Button.update(visible=True),
+            gr.Button.update(visible=False),
             gr.Audio.update(visible=True),
             gr.Audio.update(visible=True),
             gr.Audio.update(visible=True),
+            gr.Slider.update(visible=True),
             gr.Slider.update(visible=True),
             gr.Audio.update(visible=True),
             gr.Button.update(visible=True),
@@ -501,9 +521,11 @@ def change_audio_mode(vc_audio_mode):
             gr.Dropdown.update(visible=False),
             gr.Textbox.update(visible=False),
             gr.Button.update(visible=False),
+            gr.Button.update(visible=False),
             gr.Audio.update(visible=False),
             gr.Audio.update(visible=False),
             gr.Audio.update(visible=False),
+            gr.Slider.update(visible=False),
             gr.Slider.update(visible=False),
             gr.Audio.update(visible=False),
             gr.Button.update(visible=False),
@@ -556,16 +578,17 @@ with gr.Blocks() as app:
                 vc_link = gr.Textbox(label="Youtube URL", visible=False, info="Example: https://www.youtube.com/watch?v=Nc0sB1Bmf-A", placeholder="https://www.youtube.com/watch?v=...")
                 vc_log_yt = gr.Textbox(label="Output Information", visible=False, interactive=False)
                 vc_download_button = gr.Button("Download Audio", variant="primary", visible=False)
-                # Splitter
-                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["hdemucs_mmi", "htdemucs", "htdemucs_ft", "mdx", "mdx_q", "mdx_extra_q"], allow_custom_value=False, visible=False, value="htdemucs", info="Select the splitter model (Default: htdemucs)")
-                vc_split_log = gr.Textbox(label="Output Information", visible=False, interactive=False)
-                vc_split = gr.Button("Split Audio", variant="primary", visible=False)
-                vc_vocal_preview = gr.Audio(label="Vocal Preview", visible=False)
-                vc_inst_preview = gr.Audio(label="Instrumental Preview", visible=False)
-                vc_audio_preview = gr.Audio(label="Audio Preview", visible=False)
+                vc_audio_preview = gr.Audio(label="Downloaded Audio Preview", visible=False)
                 # TTS
                 tts_text = gr.Textbox(label="TTS text", info="Text to speech input", visible=False)
                 tts_voice = gr.Dropdown(label="Edge-tts speaker", choices=voices, visible=False, allow_custom_value=False, value="en-US-AnaNeural-Female")
+                # Splitter
+                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["hdemucs_mmi", "htdemucs", "htdemucs_ft", "mdx", "mdx_q", "mdx_extra_q"], allow_custom_value=False, visible=True, value="htdemucs", info="Select the splitter model (Default: htdemucs)")
+                vc_split_log = gr.Textbox(label="Output Information", visible=True, interactive=False)
+                vc_split_yt = gr.Button("Split Audio", variant="primary", visible=True)
+                vc_split = gr.Button("Split Audio", variant="primary", visible=False)
+                vc_vocal_preview = gr.Audio(label="Vocal Preview", interactive=False, visible=True)
+                vc_inst_preview = gr.Audio(label="Instrumental Preview", interactive=False, visible=True)
             with gr.Column():
                 vc_transform0 = gr.Number(
                     label="Transpose", 
@@ -626,60 +649,71 @@ with gr.Blocks() as app:
                     info="One pitch per line, Replace the default F0 and pitch modulation"
                 )
             with gr.Column():
-                vc_submit = gr.Button("Convert", variant="primary")
-                vc_output_log = gr.Textbox(label="Output Information", interactive=False)
-                vc_output = gr.Audio(
-                    label="Export audio",
-                    info="Click on the three dots in the lower right corner to download",
-                    interactive=False
-                )
-                vc_volume = gr.Slider(
+                vc_log = gr.Textbox(label="Output Information", interactive=False)
+                vc_output = gr.Audio(label="Output Audio", interactive=False)
+                vc_convert = gr.Button("Convert", variant="primary")
+                vc_vocal_volume = gr.Slider(
                     minimum=0,
                     maximum=10,
                     label="Vocal volume",
-                    info="Adjust vocal volume (Default: 4}",
-                    value=4,
+                    value=1,
                     interactive=True,
                     step=1,
-                    visible=False
+                    info="Adjust vocal volume (Default: 1}",
+                    visible=True
                 )
-                vc_combine =  gr.Button("Combine",variant="primary", visible=False)
-                vc_combined_output = gr.Audio(label="Output Combined Audio", visible=False)
-        vc_submit.click(
+                vc_inst_volume = gr.Slider(
+                    minimum=0,
+                    maximum=10,
+                    label="Instrument volume",
+                    value=1,
+                    interactive=True,
+                    step=1,
+                    info="Adjust instrument volume (Default: 1}",
+                    visible=True
+                )
+                vc_combined_output = gr.Audio(label="Output Combined Audio", visible=True)
+                vc_combine =  gr.Button("Combine",variant="primary", visible=True)
+        vc_convert.click(
             vc_single,
             [
                 spk_item,
                 vc_audio_mode,
-                vc_input_audio,
-                vc_upload_audio,
+                vc_input,
+                vc_upload,
+                vc_vocal_preview,
+                tts_text,
+                tts_voice,
                 vc_transform0,
                 f0_file0,
                 f0method0,
                 file_index,
-                # file_big_npy1,
                 index_rate0,
                 filter_radius0,
                 resample_sr0,
                 rms_mix_rate0,
                 protect0,
-                tts_text,
-                tts_voice
             ],
-            [vc_output_log, vc_output],
+            [vc_log, vc_output],
         )
         vc_download_button.click(
             fn=download_audio, 
             inputs=[vc_link, vc_download_audio], 
-            outputs=[vc_log_yt]
+            outputs=[vc_audio_preview, vc_log_yt]
+        )
+        vc_split_yt.click(
+            fn=cut_vocal_and_inst, 
+            inputs=[vc_split_model, vc_audio_mode], 
+            outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview, vc_input]
         )
         vc_split.click(
             fn=cut_vocal_and_inst, 
-            inputs=[vc_split_model], 
-            outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview, vc_audio_preview, vc_input]
+            inputs=[vc_split_model, vc_audio_mode],
+            outputs=[vc_split_log, vc_vocal_preview, vc_inst_preview]
         )
         vc_combine.click(
             fn=combine_vocal_and_inst,
-            inputs=[vc_output, vc_volume, vc_split_model],
+            inputs=[vc_output, vc_vocal_volume, vc_inst_volume, vc_split_model],
             outputs=[vc_combined_output]
         )
         vc_microphone_mode.change(
@@ -691,48 +725,57 @@ with gr.Blocks() as app:
             fn=change_audio_mode,
             inputs=[vc_audio_mode],
             outputs=[
+                # Input & Upload
                 vc_input,
                 vc_microphone_mode,
                 vc_upload,
+                # Youtube
                 vc_download_audio,
                 vc_link,
                 vc_log_yt,
                 vc_download_button,
+                # Splitter
                 vc_split_model,
                 vc_split_log,
+                vc_split_yt,
                 vc_split,
+                vc_audio_preview,
                 vc_vocal_preview,
                 vc_inst_preview,
-                vc_audio_preview,
-                vc_volume,
+                vc_vocal_volume,
+                vc_inst_volume,
                 vc_combined_output,
                 vc_combine,
+                # TTS
                 tts_text,
                 tts_voice
             ]
         )
         sid.change(fn=get_vc, inputs=[sid, protect0], outputs=[spk_item, protect0, file_index, selected_model])
     with gr.TabItem("Batch Inference"):
-        with gr.Group():
-            gr.Markdown(
-                "# <center> Batch Inference\n"+
-                "#### <center> Work in progress"
-            )
+        gr.Markdown(
+            "# <center> Batch Inference\n"+
+            "#### <center> Work in progress"
+        )
     with gr.TabItem("Model Downloader"):
-        with gr.Group():
-            gr.Markdown(
-                "# <center> Model Downloader\n"+
-                "#### <center> To download multi link you have to put your link to the textbox and every link separated by space\n"+
-                "#### <center> Support Mega, Google Drive, etc"
-            )
-            with gr.Column():
-                md_text = gr.Textbox(label="URL")
-            with gr.Row():
-                md_download = gr.Button(label="Convert", variant="primary")
-                md_download_logs = gr.Textbox(label="Output information", interactive=False)
-                md_download.click(
-                    fn=download_and_extract_models,
-                    inputs=[md_text],
-                    outputs=[md_download_logs]
-                )
+        gr.Markdown(
+            "# <center> Model Downloader (Beta)\n"+
+            "#### <center> To download multi link you have to put your link to the textbox and every link separated by space\n"+
+            "#### <center> Support Mega, Google Drive, etc"
+        )
+        with gr.Column():
+            md_text = gr.Textbox(label="URL")
+        with gr.Row():
+            md_download = gr.Button(label="Convert", variant="primary")
+            md_download_logs = gr.Textbox(label="Output information", interactive=False)
+            md_download.click(
+                fn=download_and_extract_models,
+                inputs=[md_text],
+                outputs=[md_download_logs]
+        )
+    with gr.TabItem("Settings"):
+        gr.Markdown(
+            "# <center> Settings\n"+
+            "#### <center> Work in progress"
+        )
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
