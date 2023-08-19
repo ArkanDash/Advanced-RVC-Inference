@@ -9,6 +9,7 @@ import ffmpeg
 import gdown
 import subprocess
 import wave
+from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
@@ -58,32 +59,32 @@ def load_hubert():
 load_hubert()
 
 weight_root = "weights"
-weights_path = []
-weights_file = []
-for _, dirs, _ in os.walk(weight_root):
-    for sub_dirs in dirs:
-        if sub_dirs.startswith("."):
-            continue
-        weights_path.append(os.path.join(weight_root, sub_dirs))
-        for _, _, files in os.walk(os.path.join(weight_root, sub_dirs)):
-            for file in files:
-                if file.endswith(".pth"):
-                    weights_file.append(file)
+index_root = "weights/index"
+weights_model = []
+weights_index = []
+for _, _, model_files in os.walk(weight_root):
+    for file in model_files:
+        if file.endswith(".pth"):
+            weights_model.append(file)
+for _, _, index_files in os.walk(index_root):
+    for file in index_files:
+        if file.endswith('.index') and "trained" not in file:
+            weights_index.append(os.path.join(index_root, file))
 
 def check_models():
-    weights_path = []
-    weights_file = []
-    for _, dirs, _ in os.walk(weight_root):
-        for sub_dirs in dirs:
-            if sub_dirs.startswith("."):
-                continue
-            weights_path.append(os.path.join(weight_root, sub_dirs))
-            for _, _, files in os.walk(os.path.join(weight_root, sub_dirs)):
-                for file in files:
-                    if file.endswith(".pth"):
-                        weights_file.append(file)
+    weights_model = []
+    weights_index = []
+    for _, _, model_files in os.walk(weight_root):
+        for file in model_files:
+            if file.endswith(".pth"):
+                weights_model.append(file)
+    for _, _, index_files in os.walk(index_root):
+        for file in index_files:
+            if file.endswith('.index') and "trained" not in file:
+                weights_index.append(os.path.join(index_root, file))
     return (
-        gr.Dropdown.update(choices=sorted(weights_file), value=weights_file[0])
+        gr.Dropdown.update(choices=sorted(weights_model), value=weights_model[0]),
+        gr.Dropdown.update(choices=sorted(weights_index))
     )
 
 def clean():
@@ -104,7 +105,6 @@ def vc_single(
     f0_file,
     f0_method,
     file_index,
-    # file_big_npy,
     index_rate,
     filter_radius,
     resample_sr,
@@ -220,19 +220,12 @@ def get_vc(sid, to_return_protect0):
         return (
             gr.Slider.update(maximum=2333, visible=False),
             gr.Slider.update(visible=True),
-            gr.Dropdown.update(choices=[], value=""),
-            gr.Markdown.update(value="# <cover> No model selected")
+            gr.Dropdown.update(choices=sorted(weights_index), value=""),
+            gr.Markdown.update(value="# <center> No model selected")
         )
-    current_model = ""
-    current_model_path = ""
-    for i, path in enumerate(weights_path):
-        file_path = os.path.join(path, weights_file[i])
-        if os.path.exists(file_path) and sid[:-4] in file_path:
-            current_model = file_path
-            current_model_path = path
-            break
     print(f"Loading {sid} model...")
-    cpt = torch.load(current_model, map_location="cpu")
+    selected_model = sid[:-4]
+    cpt = torch.load(os.path.join(weight_root, sid), map_location="cpu")
     tgt_sr = cpt["config"][-1]
     cpt["config"][-3] = cpt["weight"]["emb_g.weight"].shape[0]
     if_f0 = cpt.get("f0", 1)
@@ -249,19 +242,16 @@ def get_vc(sid, to_return_protect0):
             "__type__": "update",
         }
     version = cpt.get("version", "v1")
-    model_version = "Unknown"
     if version == "v1":
         if if_f0 == 1:
             net_g = SynthesizerTrnMs256NSFsid(*cpt["config"], is_half=config.is_half)
         else:
             net_g = SynthesizerTrnMs256NSFsid_nono(*cpt["config"])
-        model_version = "v1 Model"
     elif version == "v2":
         if if_f0 == 1:
             net_g = SynthesizerTrnMs768NSFsid(*cpt["config"], is_half=config.is_half)
         else:
             net_g = SynthesizerTrnMs768NSFsid_nono(*cpt["config"])
-        model_version = "v2 Model"
     del net_g.enc_q
     print(net_g.load_state_dict(cpt["weight"], strict=False))
     net_g.eval().to(config.device)
@@ -270,27 +260,20 @@ def get_vc(sid, to_return_protect0):
     else:
         net_g = net_g.float()
     vc = VC(tgt_sr, config)
-    n_spk = cpt["config"][-3]  
-    index_list = []
-    cover = gr.Markdown.update(
-        f'## <center> {sid[:-4]}\n'+
-        f'### <center> RVC {model_version}'
-    )
-    for _, _, files in os.walk(current_model_path):
-        for file in files:
-            if file.endswith('.index') and "trained" not in file:
-                index_list.append(os.path.join(current_model_path, file))
-            if file.endswith('.png') or file.endswith('.jpg') or file.endswith('.gif'):
-                cover = gr.Markdown.update(
-                    f'## <center> {sid[:-4]}\n'+
-                    f'### <center> RVC {model_version}\n'+
-                    f'<center><img style="width:auto;height:250px; display:block; margin:auto;" src="file/{os.path.join(current_model_path, file)}" align="center"></center>'
-                )
+    n_spk = cpt["config"][-3]
+    selected_index = gr.Dropdown.update(value=weights_index[0])
+    for index, model_index in enumerate(weights_index):
+        if selected_model in model_index:
+            selected_index = gr.Dropdown.update(value=weights_index[index])
+            break
     return (
         gr.Slider.update(maximum=n_spk, visible=True),
         to_return_protect0,
-        gr.Dropdown.update(choices=sorted(index_list), value=index_list[0]),
-        cover
+        selected_index,
+        gr.Markdown.update(
+            f'## <center> {selected_model}\n'+
+            f'### <center> RVC {version} Model'
+        )
     )
 
 def download_audio(url, audio_provider):
@@ -310,9 +293,9 @@ def download_audio(url, audio_provider):
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'wav',
             }],
-            "outtmpl": 'dl_audio/audio',
+            "outtmpl": 'result/dl_audio/audio',
         }
-        audio_path = "dl_audio/audio.wav"
+        audio_path = "result/dl_audio/audio.wav"
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
         logs.append("Download Complete.")
@@ -322,7 +305,7 @@ def cut_vocal_and_inst_yt(split_model):
     logs = []
     logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None, None
-    command = f"demucs --two-stems=vocals -n {split_model} dl_audio/audio.wav -o output"
+    command = f"demucs --two-stems=vocals -n {split_model} result/dl_audio/audio.wav -o output"
     result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
     for line in result.stdout:
         logs.append(line)
@@ -337,11 +320,7 @@ def cut_vocal_and_inst(split_model, audio_data):
     logs = []
     vocal_path = "output/result/audio.wav"
     os.makedirs("output/result", exist_ok=True)
-    with wave.open(vocal_path, "w") as wave_file:
-        wave_file.setnchannels(1) 
-        wave_file.setsampwidth(2)
-        wave_file.setframerate(audio_data[0])
-        wave_file.writeframes(audio_data[1].tobytes())
+    wavfile.write(vocal_path, audio_data[0], audio_data[1])
     logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None
     command = f"demucs --two-stems=vocals -n {split_model} {vocal_path} -o output"
@@ -360,11 +339,7 @@ def combine_vocal_and_inst(audio_data, vocal_volume, inst_volume, split_model):
     vocal_path = "output/result/output.wav"
     output_path = "output/result/combine.mp3"
     inst_path = f"output/{split_model}/audio/no_vocals.wav"
-    with wave.open(vocal_path, "w") as wave_file:
-        wave_file.setnchannels(1) 
-        wave_file.setsampwidth(2)
-        wave_file.setframerate(audio_data[0])
-        wave_file.writeframes(audio_data[1].tobytes())
+    wavfile.write(vocal_path, audio_data[0], audio_data[1])
     command =  f'ffmpeg -y -i {inst_path} -i {vocal_path} -filter_complex [0:a]volume={inst_volume}[i];[1:a]volume={vocal_volume}[v];[i][v]amix=inputs=2:duration=longest[a] -map [a] -b:a 320k -c:a libmp3lame {output_path}'
     result = subprocess.run(command.split(), stdout=subprocess.PIPE)
     print(result.stdout.decode())
@@ -375,6 +350,7 @@ def download_and_extract_models(urls):
     os.makedirs("zips", exist_ok=True)
     os.makedirs(os.path.join("zips", "extract"), exist_ok=True)
     os.makedirs(os.path.join(weight_root), exist_ok=True)
+    os.makedirs(os.path.join(index_root), exist_ok=True)
     for link in urls.splitlines():
         url = link.strip()
         if not url:
@@ -394,41 +370,45 @@ def download_and_extract_models(urls):
         logs.append(f"Extracting...")
         yield "\n".join(logs)
         for filename in os.listdir("zips"):
-            achived_file = os.path.join("zips", filename)
+            archived_file = os.path.join("zips", filename)
             if filename.endswith(".zip"):
-                shutil.unpack_archive(achived_file, os.path.join("zips", "extract"), 'zip')
+                shutil.unpack_archive(archived_file, os.path.join("zips", "extract"), 'zip')
             elif filename.endswith(".rar"):
-                with rarfile.RarFile(achived_file, 'r') as rar:
+                with rarfile.RarFile(archived_file, 'r') as rar:
                     rar.extractall(os.path.join("zips", "extract"))
-            for _, dirs, files in os.walk(os.path.join("zips", "extract")):
-                is_done = False
-                if files:
-                    basename = ""
-                    for file in files:
-                        if file.endswith(".pth"):
-                            basename = file[:-4]
-                            os.makedirs(os.path.join(weight_root, basename), exist_ok=True)
-                            shutil.move(os.path.join("zips", "extract", file), os.path.join(weight_root, basename, file))
-                            is_done = True
-                    for file in files:
-                        if file.endswith(".index"):
-                            shutil.move(os.path.join("zips", "extract", file), os.path.join(weight_root, basename, file))
-                            is_done = True
-                else:
-                    for sub_dir in dirs:
-                        for _, _, sub_files in os.walk(os.path.join("zips", "extract", sub_dir)):
-                            basename = ""
-                            for file in sub_files:
-                                if file.endswith(".pth"):
-                                    basename = file[:-4]
-                                    os.makedirs(os.path.join(weight_root, basename), exist_ok=True)
-                                    shutil.move(os.path.join("zips", "extract", sub_dir, file), os.path.join(weight_root, basename, file))
-                                    is_done = True
-                            for file in sub_files:
-                                if file.endswith(".index"):
-                                    shutil.move(os.path.join("zips", "extract", sub_dir, file), os.path.join(weight_root, basename, file))
-                                    is_done = True
-                            shutil.rmtree(os.path.join("zips", "extract", sub_dir))
+        for _, dirs, files in os.walk(os.path.join("zips", "extract")):
+            logs.append(f"Searching Model and Index...")
+            yield "\n".join(logs)
+            model = False
+            index = False
+            if files:
+                for file in files:
+                    if file.endswith(".pth"):
+                        basename = file[:-4]
+                        shutil.move(os.path.join("zips", "extract", file), os.path.join(weight_root, file))
+                        model = True
+                    if file.endswith('.index') and "trained" not in file:
+                        shutil.move(os.path.join("zips", "extract", file), os.path.join(index_root, file))
+                        index = True
+            else:
+                logs.append("No model in main folder.")
+                yield "\n".join(logs)
+                logs.append("Searching in subfolders...")
+                yield "\n".join(logs)
+                for sub_dir in dirs:
+                    for _, _, sub_files in os.walk(os.path.join("zips", "extract", sub_dir)):
+                        for file in sub_files:
+                            if file.endswith(".pth"):
+                                basename = file[:-4]
+                                shutil.move(os.path.join("zips", "extract", sub_dir, file), os.path.join(weight_root, file))
+                                model = True
+                            if file.endswith('.index') and "trained" not in file:
+                                shutil.move(os.path.join("zips", "extract", sub_dir, file), os.path.join(index_root, file))
+                                index = True  
+                        shutil.rmtree(os.path.join("zips", "extract", sub_dir))
+            if index is False:
+                logs.append("Model only file, no Index file detected.")
+                yield "\n".join(logs)
         logs.append("Download Completed!")
         yield "\n".join(logs)
     logs.append("Successfully download all models! Refresh your model list to load the model")
@@ -557,11 +537,11 @@ with gr.Blocks() as app:
     with gr.Row():
         sid = gr.Dropdown(
             label="Weight",
-            choices = sorted(weights_file),
+            choices=sorted(weights_model),
         )
         file_index = gr.Dropdown(
             label="List of index file",
-            choices=[],
+            choices=sorted(weights_index),
             interactive=True,
         )
         spk_item = gr.Slider(
@@ -576,7 +556,7 @@ with gr.Blocks() as app:
         refresh_model = gr.Button("Refresh model list", variant="primary")
         clean_button = gr.Button("Clear Model from memory", variant="primary")
         refresh_model.click(
-            fn=check_models, inputs=[], outputs=[sid]
+            fn=check_models, inputs=[], outputs=[sid, file_index]
         )
         clean_button.click(fn=clean, inputs=[], outputs=[sid, spk_item])
     with gr.TabItem("Inference"):
@@ -777,7 +757,7 @@ with gr.Blocks() as app:
         gr.Markdown(
             "# <center> Model Downloader (Beta)\n"+
             "#### <center> To download multi link you have to put your link to the textbox and every link separated by space\n"+
-            "#### <center> Support Mega, Google Drive, etc"
+            "#### <center> Support Direct Link, Mega, Google Drive, etc"
         )
         with gr.Column():
             md_text = gr.Textbox(label="URL")
@@ -788,7 +768,7 @@ with gr.Blocks() as app:
                 fn=download_and_extract_models,
                 inputs=[md_text],
                 outputs=[md_download_logs]
-        )
+            )
     with gr.TabItem("Settings"):
         gr.Markdown(
             "# <center> Settings\n"+
