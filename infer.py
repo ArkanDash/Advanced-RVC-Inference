@@ -9,6 +9,7 @@ import ffmpeg
 import gdown
 import subprocess
 import wave
+import soundfile as sf
 from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
@@ -275,6 +276,85 @@ def get_vc(sid, to_return_protect0):
             f'### <center> RVC {version} Model'
         )
     )
+
+def find_audio_files(folder_path, extensions):
+    audio_files = []
+    for root, dirs, files in os.walk(folder_path):
+        for file in files:
+            if any(file.endswith(ext) for ext in extensions):
+                audio_files.append(file)
+    return audio_files
+
+def vc_multi(
+    spk_item,
+    vc_input,
+    vc_output,
+    vc_transform0,
+    f0_file0,
+    f0method0,
+    file_index,
+    index_rate,
+    filter_radius,
+    resample_sr,
+    rms_mix_rate,
+    protect,
+):
+    global tgt_sr, net_g, vc, hubert_model, version, cpt
+    logs = []
+    logs.append("Converting...")
+    yield "\n".join(logs)
+    try:
+        if os.path.exists(vc_input):
+            folder_path = vc_input
+            extensions = [".mp3", ".wav", ".flac", ".ogg"]
+            audio_files = find_audio_files(folder_path, extensions)
+            for index, file in enumerate(audio_files, start=1):
+                audio, sr = librosa.load(os.path.join(folder_path, file), sr=16000, mono=True)
+                input_audio_path = folder_path, file
+                f0_up_key = int(vc_transform0)
+                times = [0, 0, 0]
+                if hubert_model == None:
+                    load_hubert()
+                if_f0 = cpt.get("f0", 1)
+                audio_opt = vc.pipeline(
+                    hubert_model,
+                    net_g,
+                    spk_item,
+                    audio,
+                    input_audio_path,
+                    times,
+                    f0_up_key,
+                    f0method0,
+                    file_index,
+                    index_rate,
+                    if_f0,
+                    filter_radius,
+                    tgt_sr,
+                    resample_sr,
+                    rms_mix_rate,
+                    version,
+                    protect,
+                    f0_file0=f0_file0
+                )
+                if resample_sr >= 16000 and tgt_sr != resample_sr:
+                    tgt_sr = resample_sr
+                output_path = f"{file}.wav"
+                os.makedirs(os.path.join(vc_output), exist_ok=True)
+                sf.write(
+                    output_path,
+                    audio_opt,
+                    tgt_sr,
+                )
+                logs.append(f"{index} / {len(audio_files)} | {file}")
+                yield "\n".join(logs)
+        else:
+            logs.append("Folder not found or path doesn't exist.")
+            yield "\n".join(logs)
+    except:
+        info = traceback.format_exc()
+        print(info)
+        logs.append(info)
+        yield "\n".join(logs)
 
 def download_audio(url, audio_provider):
     logs = []
@@ -749,9 +829,89 @@ with gr.Blocks() as app:
         )
         sid.change(fn=get_vc, inputs=[sid, protect0], outputs=[spk_item, protect0, file_index, selected_model])
     with gr.TabItem("Batch Inference"):
-        gr.Markdown(
-            "# <center> Batch Inference\n"+
-            "#### <center> Work in progress"
+        with gr.Row():
+            with gr.Column():
+                vc_input_bat = gr.Textbox(label="Input audio path (folder)", visible=True)
+                vc_output_bat = gr.TextBox(label="Output audio path (folder)", value="result/batch", visible=True)
+            with gr.Column():
+                vc_transform0_bat = gr.Number(
+                    label="Transpose", 
+                    info='Type "12" to change from male to female convertion or Type "-12" to change female to male convertion.',
+                    value=0
+                )
+                f0method0_bat = gr.Radio(
+                    label="Pitch extraction algorithm",
+                    info=f0method_info,
+                    choices=f0method_mode,
+                    value="pm",
+                    interactive=True,
+                )
+                index_rate0_bat = gr.Slider(
+                    minimum=0,
+                    maximum=1,
+                    label="Retrieval feature ratio",
+                    value=0.7,
+                    interactive=True,
+                )
+                filter_radius0_bat = gr.Slider(
+                    minimum=0,
+                    maximum=7,
+                    label="Apply Median Filtering",
+                    info="The value represents the filter radius and can reduce breathiness.",
+                    value=3,
+                    step=1,
+                    interactive=True,
+                )
+                resample_sr0_bat = gr.Slider(
+                    minimum=0,
+                    maximum=48000,
+                    label="Resample the output audio",
+                    info="Resample the output audio in post-processing to the final sample rate. Set to 0 for no resampling",
+                    value=0,
+                    step=1,
+                    interactive=True,
+                )
+                rms_mix_rate0_bat = gr.Slider(
+                    minimum=0,
+                    maximum=1,
+                    label="Volume Envelope",
+                    info="Use the volume envelope of the input to replace or mix with the volume envelope of the output. The closer the ratio is to 1, the more the output envelope is used",
+                    value=1,
+                    interactive=True,
+                )
+                protect0_bat = gr.Slider(
+                    minimum=0,
+                    maximum=0.5,
+                    label="Voice Protection",
+                    info="Protect voiceless consonants and breath sounds to prevent artifacts such as tearing in electronic music. Set to 0.5 to disable. Decrease the value to increase protection, but it may reduce indexing accuracy",
+                    value=0.5,
+                    step=0.01,
+                    interactive=True,
+                )
+                f0_file0_bat = gr.File(
+                    label="F0 curve file (Optional)",
+                    info="One pitch per line, Replace the default F0 and pitch modulation"
+                )
+            with gr.Column():
+                vc_log_bat = gr.Textbox(label="Output Information", interactive=False)
+                vc_convert_bat = gr.Button("Convert", variant="primary")
+        vc_convert.click(
+            vc_multi,
+            [
+                spk_item,
+                vc_input_bat,
+                vc_output_bat,
+                vc_transform0_bat,
+                f0_file0_bat,
+                f0method0_bat,
+                file_index,
+                index_rate0_bat,
+                filter_radius0_bat,
+                resample_sr0_bat,
+                rms_mix_rate0_bat,
+                protect0_bat,
+            ],
+            [vc_log_bat],
         )
     with gr.TabItem("Model Downloader"):
         gr.Markdown(
