@@ -188,7 +188,7 @@ def vc_single(
         yield "\n".join(logs), None
 
 def get_vc(sid, to_return_protect0):
-    global n_spk, tgt_sr, net_g, vc, cpt, version
+    global n_spk, tgt_sr, net_g, vc, cpt, version, weights_index
     if sid == "" or sid == []:
         global hubert_model
         if hubert_model is not None:  # 考虑到轮询, 需要加个判断看是否 sid 是由有模型切换到无模型的
@@ -290,7 +290,6 @@ def vc_multi(
     vc_input,
     vc_output,
     vc_transform0,
-    f0_file0,
     f0method0,
     file_index,
     index_rate,
@@ -303,6 +302,7 @@ def vc_multi(
     logs = []
     logs.append("Converting...")
     yield "\n".join(logs)
+    print()
     try:
         if os.path.exists(vc_input):
             folder_path = vc_input
@@ -334,18 +334,20 @@ def vc_multi(
                     rms_mix_rate,
                     version,
                     protect,
-                    f0_file0=f0_file0
+                    f0_file=None
                 )
                 if resample_sr >= 16000 and tgt_sr != resample_sr:
                     tgt_sr = resample_sr
-                output_path = f"{file}.wav"
+                output_path = f"{os.path.join(vc_output, file)}"
                 os.makedirs(os.path.join(vc_output), exist_ok=True)
                 sf.write(
                     output_path,
                     audio_opt,
                     tgt_sr,
                 )
-                logs.append(f"{index} / {len(audio_files)} | {file}")
+                info = f"{index} / {len(audio_files)} | {file}"
+                print(info)
+                logs.append(info)
                 yield "\n".join(logs)
         else:
             logs.append("Folder not found or path doesn't exist.")
@@ -832,7 +834,7 @@ with gr.Blocks() as app:
         with gr.Row():
             with gr.Column():
                 vc_input_bat = gr.Textbox(label="Input audio path (folder)", visible=True)
-                vc_output_bat = gr.TextBox(label="Output audio path (folder)", value="result/batch", visible=True)
+                vc_output_bat = gr.Textbox(label="Output audio path (folder)", value="result/batch", visible=True)
             with gr.Column():
                 vc_transform0_bat = gr.Number(
                     label="Transpose", 
@@ -888,21 +890,16 @@ with gr.Blocks() as app:
                     step=0.01,
                     interactive=True,
                 )
-                f0_file0_bat = gr.File(
-                    label="F0 curve file (Optional)",
-                    info="One pitch per line, Replace the default F0 and pitch modulation"
-                )
             with gr.Column():
                 vc_log_bat = gr.Textbox(label="Output Information", interactive=False)
                 vc_convert_bat = gr.Button("Convert", variant="primary")
-        vc_convert.click(
+        vc_convert_bat.click(
             vc_multi,
             [
                 spk_item,
                 vc_input_bat,
                 vc_output_bat,
                 vc_transform0_bat,
-                f0_file0_bat,
                 f0method0_bat,
                 file_index,
                 index_rate0_bat,
