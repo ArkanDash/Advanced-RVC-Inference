@@ -262,7 +262,15 @@ def get_vc(sid, to_return_protect0):
         net_g = net_g.float()
     vc = VC(tgt_sr, config)
     n_spk = cpt["config"][-3]
-    selected_index = gr.Dropdown.update(value=weights_index[0])
+    weights_index = []
+    for _, _, index_files in os.walk(index_root):
+        for file in index_files:
+            if file.endswith('.index') and "trained" not in file:
+                weights_index.append(os.path.join(index_root, file))
+    if weights_index == []:
+        selected_index = gr.Dropdown.update(value="")
+    else
+        selected_index = gr.Dropdown.update(value=weights_index[0])
     for index, model_index in enumerate(weights_index):
         if selected_model in model_index:
             selected_index = gr.Dropdown.update(value=weights_index[index])
