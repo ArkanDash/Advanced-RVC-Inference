@@ -269,7 +269,7 @@ def get_vc(sid, to_return_protect0):
                 weights_index.append(os.path.join(index_root, file))
     if weights_index == []:
         selected_index = gr.Dropdown.update(value="")
-    else
+    else:
         selected_index = gr.Dropdown.update(value=weights_index[0])
     for index, model_index in enumerate(weights_index):
         if selected_model in model_index:
