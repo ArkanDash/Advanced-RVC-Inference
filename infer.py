@@ -622,7 +622,7 @@ def change_audio_mode(vc_audio_mode):
         
 with gr.Blocks() as app:
     gr.Markdown(
-        "# <center> Advanced RVC Inference\n"
+        "# <center> 🐟 AISINGERS AI COVER | https://t.me/aisingers\n"
     )
     with gr.Row():
         sid = gr.Dropdown(
@@ -649,7 +649,7 @@ with gr.Blocks() as app:
             fn=check_models, inputs=[], outputs=[sid, file_index]
         )
         clean_button.click(fn=clean, inputs=[], outputs=[sid, spk_item])
-    with gr.TabItem("Inference"):
+    with gr.TabItem("Интерфейс"):
         selected_model = gr.Markdown(value="# <center> No model selected")
         with gr.Row():
             with gr.Column():
@@ -838,7 +838,7 @@ with gr.Blocks() as app:
             ]
         )
         sid.change(fn=get_vc, inputs=[sid, protect0], outputs=[spk_item, protect0, file_index, selected_model])
-    with gr.TabItem("Batch Inference"):
+    with gr.TabItem("Пакетный вывод"):
         with gr.Row():
             with gr.Column():
                 vc_input_bat = gr.Textbox(label="Input audio path (folder)", visible=True)
@@ -918,7 +918,7 @@ with gr.Blocks() as app:
             ],
             [vc_log_bat],
         )
-    with gr.TabItem("Model Downloader"):
+    with gr.TabItem("Скачать Модель"):
         gr.Markdown(
             "# <center> Model Downloader (Beta)\n"+
             "#### <center> To download multi link you have to put your link to the textbox and every link separated by space\n"+
@@ -934,9 +934,9 @@ with gr.Blocks() as app:
                 inputs=[md_text],
                 outputs=[md_download_logs]
             )
-    with gr.TabItem("Settings"):
+    with gr.TabItem("Настройка"):
         gr.Markdown(
-            "# <center> Settings\n"+
-            "#### <center> Work in progress"
+            "# <center> Настройки\n"+
+            "#### <center> А тут нечо не работает, ну ты всегда можешь подписаться на нас и заказать голосовую модель: https://t.me/aisingers"
         )
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
