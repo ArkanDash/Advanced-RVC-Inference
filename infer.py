@@ -15,6 +15,8 @@ from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
 
+os.system("python models.py")
+
 now_dir = os.getcwd()
 tmp = os.path.join(now_dir, "TEMP")
 shutil.rmtree(tmp, ignore_errors=True)
