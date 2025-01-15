@@ -693,7 +693,7 @@ with gr.Blocks(theme=gr.themes.Base(), title="Advanced RVC Inference") as app:
                 tts_text = gr.Textbox(label="TTS text", info="Text to speech input", visible=False)
                 tts_voice = gr.Dropdown(label="Edge-tts speaker", choices=voices, visible=False, allow_custom_value=False, value="en-US-AnaNeural-Female")
                 # Splitter
-                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["hdemucs_mmi", "htdemucs", "htdemucs_ft", "mdx", "mdx_q", "mdx_extra_q"], allow_custom_value=False, visible=True, value="htdemucs", info="Select the splitter model (Default: htdemucs)")
+                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["vocals_mel_band_roformer.ckpt", "mel_band_roformer_kim_ft_unwa.ckpt", "model_bs_roformer_ep_317_sdr_12.9755.ckpt", "model_bs_roformer_ep_368_sdr_12.9628.ckpt", "melband_roformer_big_beta4.ckpt"], allow_custom_value=False, visible=True, value="mel_band_roformer_kim_ft_unwa.ckpt", info="Select the splitter model (Default: mel_band_roformer_kim_ft_unwa.ckpt)")
                 vc_split_log = gr.Textbox(label="Output Information", visible=True, interactive=False)
                 vc_split_yt = gr.Button("Split Audio", variant="primary", visible=False)
                 vc_split = gr.Button("Split Audio", variant="primary", visible=True)
