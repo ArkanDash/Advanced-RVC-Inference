@@ -18,4 +18,4 @@ yt_dlp
 rarfile
 mega.py
 gdown
-audio-separator[gpu]=0.28.5
+audio-separator[gpu]==0.28.5
