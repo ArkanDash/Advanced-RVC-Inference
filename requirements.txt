@@ -10,7 +10,7 @@ soundfile
 praat-parselmouth
 httpx
 tensorboardX
-torchcrepe==0.0.20
+torchcrepe
 asyncio
 edge-tts
 yt_dlp
