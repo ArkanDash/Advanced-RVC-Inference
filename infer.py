@@ -14,8 +14,8 @@ from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
+from audio_separator.separator import Separator
 
-os.system("python models.py")
 
 now_dir = os.getcwd()
 tmp = os.path.join(now_dir, "TEMP")
@@ -397,32 +397,48 @@ def cut_vocal_and_inst_yt(split_model):
     logs = []
     logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None, None
-    command = f"demucs --two-stems=vocals -n {split_model} result/dl_audio/audio.wav -o output"
-    result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
-    for line in result.stdout:
-        logs.append(line)
-        yield "\n".join(logs), None, None, None
-    print(result.stdout)
-    vocal = f"output/{split_model}/audio/vocals.wav"
-    inst = f"output/{split_model}/audio/no_vocals.wav"
+    audio_path = "result/dl_audio/audio.wav"
+    separator = Separator(output_dir="output")
+    separator.load_model(model_filename=split_model)
+
+    output_names = {
+        "Vocals": "vocals",
+        "Instrumental": "no_vocals",
+
+    }
+    output_files = separator.separate(audio_path, output_names)
+
+    #command = f"demucs --two-stems=vocals -n {split_model} -o output"# Demucs too old, use new one
+    
+    
+    vocal = f"output/vocals.wav"
+    inst = f"output/no_vocals.wav"
     logs.append("Audio splitting complete.")
     yield "\n".join(logs), vocal, inst, vocal
 
+
 def cut_vocal_and_inst(split_model, audio_data):
     logs = []
-    vocal_path = "output/result/audio.wav"
-    os.makedirs("output/result", exist_ok=True)
+    vocal_path = "output/audio.wav"
+    os.makedirs("output", exist_ok=True)
     wavfile.write(vocal_path, audio_data[0], audio_data[1])
     logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None
-    command = f"demucs --two-stems=vocals -n {split_model} {vocal_path} -o output"
-    result = subprocess.Popen(command.split(), stdout=subprocess.PIPE, text=True)
-    for line in result.stdout:
-        logs.append(line)
-        yield "\n".join(logs), None, None
-    print(result.stdout)
-    vocal = f"output/{split_model}/audio/vocals.wav"
-    inst = f"output/{split_model}/audio/no_vocals.wav"
+
+    separator = Separator(output_dir="output")
+    separator.load_model(model_filename=split_model)
+
+    output_names = {
+        "Vocals": "vocals",
+        "Instrumental": "no_vocals",
+
+    }
+    output_files = separator.separate(vocal_path,output_names)
+
+    
+    
+    vocal = f"output/vocals.wav"
+    inst = f"output/no_vocals.wav"
     logs.append("Audio splitting complete.")
     yield "\n".join(logs), vocal, inst
     
@@ -430,7 +446,7 @@ def combine_vocal_and_inst(audio_data, vocal_volume, inst_volume, split_model):
     os.makedirs("output/result", exist_ok=True)
     vocal_path = "output/result/output.wav"
     output_path = "output/result/combine.mp3"
-    inst_path = f"output/{split_model}/audio/no_vocals.wav"
+    inst_path = f"output/no_vocals.wav"
     wavfile.write(vocal_path, audio_data[0], audio_data[1])
     command =  f'ffmpeg -y -i {inst_path} -i {vocal_path} -filter_complex [0:a]volume={inst_volume}[i];[1:a]volume={vocal_volume}[v];[i][v]amix=inputs=2:duration=longest[a] -map [a] -b:a 320k -c:a libmp3lame {output_path}'
     result = subprocess.run(command.split(), stdout=subprocess.PIPE)
@@ -622,7 +638,7 @@ def change_audio_mode(vc_audio_mode):
             gr.Dropdown.update(visible=True)
         )
         
-with gr.Blocks() as app:
+with gr.Blocks(theme=gr.themes.Base(), title="Advanced RVC Inference") as app:
     gr.Markdown(
         "# <center> Advanced RVC Inference\n"
     )
@@ -671,7 +687,7 @@ with gr.Blocks() as app:
                 tts_text = gr.Textbox(label="TTS text", info="Text to speech input", visible=False)
                 tts_voice = gr.Dropdown(label="Edge-tts speaker", choices=voices, visible=False, allow_custom_value=False, value="en-US-AnaNeural-Female")
                 # Splitter
-                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["hdemucs_mmi", "htdemucs", "htdemucs_ft", "mdx", "mdx_q", "mdx_extra_q"], allow_custom_value=False, visible=True, value="htdemucs", info="Select the splitter model (Default: htdemucs)")
+                vc_split_model = gr.Dropdown(label="Splitter Model", choices=["melband_roformer_instvox_duality_v2.ckpt", "model_bs_roformer_ep_317_sdr_12.9755.ckpt", "model_bs_roformer_ep_368_sdr_12.9628.ckpt", "model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt"], allow_custom_value=False, visible=True, value="model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt", info="Select the splitter model (Default: model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt)")
                 vc_split_log = gr.Textbox(label="Output Information", visible=True, interactive=False)
                 vc_split_yt = gr.Button("Split Audio", variant="primary", visible=False)
                 vc_split = gr.Button("Split Audio", variant="primary", visible=True)
@@ -734,12 +750,15 @@ with gr.Blocks() as app:
                 )
                 f0_file0 = gr.File(
                     label="F0 curve file (Optional)",
+                    visible=False,
                     info="One pitch per line, Replace the default F0 and pitch modulation"
                 )
             with gr.Column():
-                vc_log = gr.Textbox(label="Output Information", interactive=False)
-                vc_output = gr.Audio(label="Output Audio", interactive=False)
-                vc_convert = gr.Button("Convert", variant="primary")
+                with gr.Row():
+                    vc_convert = gr.Button("Convert", variant="primary")
+                    vc_log = gr.Textbox(label="Output Information", interactive=False)
+                    vc_output = gr.Audio(label="Output Audio", interactive=False)
+                
                 vc_vocal_volume = gr.Slider(
                     minimum=0,
                     maximum=10,
@@ -936,9 +955,9 @@ with gr.Blocks() as app:
                 inputs=[md_text],
                 outputs=[md_download_logs]
             )
-    with gr.TabItem("Settings"):
+    with gr.TabItem("Settings", visible=False):
         gr.Markdown(
             "# <center> Settings\n"+
             "#### <center> Work in progress"
         )
-    app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
+    app.queue(concurrency_count=1,max_size=50,api_open=config.api).launch(share=config.colab)
