@@ -36,7 +36,7 @@ jobs:
 
       - name: Install dependencies from requirements.txt
         run: |
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt --upgrade
 
       - name: Download Hubert & RMVPE
         run: |
