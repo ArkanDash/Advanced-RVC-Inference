@@ -14,6 +14,7 @@ from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
+from audio_separator.separator import Separator
 
 
 now_dir = os.getcwd()
