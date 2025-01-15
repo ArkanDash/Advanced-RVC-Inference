@@ -29,7 +29,7 @@ Please support the original RVC. This inference won't be possible to make withou
 ```bash
 pip install torch torchvision torchaudio
 
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 2. Install [ffmpeg](https://ffmpeg.org/)
 
