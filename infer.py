@@ -410,10 +410,7 @@ def cut_vocal_and_inst_yt(split_model):
 
     #command = f"demucs --two-stems=vocals -n {split_model} -o output"# Demucs too old, use new one
     
-    for line in separator.stdout:
-        logs.append(line)
-        yield "\n".join(logs), None, None, None
-    print(result.stdout)
+    
     vocal = f"output/vocals.wav"
     inst = f"output/no_vocals.wav"
     logs.append("Audio splitting complete.")
@@ -439,10 +436,7 @@ def cut_vocal_and_inst(split_model, audio_data):
     output_files = separator.separate(vocal_path,output_names)
 
     
-    for line in separator.stdout:
-        logs.append(line)
-        yield "\n".join(logs), None, None
-    print(separator.stdout)
+    
     vocal = f"output/vocals.wav"
     inst = f"output/no_vocals.wav"
     logs.append("Audio splitting complete.")
