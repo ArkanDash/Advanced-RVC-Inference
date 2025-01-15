@@ -2,19 +2,17 @@ wheel
 setuptools
 ffmpeg
 numba
-fairseq==0.12.2
-faiss-cpu==1.7.3
+fairseq
+faiss-cpu
 gradio==4.44.0
-pyworld==0.3.2
-soundfile>=0.12.1
-praat-parselmouth>=0.4.2
+pyworld
+soundfile
+praat-parselmouth
 httpx==0.23.0
 tensorboard
 tensorboardX
 torchcrepe==0.0.20
-onnxruntime
 asyncio
-#demucs ( Too Old)
 edge-tts
 yt_dlp
 rarfile
