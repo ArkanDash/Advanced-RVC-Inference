@@ -393,12 +393,11 @@ def download_audio(url, audio_provider):
         logs.append("Download Complete.")
         yield audio_path, "\n".join(logs)
 
-
 def cut_vocal_and_inst_yt(split_model):
     logs = []
     logs.append("Starting the audio splitting process...")
     yield "\n".join(logs), None, None, None
-    
+    audio_path = "result/dl_audio/audio.wav"
     separator = Separator(output_dir="output")
     separator.load_model(model_filename=split_model)
 
@@ -407,7 +406,7 @@ def cut_vocal_and_inst_yt(split_model):
         "Instrumental": "no_vocals",
 
     }
-    output_files = separator.separate('result/dl_audio/audio.waw')
+    output_files = separator.separate(audio_path, output_names)
 
     #command = f"demucs --two-stems=vocals -n {split_model} -o output"# Demucs too old, use new one
     
