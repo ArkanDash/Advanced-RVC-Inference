@@ -757,12 +757,15 @@ with gr.Blocks(theme=gr.themes.Base(), title="Advanced RVC Inference") as app:
                 )
                 f0_file0 = gr.File(
                     label="F0 curve file (Optional)",
+                    visible=False,
                     info="One pitch per line, Replace the default F0 and pitch modulation"
                 )
             with gr.Column():
-                vc_log = gr.Textbox(label="Output Information", interactive=False)
-                vc_output = gr.Audio(label="Output Audio", interactive=False)
-                vc_convert = gr.Button("Convert", variant="primary")
+                with gr.Row():
+                    vc_convert = gr.Button("Convert", variant="primary")
+                    vc_log = gr.Textbox(label="Output Information", interactive=False)
+                    vc_output = gr.Audio(label="Output Audio", interactive=False)
+                
                 vc_vocal_volume = gr.Slider(
                     minimum=0,
                     maximum=10,
