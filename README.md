@@ -14,7 +14,7 @@ Please support the original RVC. This inference won't be possible to make withou
 #### Features
 - Support V1 & V2 Model ✅
 - Youtube Audio Downloader ✅
-- Demucs (Voice Splitter) [Internet required for downloading model] ✅
+- Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Microphone Support ✅
 - TTS Support ✅
 - Model Downloader ✅
