@@ -8,8 +8,7 @@ gradio==4.44.0
 pyworld
 soundfile
 praat-parselmouth
-httpx==0.23.0
-tensorboard
+httpx
 tensorboardX
 torchcrepe==0.0.20
 asyncio
@@ -19,3 +18,4 @@ rarfile
 mega.py
 gdown
 audio-separator[gpu]==0.28.5
+aria2
