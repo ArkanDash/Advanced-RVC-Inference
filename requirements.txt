@@ -1,9 +1,8 @@
-pip==24.0
 wheel
 setuptools
 ffmpeg
 numba
-fairseq==0.12.2
+fairseq
 faiss-cpu
 gradio==3.40.0
 pyworld
