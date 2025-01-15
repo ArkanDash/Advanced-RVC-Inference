@@ -2,9 +2,6 @@ wheel
 setuptools
 ffmpeg
 numba==0.56.4
-numpy==1.23.5
-scipy==1.9.3
-librosa==0.9.1
 fairseq==0.12.2
 faiss-cpu==1.7.3
 gradio==3.40.1
@@ -14,12 +11,13 @@ praat-parselmouth>=0.4.2
 httpx==0.23.0
 tensorboard
 tensorboardX
-torchcrepe
+torchcrepe==0.0.20
 onnxruntime
 asyncio
-demucs
+#demucs ( Too Old)
 edge-tts
 yt_dlp
 rarfile
 mega.py
 gdown
+audio-separator[gpu]
