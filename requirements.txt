@@ -4,7 +4,7 @@ ffmpeg
 numba
 fairseq
 faiss-cpu
-gradio==4.44.0
+gradio==3.40.0
 pyworld
 soundfile
 praat-parselmouth
