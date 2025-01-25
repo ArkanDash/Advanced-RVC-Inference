@@ -33,9 +33,11 @@ python -m pip install -r requirements.txt
 ```
 2. Install [ffmpeg](https://ffmpeg.org/)
 
-3. Download [Hubert Model](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/hubert_base.pt)
+3. Download models use:
 
-4. [OPTIONAL] To use rmvpe pitch extraction, download this [rvmpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/blob/main/rmvpe.pt)
+```bash
+python models.py
+```
 
 ### Run WebUI <br />
 
