@@ -45,6 +45,17 @@ For Windows:
 ```bash
 Open run.bat
 ```
+For Linux:
+1.:
+```
+ chmod +x linuxrun.sh
+```
+2.:
+```
+./linuxrun.sh
+
+```
+
 For Other:
 ```bash
 python infer.py
