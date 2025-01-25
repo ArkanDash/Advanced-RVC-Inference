@@ -38,12 +38,9 @@ voices = [f"{v['ShortName']}-{v['Gender']}" for v in tts_voice_list]
 
 hubert_model = None
 
-f0method_mode = ["pm", "harvest", "crepe"]
-f0method_info = "PM is fast, Harvest is good but extremely slow, and Crepe effect is good but requires GPU (Default: PM)"
+f0method_mode = ["pm", "harvest", "crepe", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"]
+f0method_info = "PM is fast, Harvest is good but extremely slow, Rvmpe is alternative to harvest (might be better), Fcpe maybe fast one,  and Crepe effect is good but requires GPU (Default: PM)"
 
-if os.path.isfile("rmvpe.pt"):
-    f0method_mode.insert(2, "rmvpe")
-    f0method_info = "PM is fast, Harvest is good but extremely slow, Rvmpe is alternative to harvest (might be better), and Crepe effect is good but requires GPU (Default: PM)"
 
 def load_hubert():
     global hubert_model
