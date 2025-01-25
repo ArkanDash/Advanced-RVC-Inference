@@ -21,12 +21,16 @@ if __name__ == "__main__":
     # List of files to download
     files_to_download = [
         {
-            "url": "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt",
+            "url": "https://huggingface.co/theNeofr/rvc-base/resolve/main/hubert_base.pt",
             "output_name": "hubert_base.pt"
         },
         {
             "url": "https://huggingface.co/theNeofr/rvc-base/resolve/main/rmvpe.pt",
             "output_name": "rmvpe.pt"
+        },
+        {
+            "url": "https://huggingface.co/theNeofr/rvc-base/resolve/main/fcpe.pt",
+            "output_name": "fcpe.pt"
         }
     ]
 
