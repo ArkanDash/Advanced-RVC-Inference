@@ -19,7 +19,7 @@ einops
 local-attention
 
 # Web and async
-gradio==3.40.0
+gradio==3.39.0
 httpx
 asyncio
 
