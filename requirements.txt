@@ -1,21 +1,37 @@
+# Build tools
 wheel
 setuptools
+
+# Audio processing
 ffmpeg
-numba
-fairseq
-faiss-cpu
-gradio==3.40.0
 pyworld
 soundfile
 praat-parselmouth
-httpx
-tensorboardX
 torchcrepe
+audio-separator[gpu]==0.28.5
+
+# Libraries for machine learning and AI
+numba
+fairseq
+faiss-cpu
+torch
+einops
+local-attention
+
+# Web and async
+gradio==3.40.0
+httpx
 asyncio
+
+# Text-to-speech
 edge-tts
+
+# Media handling
 yt_dlp
 rarfile
 mega.py
 gdown
-audio-separator[gpu]==0.28.5
+
+# Data visualization and logging
+tensorboardX
 aria2
