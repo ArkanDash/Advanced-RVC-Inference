@@ -46,14 +46,15 @@ For Windows:
 Open run.bat
 ```
 For Linux:
+
 1.:
 ```
  chmod +x linuxrun.sh
 ```
+
 2.:
 ```
 ./linuxrun.sh
-
 ```
 
 For Other:
