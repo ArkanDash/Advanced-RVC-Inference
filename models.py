@@ -1,38 +1,37 @@
-
-
 import subprocess
+import os
 
+def download_file(url, output_name, destination):
+    command = [
+        "aria2c",
+        "--console-log-level=error",
+        "-c",
+        "-x", "16",
+        "-s", "16",
+        "-k", "1M",
+        url,
+        "-d", destination,
+        "-o", output_name
+    ]
+    subprocess.run(command)
 
+if __name__ == "__main__":
+    current_directory = os.getcwd()
+    
+    # List of files to download
+    files_to_download = [
+        {
+            "url": "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt",
+            "output_name": "hubert_base.pt"
+        },
+        {
+            "url": "https://huggingface.co/theNeofr/rvc-base/resolve/main/rmvpe.pt",
+            "output_name": "rmvpe.pt"
+        }
+    ]
 
-command1 = [
-    "aria2c",
-    "--console-log-level=error",
-    "-c",
-    "-x", "16",
-    "-s", "16",
-    "-k", "1M",
-    "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt",
-    "-d", "/content/Advanced-RVC-Inference",
-    "-o", "hubert_base.pt"
-]
+    # Download each file
+    for file in files_to_download:
+        download_file(file["url"], file["output_name"], current_directory)
 
-
-command2 = [
-    "aria2c",
-    "--console-log-level=error",
-    "-c",
-    "-x", "16",
-    "-s", "16",
-    "-k", "1M",
-    "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt",
-    "-d", "/content/Advanced-RVC-Inference",
-    "-o", "rmvpe.pt"
-]
-
-
-subprocess.run(command1)
-
-
-subprocess.run(command2)
-
-print("done")
+    print("Download completed.")
