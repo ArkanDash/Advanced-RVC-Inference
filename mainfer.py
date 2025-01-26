@@ -14,6 +14,16 @@ from pedalboard import Pedalboard, Reverb, Compressor, HighpassFilter
 from pedalboard.io import AudioFile
 from pydub import AudioSegment
 from rvc import Config, load_hubert, get_vc, rvc_infer
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+rvc_models_dir = os.path.join(BASE_DIR, 'weights')
+output_dir = os.path.join(BASE_DIR, 'song_output')
+
+
+
+
+
+
 
 def raise_exception(error_msg):
     raise Exception(error_msg)
