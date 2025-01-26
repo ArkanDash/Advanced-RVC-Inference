@@ -9,6 +9,7 @@ soundfile
 praat-parselmouth
 torchcrepe
 audio-separator[gpu]==0.28.5
+pydub
 
 # Libraries for machine learning and AI
 numba
