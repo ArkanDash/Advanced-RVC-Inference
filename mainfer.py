@@ -13,15 +13,12 @@ import soundfile as sf
 from pedalboard import Pedalboard, Reverb, Compressor, HighpassFilter
 from pedalboard.io import AudioFile
 from pydub import AudioSegment
+import yt_dlp
 from rvc import Config, load_hubert, get_vc, rvc_infer
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 rvc_models_dir = os.path.join(BASE_DIR, 'weights')
 output_dir = os.path.join(BASE_DIR, 'song_output')
-
-
-
-
 
 
 
@@ -46,6 +43,27 @@ def get_rvc_model(voice_model):
         raise_exception(error_msg)
 
     return os.path.join(model_dir, rvc_model_filename), os.path.join(model_dir, rvc_index_filename) if rvc_index_filename else ''
+
+
+
+def yt_download(link):
+    ydl_opts = {
+        'format': 'bestaudio',
+        'outtmpl': '%(title)s',
+        'nocheckcertificate': True,
+        'ignoreerrors': True,
+        'no_warnings': True,
+        'quiet': True,
+        'extractaudio': True,
+        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3'}],
+    }
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        result = ydl.extract_info(link, download=True)
+        download_path = ydl.prepare_filename(result, outtmpl='%(title)s.mp3')
+
+    return download_path
+
+
 
 
 
