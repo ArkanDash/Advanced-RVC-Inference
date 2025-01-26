@@ -9,7 +9,6 @@ from urllib.parse import urlparse, parse_qs
 import librosa
 import numpy as np
 import soundfile as sf
-from pydub import AudioSegment
 import yt_dlp
 from rvc import Config, load_hubert, get_vc, rvc_infer
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
