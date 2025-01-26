@@ -8,7 +8,7 @@ pyworld
 soundfile
 praat-parselmouth
 torchcrepe
-audio-separator[gpu]==0.28.5
+audio-separator[gpu]
 pydub
 
 # Libraries for machine learning and AI
@@ -20,7 +20,7 @@ einops
 local-attention
 
 # Web and async
-gradio==3.39.0
+gradio
 httpx
 asyncio
 
