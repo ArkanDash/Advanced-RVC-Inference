@@ -33,7 +33,7 @@ def get_rvc_model(voice_model):
 
     if rvc_model_filename is None:
         error_msg = f'No model file exists in {model_dir}.'
-        raise_exception(error_msg, is_webui)
+        raise_exception(error_msg)
 
     return os.path.join(model_dir, rvc_model_filename), os.path.join(model_dir, rvc_index_filename) if rvc_index_filename else ''
 
@@ -71,7 +71,7 @@ def voice_change(
         Any: Output of the RVC inference process.
     """
     # Load the RVC model paths
-    rvc_model_path, rvc_index_path = get_rvc_model(voice_model, is_webui)
+    rvc_model_path, rvc_index_path = get_rvc_model(voice_model)
 
     # Initialize device and configuration
     device = 'cuda:0'
