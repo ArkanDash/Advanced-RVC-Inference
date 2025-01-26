@@ -1,7 +1,3 @@
-# Build tools
-wheel
-setuptools
-
 # Audio processing
 ffmpeg
 pyworld
