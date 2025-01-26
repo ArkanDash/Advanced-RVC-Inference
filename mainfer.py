@@ -6,12 +6,9 @@ import shlex
 import subprocess
 from contextlib import suppress
 from urllib.parse import urlparse, parse_qs
-
 import librosa
 import numpy as np
 import soundfile as sf
-from pedalboard import Pedalboard, Reverb, Compressor, HighpassFilter
-from pedalboard.io import AudioFile
 from pydub import AudioSegment
 import yt_dlp
 from rvc import Config, load_hubert, get_vc, rvc_infer
