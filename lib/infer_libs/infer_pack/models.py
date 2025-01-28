@@ -1,18 +1,18 @@
-import math, pdb, os
-from time import time as ttime
+import math
+import logging
+
+logger = logging.getLogger(__name__)
+
+import numpy as np
 import torch
 from torch import nn
+from torch.nn import Conv1d, Conv2d, ConvTranspose1d
 from torch.nn import functional as F
-from lib.infer_pack import modules
-from lib.infer_pack import attentions
-from lib.infer_pack import commons
-from lib.infer_pack.commons import init_weights, get_padding
-from torch.nn import Conv1d, ConvTranspose1d, AvgPool1d, Conv2d
-from torch.nn.utils import weight_norm, remove_weight_norm, spectral_norm
-from lib.infer_pack.commons import init_weights
-import numpy as np
-from lib.infer_pack import commons
+from torch.nn.utils import remove_weight_norm, spectral_norm, weight_norm
 
+from lib.infer_libs.infer_pack import attentions, commons, modules
+from lib.infer_libs.infer_pack.commons import get_padding, init_weights
+has_xpu = bool(hasattr(torch, "xpu") and torch.xpu.is_available())
 
 class TextEncoder256(nn.Module):
     def __init__(
@@ -315,6 +315,8 @@ class SineGen(torch.nn.Module):
         # generate uv signal
         uv = torch.ones_like(f0)
         uv = uv * (f0 > self.voiced_threshold)
+        if uv.device.type == "privateuseone":  # for DirectML
+            uv = uv.float()
         return uv
 
     def forward(self, f0, upp):
@@ -412,9 +414,16 @@ class SourceModuleHnNSF(torch.nn.Module):
         self.l_tanh = torch.nn.Tanh()
 
     def forward(self, x, upp=None):
+        if hasattr(self, "ddtype") == False:
+            self.ddtype = self.l_linear.weight.dtype
         sine_wavs, uv, _ = self.l_sin_gen(x, upp)
-        if self.is_half:
-            sine_wavs = sine_wavs.half()
+        # print(x.dtype,sine_wavs.dtype,self.l_linear.weight.dtype)
+        # if self.is_half:
+        #     sine_wavs = sine_wavs.half()
+        # sine_merge = self.l_tanh(self.l_linear(sine_wavs.to(x)))
+        # print(sine_wavs.dtype,self.ddtype)
+        if sine_wavs.dtype != self.ddtype:
+            sine_wavs = sine_wavs.to(self.ddtype)
         sine_merge = self.l_tanh(self.l_linear(sine_wavs))
         return sine_merge, None, None  # noise, uv
 
@@ -607,7 +616,12 @@ class SynthesizerTrnMs256NSFsid(nn.Module):
             inter_channels, hidden_channels, 5, 1, 3, gin_channels=gin_channels
         )
         self.emb_g = nn.Embedding(self.spk_embed_dim, gin_channels)
-        print("gin_channels:", gin_channels, "self.spk_embed_dim:", self.spk_embed_dim)
+        logger.debug(
+            "gin_channels: "
+            + str(gin_channels)
+            + ", self.spk_embed_dim: "
+            + str(self.spk_embed_dim)
+        )
 
     def remove_weight_norm(self):
         self.dec.remove_weight_norm()
@@ -723,7 +737,12 @@ class SynthesizerTrnMs768NSFsid(nn.Module):
             inter_channels, hidden_channels, 5, 1, 3, gin_channels=gin_channels
         )
         self.emb_g = nn.Embedding(self.spk_embed_dim, gin_channels)
-        print("gin_channels:", gin_channels, "self.spk_embed_dim:", self.spk_embed_dim)
+        logger.debug(
+            "gin_channels: "
+            + str(gin_channels)
+            + ", self.spk_embed_dim: "
+            + str(self.spk_embed_dim)
+        )
 
     def remove_weight_norm(self):
         self.dec.remove_weight_norm()
@@ -836,7 +855,12 @@ class SynthesizerTrnMs256NSFsid_nono(nn.Module):
             inter_channels, hidden_channels, 5, 1, 3, gin_channels=gin_channels
         )
         self.emb_g = nn.Embedding(self.spk_embed_dim, gin_channels)
-        print("gin_channels:", gin_channels, "self.spk_embed_dim:", self.spk_embed_dim)
+        logger.debug(
+            "gin_channels: "
+            + str(gin_channels)
+            + ", self.spk_embed_dim: "
+            + str(self.spk_embed_dim)
+        )
 
     def remove_weight_norm(self):
         self.dec.remove_weight_norm()
@@ -942,7 +966,12 @@ class SynthesizerTrnMs768NSFsid_nono(nn.Module):
             inter_channels, hidden_channels, 5, 1, 3, gin_channels=gin_channels
         )
         self.emb_g = nn.Embedding(self.spk_embed_dim, gin_channels)
-        print("gin_channels:", gin_channels, "self.spk_embed_dim:", self.spk_embed_dim)
+        logger.debug(
+            "gin_channels: "
+            + str(gin_channels)
+            + ", self.spk_embed_dim: "
+            + str(self.spk_embed_dim)
+        )
 
     def remove_weight_norm(self):
         self.dec.remove_weight_norm()
@@ -1127,7 +1156,10 @@ class DiscriminatorP(torch.nn.Module):
         b, c, t = x.shape
         if t % self.period != 0:  # pad first
             n_pad = self.period - (t % self.period)
-            x = F.pad(x, (0, n_pad), "reflect")
+            if has_xpu and x.dtype == torch.bfloat16:
+                x = F.pad(x.to(dtype=torch.float16), (0, n_pad), "reflect").to(dtype=torch.bfloat16)
+            else:
+                x = F.pad(x, (0, n_pad), "reflect")
             t = t + n_pad
         x = x.view(b, c, t // self.period, self.period)
 
