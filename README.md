@@ -15,13 +15,13 @@ Please support the original RVC. This inference won't be possible to make withou
 - Support V1 & V2 Model ✅
 - Youtube Audio Downloader ✅
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
-- Microphone Support ✅
-- TTS Support ✅
 - Model Downloader ✅
-- Batch Inference (Beta) ✅
 
 #### Currently Working
 - Settings 🛠
+- Microphone Support 
+- TTS Support 
+- Gradio WebUI
 
 ### Installation
 
@@ -41,23 +41,4 @@ python models.py
 
 ### Run WebUI <br />
 
-For Windows:
-```bash
-Open run.bat
-```
-For Linux:
-
-1.:
-```
- chmod +x linuxrun.sh
-```
-
-2.:
-```
-./linuxrun.sh
-```
-
-For Other:
-```bash
-python infer.py
-```
+comming soon
