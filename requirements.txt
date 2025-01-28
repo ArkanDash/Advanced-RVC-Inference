@@ -1,0 +1,15 @@
+pip==24.0
+av
+ffmpeg-python>=0.2.0
+faiss_cpu==1.7.3
+praat-parselmouth==0.4.2
+pyworld==0.3.4
+resampy==0.4.2
+fairseq==0.12.2
+pydub==0.25.1
+einops
+local_attention
+torchcrepe==0.0.20
+torchfcpe
+yt-dlp
+audio-separator[gpu]
