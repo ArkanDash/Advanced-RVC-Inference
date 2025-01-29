@@ -49,7 +49,7 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert(config, hubert_path=None):
+def load_hubert(config):
     from fairseq import checkpoint_utils
 
     hubert_path = "hubert_base.pt"
