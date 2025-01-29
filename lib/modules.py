@@ -463,7 +463,7 @@ class VC:
                 self.hubert_model = load_hubert(hubert_model_path, self.config)
 
             try:
-                self.if_f0 = self.cpt.get("f0")
+                self.if_f0 = self.cpt.get() #"f0"
             except NameError:
                 message = "Model was not properly selected"
                 print(message)
