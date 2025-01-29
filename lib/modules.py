@@ -48,7 +48,7 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert(hubert_model_path, config):
+def load_hubert(hubert_model_path):
     from fairseq import checkpoint_utils
 
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
@@ -56,11 +56,8 @@ def load_hubert(hubert_model_path, config):
         suffix="",
     )
     hubert_model = models[0]
-    hubert_model = hubert_model.to(config.device)
-    if config.is_half:
-        hubert_model = hubert_model.half()
-    else:
-        hubert_model = hubert_model.float()
+    #hubert_model = hubert_model.to(config.device)
+    hubert_model = hubert_model.float()
 
     hubert_models = hubert_model.eval()
     return hubert_models
@@ -292,8 +289,8 @@ class VC:
             if self.hubert_model is None:
                 self.hubert_model = load_hubert(hubert_model_path, self.config)
 
-            try:
-                self.if_f0 = self.cpt.get("f0", 1)
+            #try:
+            #    self.if_f0 = self.cpt.get("f0", 1)
             except NameError:
                 message = "Model was not properly selected"
                 print(message)
