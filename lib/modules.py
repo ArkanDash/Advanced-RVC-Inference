@@ -20,7 +20,7 @@ from lib.pipeline import Pipeline
 import time
 import glob
 from shutil import move
-from fairseq import checkpoint_utils
+
 
 sup_audioext = {
     "wav",
@@ -49,9 +49,13 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert(hubert_model_path, config):
+def load_hubert(config, hubert_path=None):
+    from fairseq import checkpoint_utils
+
+    hubert_path = "hubert_base.pt"
+
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
-        [hubert_model_path],
+        [hubert_path],
         suffix="",
     )
     hubert_model = models[0]
@@ -60,8 +64,10 @@ def load_hubert(hubert_model_path, config):
         hubert_model = hubert_model.half()
     else:
         hubert_model = hubert_model.float()
-    return hubert_model.eval()
+    hubert_model.eval()
 
+    return hubert_model
+    
 class VC:
     def __init__(self, config):
         self.n_spk = None
