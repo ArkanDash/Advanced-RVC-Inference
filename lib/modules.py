@@ -49,10 +49,10 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert(config):
+def load_hubert():
     from fairseq import checkpoint_utils
 
-    hubert_path = "hubert_base.pt"
+    hubert_path = "assets/hubert/hubert_base.pt"
 
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
         [hubert_path],
@@ -60,10 +60,7 @@ def load_hubert(config):
     )
     hubert_model = models[0]
     hubert_model = hubert_model.to(config.device)
-    if config.is_half:
-        hubert_model = hubert_model.half()
-    else:
-        hubert_model = hubert_model.float()
+    hubert_model = hubert_model.float()
     hubert_model.eval()
 
     return hubert_model
