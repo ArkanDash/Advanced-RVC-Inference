@@ -457,8 +457,8 @@ class VC:
             times = [0, 0, 0]
 
             if self.hubert_model is None:
-                self.hubert_model = load_hubert(hubert_model_path, self.config)
-
+                self.hubert_model = load_hubert(hubert_model_path)
+                
             #try:
             #    self.if_f0 = self.cpt.get() #"f0"
             except NameError:
