@@ -21,7 +21,6 @@ import time
 import glob
 from shutil import move
 
-
 sup_audioext = {
     "wav",
     "mp3",
@@ -49,21 +48,23 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert():
+def load_hubert(hubert_model_path, config):
     from fairseq import checkpoint_utils
 
-    hubert_path = "assets/hubert/hubert_base.pt"
-
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
-        [hubert_path],
+        [hubert_model_path],
         suffix="",
     )
     hubert_model = models[0]
-    hubert_model = hubert_model.float()
-    hubert_model.eval()
+    hubert_model = hubert_model.to(config.device)
+    if config.is_half:
+        hubert_model = hubert_model.half()
+    else:
+        hubert_model = hubert_model.float()
 
-    return hubert_model
-    
+    hubert_models = hubert_model.eval()
+    return hubert_models
+
 class VC:
     def __init__(self, config):
         self.n_spk = None
@@ -459,10 +460,10 @@ class VC:
             times = [0, 0, 0]
 
             if self.hubert_model is None:
-                self.hubert_model = load_hubert()
+                self.hubert_model = load_hubert(hubert_model_path, self.config)
 
-            #try:
-            #    self.if_f0 = self.cpt.get("f0", 1)
+            try:
+                self.if_f0 = self.cpt.get("f0", 1)
             except NameError:
                 message = "Model was not properly selected"
                 print(message)
