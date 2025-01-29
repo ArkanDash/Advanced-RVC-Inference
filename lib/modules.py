@@ -59,7 +59,6 @@ def load_hubert():
         suffix="",
     )
     hubert_model = models[0]
-    hubert_model = hubert_model.to(config.device)
     hubert_model = hubert_model.float()
     hubert_model.eval()
 
