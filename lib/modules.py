@@ -461,8 +461,8 @@ class VC:
             if self.hubert_model is None:
                 self.hubert_model = load_hubert()
 
-            try:
-                self.if_f0 = self.cpt.get("f0", 1)
+            #try:
+            #    self.if_f0 = self.cpt.get("f0", 1)
             except NameError:
                 message = "Model was not properly selected"
                 print(message)
