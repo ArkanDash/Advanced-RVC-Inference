@@ -48,7 +48,7 @@ def note_to_hz(note_name):
     except:
         return None
 
-def load_hubert(hubert_model_path):
+def load_hubert(hubert_model_path="assets/hubert/hubert_base.pt"):
     from fairseq import checkpoint_utils
 
     models, _, _ = checkpoint_utils.load_model_ensemble_and_task(
@@ -458,7 +458,7 @@ class VC:
 
             if self.hubert_model is None:
                 self.hubert_model = load_hubert(hubert_model_path)
-                
+
             #try:
             #    self.if_f0 = self.cpt.get() #"f0"
             except NameError:
