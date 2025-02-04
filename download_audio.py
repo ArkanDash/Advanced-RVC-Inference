@@ -2,7 +2,6 @@ import os
 import argparse
 import yt_dlp
 
-
 class MyLogger(object):
     def debug(self, msg):
         print("[DEBUG]", msg)
