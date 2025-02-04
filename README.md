@@ -16,11 +16,11 @@ Please support the original RVC. This inference won't be possible to make withou
 - Youtube Audio Downloader ✅
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Model Downloader ✅
+- TTS Support 
 
 #### Currently Working
 - Settings 🛠
 - Microphone Support 
-- TTS Support 
 - Gradio WebUI
 
 ### Installation
