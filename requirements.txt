@@ -1,16 +1,33 @@
-av
+pip>=23.3; sys_platform == 'darwin'
+wheel; sys_platform == 'darwin'
+PyYAML; sys_platform == 'darwin'
+tqdm
+wget
 ffmpeg-python>=0.2.0
-faiss_cpu==1.7.3
-praat-parselmouth==0.4.2
-pyworld==0.3.4
-resampy==0.4.2
-fairseq==0.12.2
-pydub==0.25.1
-einops
-local_attention
-torchcrepe==0.0.20
-torchfcpe
+faiss-cpu==1.7.3
+soundfile==0.12.1
+noisereduce
+pedalboard
+stftpitchshift
 yt-dlp
 audio-separator[gpu]
-edge-tts
-gradio==4.40.0
+omegaconf>=2.0.6; sys_platform == 'darwin' 
+numba; sys_platform == 'linux'
+numba==0.57.0; sys_platform == 'darwin' or sys_platform == 'win32'
+torchaudio==2.3.1
+torchvision==0.18.1
+torchcrepe==0.0.23
+torchfcpe
+libf0
+transformers==4.44.2
+matplotlib==3.7.2
+tensorboard
+gradio==4.43.0
+certifi>=2023.07.22; sys_platform == 'darwin'  
+antlr4-python3-runtime==4.8; sys_platform == 'darwin'
+tensorboardX
+edge-tts==6.1.9
+pypresence
+beautifulsoup4
+flask
+
