@@ -10,7 +10,7 @@ noisereduce
 pedalboard
 stftpitchshift
 yt-dlp
-audio-separator[gpu]
+audio-separator[gpu]==0.28.5
 omegaconf>=2.0.6; sys_platform == 'darwin' 
 numba; sys_platform == 'linux'
 numba==0.57.0; sys_platform == 'darwin' or sys_platform == 'win32'
