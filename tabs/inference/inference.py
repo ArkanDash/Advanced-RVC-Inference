@@ -259,7 +259,10 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         if backing_audio:
             output_backing = backing_audio.overlay(lead_audio)
             final_mix = final_mix.overlay(backing_audio)
-
+        backing_mix = backing_audio.overlay(lead_audio) if lead_audio else instrumental_audio
+        if backing_audio:
+            output_bfile = backing_audio.overlay(lead_audio)
+            
         
         
         # ai Mix
