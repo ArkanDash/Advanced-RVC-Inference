@@ -45,12 +45,12 @@ with gr.Blocks(
     gr.Markdown("[Support](https://discord.gg/hvmsukmBHE) — [GitHub](https://github.com/ArkanDash/Advanced-RVC-Inference.git)")
     )
     
-    with gr.Tab(i18n("Inference")):
+    with gr.Tab("Inference"):
         inference_tab()
 
 
 
-    with gr.Tab(i18n("Download")):
+    with gr.Tab("Download"):
         download_tab()
 
 
