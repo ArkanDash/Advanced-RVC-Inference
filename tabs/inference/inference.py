@@ -300,11 +300,11 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
             final_mix = final_mix.overlay(backing_vocals_audio)
         
         # Save the final mix
-        output_filename = f"aicover_{model_name}_opt"
+        output_filename = f"aicover_{model_name}"
         output_file = f"{output_filename}.{export_format.lower()}"
         final_mix.export(output_file, format=export_format.lower())
         logging.info("Mixed file saved as: %s", output_file)
-        return f"Mixed file saved as: {output_file}", output_file
+        return f"Mixed file saved as: {output_file}", output_file, lead_vocals_audio, backing_vocals_audio
     except Exception as e:
         logging.exception("An error occurred during execution: %s", e)
         return f"An error occurred: {e}", None
@@ -320,6 +320,7 @@ def inference_tab():
         model_name_input = gr.Textbox(label="Model Name", value="Sonic")
         youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
         export_format_input = gr.Dropdown(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
+        
         f0_method_input = gr.Dropdown(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"],
                                       value="hybrid[rmvpe+fcpe]")
     with gr.Row():
@@ -330,9 +331,9 @@ def inference_tab():
     with gr.Row():
         index_rate_input = gr.Slider(label="Index Rate", minimum=0.0, maximum=1.0, step=0.1, value=0.6)
         hop_length_input = gr.Slider(label="Hop Length", minimum=1, maximum=512, step=1, value=128)
-        clean_strength_input = gr.Slider(label="Clean Strength", minimum=0.0, maximum=1.0, step=0.1, value=0.7)
-    with gr.Row():
+        clean_strength_input = gr.Slider(label="Clean Strength", minimum=0.0, maximum=1.0, step=0.1, value=0.7)    
         split_audio_input = gr.Checkbox(label="Split Audio", value=False)
+    with gr.Row():
         clean_audio_input = gr.Checkbox(label="Clean Audio", value=False)
         f0_autotune_input = gr.Checkbox(label="F0 Autotune", value=False)
         backing_vocal_infer_input = gr.Checkbox(label="Infer Backing Vocals", value=False)
@@ -343,9 +344,13 @@ def inference_tab():
             value="contentvec"
         )
         embedder_model_custom_input = gr.Textbox(label="Custom Embedder Model", value="")
-    run_button = gr.Button("Run Advanced RVC Pipeline")
-    output_message = gr.Textbox(label="Status")
-    output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
+    run_button = gr.Button("Convert")
+    with gr.Row():
+        output_message = gr.Textbox(label="Status")
+        output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
+        with gr.Row():
+            output_lead = gr.Audio(label="Output Lead Ai Cover:", type="filepath")
+            output_backing = gr.Audio(label="Output Backing Ai Cover:", type="filepath")
     
     run_button.click(
         run_advanced_rvc,
@@ -356,5 +361,5 @@ def inference_tab():
             clean_audio_input, f0_autotune_input, backing_vocal_infer_input,
             embedder_model_input, embedder_model_custom_input
         ],
-        outputs=[output_message, output_audio]
+        outputs=[output_message, output_audio, output_lead, output_backing]
     )
