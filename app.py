@@ -35,7 +35,7 @@ prerequisites_download_pipeline(models=True, exe=True)
 # Load theme (demo)
 #import assets.themes.loadThemes as loadThemes
 # loadThemes.load_theme() 
-my_theme =  "ParityError/Interstellar"
+my_theme =  "NoCrypt/miku"
 
 # Define Gradio interface
 with gr.Blocks(
