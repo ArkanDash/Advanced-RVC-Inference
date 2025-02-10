@@ -9,7 +9,7 @@
 
 ## Information
 <div align="center">
-Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter, and the added efficiency of batch inference.
+Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter.
 
 Please support the Applio. This inference won't be possible to make without it.<br />
 [![Original Applio](https://img.shields.io/badge/Github-Original%20Applio%20Repository-blue?style=for-the-badge&logo=github)](https://github.com/IAHispano/Applio)
