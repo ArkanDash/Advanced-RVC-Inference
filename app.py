@@ -3,7 +3,6 @@ import sys
 import os
 import logging
 from typing import Any
-
 DEFAULT_SERVER_NAME = "127.0.0.1"
 DEFAULT_PORT = 6969
 MAX_PORT_ATTEMPTS = 10
@@ -25,9 +24,6 @@ from tabs.download.download import download_tab
 
 # Run prerequisites
 from rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
-
-
-print("downloading models...")
 prerequisites_download_pipeline(models=True, exe=True)
 
 
@@ -42,31 +38,28 @@ with gr.Blocks(
     theme=my_theme, title="Advanced-RVC-Inference", css="footer{display:none !important}"
 ) as adrvc:
     gr.Markdown("# Advanced-RVC-Inference")
-    gr.Markdown("A simple, high-quality voice conversion tool focused on ease of use and performance.")
+    gr.Markdown("Advanced RVC Inference for quicker and effortless model downloads.")
     gr.Markdown("[Support](https://discord.gg/hvmsukmBHE) — [GitHub](https://github.com/ArkanDash/Advanced-RVC-Inference.git)")
-    
+    gr.Makrdown("Thanks to [NeoDev](https://github.com/TheNeodev) for improve this project")
     
     
     with gr.Tab("Inference"):
         inference_tab()
-
-
-
     with gr.Tab("Download"):
         download_tab()
-
 
     with gr.Tab("Settings"):
         gr.Markdown("On Progress...")
         #settings_tab()
 
     gr.Markdown(
-        """
-    <div style="text-align: center; font-size: 0.9em; text-color: a3a3a3;">
-    By using Advanced-RVC-Inference, you agree to comply with ethical and legal standards, respect intellectual property and privacy rights, avoid harmful or prohibited uses, and accept full responsibility for any outcomes, while Advanced-RVC-Inference disclaims liability and reserves the right to amend these terms.
+    """
+    <div style="text-align: center; font-size: 0.9em; color: #a3a3a3;">
+        <strong>Disclaimer:</strong> By accessing <span style="color: #555;">Advanced-RVC-Inference</span>, you acknowledge your responsibility to follow all ethical and legal standards, respect intellectual property and privacy rights, and accept full accountability for your actions. <br><br>
+        Please note that Advanced-RVC-Inference disclaims all liability and reserves the right to update these terms at any time.
     </div>
     """
-    )
+)
 
 
 def launch_gradio(server_name: str, server_port: int) -> None:
