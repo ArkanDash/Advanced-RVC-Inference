@@ -257,12 +257,17 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
 
         final_mix = instrumental_audio.overlay(lead_audio) if lead_audio else instrumental_audio
         if backing_audio:
+            output_backing = backing_audio.overlay(lead_audio)
             final_mix = final_mix.overlay(backing_audio)
 
+        # Backing Mix
+        output_bfile = os.path.join(current_dir, f"aicover-with-{backing}-{model_name}.{export_format.lower()}")
+        backing_mix.export(output_bfile, format=export_format.lower())
+        # Inst Mix
         output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
         final_mix.export(output_file, format=export_format.lower())
         logging.info("Mixing complete. Output saved to %s", output_file)
-        return f"Mixed file saved as: {output_file}", output_file, rvc_lead, rvc_backing
+        return f"Mixed file saved as: {output_file}", output_file, output_bfile, output_bfile, rvc_lead, rvc_backing
 
     except Exception as e:
         logging.exception("Error during advanced RVC pipeline: %s", e)
@@ -281,7 +286,6 @@ def inference_tab():
     with gr.Row():
         youtube_url_input = gr.Textbox(
             label="YouTube URL",
-            value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV"
         )
     with gr.Row():
         export_format_input = gr.Dropdown(
