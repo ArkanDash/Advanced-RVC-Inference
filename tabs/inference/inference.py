@@ -30,6 +30,8 @@ setup_logging()
 # --- Global Paths ---
 current_dir = os.getcwd()
 rvc_models_dir = os.path.join(current_dir, 'logs')
+model_root_relative = os.path.relpath(rvc_models_dir, current_dir)
+
 rvc_output_dir = os.path.join(current_dir, 'song_output')
 download_dir = os.path.join(current_dir, "downloads")
 uvr_output_dir = os.path.join(current_dir, "output_uvr")
@@ -37,6 +39,34 @@ rvc_cli_file = os.path.join(current_dir, "scrpt.py")
 if not os.path.exists(rvc_cli_file):
     logging.error("scrpt.py not found in %s", current_dir)
     raise FileNotFoundError("scrpt.py not found in current directory.")
+
+
+
+
+
+def get_model_folders():
+    """Fetch model file paths and extract their parent folder names."""
+    names = [
+        os.path.join(root, file)
+        for root, _, files in os.walk(model_root_relative, topdown=False)
+        for file in files
+        if (
+            file.endswith((".pth", ".onnx"))
+            and not (file.startswith("G_") or file.startswith("D_"))
+        )
+    ]
+
+    folder_names = sorted(set(os.path.basename(os.path.dirname(name)) for name in names))
+
+    return folder_names if folder_names else ["No models found"]
+
+
+
+def refresh_folders():
+    """Refresh folder list."""
+    return gr.update(choices=get_model_folders())
+
+
 
 # --- Helper Functions ---
 def download_youtube_audio(url, download_dir):
@@ -167,8 +197,10 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
 def inference_tab():
     with gr.Tabs():
         with gr.Row():
-            model_name_input = gr.Textbox(label="Model Name", value="Sonic")
-            youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
+            model_name_input = folder_list = gr.Dropdown(choices=get_model_folders(), label="Select Model Folder", interactive=True)
+            refresh_button = gr.Button("Refresh")    
+    
+        youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
             export_format_input = gr.Dropdown(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
             f0_method_input = gr.Dropdown(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"], value="hybrid[rmvpe+fcpe]")
         with gr.Row():
@@ -197,6 +229,11 @@ def inference_tab():
         with gr.Row():
             output_lead = gr.Audio(label="Output Lead Ai Cover:", type="filepath")
             output_backing = gr.Audio(label="Output Backing Ai Cover:", type="filepath")
+        refresh_button.click(
+            refresh_folders,
+            outputs=folder_list
+        )
+
         run_button.click(
             run_advanced_rvc,
             inputs=[model_name_input, youtube_url_input, export_format_input, f0_method_input,
