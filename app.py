@@ -38,7 +38,7 @@ my_theme =  "ParityError/Interstellar"
 
 # Define Gradio interface
 with gr.Blocks(
-    theme=my_applio, title="Advanced-RVC-Inference", css="footer{display:none !important}"
+    theme=my_theme, title="Advanced-RVC-Inference", css="footer{display:none !important}"
 ) as adrvc:
     gr.Markdown("# Advanced-RVC-Inference")
     gr.Markdown("A simple, high-quality voice conversion tool focused on ease of use and performance.")
