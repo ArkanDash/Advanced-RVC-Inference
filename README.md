@@ -7,7 +7,7 @@
 
 </div>
 
-### Information
+## Information
 <div align="center">
 Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter, and the added efficiency of batch inference.
 
@@ -15,13 +15,13 @@ Please support the Applio. This inference won't be possible to make without it.<
 [![Original Applio](https://img.shields.io/badge/Github-Original%20Applio%20Repository-blue?style=for-the-badge&logo=github)](https://github.com/IAHispano/Applio)
 </div>
 
-#### Features
+## Features
 - Support V1 & V2 Model ✅
 - Youtube Audio Downloader ✅
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Model Downloader ✅ 
 - Gradio WebUI ✅
-### Installation
+## Installation
 
 1. Install Dependencies <br />
 ```bash
@@ -37,7 +37,28 @@ python -m pip install -r requirements.txt
 python models.py
 ```
 
-### Run WebUI <br />
+## Run WebUI <br />
 ```bash
 python app.py
 ```
+
+
+## Terms of Use
+
+The use of the converted voice for the following purposes is prohibited.
+
+* Criticizing or attacking individuals.
+
+* Advocating for or opposing specific political positions, religions, or ideologies.
+
+* Publicly displaying strongly stimulating expressions without proper zoning.
+
+* Selling of voice models and generated voice clips.
+
+* Impersonation of the original owner of the voice with malicious intentions to harm/hurt others.
+
+* Fraudulent purposes that lead to identity theft or fraudulent phone calls.
+
+## Disclaimer
+
+I am not liable for any direct, indirect, consequential, incidental, or special damages arising out of or in any way connected with the use/misuse or inability to use this software.
