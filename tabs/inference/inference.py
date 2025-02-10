@@ -199,8 +199,9 @@ def inference_tab():
         with gr.Row():
             model_name_input = folder_list = gr.Dropdown(choices=get_model_folders(), label="Select Model Folder", interactive=True)
             refresh_button = gr.Button("Refresh")    
-    
-        youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
+        with gr.Row():   
+            youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
+        with gr.Row():
             export_format_input = gr.CheckboxGroup(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
             f0_method_input = gr.CheckboxGroup(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"], value="hybrid[rmvpe+fcpe]")
         with gr.Row():
