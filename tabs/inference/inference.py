@@ -1,8 +1,15 @@
-import os, sys, subprocess, logging
+import os
+import sys
+import subprocess
+import logging
 from logging.handlers import RotatingFileHandler
 from contextlib import suppress
 
-import yt_dlp, gradio as gr, librosa, numpy as np, soundfile as sf
+import yt_dlp
+import gradio as gr
+import librosa
+import numpy as np
+import soundfile as sf
 from pydub import AudioSegment
 
 try:
@@ -43,8 +50,7 @@ if not os.path.exists(rvc_cli_file):
     logging.error("scrpt.py not found in %s", current_dir)
     raise FileNotFoundError("scrpt.py not found in current directory.")
 
-
-
+# --- Helper Functions ---
 def load_audio(file_path):
     if file_path and os.path.exists(file_path):
         try:
@@ -53,7 +59,6 @@ def load_audio(file_path):
             logging.error("Error loading audio file %s: %s", file_path, e)
     logging.warning("Audio file not found or failed to load: %s", file_path)
     return None
-
 
 def get_model_folders():
     """Fetch model file paths and extract their parent folder names."""
@@ -73,7 +78,6 @@ def refresh_folders():
     """Refresh folder list."""
     return gr.update(choices=get_model_folders())
 
-# --- Helper Functions ---
 def download_youtube_audio(url, download_dir):
     os.makedirs(download_dir, exist_ok=True)
     ydl_opts = {
@@ -110,7 +114,7 @@ def separator_uvr(input_audio, output_dir):
     if len(sep_files) < 2:
         raise RuntimeError("UVR separation failed (instrumental/vocals).")
     
-    # Resolve file paths (in case the returned paths are not absolute)
+    # Resolve file paths
     file0 = sep_files[0] if os.path.isabs(sep_files[0]) else os.path.join(output_dir, sep_files[0])
     file1 = sep_files[1] if os.path.isabs(sep_files[1]) else os.path.join(output_dir, sep_files[1])
     instrumental = os.path.join(output_dir, 'Instrumental.wav')
@@ -135,7 +139,6 @@ def separator_uvr(input_audio, output_dir):
     logging.info("Second separation complete: saved Backing Vocals and Lead Vocals.")
 
     return lead, backing, instrumental
-
 
 def run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
             f0_method, input_path, output_path, pth_file, index_file, split_audio,
@@ -175,7 +178,6 @@ def run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, prot
     except subprocess.CalledProcessError as e:
         logging.error("RVC process failed with error: %s", e.stderr)
         raise RuntimeError("RVC process failed") from e
-
 
 def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_key, filter_radius,
                      rms_mix_rate, protect, index_rate, hop_length, clean_strength, split_audio,
@@ -244,7 +246,7 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
 
         lead_audio = load_audio(rvc_lead)
         instrumental_audio = load_audio(instrumental)
-        # If RVC was run for backing vocals, use that result; otherwise, use the original backing.
+        # Use the RVC output for backing if available, else the original backing
         backing_audio = load_audio(rvc_backing) if backing_vocal_infer else load_audio(backing)
 
         if not instrumental_audio:
@@ -264,69 +266,93 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         logging.exception("Error during advanced RVC pipeline: %s", e)
         return f"An error occurred: {e}", None, None, None
 
-
-
 # --- Gradio UI ---
 def inference_tab():
+    # In Gradio 3.49.0 it is recommended to wrap tabs inside a Blocks container and use Tab labels.
     with gr.Tabs():
-        
-        with gr.Row():
-            model_name_input = gr.Dropdown(choices=get_model_folders(), label="Select Model Folder", interactive=True)
-            refresh_button = gr.Button("Refresh")
-        with gr.Row():
-            youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
-        with gr.Row():
-            export_format_input = gr.Dropdown(
-                label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV"
+        with gr.Tab("Advanced RVC"):
+            with gr.Row():
+                model_name_input = gr.Dropdown(
+                    choices=get_model_folders(),
+                    label="Select Model Folder",
+                    interactive=True
+                )
+                refresh_button = gr.Button("Refresh")
+            with gr.Row():
+                youtube_url_input = gr.Textbox(
+                    label="YouTube URL",
+                    value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV"
+                )
+            with gr.Row():
+                export_format_input = gr.Dropdown(
+                    label="Export Format",
+                    choices=["WAV", "MP3", "FLAC", "OGG", "M4A"],
+                    value="WAV"
+                )
+                f0_method_input = gr.Dropdown(
+                    label="F0 Method",
+                    choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"],
+                    value="hybrid[rmvpe+fcpe]"
+                )
+            with gr.Row():
+                f0_up_key_input = gr.Slider(
+                    label="F0 Up Key", minimum=-24, maximum=24, step=1, value=0
+                )
+                filter_radius_input = gr.Slider(
+                    label="Filter Radius", minimum=0, maximum=10, step=1, value=3
+                )
+                rms_mix_rate_input = gr.Slider(
+                    label="RMS Mix Rate", minimum=0.0, maximum=1.0, step=0.1, value=0.8
+                )
+                protect_input = gr.Slider(
+                    label="Protect", minimum=0.0, maximum=0.5, step=0.1, value=0.5
+                )
+            with gr.Row():
+                index_rate_input = gr.Slider(
+                    label="Index Rate", minimum=0.0, maximum=1.0, step=0.1, value=0.6
+                )
+                hop_length_input = gr.Slider(
+                    label="Hop Length", minimum=1, maximum=512, step=1, value=128
+                )
+                clean_strength_input = gr.Slider(
+                    label="Clean Strength", minimum=0.0, maximum=1.0, step=0.1, value=0.7
+                )
+                split_audio_input = gr.Checkbox(label="Split Audio", value=False)
+            with gr.Row():
+                clean_audio_input = gr.Checkbox(label="Clean Audio", value=False)
+                f0_autotune_input = gr.Checkbox(label="F0 Autotune", value=False)
+                backing_vocal_infer_input = gr.Checkbox(label="Infer Backing Vocals", value=False)
+            with gr.Row():
+                embedder_model_input = gr.Dropdown(
+                    label="Embedder Model",
+                    choices=["contentvec", "chinese-hubert-base", "japanese-hubert-base", "korean-hubert-base", "custom"],
+                    value="contentvec"
+                )
+                embedder_model_custom_input = gr.Textbox(
+                    label="Custom Embedder Model", value=""
+                )
+            with gr.Row():
+                run_button = gr.Button("Convert")
+            with gr.Row():
+                output_message = gr.Textbox(label="Status")
+                output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
+            with gr.Row():
+                output_lead = gr.Audio(label="Output Lead Ai Cover", type="filepath")
+                output_backing = gr.Audio(label="Output Backing Ai Cover", type="filepath")
+            
+            refresh_button.click(
+                refresh_folders,
+                outputs=model_name_input
             )
-            f0_method_input = gr.Dropdown(
-                label="F0 Method",
-                choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"],
-                value="hybrid[rmvpe+fcpe]"
+            run_button.click(
+                run_advanced_rvc,
+                inputs=[
+                    model_name_input, youtube_url_input, export_format_input, f0_method_input,
+                    f0_up_key_input, filter_radius_input, rms_mix_rate_input, protect_input,
+                    index_rate_input, hop_length_input, clean_strength_input, split_audio_input,
+                    clean_audio_input, f0_autotune_input, backing_vocal_infer_input,
+                    embedder_model_input, embedder_model_custom_input
+                ],
+                outputs=[output_message, output_audio, output_lead, output_backing]
             )
-        with gr.Row():
-            f0_up_key_input = gr.Slider(label="F0 Up Key", minimum=-24, maximum=24, step=1, value=0)
-            filter_radius_input = gr.Slider(label="Filter Radius", minimum=0, maximum=10, step=1, value=3)
-            rms_mix_rate_input = gr.Slider(label="RMS Mix Rate", minimum=0.0, maximum=1.0, step=0.1, value=0.8)
-            protect_input = gr.Slider(label="Protect", minimum=0.0, maximum=0.5, step=0.1, value=0.5)
-        with gr.Row():
-            index_rate_input = gr.Slider(label="Index Rate", minimum=0.0, maximum=1.0, step=0.1, value=0.6)
-            hop_length_input = gr.Slider(label="Hop Length", minimum=1, maximum=512, step=1, value=128)
-            clean_strength_input = gr.Slider(label="Clean Strength", minimum=0.0, maximum=1.0, step=0.1, value=0.7)
-            split_audio_input = gr.Checkbox(label="Split Audio", value=False)
-        with gr.Row():
-            clean_audio_input = gr.Checkbox(label="Clean Audio", value=False)
-            f0_autotune_input = gr.Checkbox(label="F0 Autotune", value=False)
-            backing_vocal_infer_input = gr.Checkbox(label="Infer Backing Vocals", value=False)
-        with gr.Row():
-            embedder_model_input = gr.Dropdown(
-                label="Embedder Model",
-                choices=["contentvec", "chinese-hubert-base", "japanese-hubert-base", "korean-hubert-base", "custom"],
-                value="contentvec"
-            )
-            embedder_model_custom_input = gr.Textbox(label="Custom Embedder Model", value="")
-        with gr.Row():
-            run_button = gr.Button("Convert")
-        with gr.Row():
-            output_message = gr.Textbox(label="Status")
-            output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
-        with gr.Row():
-            output_lead = gr.Audio(label="Output Lead Ai Cover", type="filepath")
-            output_backing = gr.Audio(label="Output Backing Ai Cover", type="filepath")
-        
-        refresh_button.click(
-            refresh_folders,
-            outputs=model_name_input
-        )
-        run_button.click(
-            run_advanced_rvc,
-            inputs=[
-                model_name_input, youtube_url_input, export_format_input, f0_method_input,
-                f0_up_key_input, filter_radius_input, rms_mix_rate_input, protect_input,
-                index_rate_input, hop_length_input, clean_strength_input, split_audio_input,
-                clean_audio_input, f0_autotune_input, backing_vocal_infer_input,
-                embedder_model_input, embedder_model_custom_input
-            ],
-            outputs=[output_message, output_audio, output_lead, output_backing]
-        )
 
