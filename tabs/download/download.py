@@ -101,7 +101,7 @@ def download_tab():
             outputs=[model_download_output_info],
         )
         gr.Markdown("## Drop files")
-        dropbox = gr.File(label="Drag your .pth file and .index file into this space. Drag one and then the other.", type="filepath")
+        dropbox = gr.File(label="Drag your .pth file and .index file into this space. Drag one and then the other.", type="file")
 
         dropbox.upload(
             fn=save_drop_model,
