@@ -21,6 +21,7 @@ import rvc.lib.zluda
 
 # Import Tabs
 from tabs.inference.inference import inference_tab
+from tabs.download.download import download_tab
 
 # Run prerequisites
 from rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
