@@ -22,7 +22,7 @@ libf0
 transformers==4.44.2
 matplotlib==3.7.2
 tensorboard
-gradio==3.49.0
+gradio==4.44.0
 certifi>=2023.07.22; sys_platform == 'darwin'  
 antlr4-python3-runtime==4.8; sys_platform == 'darwin'
 tensorboardX
