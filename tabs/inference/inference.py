@@ -43,6 +43,18 @@ if not os.path.exists(rvc_cli_file):
     logging.error("scrpt.py not found in %s", current_dir)
     raise FileNotFoundError("scrpt.py not found in current directory.")
 
+
+
+def load_audio(file_path):
+    if file_path and os.path.exists(file_path):
+        try:
+            return AudioSegment.from_file(file_path)
+        except Exception as e:
+            logging.error("Error loading audio file %s: %s", file_path, e)
+    logging.warning("Audio file not found or failed to load: %s", file_path)
+    return None
+
+
 def get_model_folders():
     """Fetch model file paths and extract their parent folder names."""
     names = [
@@ -84,32 +96,55 @@ def download_youtube_audio(url, download_dir):
     return files
 
 def separator_uvr(input_audio, output_dir):
+    """
+    Runs the audio separation using UVR models.
+    It first separates the instrumental and vocals, then splits the vocals.
+    """
     os.makedirs(output_dir, exist_ok=True)
     sep = Separator(output_dir=output_dir)
-    # First model for instrumental/vocals separation
+    
+    # First separation: instrumental vs. vocals
+    logging.info("Loading first separator model for instrumental/vocals separation")
     sep.load_model('model_bs_roformer_ep_317_sdr_12.9755.ckpt')
     sep_files = sep.separate(input_audio)
     if len(sep_files) < 2:
         raise RuntimeError("UVR separation failed (instrumental/vocals).")
+    
+    # Resolve file paths (in case the returned paths are not absolute)
+    file0 = sep_files[0] if os.path.isabs(sep_files[0]) else os.path.join(output_dir, sep_files[0])
+    file1 = sep_files[1] if os.path.isabs(sep_files[1]) else os.path.join(output_dir, sep_files[1])
     instrumental = os.path.join(output_dir, 'Instrumental.wav')
     vocals = os.path.join(output_dir, 'Vocals.wav')
-    os.rename(os.path.join(output_dir, sep_files[0]), instrumental)
-    os.rename(os.path.join(output_dir, sep_files[1]), vocals)
-    # Second model for vocal splitting
+    os.replace(file0, instrumental)
+    os.replace(file1, vocals)
+    logging.info("First separation complete: saved Instrumental and Vocals.")
+
+    # Second separation: split vocals into lead and backing
+    logging.info("Loading second separator model for vocal splitting")
     sep.load_model('mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt')
     sep_vocals = sep.separate(vocals)
     if len(sep_vocals) < 2:
         raise RuntimeError("UVR separation failed (vocal split).")
+    
+    file0_vocals = sep_vocals[0] if os.path.isabs(sep_vocals[0]) else os.path.join(output_dir, sep_vocals[0])
+    file1_vocals = sep_vocals[1] if os.path.isabs(sep_vocals[1]) else os.path.join(output_dir, sep_vocals[1])
     backing = os.path.join(output_dir, 'Backing_Vocals.wav')
     lead = os.path.join(output_dir, 'Lead_Vocals.wav')
-    os.rename(os.path.join(output_dir, sep_vocals[0]), backing)
-    os.rename(os.path.join(output_dir, sep_vocals[1]), lead)
+    os.replace(file0_vocals, backing)
+    os.replace(file1_vocals, lead)
+    logging.info("Second separation complete: saved Backing Vocals and Lead Vocals.")
+
     return lead, backing, instrumental
+
 
 def run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
             f0_method, input_path, output_path, pth_file, index_file, split_audio,
             clean_audio, clean_strength, export_format, f0_autotune,
             embedder_model, embedder_model_custom, rvc_cli_file):
+    """
+    Runs the RVC inference via a subprocess call.
+    All parameters are passed as command-line arguments to the CLI script.
+    """
     cmd = [
         sys.executable, rvc_cli_file, "infer",
         "--pitch", str(f0_up_key),
@@ -131,21 +166,29 @@ def run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, prot
         "--embedder_model", embedder_model,
         "--embedder_model_custom", embedder_model_custom
     ]
-    logging.info("Running RVC inference: %s", " ".join(cmd))
-    subprocess.run(cmd, check=True, capture_output=True, text=True)
+    logging.info("Running RVC inference with command: %s", " ".join(cmd))
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+        logging.info("RVC process completed successfully.")
+        logging.debug("RVC stdout: %s", result.stdout)
+        logging.debug("RVC stderr: %s", result.stderr)
+    except subprocess.CalledProcessError as e:
+        logging.error("RVC process failed with error: %s", e.stderr)
+        raise RuntimeError("RVC process failed") from e
 
-def load_audio(file_path):
-    if file_path and os.path.exists(file_path):
-        try:
-            return AudioSegment.from_file(file_path)
-        except Exception as e:
-            logging.error("Error loading audio file %s: %s", file_path, e)
-    logging.warning("Audio file not found or failed to load: %s", file_path)
-    return None
 
 def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_key, filter_radius,
                      rms_mix_rate, protect, index_rate, hop_length, clean_strength, split_audio,
                      clean_audio, f0_autotune, backing_vocal_infer, embedder_model, embedder_model_custom):
+    """
+    The main pipeline:
+      1. Download YouTube audio.
+      2. Separate the audio using UVR.
+      3. Run RVC inference on lead (and optionally backing) vocals.
+      4. Mix the outputs with the instrumental track.
+      5. Export the final mix.
+    Returns a status message and paths to the mixed audio and individual RVC outputs.
+    """
     try:
         current_dir = os.getcwd()
         rvc_models_dir = os.path.join(current_dir, 'logs')
@@ -155,11 +198,11 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         rvc_cli_file = os.path.join(current_dir, "scrpt.py")
         if not os.path.exists(rvc_cli_file):
             return f"scrpt.py not found in {current_dir}", None, None, None
-        
+
         model_folder = os.path.join(rvc_models_dir, model_name)
         if not os.path.exists(model_folder):
             return f"Model directory not found: {model_folder}", None, None, None
-        
+
         files = os.listdir(model_folder)
         pth_filename = next((f for f in files if f.endswith(".pth")), "")
         index_filename = next((f for f in files if f.endswith(".index")), "")
@@ -167,7 +210,7 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         index_file = os.path.join(model_folder, index_filename)
         if not os.path.exists(pth_file) or not os.path.exists(index_file):
             return "Required model files (.pth or .index) not found.", None, None, None
-        
+
         downloaded = download_youtube_audio(youtube_url, download_dir)
         if isinstance(downloaded, list):
             if not downloaded:
@@ -175,47 +218,53 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
             input_audio = downloaded[0]
         else:
             input_audio = downloaded
-        
+
         if not os.path.exists(input_audio):
             return f"Downloaded audio file not found: {input_audio}", None, None, None
-        
+
+        logging.info("Starting audio separation...")
         lead, backing, instrumental = separator_uvr(input_audio, uvr_output_dir)
+
         os.makedirs(rvc_output_dir, exist_ok=True)
         rvc_lead = os.path.join(rvc_output_dir, "rvc_result_lead.wav")
         rvc_backing = os.path.join(rvc_output_dir, "rvc_result_backing.wav")
-        
-        # Process lead vocals
+
+        logging.info("Running RVC on lead vocals...")
         run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
                 f0_method, lead, rvc_lead, pth_file, index_file,
                 split_audio, clean_audio, clean_strength, export_format, f0_autotune,
                 embedder_model, embedder_model_custom, rvc_cli_file)
-        
-        # Process backing vocals if selected
+
         if backing_vocal_infer:
+            logging.info("Running RVC on backing vocals...")
             run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
                     f0_method, backing, rvc_backing, pth_file, index_file,
                     split_audio, clean_audio, clean_strength, export_format, f0_autotune,
                     embedder_model, embedder_model_custom, rvc_cli_file)
-        
+
         lead_audio = load_audio(rvc_lead)
         instrumental_audio = load_audio(instrumental)
-        # Use RVC output for backing if inferred; otherwise, use the original backing
+        # If RVC was run for backing vocals, use that result; otherwise, use the original backing.
         backing_audio = load_audio(rvc_backing) if backing_vocal_infer else load_audio(backing)
-        
+
         if not instrumental_audio:
             return "Instrumental track is required for mixing!", None, None, None
-        
-        # Mix the tracks: overlay lead and (if available) backing vocals on the instrumental
+
+        # Mix the tracks: overlay lead (and optionally backing) vocals on the instrumental
         final_mix = instrumental_audio.overlay(lead_audio) if lead_audio else instrumental_audio
         if backing_audio:
             final_mix = final_mix.overlay(backing_audio)
-        
+
         output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
         final_mix.export(output_file, format=export_format.lower())
+        logging.info("Mixing complete. Output saved to %s", output_file)
         return f"Mixed file saved as: {output_file}", output_file, rvc_lead, rvc_backing
+
     except Exception as e:
-        logging.exception("Error during pipeline: %s", e)
+        logging.exception("Error during advanced RVC pipeline: %s", e)
         return f"An error occurred: {e}", None, None, None
+
+
 
 # --- Gradio UI ---
 def inference_tab():
