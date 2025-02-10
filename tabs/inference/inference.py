@@ -268,7 +268,7 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         # ai Mix
         output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
         final_mix.export(output_file, format=export_format.lower())
-        output_bfile = os.path.join(current_dir, f"aicover-with-{backing}-{model_name}.{export_format.lower()}")
+        output_bfile = os.path.join(current_dir, f"aicover-with_{backing}_{model_name}.{export_format.lower()}")
         backing_mix.export(output_bfile, format=export_format.lower())
         logging.info("Mixing complete. Output saved to %s", output_file)
         return f"Mixed file saved as: {output_file}", output_file, output_bfile, output_bfile, rvc_lead, rvc_backing
