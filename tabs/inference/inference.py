@@ -11,7 +11,7 @@ except ImportError:
     raise ImportError("Ensure the 'audio_separator' module is installed or in your working directory.")
 
 # --- Logging Setup ---
-def setup_logging(level=logging.DEBUG, log_file="kuro_rvc.log"):
+def setup_logging(level=logging.DEBUG, log_file="adrvc.log"):
     logger = logging.getLogger()
     logger.setLevel(level)
     formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s", "%Y-%m-%d %H:%M:%S")
@@ -191,10 +191,12 @@ def inference_tab():
                                                value="contentvec")
             embedder_model_custom_input = gr.Textbox(label="Custom Embedder Model", value="")
         run_button = gr.Button("Convert")
-        output_message = gr.Textbox(label="Status")
-        output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
-        output_lead = gr.Audio(label="Output Lead Ai Cover:", type="filepath")
-        output_backing = gr.Audio(label="Output Backing Ai Cover:", type="filepath")
+        with gr.Row():
+            output_message = gr.Textbox(label="Status")
+            output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
+        with gr.Row():
+            output_lead = gr.Audio(label="Output Lead Ai Cover:", type="filepath")
+            output_backing = gr.Audio(label="Output Backing Ai Cover:", type="filepath")
         run_button.click(
             run_advanced_rvc,
             inputs=[model_name_input, youtube_url_input, export_format_input, f0_method_input,
