@@ -6,7 +6,7 @@ from typing import Any
 DEFAULT_SERVER_NAME = "127.0.0.1"
 DEFAULT_PORT = 6969
 MAX_PORT_ATTEMPTS = 10
-
+import assets.themes.loadThemes as loadThemes
 # Set up logging
 logging.getLogger("uvicorn").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -28,14 +28,11 @@ prerequisites_download_pipeline(models=True, exe=True)
 
 
 
-# Load theme (demo)
-#import assets.themes.loadThemes as loadThemes
-# loadThemes.load_theme() 
-my_theme =  "NoCrypt/miku"
+
 
 # Define Gradio interface
 with gr.Blocks(
-    theme=my_theme, title="Advanced-RVC-Inference", css="footer{display:none !important}"
+    theme = loadThemes.load_json() or "NoCrypt/miku", title="Advanced-RVC-Inference", css="footer{display:none !important}"
 ) as adrvc:
     gr.Markdown("# Advanced-RVC-Inference")
     gr.Markdown("Advanced RVC Inference for quicker and effortless model downloads.")
