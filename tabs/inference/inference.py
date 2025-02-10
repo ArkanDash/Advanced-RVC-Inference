@@ -1,4 +1,4 @@
-import os, sys, subprocess, logging, json
+import os, sys, subprocess, logging
 from logging.handlers import RotatingFileHandler
 from contextlib import suppress
 
@@ -14,17 +14,20 @@ except ImportError:
 def setup_logging(level=logging.DEBUG, log_file="adrvc.log"):
     logger = logging.getLogger()
     logger.setLevel(level)
-    formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s", "%Y-%m-%d %H:%M:%S")
+    formatter = logging.Formatter(
+        "%(asctime)s [%(levelname)s] %(name)s: %(message)s", "%Y-%m-%d %H:%M:%S"
+    )
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.INFO)
     ch.setFormatter(formatter)
-    fh = RotatingFileHandler(log_file, maxBytes=5*1024*1024, backupCount=2)
+    fh = RotatingFileHandler(log_file, maxBytes=5 * 1024 * 1024, backupCount=2)
     fh.setLevel(level)
     fh.setFormatter(formatter)
     logger.handlers.clear()
     logger.addHandler(ch)
     logger.addHandler(fh)
     logger.debug("Logging configured.")
+
 setup_logging()
 
 # --- Global Paths ---
@@ -40,10 +43,6 @@ if not os.path.exists(rvc_cli_file):
     logging.error("scrpt.py not found in %s", current_dir)
     raise FileNotFoundError("scrpt.py not found in current directory.")
 
-
-
-
-
 def get_model_folders():
     """Fetch model file paths and extract their parent folder names."""
     names = [
@@ -55,18 +54,12 @@ def get_model_folders():
             and not (file.startswith("G_") or file.startswith("D_"))
         )
     ]
-
     folder_names = sorted(set(os.path.basename(os.path.dirname(name)) for name in names))
-
     return folder_names if folder_names else ["No models found"]
-
-
 
 def refresh_folders():
     """Refresh folder list."""
     return gr.update(choices=get_model_folders())
-
-
 
 # --- Helper Functions ---
 def download_youtube_audio(url, download_dir):
@@ -74,12 +67,17 @@ def download_youtube_audio(url, download_dir):
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": os.path.join(download_dir, "%(title)s.%(ext)s"),
-        "postprocessors": [{"key": "FFmpegExtractAudio", "preferredcodec": "wav", "preferredquality": "192"}],
+        "postprocessors": [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "wav",
+            "preferredquality": "192"
+        }],
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=True)
     if "entries" in info:
-        files = [os.path.join(download_dir, f"{entry['title']}.wav") for entry in info["entries"] if entry]
+        files = [os.path.join(download_dir, f"{entry['title']}.wav")
+                 for entry in info["entries"] if entry]
     else:
         files = os.path.join(download_dir, f"{info['title']}.wav")
     logging.debug("Downloaded: %s", files)
@@ -88,16 +86,20 @@ def download_youtube_audio(url, download_dir):
 def separator_uvr(input_audio, output_dir):
     os.makedirs(output_dir, exist_ok=True)
     sep = Separator(output_dir=output_dir)
+    # First model for instrumental/vocals separation
     sep.load_model('model_bs_roformer_ep_317_sdr_12.9755.ckpt')
     sep_files = sep.separate(input_audio)
-    if len(sep_files) < 2: raise RuntimeError("UVR separation failed (instrumental/vocals).")
+    if len(sep_files) < 2:
+        raise RuntimeError("UVR separation failed (instrumental/vocals).")
     instrumental = os.path.join(output_dir, 'Instrumental.wav')
     vocals = os.path.join(output_dir, 'Vocals.wav')
     os.rename(os.path.join(output_dir, sep_files[0]), instrumental)
     os.rename(os.path.join(output_dir, sep_files[1]), vocals)
+    # Second model for vocal splitting
     sep.load_model('mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt')
     sep_vocals = sep.separate(vocals)
-    if len(sep_vocals) < 2: raise RuntimeError("UVR separation failed (vocal split).")
+    if len(sep_vocals) < 2:
+        raise RuntimeError("UVR separation failed (vocal split).")
     backing = os.path.join(output_dir, 'Backing_Vocals.wav')
     lead = os.path.join(output_dir, 'Lead_Vocals.wav')
     os.rename(os.path.join(output_dir, sep_vocals[0]), backing)
@@ -134,8 +136,11 @@ def run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, prot
 
 def load_audio(file_path):
     if file_path and os.path.exists(file_path):
-        return AudioSegment.from_file(file_path)
-    logging.warning("Audio file not found: %s", file_path)
+        try:
+            return AudioSegment.from_file(file_path)
+        except Exception as e:
+            logging.error("Error loading audio file %s: %s", file_path, e)
+    logging.warning("Audio file not found or failed to load: %s", file_path)
     return None
 
 def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_key, filter_radius,
@@ -149,61 +154,87 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         uvr_output_dir = os.path.join(current_dir, "output_uvr")
         rvc_cli_file = os.path.join(current_dir, "scrpt.py")
         if not os.path.exists(rvc_cli_file):
-            return f"scrpt.py not found in {current_dir}", None
+            return f"scrpt.py not found in {current_dir}", None, None, None
         
         model_folder = os.path.join(rvc_models_dir, model_name)
         if not os.path.exists(model_folder):
-            return f"Model directory not found: {model_folder}", None
+            return f"Model directory not found: {model_folder}", None, None, None
+        
         files = os.listdir(model_folder)
-        pth_file = os.path.join(model_folder, next((f for f in files if f.endswith(".pth")), ""))
-        index_file = os.path.join(model_folder, next((f for f in files if f.endswith(".index")), ""))
+        pth_filename = next((f for f in files if f.endswith(".pth")), "")
+        index_filename = next((f for f in files if f.endswith(".index")), "")
+        pth_file = os.path.join(model_folder, pth_filename)
+        index_file = os.path.join(model_folder, index_filename)
         if not os.path.exists(pth_file) or not os.path.exists(index_file):
-            return "Required model files (.pth or .index) not found.", None
+            return "Required model files (.pth or .index) not found.", None, None, None
         
         downloaded = download_youtube_audio(youtube_url, download_dir)
-        input_audio = downloaded[0] if isinstance(downloaded, list) else downloaded
+        if isinstance(downloaded, list):
+            if not downloaded:
+                return "No audio files were downloaded.", None, None, None
+            input_audio = downloaded[0]
+        else:
+            input_audio = downloaded
+        
         if not os.path.exists(input_audio):
-            return f"Downloaded audio file not found: {input_audio}", None
+            return f"Downloaded audio file not found: {input_audio}", None, None, None
         
         lead, backing, instrumental = separator_uvr(input_audio, uvr_output_dir)
         os.makedirs(rvc_output_dir, exist_ok=True)
         rvc_lead = os.path.join(rvc_output_dir, "rvc_result_lead.wav")
         rvc_backing = os.path.join(rvc_output_dir, "rvc_result_backing.wav")
+        
+        # Process lead vocals
         run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
                 f0_method, lead, rvc_lead, pth_file, index_file,
                 split_audio, clean_audio, clean_strength, export_format, f0_autotune,
                 embedder_model, embedder_model_custom, rvc_cli_file)
+        
+        # Process backing vocals if selected
         if backing_vocal_infer:
             run_rvc(f0_up_key, filter_radius, rms_mix_rate, index_rate, hop_length, protect,
                     f0_method, backing, rvc_backing, pth_file, index_file,
                     split_audio, clean_audio, clean_strength, export_format, f0_autotune,
                     embedder_model, embedder_model_custom, rvc_cli_file)
+        
         lead_audio = load_audio(rvc_lead)
         instrumental_audio = load_audio(instrumental)
+        # Use RVC output for backing if inferred; otherwise, use the original backing
         backing_audio = load_audio(rvc_backing) if backing_vocal_infer else load_audio(backing)
+        
         if not instrumental_audio:
-            return "Instrumental track is required for mixing!", None
+            return "Instrumental track is required for mixing!", None, None, None
+        
+        # Mix the tracks: overlay lead and (if available) backing vocals on the instrumental
         final_mix = instrumental_audio.overlay(lead_audio) if lead_audio else instrumental_audio
         if backing_audio:
             final_mix = final_mix.overlay(backing_audio)
-        output_file = f"aicover_{model_name}.{export_format.lower()}"
+        
+        output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
         final_mix.export(output_file, format=export_format.lower())
-        return f"Mixed file saved as: {output_file}", output_file, lead_audio, backing_audio
+        return f"Mixed file saved as: {output_file}", output_file, rvc_lead, rvc_backing
     except Exception as e:
         logging.exception("Error during pipeline: %s", e)
-        return f"An error occurred: {e}", None
+        return f"An error occurred: {e}", None, None, None
 
 # --- Gradio UI ---
 def inference_tab():
     with gr.Tabs():
+        
         with gr.Row():
-            model_name_input = folder_list = gr.Dropdown(choices=get_model_folders(), label="Select Model Folder", interactive=True)
-            refresh_button = gr.Button("Refresh")    
-        with gr.Row():   
+            model_name_input = gr.Dropdown(choices=get_model_folders(), label="Select Model Folder", interactive=True)
+            refresh_button = gr.Button("Refresh")
+        with gr.Row():
             youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
         with gr.Row():
-            export_format_input = gr.Dropdown(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
-            f0_method_input = gr.Dropdown(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"], value="hybrid[rmvpe+fcpe]")
+            export_format_input = gr.Dropdown(
+                label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV"
+            )
+            f0_method_input = gr.Dropdown(
+                label="F0 Method",
+                choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"],
+                value="hybrid[rmvpe+fcpe]"
+            )
         with gr.Row():
             f0_up_key_input = gr.Slider(label="F0 Up Key", minimum=-24, maximum=24, step=1, value=0)
             filter_radius_input = gr.Slider(label="Filter Radius", minimum=0, maximum=10, step=1, value=3)
@@ -219,9 +250,11 @@ def inference_tab():
             f0_autotune_input = gr.Checkbox(label="F0 Autotune", value=False)
             backing_vocal_infer_input = gr.Checkbox(label="Infer Backing Vocals", value=False)
         with gr.Row():
-            embedder_model_input = gr.Dropdown(label="Embedder Model",
-                                               choices=["contentvec", "chinese-hubert-base", "japanese-hubert-base", "korean-hubert-base", "custom"],
-                                               value="contentvec")
+            embedder_model_input = gr.Dropdown(
+                label="Embedder Model",
+                choices=["contentvec", "chinese-hubert-base", "japanese-hubert-base", "korean-hubert-base", "custom"],
+                value="contentvec"
+            )
             embedder_model_custom_input = gr.Textbox(label="Custom Embedder Model", value="")
         with gr.Row():
             run_button = gr.Button("Convert")
@@ -229,20 +262,22 @@ def inference_tab():
             output_message = gr.Textbox(label="Status")
             output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
         with gr.Row():
-            output_lead = gr.Audio(label="Output Lead Ai Cover:", type="filepath")
-            output_backing = gr.Audio(label="Output Backing Ai Cover:", type="filepath")
+            output_lead = gr.Audio(label="Output Lead Ai Cover", type="filepath")
+            output_backing = gr.Audio(label="Output Backing Ai Cover", type="filepath")
+        
         refresh_button.click(
             refresh_folders,
-            outputs=folder_list
+            outputs=model_name_input
         )
-
         run_button.click(
             run_advanced_rvc,
-            inputs=[model_name_input, youtube_url_input, export_format_input, f0_method_input,
-                    f0_up_key_input, filter_radius_input, rms_mix_rate_input, protect_input,
-                    index_rate_input, hop_length_input, clean_strength_input, split_audio_input,
-                    clean_audio_input, f0_autotune_input, backing_vocal_infer_input,
-                    embedder_model_input, embedder_model_custom_input],
+            inputs=[
+                model_name_input, youtube_url_input, export_format_input, f0_method_input,
+                f0_up_key_input, filter_radius_input, rms_mix_rate_input, protect_input,
+                index_rate_input, hop_length_input, clean_strength_input, split_audio_input,
+                clean_audio_input, f0_autotune_input, backing_vocal_infer_input,
+                embedder_model_input, embedder_model_custom_input
+            ],
             outputs=[output_message, output_audio, output_lead, output_backing]
         )
-    
+
