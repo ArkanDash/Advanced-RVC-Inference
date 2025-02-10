@@ -3,7 +3,7 @@ import gradio as gr
 import assets.themes.loadThemes as loadThemes
 
 def theme_loader():
-  gr.Markdowm("Theme Loader for UI")
+  gr.Markdown("Theme Loader for UI")
   themes_select = gr.Dropdown(
     label = "Theme",
     info = "Select the theme you want to use. (Requires restarting the App)",
