@@ -257,21 +257,25 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
 
         final_mix = instrumental_audio.overlay(lead_audio) if lead_audio else instrumental_audio
         if backing_audio:
-            output_backing = backing_audio.overlay(lead_audio)
+            backing_mix = backing_audio.overlay(lead_audio) if lead_audio else backing_audio
             final_mix = final_mix.overlay(backing_audio)
-        backing_mix = backing_audio.overlay(lead_audio) if lead_audio else instrumental_audio
-        if backing_audio:
-            output_bfile = backing_audio.overlay(lead_audio)
             
-        
-        
-        # ai Mix
-        output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
-        final_mix.export(output_file, format=export_format.lower())
-        output_bfile = os.path.join(current_dir, f"aicover-with_{backing}_{model_name}.{export_format.lower()}")
-        backing_mix.export(output_bfile, format=export_format.lower())
-        logging.info("Mixing complete. Output saved to %s", output_file)
-        return f"Mixed file saved as: {output_file}", output_file, output_bfile, output_bfile, rvc_lead, rvc_backing
+            output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
+            output_backing_file = os.path.join(current_dir, f"aicover-with_{backing}_{model_name}.{export_format.lower()}")
+            
+            final_mix.export(output_file, format=export_format.lower())
+            backing_mix.export(output_backing_file, format=export_format.lower())
+            
+            logging.info("Mixing complete. Output saved to %s and %s", output_file, output_backing_file)
+            
+            return f"Mixed file saved as: {output_file}", output_file, output_backing_file, rvc_lead, rvc_backing
+        else:
+            logging.info("No backing audio provided. Only the main mix will be exported.")
+
+    output_file = os.path.join(current_dir, f"aicover_{model_name}.{export_format.lower()}")
+    final_mix.export(output_file, format=export_format.lower())
+
+    return f"Mixed file saved as: {output_file}", output_file, None, rvc_lead, rvc_backing
 
     except Exception as e:
         logging.exception("Error during advanced RVC pipeline: %s", e)
