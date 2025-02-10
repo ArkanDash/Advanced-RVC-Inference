@@ -272,9 +272,9 @@ def run_advanced_rvc(model_name, youtube_url, export_format, f0_method, f0_up_ke
         logging.exception("Error during advanced RVC pipeline: %s", e)
         return f"An error occurred: {e}", None, None, None
 
-# --- Gradio UI Without gr.Tab ---
-def inference_ui():
-    with gr.Blocks() as demo:
+# --- Inference  UI ---
+def inference_tab():
+    with gr.Tabs():
         with gr.Row():
             model_name_input = gr.Dropdown(
                 choices=get_model_folders(),
