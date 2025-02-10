@@ -37,7 +37,7 @@ with gr.Blocks(
     gr.Markdown("# Advanced-RVC-Inference")
     gr.Markdown("Advanced RVC Inference for quicker and effortless model downloads.")
     gr.Markdown("[Support](https://discord.gg/hvmsukmBHE) — [GitHub](https://github.com/ArkanDash/Advanced-RVC-Inference.git)")
-    gr.Makrdown("Thanks to [NeoDev](https://github.com/TheNeodev) for improve this project")
+    gr.Markdown("Thanks to [NeoDev](https://github.com/TheNeodev) for improve this project")
     
     
     with gr.Tab("Inference"):
