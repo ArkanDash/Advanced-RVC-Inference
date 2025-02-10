@@ -202,8 +202,8 @@ def inference_tab():
         with gr.Row():   
             youtube_url_input = gr.Textbox(label="YouTube URL", value="https://youtu.be/eCkWlRL3_N0?si=y6xHAs1m8fYVLTUV")
         with gr.Row():
-            export_format_input = gr.Checkbox(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
-            f0_method_input = gr.Checkbox(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"], value="hybrid[rmvpe+fcpe]")
+            export_format_input = gr.Dropdown(label="Export Format", choices=["WAV", "MP3", "FLAC", "OGG", "M4A"], value="WAV")
+            f0_method_input = gr.Dropdown(label="F0 Method", choices=["crepe", "crepe-tiny", "rmvpe", "fcpe", "hybrid[rmvpe+fcpe]"], value="hybrid[rmvpe+fcpe]")
         with gr.Row():
             f0_up_key_input = gr.Slider(label="F0 Up Key", minimum=-24, maximum=24, step=1, value=0)
             filter_radius_input = gr.Slider(label="Filter Radius", minimum=0, maximum=10, step=1, value=3)
@@ -223,7 +223,8 @@ def inference_tab():
                                                choices=["contentvec", "chinese-hubert-base", "japanese-hubert-base", "korean-hubert-base", "custom"],
                                                value="contentvec")
             embedder_model_custom_input = gr.Textbox(label="Custom Embedder Model", value="")
-        run_button = gr.Button("Convert")
+        with gr.Row():
+            run_button = gr.Button("Convert")
         with gr.Row():
             output_message = gr.Textbox(label="Status")
             output_audio = gr.Audio(label="Final Mixed Audio", type="filepath")
