@@ -21,7 +21,7 @@ import rvc.lib.zluda
 # Import Tabs
 from tabs.inference.inference import inference_tab
 from tabs.download.download import download_tab
-
+from tabs.theme_loader.theme_loader import theme_loader
 # Run prerequisites
 from rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
 prerequisites_download_pipeline(models=True, exe=True)
@@ -46,8 +46,7 @@ with gr.Blocks(
         download_tab()
 
     with gr.Tab("Settings"):
-        gr.Markdown("On Progress...")
-        #settings_tab()
+        theme_loader()
 
     gr.Markdown(
     """
