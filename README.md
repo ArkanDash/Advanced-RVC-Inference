@@ -19,11 +19,11 @@ Please support the Applio. This inference won't be possible to make without it.<
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Model Downloader ✅
 - TTS Support 
-
-#### Currently Working
-- Settings 🛠
-- Microphone Support 
 - Gradio WebUI
+- 
+#### Currently Working
+- Settings 🛠 
+
 
 ### Installation
 
@@ -42,5 +42,6 @@ python models.py
 ```
 
 ### Run WebUI <br />
-
-comming soon
+```bash
+python app.py
+```
