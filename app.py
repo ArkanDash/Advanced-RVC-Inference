@@ -43,7 +43,7 @@ with gr.Blocks(
     gr.Markdown("# Advanced-RVC-Inference")
     gr.Markdown("A simple, high-quality voice conversion tool focused on ease of use and performance.")
     gr.Markdown("[Support](https://discord.gg/hvmsukmBHE) — [GitHub](https://github.com/ArkanDash/Advanced-RVC-Inference.git)")
-    )
+    
     
     
     with gr.Tab("Inference"):
