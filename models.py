@@ -1,5 +1,4 @@
-from rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
+import os
 
 
-print("downloading models...")
-prerequisites_download_pipeline(models=True, exe=True)
+os.system("python programs/applio_code/rvc/lib/tools/prerequisites_download.py")
