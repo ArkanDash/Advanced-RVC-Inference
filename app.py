@@ -29,7 +29,7 @@ with gr.Blocks(
         with gr.Tab("Language Changer"):
             lang_tab()
         restart_tab()
-    gr.Markdown("this project Maintained by [NeoDev](https://discord.com/1314204512814235689)")
+    gr.Markdown("<div align="center">this project Maintained by [NeoDev](https://discord.com/1314204512814235689)</div>")
         
 
 
