@@ -26,11 +26,11 @@ with gr.Blocks(
         full_inference_tab()
     with gr.Tab(i18n("Download Music")):
         download_music_tab()
-    with gr.Tab(i18n("Download Model")):
-        download_model_tab()
     with gr.Tab(i18n("Settings")):
-        select_themes_tab()
-        lang_tab()
+        with gr.Tab("Theme Selection"):
+            select_themes_tab()
+        with gr.Tab("Language Changer"):
+            lang_tab()
         restart_tab()
         
 
