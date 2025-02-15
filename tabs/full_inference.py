@@ -441,10 +441,16 @@ def download_music_tab():
     )
 
     download = gr.Button(i18n("Download"))
-
-
-
     
+    download.click(
+
+        download_music,
+
+        inputs=[link],
+
+        outputs=[output],
+
+    )
 
 
 
@@ -1573,15 +1579,7 @@ def full_inference_tab():
 
 
 
-    download.click(
-
-        download_music,
-
-        inputs=[link],
-
-        outputs=[output],
-
-    )
+    
     refresh_button.click(
 
         fn=change_choices,
