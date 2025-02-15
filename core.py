@@ -10,6 +10,9 @@ from audio_separator.separator import Separator
 import logging
 import yaml
 
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 from programs.applio_code.rvc.infer.infer import VoiceConverter
@@ -1010,14 +1013,30 @@ def download_model(link):
     return "Model downloaded with success"
 
 
+
 def download_music(link):
-    os.makedirs(os.path.join(now_dir, "audio_files", "original_files"), exist_ok=True)
-    command = [
-        "yt-dlp",
-        "-x",
-        "--output",
-        os.path.join(now_dir, "audio_files", "original_files", "%(title)s.%(ext)s"),
-        link,
-    ]
-    subprocess.run(command)
-    return "Music downloaded with success"
+    if not link or not isinstance(link, str):
+        logging.error("Invalid link provided.")
+        return "Error: Invalid link"
+
+    now_dir = os.getcwd()
+    output_dir = os.path.join(now_dir, "audio_files", "original_files")
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
+
+    command = ["yt-dlp", "-x", "--output", output_template, link]
+
+    try:
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        logging.info(f"Download successful: {result.stdout}")
+        return "Music downloaded successfully"
+    except FileNotFoundError:
+        logging.error("yt-dlp is not installed. Please install it first.")
+        return "Error: yt-dlp not found"
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Download failed: {e.stderr}")
+        return f"Error: {e.stderr}"
+
+# Example usage
+# print(download_music("https://www.youtube.com/watch?v=example"))
