@@ -31,8 +31,8 @@ with gr.Blocks(
         with gr.Tab("Language Changer"):
             lang_tab()
         restart_tab()
-    gr.Markdown("<div align="center">this project Maintained by [NeoDev](https://discord.com/1314204512814235689)</div>")
-        
+    gr.Markdown('<div align="center">this project Maintained by <a href="https://discord.com/1314204512814235689">NeoDev</a></div>')
+
 
 
 def launch(port):
