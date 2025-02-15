@@ -1,4 +1,4 @@
-from core import full_inference_program
+from core import full_inference_program, download_music
 import sys, os
 import gradio as gr
 import regex as re
@@ -6,6 +6,9 @@ from assets.i18n.i18n import I18nAuto
 import torch
 import shutil
 import unicodedata
+import gradio as gr
+from assets.i18n.i18n import I18nAuto
+
 
 i18n = I18nAuto()
 
@@ -204,6 +207,26 @@ def change_choices():
         {"choices": sorted(indexes_list), "__type__": "update"},
         {"choices": sorted(audio_paths), "__type__": "update"},
     )
+
+
+def download_music_tab():
+    with gr.Row():
+        link = gr.Textbox(
+            label=i18n("Music URL"),
+            lines=1,
+        )
+    output = gr.Textbox(
+        label=i18n("Output Information"),
+        info=i18n("The output information will be displayed here."),
+    )
+    download = gr.Button(i18n("Download"))
+
+    download.click(
+        download_music,
+        inputs=[link],
+        outputs=[output],
+    )
+
 
 
 def full_inference_tab():
@@ -741,7 +764,8 @@ def full_inference_tab():
             info=i18n("The output information will be displayed here."),
         )
         vc_output2 = gr.Audio(label=i18n("Export Audio"))
-
+    with gr.Tab("Download Music"):
+        download_music_tab()
     def update_dropdown_visibility(checkbox):
         return gr.update(visible=checkbox)
 
