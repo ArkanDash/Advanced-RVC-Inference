@@ -241,7 +241,7 @@ def full_inference_tab():
                 value=default_weight,
                 allow_custom_value=True,
             )
-
+        with gr.Row():
             index_file = gr.Dropdown(
                 label=i18n("Index File"),
                 info=i18n("Select the index file to use for the conversion."),
@@ -251,8 +251,10 @@ def full_inference_tab():
                 allow_custom_value=True,
             )
         with gr.Column():
-            refresh_button = gr.Button(i18n("Refresh"))
-            unload_button = gr.Button(i18n("Unload Voice"))
+            with gr.Row():
+                refresh_button = gr.Button(i18n("Refresh"))
+            
+                unload_button = gr.Button(i18n("Unload Voice"))
 
             unload_button.click(
                 fn=lambda: (
