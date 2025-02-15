@@ -764,8 +764,8 @@ def full_inference_tab():
             info=i18n("The output information will be displayed here."),
         )
         vc_output2 = gr.Audio(label=i18n("Export Audio"))
-    with gr.Tab("Download Music"):
-        download_music_tab()
+with gr.Tab(i18n("Download Music")):
+    download_music_tab()
     def update_dropdown_visibility(checkbox):
         return gr.update(visible=checkbox)
 
