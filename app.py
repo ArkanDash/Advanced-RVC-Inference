@@ -2,7 +2,6 @@ import gradio as gr
 import sys, os
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
-from tabs.download_music import download_music_tab
 from tabs.settings import select_themes_tab, lang_tab, restart_tab
 
 now_dir = os.getcwd()
@@ -32,6 +31,7 @@ with gr.Blocks(
         with gr.Tab("Language Changer"):
             lang_tab()
         restart_tab()
+    gr.Markdown("this project Maintained by [NeoDev](https://discord.com/1314204512814235689)")
         
 
 
