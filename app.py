@@ -23,6 +23,8 @@ with gr.Blocks(
     gr.Markdown("# Advanced-RVC-Inference")
     with gr.Tab(i18n("Full Inference")):
         full_inference_tab()
+    with gr.Tab(i18n("Download Model")):
+        download_model_tab()
     with gr.Tab(i18n("Settings")):
         with gr.Tab("Theme Selection"):
             select_themes_tab()
