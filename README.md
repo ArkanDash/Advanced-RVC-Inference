@@ -26,9 +26,11 @@ Please support the Applio. This inference won't be possible to make without it.<
 
 1. Install Dependencies <br />
 ```bash
-pip install torch torchvision torchaudio
 
 python -m pip install -r requirements.txt
+
+pip install torch torchvision torchaudio numpy==1.23.5
+
 ```
 2. Install [ffmpeg](https://ffmpeg.org/)
 
