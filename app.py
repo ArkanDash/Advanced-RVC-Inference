@@ -3,48 +3,7 @@ import sys, os
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
 from tabs.settings import select_themes_tab, lang_tab, restart_tab
-from pypresence import Presence
-import datetime as dt
 
-class RichPresenceManager:
-    def __init__(self):
-        self.client_id = "1340358329771364430"
-        self.rpc = None
-        self.running = False
-
-    def start_presence(self):
-        if not self.running:
-            self.running = True
-            self.rpc = Presence(self.client_id)
-            try:
-                self.rpc.connect()
-                self.update_presence()
-            except KeyboardInterrupt as error:
-                print(error)
-                self.rpc = None
-                self.running = False
-            except Exception as error:
-                print(f"An error occurred connecting to Discord: {error}")
-                self.rpc = None
-                self.running = False
-
-    def update_presence(self):
-        if self.rpc:
-            self.rpc.update(
-                details="Advanced RVC Inference",
-                buttons=[{"label": "Download", "url": "https://github.com/ArkanDash/Advanced-RVC-Inference.git"}],
-                large_image="nfvs4co",
-                large_text="Advanced RVC Inference for quicker and effortless model downloads",
-                start=dt.datetime.now().timestamp(),
-            )
-
-    def stop_presence(self):
-        self.running = False
-        if self.rpc:
-            self.rpc.close()
-            self.rpc = None
-
-RPCManager = RichPresenceManager()
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
