@@ -33,11 +33,6 @@ pip install torch torchvision torchaudio numpy==1.23.5
 
 ```
 2. Install [ffmpeg](https://ffmpeg.org/)
-
-3. Download models use:
-
-```bash
-python models.py
 ```
 
 ## Run WebUI <br />
