@@ -501,13 +501,8 @@ def full_inference_tab():
             )
 
         with gr.Column():
-
             with gr.Row():
-
-                refresh_button = gr.Button(i18n("Refresh"))
-
-            
-
+                refresh_button = gr.Button(i18n("Refresh"))        
                 unload_button = gr.Button(i18n("Unload Voice"))
 
 
@@ -722,7 +717,7 @@ def full_inference_tab():
 
                         choices=["WAV", "MP3", "FLAC", "OGG", "M4A"],
 
-                        value="FLAC",
+                        value="MP3",
 
                         interactive=True,
 
@@ -1308,7 +1303,7 @@ def full_inference_tab():
 
                     visible=True,
 
-                    value=True,
+                    value=False,
 
                     interactive=True,
 
