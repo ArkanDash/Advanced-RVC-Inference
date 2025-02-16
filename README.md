@@ -31,9 +31,9 @@ python -m pip install -r requirements.txt
 
 pip install torch torchvision torchaudio numpy==1.23.5
 ```
-```
+
 2. Install [ffmpeg](https://ffmpeg.org/)
-```
+
 
 ## Run WebUI <br />
 ```bash
