@@ -10,14 +10,16 @@ from audio_separator.separator import Separator
 import logging
 import yaml
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-now_dir = os.getcwd()
-sys.path.append(now_dir)
 from programs.applio_code.rvc.infer.infer import VoiceConverter
 from programs.applio_code.rvc.lib.tools.model_download import model_download_pipeline
 from programs.music_separation_code.inference import proc_file
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+now_dir = os.getcwd()
+sys.path.append(now_dir)
 
 models_vocals = [
     {
@@ -384,9 +386,9 @@ def full_inference_program(
     input_audio_basename = os.path.splitext(os.path.basename(input_audio_path))[0]
     search_result = search_with_word(store_dir, "vocals")
     if search_result:
-        print("Vocals already separated"),
+        print("Vocals already separated..."),
     else:
-        print("Separating vocals")
+        print("Separating vocals...")
         command = [
             "python",
             os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
@@ -443,11 +445,11 @@ def full_inference_program(
     karaoke_exists = search_with_word(store_dir, "karaoke") is not None
 
     if karaoke_exists:
-        print("Backing vocals already separated")
+        print("Backing vocals already separated...")
     else:
         if input_file:
             input_file = os.path.join(vocals_path, input_file)
-        print("Separating Backing vocals")
+        print("Separating Backing vocals...")
         if model_info["name"] == "Mel-Roformer Karaoke by aufr33 and viperx":
             model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
             if not os.path.exists(model_ckpt_path):
@@ -550,11 +552,11 @@ def full_inference_program(
     input_file = search_with_word(karaoke_path, "karaoke")
     noreverb_exists = search_with_word(store_dir, "noreverb") is not None
     if noreverb_exists:
-        print("Reverb already removed")
+        print("Reverb already removed...")
     else:
         if input_file:
             input_file = os.path.join(karaoke_path, input_file)
-        print("Removing reverb")
+        print("Removing reverb...")
         if (
             model_info["name"] == "BS-Roformer Dereverb by anvuew"
             or model_info["name"] == "MDX23C DeReverb by aufr33 and jarredou"
@@ -658,9 +660,9 @@ def full_inference_program(
     if deecho:
         no_echo_exists = search_with_word(store_dir, "noecho") is not None
         if no_echo_exists:
-            print("Echo already removed")
+            print("Echo already removed...")
         else:
-            print("Removing echo")
+            print("Removing echo...")
             model_info = get_model_info_by_name(deecho_model)
 
             dereverb_path = os.path.join(
@@ -847,7 +849,7 @@ def full_inference_program(
 
     store_dir = os.path.join(now_dir, "audio_files", music_folder, "rvc")
     os.makedirs(store_dir, exist_ok=True)
-    print("Making RVC inference")
+    print("Making RVC inference...")
     output_rvc = os.path.join(
         now_dir,
         "audio_files",
@@ -880,7 +882,7 @@ def full_inference_program(
     )
 
     if infer_backing_vocals:
-        print("Infering backing vocals")
+        print("Infering backing vocals...")
         karaoke_path = os.path.join(now_dir, "audio_files", music_folder, "karaoke")
         instrumental_file = search_with_word(karaoke_path, "instrumental")
         backing_vocals = os.path.join(karaoke_path, instrumental_file)
@@ -934,7 +936,7 @@ def full_inference_program(
             ),
         )
     if change_inst_pitch != 0:
-        print("Changing instrumental pitch")
+        print("Changing instrumental pitch...")
         inst_path = os.path.join(
             now_dir,
             "audio_files",
@@ -983,7 +985,7 @@ def full_inference_program(
         "final",
         f"{os.path.basename(input_audio_path).split('.')[0]}_final.{export_format_final.lower()}",
     )
-    print("Merging audios")
+    print("Merging audios...")
     result = merge_audios(
         vocals_file,
         inst_file,
@@ -994,7 +996,7 @@ def full_inference_program(
         backing_vocals_volume,
         export_format_final,
     )
-    print("Audios merged!")
+    print("Audios merged...")
     if delete_audios:
         main_directory = os.path.join(now_dir, "audio_files", music_folder)
         folder_to_keep = "final"
@@ -1019,13 +1021,24 @@ def download_music(link):
         logging.error("Invalid link provided.")
         return "Error: Invalid link"
 
-    now_dir = os.getcwd()
+    try:
+        now_dir = os.getcwd()
+    except OSError as e:
+        logging.error(f"Error accessing current working directory: {e}")
+        return "Error: Unable to access current working directory"
+
     output_dir = os.path.join(now_dir, "audio_files", "original_files")
     os.makedirs(output_dir, exist_ok=True)
 
     output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
-    command = ["yt-dlp", "-x", "--output", output_template, link]
+    command = [
+        "yt-dlp",
+        "-x",
+        "--audio-format", "wav",
+        "--output", output_template,
+        link
+    ]
 
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
@@ -1037,6 +1050,3 @@ def download_music(link):
     except subprocess.CalledProcessError as e:
         logging.error(f"Download failed: {e.stderr}")
         return f"Error: {e.stderr}"
-
-# Example usage
-# print(download_music("https://www.youtube.com/watch?v=example"))
