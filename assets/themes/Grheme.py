@@ -9,7 +9,7 @@ from gradio.themes.base import Base
 from gradio.themes.utils import colors, fonts, sizes
 
 
-class Theme(Base):
+class Grheme(Base):
     def __init__(
         self,
         *,
@@ -40,7 +40,7 @@ class Theme(Base):
             font=font,
             font_mono=font_mono,
         )
-        self.name = ("Theme",)
+        self.name = ("Grheme",)
         self.secondary_100 = ("#ffffff",)
         self.secondary_200 = ("#c8e0ff",)
         self.secondary_300 = ("#93c5fd",)
