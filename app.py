@@ -4,7 +4,7 @@ from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
 from tabs.settings import theme_tab, lang_tab, restart_tab
 from programs.applio_code.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
-from tabs.presence import load_config_presence
+from tabs.presence import load_config_presence, presence_tab
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -50,6 +50,8 @@ with gr.Blocks(
             theme_tab()
         with gr.Tab("Language Changer"):
             lang_tab()
+        with gr.Tab("Discord Presence"):
+            presence_tab()
         restart_tab()
     gr.Markdown(
         """
