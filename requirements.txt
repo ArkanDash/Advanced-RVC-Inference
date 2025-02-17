@@ -63,7 +63,7 @@ ftfy==6.2.3
 future==1.0.0
 gitdb==4.0.11
 GitPython==3.1.43
-gradio==5.16.0
+gradio==4.44.0
 gradio-client==1.7.0
 grpcio==1.66.1
 h11==0.14.0
