@@ -1,6 +1,6 @@
 {
   "theme": {
-    "file": null,
+    "file": "Theme.py",
     "class": "NeoPy/Syne"
   },
   "discord_presence": true,
