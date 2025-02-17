@@ -85,19 +85,20 @@ def restart_tab():
             )
 
 
-def select_themes_tab():
-    with gr.Column():
-        themes_select = gr.Dropdown(
-            choices=loadThemes.get_list(),
-            value=loadThemes.read_json(),
-            label=i18n("Theme"),
-            info=i18n(
-                "Select the theme you want to use. (Requires restarting the App)"
-            ),
-            visible=True,
-        )
-        themes_select.change(
-            fn=loadThemes.select_theme,
-            inputs=themes_select,
-            outputs=[],
-        )
+def theme_tab():
+    with gr.Row():
+        with gr.Column():
+            themes_select = gr.Dropdown(
+                loadThemes.get_theme_list(),
+                value=loadThemes.load_theme(),
+                label=i18n("Theme"),
+                info=i18n(
+                    "Select the theme you want to use. (Requires restarting Applio)"
+                ),
+                visible=True,
+            )
+            themes_select.change(
+                fn=loadThemes.select_theme,
+                inputs=themes_select,
+                outputs=[],
+            )
