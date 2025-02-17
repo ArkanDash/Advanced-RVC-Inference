@@ -482,8 +482,6 @@ def full_inference_tab():
 
             )
 
-        with gr.Row():
-
             index_file = gr.Dropdown(
 
                 label=i18n("Index File"),
@@ -502,9 +500,9 @@ def full_inference_tab():
 
         with gr.Column():
             with gr.Row():
-                refresh_button = gr.Button(i18n("Refresh"))        
-                unload_button = gr.Button(i18n("Unload Voice"))
-
+                refresh_button = gr.Button(i18n("Refresh"))  
+                with gr.Row():
+                    unload_button = gr.Button(i18n("Unload Voice"))
 
 
             unload_button.click(
