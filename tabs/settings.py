@@ -77,7 +77,7 @@ def lang_tab():
 def restart_tab():
     with gr.Row():
         with gr.Column():
-            restart_button = gr.Button(i18n("Restart Applio"))
+            restart_button = gr.Button("Restart App")
             restart_button.click(
                 fn=restart_applio,
                 inputs=[],
