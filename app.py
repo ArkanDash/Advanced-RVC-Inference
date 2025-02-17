@@ -4,6 +4,7 @@ from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
 from tabs.settings import select_themes_tab, lang_tab, restart_tab
 from programs.applio_code.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
+from tabs.settings.sections.presence import load_config_presence
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -25,6 +26,10 @@ import assets.themes.loadThemes as loadThemes
 
 i18n = I18nAuto()
 
+if load_config_presence():
+    from assets.discord_presence import RPCManager
+
+    RPCManager.start_presence()
 
 
 
