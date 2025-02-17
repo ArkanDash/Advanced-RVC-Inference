@@ -3,6 +3,7 @@
     "file": null,
     "class": "NeoPy/Syne"
   },
+  "discord_presence": true,
   "lang": {
     "override": false,
     "selected_lang": "en_US"
