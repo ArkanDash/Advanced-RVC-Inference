@@ -500,10 +500,9 @@ def full_inference_tab():
 
         with gr.Column():
             with gr.Row():
+                unload_button = gr.Button(i18n("Unload Voice"))
                 refresh_button = gr.Button(i18n("Refresh"))  
-                with gr.Row():
-                    unload_button = gr.Button(i18n("Unload Voice"))
-
+                
 
             unload_button.click(
 
