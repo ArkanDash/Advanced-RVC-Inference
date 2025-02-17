@@ -2,7 +2,7 @@ import gradio as gr
 import sys, os
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
-from tabs.settings import select_themes_tab, lang_tab, restart_tab
+from tabs.settings import theme_tab, lang_tab, restart_tab
 from programs.applio_code.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
 from tabs.presence import load_config_presence
 
@@ -47,7 +47,7 @@ with gr.Blocks(
         download_model_tab()
     with gr.Tab(i18n("Settings")):
         with gr.Tab("Theme Selection"):
-            select_themes_tab()
+            theme_tab()
         with gr.Tab("Language Changer"):
             lang_tab()
         restart_tab()
