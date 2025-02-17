@@ -33,7 +33,7 @@ if load_config_presence():
 
 
 
-rvc_theme = loadThemes.load_json() or "NoCrypt/miku"
+rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
 
 with gr.Blocks(
     theme=rvc_theme, title="Advanced RVC Inference"
