@@ -7,20 +7,20 @@ from .dataset import (
     DivideAndRemasterDataset,
     DivideAndRemasterDeterministicChunkDataset,
     DivideAndRemasterRandomChunkDataset,
-    DivideAndRemasterRandomChunkDatasetWithSpeechReverb
+    DivideAndRemasterRandomChunkDatasetWithSpeechReverb,
 )
 
 
 def DivideAndRemasterDataModule(
-        data_root: str = "$DATA_ROOT/DnR/v2",
-        batch_size: int = 2,
-        num_workers: int = 8,
-        train_kwargs: Optional[Mapping] = None,
-        val_kwargs: Optional[Mapping] = None,
-        test_kwargs: Optional[Mapping] = None,
-        datamodule_kwargs: Optional[Mapping] = None,
-        use_speech_reverb: bool = False
-        # augmentor=None
+    data_root: str = "$DATA_ROOT/DnR/v2",
+    batch_size: int = 2,
+    num_workers: int = 8,
+    train_kwargs: Optional[Mapping] = None,
+    val_kwargs: Optional[Mapping] = None,
+    test_kwargs: Optional[Mapping] = None,
+    datamodule_kwargs: Optional[Mapping] = None,
+    use_speech_reverb: bool = False,
+    # augmentor=None
 ) -> pl.LightningDataModule:
     if train_kwargs is None:
         train_kwargs = {}
@@ -47,26 +47,20 @@ def DivideAndRemasterDataModule(
     else:
         train_cls = DivideAndRemasterRandomChunkDataset
 
-    train_dataset = train_cls(
-            data_root, "train", **train_kwargs
-    )
+    train_dataset = train_cls(data_root, "train", **train_kwargs)
 
     # if augmentor is not None:
     #     train_dataset = AugmentedDataset(train_dataset, augmentor)
 
     datamodule = pl.LightningDataModule.from_datasets(
-            train_dataset=train_dataset,
-            val_dataset=DivideAndRemasterDeterministicChunkDataset(
-                    data_root, "val", **val_kwargs
-            ),
-            test_dataset=DivideAndRemasterDataset(
-                data_root,
-                "test",
-                **test_kwargs
-                ),
-            batch_size=batch_size,
-            num_workers=num_workers,
-            **datamodule_kwargs
+        train_dataset=train_dataset,
+        val_dataset=DivideAndRemasterDeterministicChunkDataset(
+            data_root, "val", **val_kwargs
+        ),
+        test_dataset=DivideAndRemasterDataset(data_root, "test", **test_kwargs),
+        batch_size=batch_size,
+        num_workers=num_workers,
+        **datamodule_kwargs
     )
 
     datamodule.predict_dataloader = datamodule.test_dataloader  # type: ignore[method-assign]

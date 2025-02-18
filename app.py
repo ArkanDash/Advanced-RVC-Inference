@@ -3,7 +3,9 @@ import sys, os
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
 from tabs.settings import theme_tab, lang_tab, restart_tab
-from programs.applio_code.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
+from programs.applio_code.rvc.lib.tools.prerequisites_download import (
+    prequisites_download_pipeline,
+)
 from tabs.presence import load_config_presence, presence_tab
 
 now_dir = os.getcwd()
@@ -15,7 +17,7 @@ MAX_PORT_ATTEMPTS = 10
 prequisites_download_pipeline(
     False,
     False,
-    True, 
+    True,
     False,
 )
 
@@ -32,15 +34,14 @@ if load_config_presence():
     RPCManager.start_presence()
 
 
-
 rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
 
-with gr.Blocks(
-    theme=rvc_theme, title="Advanced RVC Inference"
-) as rvc:
+with gr.Blocks(theme=rvc_theme, title="Advanced RVC Inference") as rvc:
     gr.Markdown('<div align="center"><h1>Advanced RVC Inference</h1></a></div>')
-    gr.Markdown('<div align="center">this project Maintained by <a href="https://discord.com/1314204512814235689">NeoDev</a></div>')
-  
+    gr.Markdown(
+        '<div align="center">this project Maintained by <a href="https://discord.com/1314204512814235689">NeoDev</a></div>'
+    )
+
     with gr.Tab(i18n("Full Inference")):
         full_inference_tab()
     with gr.Tab(i18n("Download Model")):

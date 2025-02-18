@@ -40,7 +40,10 @@ class RangeSigmoid(nn.Module):
         self.sigmoid: nn.modules.Module = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = self.sigmoid(x) * (self.val_range[1] - self.val_range[0]) + self.val_range[0]
+        out = (
+            self.sigmoid(x) * (self.val_range[1] - self.val_range[0])
+            + self.val_range[0]
+        )
         return out
 
 
@@ -72,7 +75,9 @@ class Encoder(nn.Module):
 
 
 class SingleRNN(nn.Module):
-    def __init__(self, rnn_type: str, input_size: int, hidden_size: int, dropout: float = 0.0) -> None:
+    def __init__(
+        self, rnn_type: str, input_size: int, hidden_size: int, dropout: float = 0.0
+    ) -> None:
         super(SingleRNN, self).__init__()
 
         self.rnn_type = rnn_type
@@ -144,7 +149,10 @@ class DPRNN(nn.Module):
         # input shape: (B, N, T)
         seq_len = x.shape[-1]
 
-        rest = self.chunk_size - (self.chunk_stride + seq_len % self.chunk_size) % self.chunk_size
+        rest = (
+            self.chunk_size
+            - (self.chunk_stride + seq_len % self.chunk_size) % self.chunk_size
+        )
         out = F.pad(x, [self.chunk_stride, rest + self.chunk_stride])
 
         return out, rest
@@ -153,18 +161,42 @@ class DPRNN(nn.Module):
         out, rest = self.pad_chunk(x)
         batch_size, feat_dim, seq_len = out.shape
 
-        segments1 = out[:, :, : -self.chunk_stride].contiguous().view(batch_size, feat_dim, -1, self.chunk_size)
-        segments2 = out[:, :, self.chunk_stride :].contiguous().view(batch_size, feat_dim, -1, self.chunk_size)
+        segments1 = (
+            out[:, :, : -self.chunk_stride]
+            .contiguous()
+            .view(batch_size, feat_dim, -1, self.chunk_size)
+        )
+        segments2 = (
+            out[:, :, self.chunk_stride :]
+            .contiguous()
+            .view(batch_size, feat_dim, -1, self.chunk_size)
+        )
         out = torch.cat([segments1, segments2], dim=3)
-        out = out.view(batch_size, feat_dim, -1, self.chunk_size).transpose(2, 3).contiguous()
+        out = (
+            out.view(batch_size, feat_dim, -1, self.chunk_size)
+            .transpose(2, 3)
+            .contiguous()
+        )
 
         return out, rest
 
     def merging(self, x: torch.Tensor, rest: int) -> torch.Tensor:
         batch_size, dim, _, _ = x.shape
-        out = x.transpose(2, 3).contiguous().view(batch_size, dim, -1, self.chunk_size * 2)
-        out1 = out[:, :, :, : self.chunk_size].contiguous().view(batch_size, dim, -1)[:, :, self.chunk_stride :]
-        out2 = out[:, :, :, self.chunk_size :].contiguous().view(batch_size, dim, -1)[:, :, : -self.chunk_stride]
+        out = (
+            x.transpose(2, 3)
+            .contiguous()
+            .view(batch_size, dim, -1, self.chunk_size * 2)
+        )
+        out1 = (
+            out[:, :, :, : self.chunk_size]
+            .contiguous()
+            .view(batch_size, dim, -1)[:, :, self.chunk_stride :]
+        )
+        out2 = (
+            out[:, :, :, self.chunk_size :]
+            .contiguous()
+            .view(batch_size, dim, -1)[:, :, : -self.chunk_stride]
+        )
         out = out1 + out2
         if rest > 0:
             out = out[:, :, :-rest]
@@ -175,16 +207,36 @@ class DPRNN(nn.Module):
         x, rest = self.chunking(x)
         batch_size, _, dim1, dim2 = x.shape
         out = x
-        for row_rnn, row_norm, col_rnn, col_norm in zip(self.row_rnn, self.row_norm, self.col_rnn, self.col_norm):
-            row_in = out.permute(0, 3, 2, 1).contiguous().view(batch_size * dim2, dim1, -1).contiguous()
+        for row_rnn, row_norm, col_rnn, col_norm in zip(
+            self.row_rnn, self.row_norm, self.col_rnn, self.col_norm
+        ):
+            row_in = (
+                out.permute(0, 3, 2, 1)
+                .contiguous()
+                .view(batch_size * dim2, dim1, -1)
+                .contiguous()
+            )
             row_out = row_rnn(row_in)
-            row_out = row_out.view(batch_size, dim2, dim1, -1).permute(0, 3, 2, 1).contiguous()
+            row_out = (
+                row_out.view(batch_size, dim2, dim1, -1)
+                .permute(0, 3, 2, 1)
+                .contiguous()
+            )
             row_out = row_norm(row_out)
             out = out + row_out
 
-            col_in = out.permute(0, 2, 3, 1).contiguous().view(batch_size * dim1, dim2, -1).contiguous()
+            col_in = (
+                out.permute(0, 2, 3, 1)
+                .contiguous()
+                .view(batch_size * dim1, dim2, -1)
+                .contiguous()
+            )
             col_out = col_rnn(col_in)
-            col_out = col_out.view(batch_size, dim1, dim2, -1).permute(0, 3, 1, 2).contiguous()
+            col_out = (
+                col_out.view(batch_size, dim1, dim2, -1)
+                .permute(0, 3, 1, 2)
+                .contiguous()
+            )
             col_out = col_norm(col_out)
             out = out + col_out
         out = self.conv(out)
@@ -236,7 +288,9 @@ class SquimObjective(nn.Module):
             List(torch.Tensor): List of score Tenosrs. Each Tensor is with dimension `(batch,)`.
         """
         if x.ndim != 2:
-            raise ValueError(f"The input must be a 2D Tensor. Found dimension {x.ndim}.")
+            raise ValueError(
+                f"The input must be a 2D Tensor. Found dimension {x.ndim}."
+            )
         x = x / (torch.mean(x**2, dim=1, keepdim=True) ** 0.5 * 20)
         out = self.encoder(x)
         out = self.dprnn(out)
@@ -257,7 +311,9 @@ def _create_branch(d_model: int, nhead: int, metric: str) -> nn.modules.Module:
     Returns:
         (nn.Module): Returned module to predict corresponding metric score.
     """
-    layer1 = nn.TransformerEncoderLayer(d_model, nhead, d_model * 4, dropout=0.0, batch_first=True)
+    layer1 = nn.TransformerEncoderLayer(
+        d_model, nhead, d_model * 4, dropout=0.0, batch_first=True
+    )
     layer2 = AutoPool()
     if metric == "stoi":
         layer3 = nn.Sequential(
@@ -274,7 +330,9 @@ def _create_branch(d_model: int, nhead: int, metric: str) -> nn.modules.Module:
             RangeSigmoid(val_range=PESQRange),
         )
     else:
-        layer3: nn.modules.Module = nn.Sequential(nn.Linear(d_model, d_model), nn.PReLU(), nn.Linear(d_model, 1))
+        layer3: nn.modules.Module = nn.Sequential(
+            nn.Linear(d_model, d_model), nn.PReLU(), nn.Linear(d_model, 1)
+        )
     return nn.Sequential(layer1, layer2, layer3)
 
 
@@ -305,7 +363,9 @@ def squim_objective_model(
     if chunk_stride is None:
         chunk_stride = chunk_size // 2
     encoder = Encoder(feat_dim, win_len)
-    dprnn = DPRNN(feat_dim, hidden_dim, num_blocks, rnn_type, d_model, chunk_size, chunk_stride)
+    dprnn = DPRNN(
+        feat_dim, hidden_dim, num_blocks, rnn_type, d_model, chunk_size, chunk_stride
+    )
     branches = nn.ModuleList(
         [
             _create_branch(d_model, nhead, "stoi"),
@@ -328,6 +388,7 @@ def squim_objective_base() -> SquimObjective:
         rnn_type="LSTM",
         chunk_size=71,
     )
+
 
 @dataclass
 class SquimObjectiveBundle:
@@ -380,4 +441,3 @@ SQUIM_OBJECTIVE.__doc__ = """SquimObjective pipeline trained using approach desc
 
     Please refer to :py:class:`SquimObjectiveBundle` for usage instructions.
     """
-

@@ -30,8 +30,14 @@ class RichPresenceManager:
                 state="Advanced-RVC",
                 details="Advaced voice cloning with UVR5 feature",
                 buttons=[
-                    {"label": "Home", "url": "https://github.com/ArkanDash/Advanced-RVC-Inference"},
-                    {"label": "Download", "url": "https://github.com/ArkanDash/Advanced-RVC-Inference/archive/refs/heads/master.zip"},
+                    {
+                        "label": "Home",
+                        "url": "https://github.com/ArkanDash/Advanced-RVC-Inference",
+                    },
+                    {
+                        "label": "Download",
+                        "url": "https://github.com/ArkanDash/Advanced-RVC-Inference/archive/refs/heads/master.zip",
+                    },
                 ],
                 large_image="logo",
                 large_text="Experimenting with Advanced-RVC",

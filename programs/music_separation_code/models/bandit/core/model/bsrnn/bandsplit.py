@@ -13,12 +13,12 @@ from models.bandit.core.model.bsrnn.utils import (
 
 class NormFC(nn.Module):
     def __init__(
-            self,
-            emb_dim: int,
-            bandwidth: int,
-            in_channel: int,
-            normalize_channel_independently: bool = False,
-            treat_channel_as_feature: bool = True,
+        self,
+        emb_dim: int,
+        bandwidth: int,
+        in_channel: int,
+        normalize_channel_independently: bool = False,
+        treat_channel_as_feature: bool = True,
     ) -> None:
         super().__init__()
 
@@ -67,14 +67,14 @@ class NormFC(nn.Module):
 
 class BandSplitModule(nn.Module):
     def __init__(
-            self,
-            band_specs: List[Tuple[float, float]],
-            emb_dim: int,
-            in_channel: int,
-            require_no_overlap: bool = False,
-            require_no_gap: bool = True,
-            normalize_channel_independently: bool = False,
-            treat_channel_as_feature: bool = True,
+        self,
+        band_specs: List[Tuple[float, float]],
+        emb_dim: int,
+        in_channel: int,
+        require_no_overlap: bool = False,
+        require_no_gap: bool = True,
+        normalize_channel_independently: bool = False,
+        treat_channel_as_feature: bool = True,
     ) -> None:
         super().__init__()
 
@@ -94,18 +94,18 @@ class BandSplitModule(nn.Module):
         self.emb_dim = emb_dim
 
         self.norm_fc_modules = nn.ModuleList(
-                [  # type: ignore
-                        (
-                                NormFC(
-                                        emb_dim=emb_dim,
-                                        bandwidth=bw,
-                                        in_channel=in_channel,
-                                        normalize_channel_independently=normalize_channel_independently,
-                                        treat_channel_as_feature=treat_channel_as_feature,
-                                )
-                        )
-                        for bw in self.band_widths
-                ]
+            [  # type: ignore
+                (
+                    NormFC(
+                        emb_dim=emb_dim,
+                        bandwidth=bw,
+                        in_channel=in_channel,
+                        normalize_channel_independently=normalize_channel_independently,
+                        treat_channel_as_feature=treat_channel_as_feature,
+                    )
+                )
+                for bw in self.band_widths
+            ]
         )
 
     def forward(self, x: torch.Tensor):
@@ -114,15 +114,11 @@ class BandSplitModule(nn.Module):
         batch, in_chan, _, n_time = x.shape
 
         z = torch.zeros(
-            size=(batch, self.n_bands, n_time, self.emb_dim),
-            device=x.device
+            size=(batch, self.n_bands, n_time, self.emb_dim), device=x.device
         )
 
         xr = torch.view_as_real(x)  # batch, in_chan, n_freq, n_time, 2
-        xr = torch.permute(
-            xr,
-            (0, 3, 1, 4, 2)
-            )  # batch, n_time, in_chan, 2, n_freq
+        xr = torch.permute(xr, (0, 3, 1, 4, 2))  # batch, n_time, in_chan, 2, n_freq
         batch, n_time, in_chan, reim, band_width = xr.shape
         for i, nfm in enumerate(self.norm_fc_modules):
             # print(f"bandsplit/band{i:02d}")
