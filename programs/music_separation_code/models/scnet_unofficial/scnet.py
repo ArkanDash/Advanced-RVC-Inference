@@ -1,8 +1,8 @@
-'''
+"""
 SCNet - great paper, great implementation
 https://arxiv.org/pdf/2401.13276.pdf
 https://github.com/amanteur/SCNet-PyTorch
-'''
+"""
 
 from typing import List
 
@@ -19,6 +19,7 @@ from functools import partial
 
 from beartype.typing import Tuple, Optional, List, Callable
 from beartype import beartype
+
 
 def exists(val):
     return val is not None
@@ -39,7 +40,7 @@ def unpack_one(t, ps, pattern):
 class RMSNorm(nn.Module):
     def __init__(self, dim):
         super().__init__()
-        self.scale = dim ** 0.5
+        self.scale = dim**0.5
         self.gamma = nn.Parameter(torch.ones(dim))
 
     def forward(self, x):
@@ -48,20 +49,13 @@ class RMSNorm(nn.Module):
 
 class BandSplit(nn.Module):
     @beartype
-    def __init__(
-            self,
-            dim,
-            dim_inputs: Tuple[int, ...]
-    ):
+    def __init__(self, dim, dim_inputs: Tuple[int, ...]):
         super().__init__()
         self.dim_inputs = dim_inputs
         self.to_features = ModuleList([])
 
         for dim_in in dim_inputs:
-            net = nn.Sequential(
-                RMSNorm(dim_in),
-                nn.Linear(dim_in, dim)
-            )
+            net = nn.Sequential(RMSNorm(dim_in), nn.Linear(dim_in, dim))
 
             self.to_features.append(net)
 
@@ -107,6 +101,7 @@ class SCNet(nn.Module):
         C is channel dim (mono / stereo),
         T is sequence length,
     """
+
     @beartype
     def __init__(
         self,
@@ -122,7 +117,7 @@ class SCNet(nn.Module):
         win_length: int = 4096,
         stft_window_fn: Optional[Callable] = None,
         stft_normalized: bool = False,
-        **kwargs
+        **kwargs,
     ):
         """
         Initializes SCNet with input parameters.
@@ -156,7 +151,7 @@ class SCNet(nn.Module):
             n_layers=n_rnn_layers,
             input_dim=dims[-1],
             hidden_dim=rnn_hidden_dim,
-            **kwargs
+            **kwargs,
         )
         self.su_blocks = nn.ModuleList(
             SUBlock(
@@ -174,10 +169,12 @@ class SCNet(nn.Module):
             n_fft=n_fft,
             hop_length=hop_length,
             win_length=win_length,
-            normalized=stft_normalized
+            normalized=stft_normalized,
         )
 
-        self.stft_window_fn = partial(default(stft_window_fn, torch.hann_window), win_length)
+        self.stft_window_fn = partial(
+            default(stft_window_fn, torch.hann_window), win_length
+        )
         self.n_sources = n_sources
         self.hop_length = hop_length
 
@@ -208,19 +205,19 @@ class SCNet(nn.Module):
         stft_window = self.stft_window_fn(device=device)
 
         if x.ndim == 2:
-            x = rearrange(x, 'b t -> b 1 t')
+            x = rearrange(x, "b t -> b 1 t")
 
         c = x.shape[1]
-        
+
         stft_pad = self.hop_length - x.shape[-1] % self.hop_length
         x = F.pad(x, (0, stft_pad))
 
         # stft
-        x, ps = pack_one(x, '* t')
+        x, ps = pack_one(x, "* t")
         x = torch.stft(x, **self.stft_kwargs, window=stft_window, return_complex=True)
         x = torch.view_as_real(x)
-        x = unpack_one(x, ps, '* c f t')
-        x = rearrange(x, 'b c f t r -> b f t (c r)')
+        x = unpack_one(x, ps, "* c f t")
+        x = rearrange(x, "b c f t r -> b f t (c r)")
 
         # encoder part
         x_skips = []
@@ -236,14 +233,14 @@ class SCNet(nn.Module):
             x = su_block(x, x_skip)
 
         # istft
-        x = rearrange(x, 'b f t (c r n) -> b n c f t r', c=c, n=self.n_sources, r=2)
+        x = rearrange(x, "b f t (c r n) -> b n c f t r", c=c, n=self.n_sources, r=2)
         x = x.contiguous()
 
-        x = torch.view_as_complex(x) 
-        x = rearrange(x, 'b n c f t -> (b n c) f t')
+        x = torch.view_as_complex(x)
+        x = rearrange(x, "b n c f t -> (b n c) f t")
         x = torch.istft(x, **self.stft_kwargs, window=stft_window, return_complex=False)
-        x = rearrange(x, '(b n c) t -> b n c t', c=c, n=self.n_sources)
+        x = rearrange(x, "(b n c) t -> b n c t", c=c, n=self.n_sources)
 
-        x = x[..., :-stft_pad] 
+        x = x[..., :-stft_pad]
 
         return x

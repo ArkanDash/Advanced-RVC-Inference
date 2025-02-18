@@ -16,7 +16,9 @@ def process_one(inputs: Tuple[str, str, int]) -> None:
     data, fs = ta.load(infile)
 
     if fs != target_fs:
-        data = ta.functional.resample(data, fs, target_fs, resampling_method="sinc_interp_kaiser")
+        data = ta.functional.resample(
+            data, fs, target_fs, resampling_method="sinc_interp_kaiser"
+        )
         fs = target_fs
 
     data = data.numpy()
@@ -30,16 +32,11 @@ def process_one(inputs: Tuple[str, str, int]) -> None:
     np.save(outfile, data)
 
 
-def preprocess(
-        data_path: str,
-        output_path: str,
-        fs: int
-) -> None:
+def preprocess(data_path: str, output_path: str, fs: int) -> None:
     files = glob.glob(os.path.join(data_path, "**", "*.wav"), recursive=True)
     print(files)
     outfiles = [
-            f.replace(data_path, output_path).replace(".wav", ".npy") for f in
-            files
+        f.replace(data_path, output_path).replace(".wav", ".npy") for f in files
     ]
 
     os.makedirs(output_path, exist_ok=True)

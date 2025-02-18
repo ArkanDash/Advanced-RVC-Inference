@@ -24,16 +24,14 @@ class MultiStemWrapper(_Loss):
         self.modality = modality
 
     def forward(
-            self,
-            preds: Dict[str, Dict[str, torch.Tensor]],
-            target: Dict[str, Dict[str, torch.Tensor]],
+        self,
+        preds: Dict[str, Dict[str, torch.Tensor]],
+        target: Dict[str, Dict[str, torch.Tensor]],
     ) -> torch.Tensor:
         loss = {
-                stem: self.loss(
-                        preds[self.modality][stem],
-                        target[self.modality][stem]
-                )
-                for stem in preds[self.modality] if stem in target[self.modality]
+            stem: self.loss(preds[self.modality][stem], target[self.modality][stem])
+            for stem in preds[self.modality]
+            if stem in target[self.modality]
         }
 
         return sum(list(loss.values()))

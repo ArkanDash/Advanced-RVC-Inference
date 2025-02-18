@@ -1,5 +1,5 @@
 # coding: utf-8
-__author__ = 'Roman Solovyev (ZFTurbo): https://github.com/ZFTurbo/'
+__author__ = "Roman Solovyev (ZFTurbo): https://github.com/ZFTurbo/"
 
 import os
 import librosa
@@ -81,42 +81,42 @@ def average_waveforms(pred_track, weights, algorithm):
 
     mod_track = []
     for i in range(pred_track.shape[0]):
-        if algorithm == 'avg_wave':
+        if algorithm == "avg_wave":
             mod_track.append(pred_track[i] * weights[i])
-        elif algorithm in ['median_wave', 'min_wave', 'max_wave']:
+        elif algorithm in ["median_wave", "min_wave", "max_wave"]:
             mod_track.append(pred_track[i])
-        elif algorithm in ['avg_fft', 'min_fft', 'max_fft', 'median_fft']:
+        elif algorithm in ["avg_fft", "min_fft", "max_fft", "median_fft"]:
             spec = stft(pred_track[i], nfft=2048, hl=1024)
-            if algorithm in ['avg_fft']:
+            if algorithm in ["avg_fft"]:
                 mod_track.append(spec * weights[i])
             else:
                 mod_track.append(spec)
     pred_track = np.array(mod_track)
 
-    if algorithm in ['avg_wave']:
+    if algorithm in ["avg_wave"]:
         pred_track = pred_track.sum(axis=0)
         pred_track /= np.array(weights).sum().T
-    elif algorithm in ['median_wave']:
+    elif algorithm in ["median_wave"]:
         pred_track = np.median(pred_track, axis=0)
-    elif algorithm in ['min_wave']:
+    elif algorithm in ["min_wave"]:
         pred_track = np.array(pred_track)
         pred_track = lambda_min(pred_track, axis=0, key=np.abs)
-    elif algorithm in ['max_wave']:
+    elif algorithm in ["max_wave"]:
         pred_track = np.array(pred_track)
         pred_track = lambda_max(pred_track, axis=0, key=np.abs)
-    elif algorithm in ['avg_fft']:
+    elif algorithm in ["avg_fft"]:
         pred_track = pred_track.sum(axis=0)
         pred_track /= np.array(weights).sum()
         pred_track = istft(pred_track, 1024, final_length)
-    elif algorithm in ['min_fft']:
+    elif algorithm in ["min_fft"]:
         pred_track = np.array(pred_track)
         pred_track = lambda_min(pred_track, axis=0, key=np.abs)
         pred_track = istft(pred_track, 1024, final_length)
-    elif algorithm in ['max_fft']:
+    elif algorithm in ["max_fft"]:
         pred_track = np.array(pred_track)
         pred_track = absmax(pred_track, axis=0)
         pred_track = istft(pred_track, 1024, final_length)
-    elif algorithm in ['median_fft']:
+    elif algorithm in ["median_fft"]:
         pred_track = np.array(pred_track)
         pred_track = np.median(pred_track, axis=0)
         pred_track = istft(pred_track, 1024, final_length)
@@ -125,37 +125,58 @@ def average_waveforms(pred_track, weights, algorithm):
 
 def ensemble_files(args):
     parser = argparse.ArgumentParser()
-    parser.add_argument("--files", type=str, required=True, nargs='+', help="Path to all audio-files to ensemble")
-    parser.add_argument("--type", type=str, default='avg_wave', help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft")
-    parser.add_argument("--weights", type=float, nargs='+', help="Weights to create ensemble. Number of weights must be equal to number of files")
-    parser.add_argument("--output", default="res.wav", type=str, help="Path to wav file where ensemble result will be stored")
+    parser.add_argument(
+        "--files",
+        type=str,
+        required=True,
+        nargs="+",
+        help="Path to all audio-files to ensemble",
+    )
+    parser.add_argument(
+        "--type",
+        type=str,
+        default="avg_wave",
+        help="One of avg_wave, median_wave, min_wave, max_wave, avg_fft, median_fft, min_fft, max_fft",
+    )
+    parser.add_argument(
+        "--weights",
+        type=float,
+        nargs="+",
+        help="Weights to create ensemble. Number of weights must be equal to number of files",
+    )
+    parser.add_argument(
+        "--output",
+        default="res.wav",
+        type=str,
+        help="Path to wav file where ensemble result will be stored",
+    )
     if args is None:
         args = parser.parse_args()
     else:
         args = parser.parse_args(args)
 
-    print('Ensemble type: {}'.format(args.type))
-    print('Number of input files: {}'.format(len(args.files)))
+    print("Ensemble type: {}".format(args.type))
+    print("Number of input files: {}".format(len(args.files)))
     if args.weights is not None:
         weights = args.weights
     else:
         weights = np.ones(len(args.files))
-    print('Weights: {}'.format(weights))
-    print('Output file: {}'.format(args.output))
+    print("Weights: {}".format(weights))
+    print("Output file: {}".format(args.output))
     data = []
     for f in args.files:
         if not os.path.isfile(f):
-            print('Error. Can\'t find file: {}. Check paths.'.format(f))
+            print("Error. Can't find file: {}. Check paths.".format(f))
             exit()
-        print('Reading file: {}'.format(f))
+        print("Reading file: {}".format(f))
         wav, sr = librosa.load(f, sr=None, mono=False)
         # wav, sr = sf.read(f)
         print("Waveform shape: {} sample rate: {}".format(wav.shape, sr))
         data.append(wav)
     data = np.array(data)
     res = average_waveforms(data, weights, args.type)
-    print('Result shape: {}'.format(res.shape))
-    sf.write(args.output, res.T, sr, 'FLOAT')
+    print("Result shape: {}".format(res.shape))
+    sf.write(args.output, res.T, sr, "FLOAT")
 
 
 if __name__ == "__main__":

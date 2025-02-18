@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as Func
 
+
 class RMSNorm(nn.Module):
     def __init__(self, dim):
         super().__init__()
-        self.scale = dim ** 0.5
+        self.scale = dim**0.5
         self.gamma = nn.Parameter(torch.ones(dim))
 
     def forward(self, x):
@@ -17,11 +18,8 @@ class MambaModule(nn.Module):
         super().__init__()
         self.norm = RMSNorm(dim=d_model)
         self.mamba = Mamba(
-                d_model=d_model, 
-                d_state=d_state, 
-                d_conv=d_conv, 
-                d_expand=d_expand
-            )
+            d_model=d_model, d_state=d_state, d_conv=d_conv, d_expand=d_expand
+        )
 
     def forward(self, x):
         x = x + self.mamba(self.norm(x))
@@ -128,7 +126,7 @@ class RFFTModule(nn.Module):
             x = x.reshape(B, F, T, D // 2, 2)
             x = torch.view_as_complex(x)
             x = torch.fft.irfft(x, n=time_dim, dim=2)
-        
+
         x = x.to(dtype)
         return x
 
@@ -166,11 +164,10 @@ class DualPathRNN(nn.Module):
         n_layers: int,
         input_dim: int,
         hidden_dim: int,
-
         use_mamba: bool = False,
         d_state: int = 16,
         d_conv: int = 4,
-        d_expand: int = 2
+        d_expand: int = 2,
     ):
         """
         Initializes DualPathRNN with the specified number of layers, input dimension, and hidden dimension.
@@ -179,9 +176,20 @@ class DualPathRNN(nn.Module):
 
         if use_mamba:
             from mamba_ssm.modules.mamba_simple import Mamba
+
             net = MambaModule
-            dkwargs = {"d_model": input_dim, "d_state": d_state, "d_conv": d_conv, "d_expand": d_expand}
-            ukwargs = {"d_model": input_dim * 2, "d_state": d_state, "d_conv": d_conv, "d_expand": d_expand * 2}
+            dkwargs = {
+                "d_model": input_dim,
+                "d_state": d_state,
+                "d_conv": d_conv,
+                "d_expand": d_expand,
+            }
+            ukwargs = {
+                "d_model": input_dim * 2,
+                "d_state": d_state,
+                "d_conv": d_conv,
+                "d_expand": d_expand * 2,
+            }
         else:
             net = RNNModule
             dkwargs = {"input_dim": input_dim, "hidden_dim": hidden_dim}
@@ -190,13 +198,15 @@ class DualPathRNN(nn.Module):
         self.layers = nn.ModuleList()
         for i in range(1, n_layers + 1):
             kwargs = dkwargs if i % 2 == 1 else ukwargs
-            layer = nn.ModuleList([
-                net(**kwargs),
-                net(**kwargs),
-                RFFTModule(inverse=(i % 2 == 0)),
-            ])
+            layer = nn.ModuleList(
+                [
+                    net(**kwargs),
+                    net(**kwargs),
+                    RFFTModule(inverse=(i % 2 == 0)),
+                ]
+            )
             self.layers.append(layer)
-        
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
         Performs forward pass through the DualPathRNN.
@@ -224,5 +234,5 @@ class DualPathRNN(nn.Module):
             x = x.permute(0, 2, 1, 3)
 
             x = rfft_layer(x, time_dim)
-        
+
         return x

@@ -1,8 +1,8 @@
-'''
+"""
 SCNet - great paper, great implementation
 https://arxiv.org/pdf/2401.13276.pdf
 https://github.com/amanteur/SCNet-PyTorch
-'''
+"""
 
 from typing import List, Tuple, Union
 
@@ -10,7 +10,7 @@ import torch
 
 
 def create_intervals(
-    splits: List[Union[float, int]]
+    splits: List[Union[float, int]],
 ) -> List[Union[Tuple[float, float], Tuple[int, int]]]:
     """
     Create intervals based on splits provided.

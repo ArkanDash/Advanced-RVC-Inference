@@ -12,20 +12,21 @@ from core.data._types import DataDict
 from core.data.musdb.dataset import MUSDB18FullTrackDataset
 import pyloudnorm as pyln
 
+
 class SourceActivityDetector(nn.Module):
     def __init__(
-            self,
-            analysis_stem: str,
-            output_path: str,
-            fs: int = 44100,
-            segment_length_second: float = 6.0,
-            hop_length_second: float = 3.0,
-            n_chunks: int = 10,
-            chunk_epsilon: float = 1e-5,
-            energy_threshold_quantile: float = 0.15,
-            segment_epsilon: float = 1e-3,
-            salient_proportion_threshold: float = 0.5,
-            target_lufs: float = -24
+        self,
+        analysis_stem: str,
+        output_path: str,
+        fs: int = 44100,
+        segment_length_second: float = 6.0,
+        hop_length_second: float = 3.0,
+        n_chunks: int = 10,
+        chunk_epsilon: float = 1e-5,
+        energy_threshold_quantile: float = 0.15,
+        segment_epsilon: float = 1e-3,
+        salient_proportion_threshold: float = 0.5,
+        target_lufs: float = -24,
     ) -> None:
         super().__init__()
 
@@ -48,8 +49,7 @@ class SourceActivityDetector(nn.Module):
 
     def forward(self, data: DataDict) -> None:
 
-        stem_ = self.analysis_stem if (
-                    self.analysis_stem != "none") else "mixture"
+        stem_ = self.analysis_stem if (self.analysis_stem != "none") else "mixture"
 
         x = data["audio"][stem_]
 
@@ -69,9 +69,7 @@ class SourceActivityDetector(nn.Module):
         n_chan, n_samples = x.shape
 
         n_segments = (
-                int(
-                    np.ceil((n_samples - self.segment_length) / self.hop_length)
-                    ) + 1
+            int(np.ceil((n_samples - self.segment_length) / self.hop_length)) + 1
         )
 
         segments = torch.zeros((n_segments, n_chan, self.segment_length))
@@ -84,16 +82,12 @@ class SourceActivityDetector(nn.Module):
 
             if end - start < self.segment_length:
                 xseg = F.pad(
-                        xseg,
-                        pad=(0, self.segment_length - (end - start)),
-                        value=torch.nan
+                    xseg, pad=(0, self.segment_length - (end - start)), value=torch.nan
                 )
 
             segments[i, :, :] = xseg
 
-        chunks = segments.reshape(
-                (n_segments, n_chan, self.n_chunks, self.chunk_size)
-                )
+        chunks = segments.reshape((n_segments, n_chan, self.n_chunks, self.chunk_size))
 
         if self.analysis_stem != "none":
             chunk_energies = torch.mean(torch.square(chunks), dim=(1, 3))
@@ -101,7 +95,7 @@ class SourceActivityDetector(nn.Module):
             chunk_energies[chunk_energies == 0] = self.chunk_epsilon
 
             energy_threshold = torch.nanquantile(
-                    chunk_energies, q=self.energy_threshold_quantile
+                chunk_energies, q=self.energy_threshold_quantile
             )
 
             if energy_threshold < self.segment_epsilon:
@@ -109,11 +103,11 @@ class SourceActivityDetector(nn.Module):
 
             chunks_above_threshold = chunk_energies > energy_threshold
             n_chunks_above_threshold = torch.mean(
-                    chunks_above_threshold.to(torch.float), dim=-1
+                chunks_above_threshold.to(torch.float), dim=-1
             )
 
             segment_above_threshold = (
-                    n_chunks_above_threshold > self.salient_proportion_threshold
+                n_chunks_above_threshold > self.salient_proportion_threshold
             )
 
             if torch.sum(segment_above_threshold) == 0:
@@ -127,9 +121,9 @@ class SourceActivityDetector(nn.Module):
                 continue
 
             outpath = os.path.join(
-                    self.output_path,
-                    self.analysis_stem,
-                    f"{data['track']} - {self.analysis_stem}{i:03d}",
+                self.output_path,
+                self.analysis_stem,
+                f"{data['track']} - {self.analysis_stem}{i:03d}",
             )
             os.makedirs(outpath, exist_ok=True)
 
@@ -145,8 +139,7 @@ class SourceActivityDetector(nn.Module):
 
                     if end - start < self.segment_length:
                         segment = F.pad(
-                                segment,
-                                (0, self.segment_length - (end - start))
+                            segment, (0, self.segment_length - (end - start))
                         )
 
                 assert segment.shape[-1] == self.segment_length, segment.shape
@@ -157,35 +150,35 @@ class SourceActivityDetector(nn.Module):
 
 
 def preprocess(
-        analysis_stem: str,
-        output_path: str = "/data/MUSDB18/HQ/saded-np",
-        fs: int = 44100,
-        segment_length_second: float = 6.0,
-        hop_length_second: float = 3.0,
-        n_chunks: int = 10,
-        chunk_epsilon: float = 1e-5,
-        energy_threshold_quantile: float = 0.15,
-        segment_epsilon: float = 1e-3,
-        salient_proportion_threshold: float = 0.5,
+    analysis_stem: str,
+    output_path: str = "/data/MUSDB18/HQ/saded-np",
+    fs: int = 44100,
+    segment_length_second: float = 6.0,
+    hop_length_second: float = 3.0,
+    n_chunks: int = 10,
+    chunk_epsilon: float = 1e-5,
+    energy_threshold_quantile: float = 0.15,
+    segment_epsilon: float = 1e-3,
+    salient_proportion_threshold: float = 0.5,
 ) -> None:
 
     sad = SourceActivityDetector(
-            analysis_stem=analysis_stem,
-            output_path=output_path,
-            fs=fs,
-            segment_length_second=segment_length_second,
-            hop_length_second=hop_length_second,
-            n_chunks=n_chunks,
-            chunk_epsilon=chunk_epsilon,
-            energy_threshold_quantile=energy_threshold_quantile,
-            segment_epsilon=segment_epsilon,
-            salient_proportion_threshold=salient_proportion_threshold,
+        analysis_stem=analysis_stem,
+        output_path=output_path,
+        fs=fs,
+        segment_length_second=segment_length_second,
+        hop_length_second=hop_length_second,
+        n_chunks=n_chunks,
+        chunk_epsilon=chunk_epsilon,
+        energy_threshold_quantile=energy_threshold_quantile,
+        segment_epsilon=segment_epsilon,
+        salient_proportion_threshold=salient_proportion_threshold,
     )
 
     for split in ["train", "val", "test"]:
         ds = MUSDB18FullTrackDataset(
-                data_root="/data/MUSDB18/HQ/canonical",
-                split=split,
+            data_root="/data/MUSDB18/HQ/canonical",
+            split=split,
         )
 
         tracks = []
@@ -196,9 +189,8 @@ def preprocess(
             tracks.append(track)
         process_map(sad, tracks, max_workers=8)
 
-def loudness_norm_one(
-        inputs
-):
+
+def loudness_norm_one(inputs):
     infile, outfile, target_lufs = inputs
 
     audio, fs = ta.load(infile)
@@ -211,23 +203,19 @@ def loudness_norm_one(
     os.makedirs(os.path.dirname(outfile), exist_ok=True)
     np.save(outfile, audio.T)
 
-def loudness_norm(
-        data_path: str,
-        # output_path: str,
-        target_lufs = -17.0,
-):
-    files = glob.glob(
-            os.path.join(data_path, "**", "*.wav"), recursive=True
-    )
 
-    outfiles = [
-            f.replace(".wav", ".npy").replace("saded", "saded-np") for f in files
-    ]
+def loudness_norm(
+    data_path: str,
+    # output_path: str,
+    target_lufs=-17.0,
+):
+    files = glob.glob(os.path.join(data_path, "**", "*.wav"), recursive=True)
+
+    outfiles = [f.replace(".wav", ".npy").replace("saded", "saded-np") for f in files]
 
     files = [(f, o, target_lufs) for f, o in zip(files, outfiles)]
 
     process_map(loudness_norm_one, files, chunksize=2)
-
 
 
 if __name__ == "__main__":

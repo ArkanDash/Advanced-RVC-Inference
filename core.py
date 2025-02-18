@@ -15,8 +15,7 @@ from programs.applio_code.rvc.lib.tools.model_download import model_download_pip
 from programs.music_separation_code.inference import proc_file
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -1015,7 +1014,6 @@ def download_model(link):
     return "Model downloaded with success"
 
 
-
 def download_music(link):
     if not link or not isinstance(link, str):
         logging.error("Invalid link provided.")
@@ -1035,9 +1033,11 @@ def download_music(link):
     command = [
         "yt-dlp",
         "-x",
-        "--audio-format", "wav",
-        "--output", output_template,
-        link
+        "--audio-format",
+        "wav",
+        "--output",
+        output_template,
+        link,
     ]
 
     try:

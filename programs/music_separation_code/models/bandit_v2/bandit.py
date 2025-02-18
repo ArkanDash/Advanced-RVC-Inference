@@ -11,7 +11,6 @@ from .tfmodel import SeqBandModellingModule
 from .utils import MusicalBandsplitSpecification
 
 
-
 class BaseEndToEndModule(pl.LightningModule):
     def __init__(
         self,
@@ -178,12 +177,12 @@ class BaseBandit(BaseEndToEndModule):
             )
         except Exception as e:
             self.tf_model = SeqBandModellingModule(
-                    n_modules=n_sqm_modules,
-                    emb_dim=emb_dim,
-                    rnn_dim=rnn_dim,
-                    bidirectional=bidirectional,
-                    rnn_type=rnn_type,
-                )
+                n_modules=n_sqm_modules,
+                emb_dim=emb_dim,
+                rnn_dim=rnn_dim,
+                bidirectional=bidirectional,
+                rnn_type=rnn_type,
+            )
 
     def mask(self, x, m):
         return x * m
@@ -193,11 +192,7 @@ class BaseBandit(BaseEndToEndModule):
         init_shape = batch.shape
         if not isinstance(batch, dict):
             mono = batch.view(-1, 1, batch.shape[-1])
-            batch = {
-                "mixture": {
-                    "audio": mono
-                }
-            }
+            batch = {"mixture": {"audio": mono}}
 
         with torch.no_grad():
             mixture = batch["mixture"]["audio"]
@@ -217,7 +212,9 @@ class BaseBandit(BaseEndToEndModule):
             b = []
             for s in self.stems:
                 # We need to obtain stereo again
-                r = batch['estimates'][s]['audio'].view(-1, init_shape[1], init_shape[2])
+                r = batch["estimates"][s]["audio"].view(
+                    -1, init_shape[1], init_shape[2]
+                )
                 b.append(r)
             # And we need to return back tensor and not independent stems
             batch = torch.stack(b, dim=1)
@@ -364,4 +361,3 @@ class Bandit(BaseBandit):
             }
 
         return batch
-

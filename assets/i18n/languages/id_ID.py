@@ -85,5 +85,5 @@
     "Export Audio": "Ekspor Audio",
     "Music URL": "URL Musik",
     "Download": "Unduh",
-    "Model URL": "URL Model"
+    "Model URL": "URL Model",
 }
