@@ -21,12 +21,14 @@ class STFT:
             hop_length=self.hop_length,
             window=window,
             center=True,
-            return_complex=True
+            return_complex=True,
         )
         x = torch.view_as_real(x)
         x = x.permute([0, 3, 1, 2])
-        x = x.reshape([*batch_dims, c, 2, -1, x.shape[-1]]).reshape([*batch_dims, c * 2, -1, x.shape[-1]])
-        return x[..., :self.dim_f, :]
+        x = x.reshape([*batch_dims, c, 2, -1, x.shape[-1]]).reshape(
+            [*batch_dims, c * 2, -1, x.shape[-1]]
+        )
+        return x[..., : self.dim_f, :]
 
     def inverse(self, x):
         window = self.window.to(x.device)
@@ -37,25 +39,21 @@ class STFT:
         x = torch.cat([x, f_pad], -2)
         x = x.reshape([*batch_dims, c // 2, 2, n, t]).reshape([-1, 2, n, t])
         x = x.permute([0, 2, 3, 1])
-        x = x[..., 0] + x[..., 1] * 1.j
+        x = x[..., 0] + x[..., 1] * 1.0j
         x = torch.istft(
-            x,
-            n_fft=self.n_fft,
-            hop_length=self.hop_length,
-            window=window,
-            center=True
+            x, n_fft=self.n_fft, hop_length=self.hop_length, window=window, center=True
         )
         x = x.reshape([*batch_dims, 2, -1])
         return x
 
 
 def get_act(act_type):
-    if act_type == 'gelu':
+    if act_type == "gelu":
         return nn.GELU()
-    elif act_type == 'relu':
+    elif act_type == "relu":
         return nn.ReLU()
-    elif act_type[:3] == 'elu':
-        alpha = float(act_type.replace('elu', ''))
+    elif act_type[:3] == "elu":
+        alpha = float(act_type.replace("elu", ""))
         return nn.ELU(alpha)
     else:
         raise Exception
@@ -64,7 +62,7 @@ def get_act(act_type):
 def get_decoder(config, c):
     decoder = None
     decoder_options = dict()
-    if config.model.decoder_type == 'unet':
+    if config.model.decoder_type == "unet":
         try:
             decoder_options = dict(config.decoder_unet)
         except:
@@ -76,7 +74,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'fpn':
+    elif config.model.decoder_type == "fpn":
         try:
             decoder_options = dict(config.decoder_fpn)
         except:
@@ -88,7 +86,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'unet++':
+    elif config.model.decoder_type == "unet++":
         try:
             decoder_options = dict(config.decoder_unet_plus_plus)
         except:
@@ -100,7 +98,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'manet':
+    elif config.model.decoder_type == "manet":
         try:
             decoder_options = dict(config.decoder_manet)
         except:
@@ -112,7 +110,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'linknet':
+    elif config.model.decoder_type == "linknet":
         try:
             decoder_options = dict(config.decoder_linknet)
         except:
@@ -124,7 +122,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'pspnet':
+    elif config.model.decoder_type == "pspnet":
         try:
             decoder_options = dict(config.decoder_pspnet)
         except:
@@ -136,7 +134,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'pspnet':
+    elif config.model.decoder_type == "pspnet":
         try:
             decoder_options = dict(config.decoder_pspnet)
         except:
@@ -148,7 +146,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'pan':
+    elif config.model.decoder_type == "pan":
         try:
             decoder_options = dict(config.decoder_pan)
         except:
@@ -160,7 +158,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'deeplabv3':
+    elif config.model.decoder_type == "deeplabv3":
         try:
             decoder_options = dict(config.decoder_deeplabv3)
         except:
@@ -172,7 +170,7 @@ def get_decoder(config, c):
             classes=c,
             **decoder_options,
         )
-    elif config.model.decoder_type == 'deeplabv3plus':
+    elif config.model.decoder_type == "deeplabv3plus":
         try:
             decoder_options = dict(config.decoder_deeplabv3plus)
         except:
@@ -194,7 +192,9 @@ class Torchseg_Net(nn.Module):
 
         act = get_act(act_type=config.model.act)
 
-        self.num_target_instruments = 1 if config.training.target_instrument else len(config.training.instruments)
+        self.num_target_instruments = (
+            1 if config.training.target_instrument else len(config.training.instruments)
+        )
         self.num_subbands = config.model.num_subbands
 
         dim_c = self.num_subbands * config.audio.num_channels * 2
@@ -208,7 +208,7 @@ class Torchseg_Net(nn.Module):
         self.final_conv = nn.Sequential(
             nn.Conv2d(c + dim_c, c, 1, 1, 0, bias=False),
             act,
-            nn.Conv2d(c, self.num_target_instruments * dim_c, 1, 1, 0, bias=False)
+            nn.Conv2d(c, self.num_target_instruments * dim_c, 1, 1, 0, bias=False),
         )
 
         self.stft = STFT(config.audio)

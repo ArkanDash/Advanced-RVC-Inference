@@ -11,15 +11,8 @@ class ReImLossWrapper(_Loss):
         super().__init__()
         self.module = module
 
-    def forward(
-            self,
-            preds: torch.Tensor,
-            target: torch.Tensor
-            ) -> torch.Tensor:
-        return self.module(
-            torch.view_as_real(preds),
-            torch.view_as_real(target)
-            )
+    def forward(self, preds: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        return self.module(torch.view_as_real(preds), torch.view_as_real(target))
 
 
 class ReImL1Loss(ReImLossWrapper):

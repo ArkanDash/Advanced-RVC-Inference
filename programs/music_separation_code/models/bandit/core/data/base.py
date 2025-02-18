@@ -1,6 +1,5 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pedalboard as pb
@@ -13,14 +12,15 @@ from models.bandit.core.data._types import AudioDict, DataDict
 
 class BaseSourceSeparationDataset(data.Dataset, ABC):
     def __init__(
-            self, split: str,
-            stems: List[str],
-            files: List[str],
-            data_path: str,
-            fs: int,
-            npy_memmap: bool,
-            recompute_mixture: bool
-            ):
+        self,
+        split: str,
+        stems: List[str],
+        files: List[str],
+        data_path: str,
+        fs: int,
+        npy_memmap: bool,
+        recompute_mixture: bool,
+    ):
         self.split = split
         self.stems = stems
         self.stems_no_mixture = [s for s in stems if s != "mixture"]
@@ -31,12 +31,7 @@ class BaseSourceSeparationDataset(data.Dataset, ABC):
         self.recompute_mixture = recompute_mixture
 
     @abstractmethod
-    def get_stem(
-            self,
-            *,
-            stem: str,
-            identifier: Dict[str, Any]
-            ) -> torch.Tensor:
+    def get_stem(self, *, stem: str, identifier: Dict[str, Any]) -> torch.Tensor:
         raise NotImplementedError
 
     def _get_audio(self, stems, identifier: Dict[str, Any]):
@@ -49,10 +44,7 @@ class BaseSourceSeparationDataset(data.Dataset, ABC):
     def get_audio(self, identifier: Dict[str, Any]) -> AudioDict:
 
         if self.recompute_mixture:
-            audio = self._get_audio(
-                self.stems_no_mixture,
-                identifier=identifier
-                )
+            audio = self._get_audio(self.stems_no_mixture, identifier=identifier)
             audio["mixture"] = self.compute_mixture(audio)
             return audio
         else:
@@ -64,6 +56,4 @@ class BaseSourceSeparationDataset(data.Dataset, ABC):
 
     def compute_mixture(self, audio: AudioDict) -> torch.Tensor:
 
-        return sum(
-                audio[stem] for stem in audio if stem != "mixture"
-        )
+        return sum(audio[stem] for stem in audio if stem != "mixture")

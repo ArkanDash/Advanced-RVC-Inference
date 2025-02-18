@@ -21,8 +21,8 @@ class FeatureConversion(nn.Module):
         # B, C, F, T = x.shape
         if self.inverse:
             x = x.float()
-            x_r = x[:, :self.channels // 2, :, :]
-            x_i = x[:, self.channels // 2:, :, :]
+            x_r = x[:, : self.channels // 2, :, :]
+            x_i = x[:, self.channels // 2 :, :, :]
             x = torch.complex(x_r, x_i)
             x = torch.fft.irfft(x, dim=3, norm="ortho")
         else:
@@ -51,12 +51,22 @@ class DualPathRNN(nn.Module):
         self.hidden_size = d_model * expand
         self.bidirectional = bidirectional
         # Initialize LSTM layers and normalization layers
-        self.lstm_layers = nn.ModuleList([self._init_lstm_layer(self.d_model, self.hidden_size) for _ in range(2)])
-        self.linear_layers = nn.ModuleList([nn.Linear(self.hidden_size * 2, self.d_model) for _ in range(2)])
+        self.lstm_layers = nn.ModuleList(
+            [self._init_lstm_layer(self.d_model, self.hidden_size) for _ in range(2)]
+        )
+        self.linear_layers = nn.ModuleList(
+            [nn.Linear(self.hidden_size * 2, self.d_model) for _ in range(2)]
+        )
         self.norm_layers = nn.ModuleList([nn.GroupNorm(1, d_model) for _ in range(2)])
 
     def _init_lstm_layer(self, d_model, hidden_size):
-        return LSTM(d_model, hidden_size, num_layers=1, bidirectional=self.bidirectional, batch_first=True)
+        return LSTM(
+            d_model,
+            hidden_size,
+            num_layers=1,
+            bidirectional=self.bidirectional,
+            batch_first=True,
+        )
 
     def forward(self, x):
         B, C, F, T = x.shape
@@ -98,13 +108,19 @@ class SeparationNet(nn.Module):
 
         self.num_layers = num_layers
 
-        self.dp_modules = nn.ModuleList([
-            DualPathRNN(channels * (2 if i % 2 == 1 else 1), expand) for i in range(num_layers)
-        ])
+        self.dp_modules = nn.ModuleList(
+            [
+                DualPathRNN(channels * (2 if i % 2 == 1 else 1), expand)
+                for i in range(num_layers)
+            ]
+        )
 
-        self.feature_conversion = nn.ModuleList([
-            FeatureConversion(channels * 2, inverse=False if i % 2 == 0 else True) for i in range(num_layers)
-        ])
+        self.feature_conversion = nn.ModuleList(
+            [
+                FeatureConversion(channels * 2, inverse=False if i % 2 == 0 else True)
+                for i in range(num_layers)
+            ]
+        )
 
     def forward(self, x):
         for i in range(self.num_layers):
