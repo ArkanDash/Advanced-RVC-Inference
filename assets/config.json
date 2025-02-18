@@ -1,7 +1,7 @@
 {
   "theme": {
     "file": "Grheme.py",
-    "class": "NeoPy/Syne"
+    "class": "Grheme"
   },
   "discord_presence": true,
   "lang": {
