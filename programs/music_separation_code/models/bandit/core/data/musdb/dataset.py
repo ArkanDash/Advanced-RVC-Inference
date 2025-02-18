@@ -16,22 +16,22 @@ class MUSDB18BaseDataset(BaseSourceSeparationDataset, ABC):
     ALLOWED_STEMS = ["mixture", "vocals", "bass", "drums", "other"]
 
     def __init__(
-            self,
-            split: str,
-            stems: List[str],
-            files: List[str],
-            data_path: str,
-            fs: int = 44100,
-            npy_memmap=False,
+        self,
+        split: str,
+        stems: List[str],
+        files: List[str],
+        data_path: str,
+        fs: int = 44100,
+        npy_memmap=False,
     ) -> None:
         super().__init__(
-                split=split,
-                stems=stems,
-                files=files,
-                data_path=data_path,
-                fs=fs,
-                npy_memmap=npy_memmap,
-                recompute_mixture=False
+            split=split,
+            stems=stems,
+            files=files,
+            data_path=data_path,
+            fs=fs,
+            npy_memmap=npy_memmap,
+            recompute_mixture=False,
         )
 
     def get_stem(self, *, stem: str, identifier) -> torch.Tensor:
@@ -61,25 +61,24 @@ class MUSDB18FullTrackDataset(MUSDB18BaseDataset):
     N_TRAIN_TRACKS = 100
     N_TEST_TRACKS = 50
     VALIDATION_FILES = [
-            "Actions - One Minute Smile",
-            "Clara Berry And Wooldog - Waltz For My Victims",
-            "Johnny Lokke - Promises & Lies",
-            "Patrick Talbot - A Reason To Leave",
-            "Triviul - Angelsaint",
-            "Alexander Ross - Goodbye Bolero",
-            "Fergessen - Nos Palpitants",
-            "Leaf - Summerghost",
-            "Skelpolu - Human Mistakes",
-            "Young Griffo - Pennies",
-            "ANiMAL - Rockshow",
-            "James May - On The Line",
-            "Meaxic - Take A Step",
-            "Traffic Experiment - Sirens",
+        "Actions - One Minute Smile",
+        "Clara Berry And Wooldog - Waltz For My Victims",
+        "Johnny Lokke - Promises & Lies",
+        "Patrick Talbot - A Reason To Leave",
+        "Triviul - Angelsaint",
+        "Alexander Ross - Goodbye Bolero",
+        "Fergessen - Nos Palpitants",
+        "Leaf - Summerghost",
+        "Skelpolu - Human Mistakes",
+        "Young Griffo - Pennies",
+        "ANiMAL - Rockshow",
+        "James May - On The Line",
+        "Meaxic - Take A Step",
+        "Traffic Experiment - Sirens",
     ]
 
     def __init__(
-            self, data_root: str, split: str, stems: Optional[List[
-                str]] = None
+        self, data_root: str, split: str, stems: Optional[List[str]] = None
     ) -> None:
 
         if stems is None:
@@ -112,25 +111,21 @@ class MUSDB18FullTrackDataset(MUSDB18BaseDataset):
 
         self.n_tracks = len(files)
 
-        super().__init__(
-                data_path=data_path,
-                split=split,
-                stems=stems,
-                files=files
-        )
+        super().__init__(data_path=data_path, split=split, stems=stems, files=files)
 
     def __len__(self) -> int:
         return self.n_tracks
 
+
 class MUSDB18SadDataset(MUSDB18BaseDataset):
     def __init__(
-            self,
-            data_root: str,
-            split: str,
-            target_stem: str,
-            stems: Optional[List[str]] = None,
-            target_length: Optional[int] = None,
-            npy_memmap=False,
+        self,
+        data_root: str,
+        split: str,
+        target_stem: str,
+        stems: Optional[List[str]] = None,
+        target_length: Optional[int] = None,
+        npy_memmap=False,
     ) -> None:
 
         if stems is None:
@@ -142,16 +137,16 @@ class MUSDB18SadDataset(MUSDB18BaseDataset):
         files = [f for f in files if not f.startswith(".")]
 
         super().__init__(
-                data_path=data_path,
-                split=split,
-                stems=stems,
-                files=files,
-                npy_memmap=npy_memmap
+            data_path=data_path,
+            split=split,
+            stems=stems,
+            files=files,
+            npy_memmap=npy_memmap,
         )
         self.n_segments = len(files)
         self.target_stem = target_stem
         self.target_length = (
-                target_length if target_length is not None else self.n_segments
+            target_length if target_length is not None else self.n_segments
         )
 
     def __len__(self) -> int:
@@ -169,23 +164,22 @@ class MUSDB18SadDataset(MUSDB18BaseDataset):
 
 class MUSDB18SadOnTheFlyAugmentedDataset(MUSDB18SadDataset):
     def __init__(
-            self,
-            data_root: str,
-            split: str,
-            target_stem: str,
-            stems: Optional[List[str]] = None,
-            target_length: int = 20000,
-            apply_probability: Optional[float] = None,
-            chunk_size_second: float = 3.0,
-            random_scale_range_db: Tuple[float, float] = (-10, 10),
-            drop_probability: float = 0.1,
-            rescale: bool = True,
+        self,
+        data_root: str,
+        split: str,
+        target_stem: str,
+        stems: Optional[List[str]] = None,
+        target_length: int = 20000,
+        apply_probability: Optional[float] = None,
+        chunk_size_second: float = 3.0,
+        random_scale_range_db: Tuple[float, float] = (-10, 10),
+        drop_probability: float = 0.1,
+        rescale: bool = True,
     ) -> None:
         super().__init__(data_root, split, target_stem, stems)
 
         if apply_probability is None:
-            apply_probability = (
-                                        target_length - self.n_segments) / target_length
+            apply_probability = (target_length - self.n_segments) / target_length
 
         self.apply_probability = apply_probability
         self.drop_probability = drop_probability
@@ -226,7 +220,7 @@ class MUSDB18SadOnTheFlyAugmentedDataset(MUSDB18SadDataset):
 
             if self.chunk_size_sample < audio[stem].shape[-1]:
                 chunk_start = np.random.randint(
-                        audio[stem].shape[-1] - self.chunk_size_sample
+                    audio[stem].shape[-1] - self.chunk_size_sample
                 )
             else:
                 chunk_start = 0
@@ -239,18 +233,16 @@ class MUSDB18SadOnTheFlyAugmentedDataset(MUSDB18SadDataset):
                 linear_scale = np.power(10, db_scale / 20)
                 # db_scale = f"{db_scale:+2.1f}"
             # print(linear_scale)
-            audio[stem][...,
-            chunk_start: chunk_start + self.chunk_size_sample] = (
-                    linear_scale
-                    * audio[stem][...,
-                      chunk_start: chunk_start + self.chunk_size_sample]
+            audio[stem][..., chunk_start : chunk_start + self.chunk_size_sample] = (
+                linear_scale
+                * audio[stem][..., chunk_start : chunk_start + self.chunk_size_sample]
             )
 
         audio["mixture"] = self.compute_mixture(audio)
 
         if self.rescale:
             max_abs_val = max(
-                    [torch.max(torch.abs(audio[stem])) for stem in self.stems]
+                [torch.max(torch.abs(audio[stem])) for stem in self.stems]
             )  # type: ignore[type-var]
             if max_abs_val > 1:
                 audio = {k: v / max_abs_val for k, v in audio.items()}
@@ -258,6 +250,7 @@ class MUSDB18SadOnTheFlyAugmentedDataset(MUSDB18SadDataset):
         track = identifier["track"]
 
         return {"audio": audio, "track": f"{self.split}/{track}"}
+
 
 # if __name__ == "__main__":
 #

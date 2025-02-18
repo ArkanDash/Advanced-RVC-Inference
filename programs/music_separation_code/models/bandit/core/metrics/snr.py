@@ -25,11 +25,11 @@ class SafeSignalDistortionRatio(tm.SignalDistortionRatio):
 
 class BaseChunkMedianSignalRatio(tm.Metric):
     def __init__(
-            self,
-            func: Callable,
-            window_size: int,
-            hop_size: int = None,
-            zero_mean: bool = False,
+        self,
+        func: Callable,
+        window_size: int,
+        hop_size: int = None,
+        zero_mean: bool = False,
     ) -> None:
         super().__init__()
 
@@ -40,20 +40,14 @@ class BaseChunkMedianSignalRatio(tm.Metric):
             hop_size = window_size
         self.hop_size = hop_size
 
-        self.add_state(
-            "sum_snr",
-            default=torch.tensor(0.0),
-            dist_reduce_fx="sum"
-            )
+        self.add_state("sum_snr", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: torch.Tensor, target: torch.Tensor) -> None:
 
         n_samples = target.shape[-1]
 
-        n_chunks = int(
-            np.ceil((n_samples - self.window_size) / self.hop_size) + 1
-            )
+        n_chunks = int(np.ceil((n_samples - self.window_size) / self.hop_size) + 1)
 
         snr_chunk = []
 
@@ -66,10 +60,7 @@ class BaseChunkMedianSignalRatio(tm.Metric):
             end = start + self.window_size
 
             try:
-                chunk_snr = self.func(
-                        preds[..., start:end],
-                        target[..., start:end]
-                        )
+                chunk_snr = self.func(preds[..., start:end], target[..., start:end])
 
                 # print(preds.shape, chunk_snr.shape)
 
@@ -90,61 +81,47 @@ class BaseChunkMedianSignalRatio(tm.Metric):
 
 class ChunkMedianSignalNoiseRatio(BaseChunkMedianSignalRatio):
     def __init__(
-            self,
-            window_size: int,
-            hop_size: int = None,
-            zero_mean: bool = False
+        self, window_size: int, hop_size: int = None, zero_mean: bool = False
     ) -> None:
         super().__init__(
-                func=tmF.signal_noise_ratio,
-                window_size=window_size,
-                hop_size=hop_size,
-                zero_mean=zero_mean,
+            func=tmF.signal_noise_ratio,
+            window_size=window_size,
+            hop_size=hop_size,
+            zero_mean=zero_mean,
         )
 
 
 class ChunkMedianScaleInvariantSignalNoiseRatio(BaseChunkMedianSignalRatio):
     def __init__(
-            self,
-            window_size: int,
-            hop_size: int = None,
-            zero_mean: bool = False
+        self, window_size: int, hop_size: int = None, zero_mean: bool = False
     ) -> None:
         super().__init__(
-                func=tmF.scale_invariant_signal_noise_ratio,
-                window_size=window_size,
-                hop_size=hop_size,
-                zero_mean=zero_mean,
+            func=tmF.scale_invariant_signal_noise_ratio,
+            window_size=window_size,
+            hop_size=hop_size,
+            zero_mean=zero_mean,
         )
 
 
 class ChunkMedianSignalDistortionRatio(BaseChunkMedianSignalRatio):
     def __init__(
-            self,
-            window_size: int,
-            hop_size: int = None,
-            zero_mean: bool = False
+        self, window_size: int, hop_size: int = None, zero_mean: bool = False
     ) -> None:
         super().__init__(
-                func=tmF.signal_distortion_ratio,
-                window_size=window_size,
-                hop_size=hop_size,
-                zero_mean=zero_mean,
+            func=tmF.signal_distortion_ratio,
+            window_size=window_size,
+            hop_size=hop_size,
+            zero_mean=zero_mean,
         )
 
 
-class ChunkMedianScaleInvariantSignalDistortionRatio(
-        BaseChunkMedianSignalRatio
-        ):
+class ChunkMedianScaleInvariantSignalDistortionRatio(BaseChunkMedianSignalRatio):
     def __init__(
-            self,
-            window_size: int,
-            hop_size: int = None,
-            zero_mean: bool = False
+        self, window_size: int, hop_size: int = None, zero_mean: bool = False
     ) -> None:
         super().__init__(
-                func=tmF.scale_invariant_signal_distortion_ratio,
-                window_size=window_size,
-                hop_size=hop_size,
-                zero_mean=zero_mean,
+            func=tmF.scale_invariant_signal_distortion_ratio,
+            window_size=window_size,
+            hop_size=hop_size,
+            zero_mean=zero_mean,
         )

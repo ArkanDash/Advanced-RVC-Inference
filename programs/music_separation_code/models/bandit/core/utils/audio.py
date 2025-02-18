@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 from tqdm import tqdm
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, Tuple
 
 import numpy as np
 import torch
@@ -11,19 +11,17 @@ from torch.nn import functional as F
 
 @torch.jit.script
 def merge(
-        combined: torch.Tensor,
-        original_batch_size: int,
-        n_channel: int,
-        n_chunks: int,
-        chunk_size: int, ):
+    combined: torch.Tensor,
+    original_batch_size: int,
+    n_channel: int,
+    n_chunks: int,
+    chunk_size: int,
+):
     combined = torch.reshape(
-            combined,
-            (original_batch_size, n_chunks, n_channel, chunk_size)
+        combined, (original_batch_size, n_chunks, n_channel, chunk_size)
     )
     combined = torch.permute(combined, (0, 2, 3, 1)).reshape(
-            original_batch_size * n_channel,
-            chunk_size,
-            n_chunks
+        original_batch_size * n_channel, chunk_size, n_chunks
     )
 
     return combined
@@ -31,33 +29,23 @@ def merge(
 
 @torch.jit.script
 def unfold(
-        padded_audio: torch.Tensor,
-        original_batch_size: int,
-        n_channel: int,
-        chunk_size: int,
-        hop_size: int
-        ) -> torch.Tensor:
+    padded_audio: torch.Tensor,
+    original_batch_size: int,
+    n_channel: int,
+    chunk_size: int,
+    hop_size: int,
+) -> torch.Tensor:
 
     unfolded_input = F.unfold(
-            padded_audio[:, :, None, :],
-            kernel_size=(1, chunk_size),
-            stride=(1, hop_size)
+        padded_audio[:, :, None, :], kernel_size=(1, chunk_size), stride=(1, hop_size)
     )
 
     _, _, n_chunks = unfolded_input.shape
     unfolded_input = unfolded_input.view(
-            original_batch_size,
-            n_channel,
-            chunk_size,
-            n_chunks
+        original_batch_size, n_channel, chunk_size, n_chunks
     )
-    unfolded_input = torch.permute(
-            unfolded_input,
-            (0, 3, 1, 2)
-    ).reshape(
-            original_batch_size * n_chunks,
-            n_channel,
-            chunk_size
+    unfolded_input = torch.permute(unfolded_input, (0, 3, 1, 2)).reshape(
+        original_batch_size * n_chunks, n_channel, chunk_size
     )
 
     return unfolded_input
@@ -66,40 +54,31 @@ def unfold(
 @torch.jit.script
 # @torch.compile
 def merge_chunks_all(
-        combined: torch.Tensor,
-        original_batch_size: int,
-        n_channel: int,
-        n_samples: int,
-        n_padded_samples: int,
-        n_chunks: int,
-        chunk_size: int,
-        hop_size: int,
-        edge_frame_pad_sizes: Tuple[int, int],
-        standard_window: torch.Tensor,
-        first_window: torch.Tensor,
-        last_window: torch.Tensor
+    combined: torch.Tensor,
+    original_batch_size: int,
+    n_channel: int,
+    n_samples: int,
+    n_padded_samples: int,
+    n_chunks: int,
+    chunk_size: int,
+    hop_size: int,
+    edge_frame_pad_sizes: Tuple[int, int],
+    standard_window: torch.Tensor,
+    first_window: torch.Tensor,
+    last_window: torch.Tensor,
 ):
-    combined = merge(
-        combined,
-        original_batch_size,
-        n_channel,
-        n_chunks,
-        chunk_size
-        )
+    combined = merge(combined, original_batch_size, n_channel, n_chunks, chunk_size)
 
     combined = combined * standard_window[:, None].to(combined.device)
 
     combined = F.fold(
-            combined.to(torch.float32), output_size=(1, n_padded_samples),
-            kernel_size=(1, chunk_size),
-            stride=(1, hop_size)
+        combined.to(torch.float32),
+        output_size=(1, n_padded_samples),
+        kernel_size=(1, chunk_size),
+        stride=(1, hop_size),
     )
 
-    combined = combined.view(
-            original_batch_size,
-            n_channel,
-            n_padded_samples
-    )
+    combined = combined.view(original_batch_size, n_channel, n_padded_samples)
 
     pad_front, pad_back = edge_frame_pad_sizes
     combined = combined[..., pad_front:-pad_back]
@@ -112,43 +91,33 @@ def merge_chunks_all(
 
 
 def merge_chunks_edge(
-        combined: torch.Tensor,
-        original_batch_size: int,
-        n_channel: int,
-        n_samples: int,
-        n_padded_samples: int,
-        n_chunks: int,
-        chunk_size: int,
-        hop_size: int,
-        edge_frame_pad_sizes: Tuple[int, int],
-        standard_window: torch.Tensor,
-        first_window: torch.Tensor,
-        last_window: torch.Tensor
+    combined: torch.Tensor,
+    original_batch_size: int,
+    n_channel: int,
+    n_samples: int,
+    n_padded_samples: int,
+    n_chunks: int,
+    chunk_size: int,
+    hop_size: int,
+    edge_frame_pad_sizes: Tuple[int, int],
+    standard_window: torch.Tensor,
+    first_window: torch.Tensor,
+    last_window: torch.Tensor,
 ):
-    combined = merge(
-        combined,
-        original_batch_size,
-        n_channel,
-        n_chunks,
-        chunk_size
-        )
+    combined = merge(combined, original_batch_size, n_channel, n_chunks, chunk_size)
 
     combined[..., 0] = combined[..., 0] * first_window
     combined[..., -1] = combined[..., -1] * last_window
-    combined[..., 1:-1] = combined[...,
-                          1:-1] * standard_window[:, None]
+    combined[..., 1:-1] = combined[..., 1:-1] * standard_window[:, None]
 
     combined = F.fold(
-            combined, output_size=(1, n_padded_samples),
-            kernel_size=(1, chunk_size),
-            stride=(1, hop_size)
+        combined,
+        output_size=(1, n_padded_samples),
+        kernel_size=(1, chunk_size),
+        stride=(1, hop_size),
     )
 
-    combined = combined.view(
-            original_batch_size,
-            n_channel,
-            n_padded_samples
-    )
+    combined = combined.view(original_batch_size, n_channel, n_padded_samples)
 
     combined = combined[..., :n_samples]
 
@@ -157,12 +126,12 @@ def merge_chunks_edge(
 
 class BaseFader(nn.Module):
     def __init__(
-            self,
-            chunk_size_second: float,
-            hop_size_second: float,
-            fs: int,
-            fade_edge_frames: bool,
-            batch_size: int,
+        self,
+        chunk_size_second: float,
+        hop_size_second: float,
+        fs: int,
+        fade_edge_frames: bool,
+        batch_size: int,
     ) -> None:
         super().__init__()
 
@@ -179,9 +148,7 @@ class BaseFader(nn.Module):
             audio = F.pad(audio, self.edge_frame_pad_sizes, mode="reflect")
 
         n_samples = audio.shape[-1]
-        n_chunks = int(
-                np.ceil((n_samples - self.chunk_size) / self.hop_size) + 1
-        )
+        n_chunks = int(np.ceil((n_samples - self.chunk_size) / self.hop_size) + 1)
 
         padded_size = (n_chunks - 1) * self.hop_size + self.chunk_size
         pad_size = padded_size - n_samples
@@ -191,9 +158,9 @@ class BaseFader(nn.Module):
         return padded_audio, n_chunks
 
     def forward(
-            self,
-            audio: torch.Tensor,
-            model_fn: Callable[[torch.Tensor], Dict[str, torch.Tensor]],
+        self,
+        audio: torch.Tensor,
+        model_fn: Callable[[torch.Tensor], Dict[str, torch.Tensor]],
     ):
 
         original_dtype = audio.dtype
@@ -208,14 +175,11 @@ class BaseFader(nn.Module):
 
         if n_channel > 1:
             padded_audio = padded_audio.view(
-                    original_batch_size * n_channel, 1, n_padded_samples
+                original_batch_size * n_channel, 1, n_padded_samples
             )
 
         unfolded_input = unfold(
-                padded_audio,
-                original_batch_size,
-                n_channel,
-                self.chunk_size, self.hop_size
+            padded_audio, original_batch_size, n_channel, self.chunk_size, self.hop_size
         )
 
         n_total_chunks, n_channel, chunk_size = unfolded_input.shape
@@ -223,15 +187,12 @@ class BaseFader(nn.Module):
         n_batch = np.ceil(n_total_chunks / self.batch_size).astype(int)
 
         chunks_in = [
-                unfolded_input[
-                b * self.batch_size:(b + 1) * self.batch_size, ...].clone()
-                for b in range(n_batch)
+            unfolded_input[b * self.batch_size : (b + 1) * self.batch_size, ...].clone()
+            for b in range(n_batch)
         ]
 
         all_chunks_out = defaultdict(
-                lambda: torch.zeros_like(
-                        unfolded_input, device="cpu"
-                )
+            lambda: torch.zeros_like(unfolded_input, device="cpu")
         )
 
         # for b, cin in enumerate(tqdm(chunks_in)):
@@ -243,8 +204,9 @@ class BaseFader(nn.Module):
             chunks_out = model_fn(cin.to(original_device))
             del cin
             for s, c in chunks_out.items():
-                all_chunks_out[s][b * self.batch_size:(b + 1) * self.batch_size,
-                ...] = c.cpu()
+                all_chunks_out[s][
+                    b * self.batch_size : (b + 1) * self.batch_size, ...
+                ] = c.cpu()
             del chunks_out
 
         del unfolded_input
@@ -260,28 +222,24 @@ class BaseFader(nn.Module):
 
         for s, c in all_chunks_out.items():
             combined: torch.Tensor = fn(
-                    c,
-                    original_batch_size,
-                    n_channel,
-                    n_samples,
-                    n_padded_samples,
-                    n_chunks,
-                    self.chunk_size,
-                    self.hop_size,
-                    self.edge_frame_pad_sizes,
-                    self.standard_window,
-                    self.__dict__.get("first_window", self.standard_window),
-                    self.__dict__.get("last_window", self.standard_window)
+                c,
+                original_batch_size,
+                n_channel,
+                n_samples,
+                n_padded_samples,
+                n_chunks,
+                self.chunk_size,
+                self.hop_size,
+                self.edge_frame_pad_sizes,
+                self.standard_window,
+                self.__dict__.get("first_window", self.standard_window),
+                self.__dict__.get("last_window", self.standard_window),
             )
 
-            outputs[s] = combined.to(
-                dtype=original_dtype,
-                device=original_device
-                )
+            outputs[s] = combined.to(dtype=original_dtype, device=original_device)
 
-        return {
-                "audio": outputs
-        }
+        return {"audio": outputs}
+
     #
     # def old_forward(
     #         self,
@@ -366,22 +324,22 @@ class BaseFader(nn.Module):
 
 class LinearFader(BaseFader):
     def __init__(
-            self,
-            chunk_size_second: float,
-            hop_size_second: float,
-            fs: int,
-            fade_edge_frames: bool = False,
-            batch_size: int = 1,
+        self,
+        chunk_size_second: float,
+        hop_size_second: float,
+        fs: int,
+        fade_edge_frames: bool = False,
+        batch_size: int = 1,
     ) -> None:
 
         assert hop_size_second >= chunk_size_second / 2
 
         super().__init__(
-                chunk_size_second=chunk_size_second,
-                hop_size_second=hop_size_second,
-                fs=fs,
-                fade_edge_frames=fade_edge_frames,
-                batch_size=batch_size,
+            chunk_size_second=chunk_size_second,
+            hop_size_second=hop_size_second,
+            fs=fs,
+            fade_edge_frames=fade_edge_frames,
+            batch_size=batch_size,
         )
 
         in_fade = torch.linspace(0.0, 1.0, self.overlap_size + 1)[:-1]
@@ -391,8 +349,7 @@ class LinearFader(BaseFader):
 
         # using nn.Parameters allows lightning to take care of devices for us
         self.register_buffer(
-                "standard_window",
-                torch.concat([in_fade, center_ones, out_fade])
+            "standard_window", torch.concat([in_fade, center_ones, out_fade])
         )
 
         self.fade_edge_frames = fade_edge_frames
@@ -400,23 +357,21 @@ class LinearFader(BaseFader):
 
         if not self.fade_edge_frames:
             self.first_window = nn.Parameter(
-                    torch.concat([inout_ones, center_ones, out_fade]),
-                    requires_grad=False
+                torch.concat([inout_ones, center_ones, out_fade]), requires_grad=False
             )
             self.last_window = nn.Parameter(
-                    torch.concat([in_fade, center_ones, inout_ones]),
-                    requires_grad=False
+                torch.concat([in_fade, center_ones, inout_ones]), requires_grad=False
             )
 
 
 class OverlapAddFader(BaseFader):
     def __init__(
-            self,
-            window_type: str,
-            chunk_size_second: float,
-            hop_size_second: float,
-            fs: int,
-            batch_size: int = 1,
+        self,
+        window_type: str,
+        chunk_size_second: float,
+        hop_size_second: float,
+        fs: int,
+        batch_size: int = 1,
     ) -> None:
         assert (chunk_size_second / hop_size_second) % 2 == 0
         assert int(chunk_size_second * fs) % 2 == 0
@@ -432,31 +387,25 @@ class OverlapAddFader(BaseFader):
         self.hop_multiplier = self.chunk_size / (2 * self.hop_size)
         # print(f"hop multiplier: {self.hop_multiplier}")
 
-        self.edge_frame_pad_sizes = (
-            2 * self.overlap_size,
-            2 * self.overlap_size
-        )
+        self.edge_frame_pad_sizes = (2 * self.overlap_size, 2 * self.overlap_size)
 
         self.register_buffer(
-            "standard_window", torch.windows.__dict__[window_type](
-                    self.chunk_size, sym=False,  # dtype=torch.float64
-            ) / self.hop_multiplier
+            "standard_window",
+            torch.windows.__dict__[window_type](
+                self.chunk_size,
+                sym=False,  # dtype=torch.float64
+            )
+            / self.hop_multiplier,
         )
 
 
 if __name__ == "__main__":
     import torchaudio as ta
+
     fs = 44100
-    ola = OverlapAddFader(
-        "hann",
-        6.0,
-        1.0,
-        fs,
-        batch_size=16
-    )
+    ola = OverlapAddFader("hann", 6.0, 1.0, fs, batch_size=16)
     audio_, _ = ta.load(
-            "$DATA_ROOT/MUSDB18/HQ/canonical/test/BKS - Too "
-            "Much/vocals.wav"
+        "$DATA_ROOT/MUSDB18/HQ/canonical/test/BKS - Too " "Much/vocals.wav"
     )
     audio_ = audio_[None, ...]
     out = ola(audio_, lambda x: {"stem": x})["audio"]["stem"]

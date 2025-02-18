@@ -4,11 +4,10 @@ import torch
 
 AudioDict = Dict[str, torch.Tensor]
 
-DataDict = TypedDict('DataDict', {'audio': AudioDict, 'track': str})
+DataDict = TypedDict("DataDict", {"audio": AudioDict, "track": str})
 
 BatchedDataDict = TypedDict(
-        'BatchedDataDict',
-        {'audio': AudioDict, 'track': Sequence[str]}
+    "BatchedDataDict", {"audio": AudioDict, "track": Sequence[str]}
 )
 
 

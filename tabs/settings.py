@@ -39,7 +39,6 @@ def save_lang_settings(selected_language):
         json.dump(config, file, indent=2)
 
 
-
 def restart_applio():
     if os.name != "nt":
         os.system("clear")
@@ -47,11 +46,6 @@ def restart_applio():
         os.system("cls")
     python = sys.executable
     os.execl(python, python, *sys.argv)
-
-
-
-
-
 
 
 def lang_tab():

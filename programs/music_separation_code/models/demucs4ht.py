@@ -1,11 +1,9 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from functools import partial
 
 import numpy as np
 import torch
-import json
 from omegaconf import OmegaConf
 from demucs.demucs import Demucs
 from demucs.hdemucs import HDemucs
@@ -317,7 +315,7 @@ class HTDemucs(nn.Module):
                     dconv=dconv_mode & 1,
                     context=context_enc,
                     empty=last_freq,
-                    **kwt
+                    **kwt,
                 )
                 self.tencoder.append(tenc)
 
@@ -337,7 +335,7 @@ class HTDemucs(nn.Module):
                 dconv=dconv_mode & 2,
                 last=index == 0,
                 context=context,
-                **kw_dec
+                **kw_dec,
             )
             if multi:
                 dec = MultiWrap(dec, multi_freqs)
@@ -349,7 +347,7 @@ class HTDemucs(nn.Module):
                     empty=last_freq,
                     last=index == 0,
                     context=context,
-                    **kwt
+                    **kwt,
                 )
                 self.tdecoder.insert(0, tdec)
             self.decoder.insert(0, dec)
@@ -443,7 +441,7 @@ class HTDemucs(nn.Module):
 
         z = spectro(x, nfft, hl)[..., :-1, :]
         assert z.shape[-1] == le + 4, (z.shape, x.shape, le)
-        z = z[..., 2: 2 + le]
+        z = z[..., 2 : 2 + le]
         return z
 
     def _ispec(self, z, length=None, scale=0):
@@ -453,7 +451,7 @@ class HTDemucs(nn.Module):
         pad = hl // 2 * 3
         le = hl * int(math.ceil(length / hl)) + 2 * pad
         x = ispectro(z, hl, length=le)
-        x = x[..., pad: pad + length]
+        x = x[..., pad : pad + length]
         return x
 
     def _magnitude(self, z):
@@ -527,8 +525,9 @@ class HTDemucs(nn.Module):
         training_length = int(self.segment * self.samplerate)
         if training_length < length:
             raise ValueError(
-                    f"Given length {length} is longer than "
-                    f"training length {training_length}")
+                f"Given length {length} is longer than "
+                f"training length {training_length}"
+            )
         return training_length
 
     def cac2cws(self, x):
@@ -695,19 +694,17 @@ class HTDemucs(nn.Module):
 
 def get_model(args):
     extra = {
-        'sources': list(args.training.instruments),
-        'audio_channels': args.training.channels,
-        'samplerate': args.training.samplerate,
+        "sources": list(args.training.instruments),
+        "audio_channels": args.training.channels,
+        "samplerate": args.training.samplerate,
         # 'segment': args.model_segment or 4 * args.dset.segment,
-        'segment': args.training.segment,
+        "segment": args.training.segment,
     }
     klass = {
-        'demucs': Demucs,
-        'hdemucs': HDemucs,
-        'htdemucs': HTDemucs,
+        "demucs": Demucs,
+        "hdemucs": HDemucs,
+        "htdemucs": HTDemucs,
     }[args.model]
     kw = OmegaConf.to_container(getattr(args, args.model), resolve=True)
     model = klass(**extra, **kw)
     return model
-
-
