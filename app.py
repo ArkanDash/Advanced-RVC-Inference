@@ -6,8 +6,9 @@ from tabs.settings import theme_tab, lang_tab, restart_tab
 from programs.applio_code.rvc.lib.tools.prerequisites_download import (
     prequisites_download_pipeline,
 )
-from tabs.presence import load_config_presence, presence_tab
-
+from tabs.presence import load_config_presence
+from assets.i18n.i18n import I18nAuto
+import assets.themes.loadThemes as loadThemes
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
@@ -22,17 +23,10 @@ prequisites_download_pipeline(
 )
 
 
-from assets.i18n.i18n import I18nAuto
-import assets.themes.loadThemes as loadThemes
+
 
 
 i18n = I18nAuto()
-
-if load_config_presence():
-    from assets.discord_presence import RPCManager
-
-    RPCManager.start_presence()
-
 
 rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
 
@@ -51,8 +45,7 @@ with gr.Blocks(theme=rvc_theme, title="Advanced RVC Inference") as rvc:
             theme_tab()
         with gr.Tab("Language Changer"):
             lang_tab()
-        with gr.Tab("Discord Presence"):
-            presence_tab()
+
         restart_tab()
     gr.Markdown(
         """
