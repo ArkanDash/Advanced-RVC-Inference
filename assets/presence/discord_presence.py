@@ -4,6 +4,7 @@ import datetime as dt
 import threading
 import functools
 
+
 class RichPresenceManager:
     def __init__(self):
         self.client_id = "1340358329771364430"
@@ -12,8 +13,6 @@ class RichPresenceManager:
         self.current_state = "Idling"
         self.lock = threading.Lock()
         self.discord_available = True
-        
-     
 
     def start_presence(self):
         try:
@@ -48,7 +47,12 @@ class RichPresenceManager:
                 self.rpc.update(
                     state=self.current_state,
                     details="Advanced RVC Inference UI",
-                    buttons=[{"label": "Download", "url": "https://github.com/ArkanDash/Advanced-RVC-Inference.git"}],
+                    buttons=[
+                        {
+                            "label": "Download",
+                            "url": "https://github.com/ArkanDash/Advanced-RVC-Inference.git",
+                        }
+                    ],
                     large_image="logo",
                     large_text="Advanced RVC Inference for quicker and effortless model downloads",
                     small_image=config["small_image"],
@@ -80,7 +84,9 @@ class RichPresenceManager:
     def stop_presence(self):
         self.cleanup()
 
+
 RPCManager = RichPresenceManager()
+
 
 def track_presence(state_message):
     def decorator(func):
@@ -94,5 +100,7 @@ def track_presence(state_message):
             finally:
                 if RPCManager.running and RPCManager.discord_available:
                     RPCManager.set_state("Idling")
+
         return wrapper
+
     return decorator
