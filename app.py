@@ -6,7 +6,6 @@ from tabs.settings import theme_tab, lang_tab, restart_tab
 from programs.applio_code.rvc.lib.tools.prerequisites_download import (
     prequisites_download_pipeline,
 )
-from tabs.presence import load_config_presence
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
 
