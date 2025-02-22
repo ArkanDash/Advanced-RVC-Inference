@@ -9,6 +9,7 @@ from programs.applio_code.rvc.lib.tools.prerequisites_download import (
 from tabs.presence import load_config_presence
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
@@ -21,9 +22,6 @@ prequisites_download_pipeline(
     True,
     False,
 )
-
-
-
 
 
 i18n = I18nAuto()
