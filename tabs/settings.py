@@ -53,7 +53,7 @@ def lang_tab():
         selected_language = gr.Dropdown(
             label=i18n("Language"),
             info=i18n(
-                "Select the language you want to use. (Requires restarting Applio)"
+                "Select the language you want to use. (Requires restarting App)"
             ),
             value=get_language_settings(),
             choices=["Language automatically detected in the system"]
