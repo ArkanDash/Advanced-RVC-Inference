@@ -85,7 +85,7 @@ def theme_tab():
                 value=loadThemes.load_theme(),
                 label=i18n("Theme"),
                 info=i18n(
-                    "Select the theme you want to use. (Requires restarting Applio)"
+                    "Select the theme you want to use. (Requires restarting App)"
                 ),
                 visible=True,
             )
