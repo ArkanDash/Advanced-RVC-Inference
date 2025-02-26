@@ -5,8 +5,16 @@
 [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?style=flat&logo=https%3A%2F%2Fcolab.research.google.com%2Fimg%2Fcolab_favicon_256px.png)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
 
-
 </div>
+
+
+## Table Of content
+
+- [Information](##Information)
+ - [Features](##Features)
+- [Run WebUI](##Run-WebUI)
+ - [Terms of Use](##Terms-of-Use)
+- [Disclaimer](##Disclaimer)
 
 ## Information
 <div align="center">
@@ -22,6 +30,8 @@ Please support the Applio. This inference won't be possible to make without it.<
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Model Downloader ✅ 
 - Gradio WebUI ✅
+
+
 ## Installation
 
 1. Install Dependencies <br />
