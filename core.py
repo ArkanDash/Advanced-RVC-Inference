@@ -13,6 +13,8 @@ import yaml
 from programs.applio_code.rvc.infer.infer import VoiceConverter
 from programs.applio_code.rvc.lib.tools.model_download import model_download_pipeline
 from programs.music_separation_code.inference import proc_file
+from assets.presence.discord_presence import RPCManager, track_presence
+
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -143,6 +145,20 @@ def import_voice_converter():
     from programs.applio_code.rvc.infer.infer import VoiceConverter
 
     return VoiceConverter()
+
+
+
+def load_config_presence():
+    with open(config_file, "r", encoding="utf8") as file:
+        config = json.load(file)
+        return config["discord_presence"]
+
+def initialize_presence():
+    if load_config_presence():
+        RPCManager.start_presence()
+
+initialize_presence()
+
 
 
 @lru_cache(maxsize=1)
@@ -288,6 +304,8 @@ def check_fp16_support(device):
     return True
 
 
+
+@track_presence("Infer the Audio")
 def full_inference_program(
     model_path,
     index_path,
@@ -1031,14 +1049,13 @@ def download_music(link):
     output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
     command = [
-        "yt-dlp",
-        "-x",
-        "--audio-format",
-        "wav",
-        "--output",
-        output_template,
-        link,
-    ]
+    "yt-dlp",
+    "-x",
+    "--audio-format", "wav",
+    "--output", output_template,
+    "--cookies", "./assets/ytdlstuff.txt",  
+    link,
+]
 
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
