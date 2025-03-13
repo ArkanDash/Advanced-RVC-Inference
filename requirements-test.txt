@@ -26,3 +26,6 @@ transformers==4.44.2
 pypresence
 gradio
 gradio_client
+bs4
+omegaconf
+
