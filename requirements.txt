@@ -1,5 +1,5 @@
-gradio==4.36.0
-gradio_client==1.0.1
+gradio
+gradio_client
 absl-py==2.1.0  
 accelerate==0.34.0  
 diffusers>=0.30.3  
