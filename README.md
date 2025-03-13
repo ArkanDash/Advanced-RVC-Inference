@@ -1,6 +1,6 @@
 <div align="center">
 
-# Advanced RVC Inference
+# Advanced RVC Inference V3
 
 [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?style=flat&logo=https%3A%2F%2Fcolab.research.google.com%2Fimg%2Fcolab_favicon_256px.png)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
@@ -18,10 +18,13 @@
 
 ## Information
 <div align="center">
-Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter.
+
+ Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter.
 
 Please support the Applio. This inference won't be possible to make without it.<br />
+
 [![Original Applio](https://img.shields.io/badge/Github-Original%20Applio%20Repository-blue?style=for-the-badge&logo=github)](https://github.com/IAHispano/Applio)
+
 </div>
 
 ## Features
@@ -70,3 +73,10 @@ The use of the converted voice for the following purposes is prohibited.
 ## Disclaimer
 
 I am not liable for any direct, indirect, consequential, incidental, or special damages arising out of or in any way connected with the use/misuse or inability to use this software.
+
+
+## Credits
+
+- [ArkanDash](https://github.com/ArkanDash) - Original Owner of this project
+
+- [ShiromiyaG's  RVC AICoverMaker UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI.git) - this project base
