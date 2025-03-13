@@ -1,6 +1,6 @@
 import sys, os
 import subprocess
-import torch
+import torch, json
 from functools import lru_cache
 import shutil
 from pedalboard import Pedalboard, Reverb
