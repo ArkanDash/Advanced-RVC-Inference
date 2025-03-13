@@ -45,7 +45,6 @@ with gr.Blocks(theme=rvc_theme, title="Advanced RVC Inference") as rvc:
 
         restart_tab()
     
-    )
 
 
 def launch(port):
