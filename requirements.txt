@@ -17,7 +17,8 @@ asteroid-filterbanks==0.4.0
 async-timeout==4.0.3
 attrs==24.2.0
 audio-separator==0.18.0
-audio_upscaler==0.1.4
+- audio_upscaler==0.1.4  # Old version requiring librosa==0.9.2
++ audio_upscaler>=0.1.5  # Newer version supporting librosa>=0.10 [[10]]
 audiomentations==0.24.0
 audioread==3.0.1
 auraloss==0.4.0
@@ -88,7 +89,8 @@ lameenc==1.7.0
 language-tags==1.2.0
 lazy_loader==0.4
 libf0==1.0.2
-librosa==0.10.2.post1
+- librosa==0.10.2.post1  # Explicit pin no longer needed
++ librosa>=0.10.0  # Allow compatible versions [[5]]
 lightning-utilities==0.11.7
 llvmlite==0.40.1
 local-attention==1.9.14
