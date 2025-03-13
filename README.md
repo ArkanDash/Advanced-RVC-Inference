@@ -1,6 +1,6 @@
 <div align="center">
 
-# Advanced RVC Inference V3
+# Advanced RVC Inference V2
 
 [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?style=flat&logo=https%3A%2F%2Fcolab.research.google.com%2Fimg%2Fcolab_favicon_256px.png)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
