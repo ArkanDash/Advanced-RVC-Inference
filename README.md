@@ -79,4 +79,4 @@ I am not liable for any direct, indirect, consequential, incidental, or special 
 
 - [ArkanDash](https://github.com/ArkanDash) - Original Owner of this project
 
-- [ShiromiyaG's  RVC AICoverMaker UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI.git) - this project base
+- [Shirou's  RVC AICoverMaker UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI.git) - this project base
