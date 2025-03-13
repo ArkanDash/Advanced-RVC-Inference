@@ -1,21 +1,12 @@
 from core import full_inference_program, download_music
-
 import sys, os
-
 import gradio as gr
-
 import regex as re
-
 from assets.i18n.i18n import I18nAuto
-
 import torch
-
 import shutil
-
 import unicodedata
-
 import gradio as gr
-
 from assets.i18n.i18n import I18nAuto
 
 
@@ -23,17 +14,14 @@ i18n = I18nAuto()
 
 
 now_dir = os.getcwd()
-
 sys.path.append(now_dir)
 
 
 model_root = os.path.join(now_dir, "logs")
-
 audio_root = os.path.join(now_dir, "audio_files", "original_files")
 
 
 model_root_relative = os.path.relpath(model_root, now_dir)
-
 audio_root_relative = os.path.relpath(audio_root, now_dir)
 
 
@@ -127,53 +115,37 @@ def get_indexes():
 
 
 def match_index(model_file_value):
-
     if model_file_value:
-
         model_folder = os.path.dirname(model_file_value)
-
         model_name = os.path.basename(model_file_value)
-
         index_files = get_indexes()
-
         pattern = r"^(.*?)_"
-
         match = re.match(pattern, model_name)
-
         for index_file in index_files:
-
             if os.path.dirname(index_file) == model_folder:
-
                 return index_file
 
             elif match and match.group(1) in os.path.basename(index_file):
-
                 return index_file
 
             elif model_name in os.path.basename(index_file):
-
                 return index_file
 
     return ""
 
 
 def output_path_fn(input_audio_path):
-
     original_name_without_extension = os.path.basename(input_audio_path).rsplit(".", 1)[
         0
     ]
-
     new_name = original_name_without_extension + "_output.wav"
-
     output_path = os.path.join(os.path.dirname(input_audio_path), new_name)
 
     return output_path
 
 
 def get_number_of_gpus():
-
     if torch.cuda.is_available():
-
         num_gpus = torch.cuda.device_count()
 
         return "-".join(map(str, range(num_gpus)))
@@ -186,9 +158,7 @@ def get_number_of_gpus():
 def max_vram_gpu(gpu):
 
     if torch.cuda.is_available():
-
         gpu_properties = torch.cuda.get_device_properties(gpu)
-
         total_memory_gb = round(gpu_properties.total_memory / 1024 / 1024 / 1024)
 
         return total_memory_gb / 2
@@ -205,9 +175,7 @@ def format_title(title):
     )
 
     formatted_title = re.sub(r"[\u2500-\u257F]+", "", formatted_title)
-
     formatted_title = re.sub(r"[^\w\s.-]", "", formatted_title)
-
     formatted_title = re.sub(r"\s+", "_", formatted_title)
 
     return formatted_title
@@ -216,37 +184,27 @@ def format_title(title):
 def save_to_wav(upload_audio):
 
     file_path = upload_audio
-
     formated_name = format_title(os.path.basename(file_path))
-
     target_path = os.path.join(audio_root_relative, formated_name)
 
     if os.path.exists(target_path):
-
         os.remove(target_path)
 
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
-
     shutil.copy(file_path, target_path)
-
+    
     return target_path, output_path_fn(target_path)
 
 
 def delete_outputs():
-
     gr.Info(f"Outputs cleared!")
-
     for root, _, files in os.walk(audio_root_relative, topdown=False):
-
         for name in files:
-
             if name.endswith(tuple(sup_audioext)) and name.__contains__("_output"):
-
                 os.remove(os.path.join(root, name))
 
 
 def change_choices():
-
     names = [
         os.path.join(root, file)
         for root, _, files in os.walk(model_root_relative, topdown=False)
@@ -281,21 +239,17 @@ def change_choices():
 
 
 def download_music_tab():
-
     with gr.Row():
-
         link = gr.Textbox(
             label=i18n("Music URL"),
             lines=1,
         )
-
     output = gr.Textbox(
         label=i18n("Output Information"),
         info=i18n("The output information will be displayed here."),
     )
 
     download = gr.Button(i18n("Download"))
-
     download.click(
         download_music,
         inputs=[link],
@@ -304,13 +258,10 @@ def download_music_tab():
 
 
 def full_inference_tab():
-
     default_weight = names[0] if names else None
 
     with gr.Row():
-
         with gr.Row():
-
             model_file = gr.Dropdown(
                 label=i18n("Voice Model"),
                 info=i18n("Select the voice model to use for the conversion."),
@@ -319,7 +270,6 @@ def full_inference_tab():
                 value=default_weight,
                 allow_custom_value=True,
             )
-
             index_file = gr.Dropdown(
                 label=i18n("Index File"),
                 info=i18n("Select the index file to use for the conversion."),
@@ -328,7 +278,6 @@ def full_inference_tab():
                 interactive=True,
                 allow_custom_value=True,
             )
-
         with gr.Column():
             with gr.Row():
                 unload_button = gr.Button(i18n("Unload Voice"))
@@ -350,9 +299,7 @@ def full_inference_tab():
             )
 
     with gr.Tab(i18n("Single")):
-
         with gr.Column():
-
             upload_audio = gr.Audio(
                 label=i18n("Upload Audio"),
                 type="filepath",
@@ -361,7 +308,6 @@ def full_inference_tab():
             )
 
             with gr.Row():
-
                 audio = gr.Dropdown(
                     label=i18n("Select Audio"),
                     info=i18n("Select the audio to convert."),
@@ -372,9 +318,7 @@ def full_inference_tab():
                 )
 
         with gr.Accordion(i18n("Advanced Settings"), open=False):
-
             with gr.Accordion(i18n("RVC Settings"), open=False):
-
                 output_path = gr.Textbox(
                     label=i18n("Output Path"),
                     placeholder=i18n("Enter output path"),
@@ -395,7 +339,6 @@ def full_inference_tab():
                 )
 
                 with gr.Row():
-
                     infer_backing_vocals_model = gr.Dropdown(
                         label=i18n("Backing Vocals Model"),
                         info=i18n(
