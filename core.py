@@ -126,6 +126,9 @@ dereverb_models = [
     },
 ]
 
+config_file = os.path.join(now_dir, "assets", "config.json")
+
+
 deecho_models = [
     {
         "name": "UVR-Deecho-Normal",
