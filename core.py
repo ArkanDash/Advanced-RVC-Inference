@@ -147,18 +147,18 @@ def import_voice_converter():
     return VoiceConverter()
 
 
-
 def load_config_presence():
     with open(config_file, "r", encoding="utf8") as file:
         config = json.load(file)
         return config["discord_presence"]
 
+
 def initialize_presence():
     if load_config_presence():
         RPCManager.start_presence()
 
-initialize_presence()
 
+initialize_presence()
 
 
 @lru_cache(maxsize=1)
@@ -302,7 +302,6 @@ def check_fp16_support(device):
         print(f"Your GPU {gpu_name} not support FP16 inference. Using FP32 instead.")
         return False
     return True
-
 
 
 @track_presence("Infer the Audio")
@@ -1049,13 +1048,16 @@ def download_music(link):
     output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
     command = [
-    "yt-dlp",
-    "-x",
-    "--audio-format", "wav",
-    "--output", output_template,
-    "--cookies", "./assets/ytdlstuff.txt",  
-    link,
-]
+        "yt-dlp",
+        "-x",
+        "--audio-format",
+        "wav",
+        "--output",
+        output_template,
+        "--cookies",
+        "./assets/ytdlstuff.txt",
+        link,
+    ]
 
     try:
         result = subprocess.run(command, check=True, capture_output=True, text=True)
