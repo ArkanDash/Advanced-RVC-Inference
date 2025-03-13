@@ -1,8 +1,18 @@
-pip>=23.3; sys_platform == 'darwin'
+# Darwin-specific dependencies
+pip>=23.3; sys_platform=='darwin'
+wheel; sys_platform=='darwin'
+PyYAML; sys_platform=='darwin'
+omegaconf>=2.0.6; sys_platform=='darwin'
+
+# Linux: do not pin numba
+numba; sys_platform=='linux'
+
+# Darwin and Windows: pin numba to 0.57.0
+numba==0.57.0; (sys_platform == 'darwin' or sys_platform == 'win32')
+
+# Common dependencies
 audio-separator[gpu]==0.30.1
 yt_dlp
-wheel; sys_platform == 'darwin'
-PyYAML; sys_platform == 'darwin'
 wget
 ffmpeg-python>=0.2.0
 faiss-cpu==1.7.3
@@ -10,9 +20,6 @@ soundfile==0.12.1
 noisereduce
 pedalboard
 stftpitchshift
-omegaconf>=2.0.6; sys_platform == 'darwin' 
-numba; sys_platform == 'linux'
-numba==0.57.0; sys_platform == 'darwin' or sys_platform == 'win32'
 torch==2.3.1
 torchaudio==2.3.1
 torchvision==0.18.1
