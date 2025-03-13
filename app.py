@@ -44,12 +44,7 @@ with gr.Blocks(theme=rvc_theme, title="Advanced RVC Inference") as rvc:
             lang_tab()
 
         restart_tab()
-    gr.Markdown(
-        """
-    <div style="text-align: center; font-size: 0.9em; text-color: a3a3a3;">
-    By using Advanced RVC Inference, you agree to comply with ethical and legal standards, respect intellectual property and privacy rights, avoid harmful or prohibited uses, and accept full responsibility for any outcomes, while Advanced RVC Inference disclaims liability and reserves the right to amend these terms.
-    </div>
-    """
+    
     )
 
 
