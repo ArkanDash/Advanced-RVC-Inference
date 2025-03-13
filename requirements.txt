@@ -215,4 +215,4 @@ Werkzeug==3.0.4
 wget==3.2
 yarl==1.9.7
 zipp==3.20.1
-yt-dlp==2024.08.05
+yt-dlp
