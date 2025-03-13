@@ -28,4 +28,4 @@ gradio
 gradio_client
 bs4
 omegaconf
-
+matplotlib==3.7.2
