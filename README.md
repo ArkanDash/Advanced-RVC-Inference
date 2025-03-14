@@ -8,7 +8,6 @@
 </div>
 
 
-![Preview UI](assets/img.png)
 
 
 
