@@ -192,7 +192,7 @@ def save_to_wav(upload_audio):
 
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
     shutil.copy(file_path, target_path)
-    
+
     return target_path, output_path_fn(target_path)
 
 

@@ -38,12 +38,11 @@ with gr.Blocks(title="Advanced RVC Inference") as rvc:
     with gr.Tab(i18n("Download Model")):
         download_model_tab()
     with gr.Tab(i18n("Settings")):
-        
+
         with gr.Tab("Language Changer"):
             lang_tab()
 
         restart_tab()
-    
 
 
 def launch(port):

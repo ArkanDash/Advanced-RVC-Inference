@@ -74,5 +74,3 @@ def restart_tab():
                 inputs=[],
                 outputs=[],
             )
-
-
