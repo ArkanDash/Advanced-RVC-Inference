@@ -3,7 +3,6 @@ import os, sys
 import json
 import gradio as gr
 from assets.i18n.i18n import I18nAuto
-import assets.themes.loadThemes as loadThemes
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -77,20 +76,3 @@ def restart_tab():
             )
 
 
-def theme_tab():
-    with gr.Row():
-        with gr.Column():
-            themes_select = gr.Dropdown(
-                loadThemes.get_theme_list(),
-                value=loadThemes.load_theme(),
-                label=i18n("Theme"),
-                info=i18n(
-                    "Select the theme you want to use. (Requires restarting App)"
-                ),
-                visible=True,
-            )
-            themes_select.change(
-                fn=loadThemes.select_theme,
-                inputs=themes_select,
-                outputs=[],
-            )
