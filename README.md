@@ -77,6 +77,12 @@ The use of the converted voice for the following purposes is prohibited.
 
 I am not liable for any direct, indirect, consequential, incidental, or special damages arising out of or in any way connected with the use/misuse or inability to use this software.
 
+## Alternative
+
+- Inference * [NeoRVC](https://github.com/TheNeodev/NeoRVC) simple version of this project
+
+- Training * comming Soon...
+
 
 ## Credits
 
