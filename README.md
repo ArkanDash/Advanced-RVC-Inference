@@ -79,11 +79,9 @@ I am not liable for any direct, indirect, consequential, incidental, or special 
 
 ## Alternative  
 
-- **Inference:**  
-  - [NeoRVC](https://github.com/TheNeodev/NeoRVC) – A simpler version of this project.  
+- [NeoRVC](https://github.com/TheNeodev/NeoRVC) – A simpler version of this project.  
 
-- **Training:**  
-  - Coming soon...
+
 
 ## Credits
 
