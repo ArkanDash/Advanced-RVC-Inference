@@ -27,10 +27,10 @@ i18n = I18nAuto()
 
 rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
 
-with gr.Blocks(title="Advanced RVC Inference") as rvc:
+with gr.Blocks(title="Advanced RVC Inference", theme="Thatguy099/Sonix") as rvc:
     gr.Markdown('<div align="center"><h1>Advanced RVC Inference</h1></a></div>')
     gr.Markdown(
-        '<div align="center">this project Maintained by <a href="https://discord.com/1314204512814235689">NeoDev</a></div>'
+        '<div align="center">this project Maintained by <a href="https://github.com/BF667">BF677</a></div>'
     )
 
     with gr.Tab(i18n("Full Inference")):
