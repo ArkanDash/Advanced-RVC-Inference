@@ -2,12 +2,10 @@
 
 # Advanced RVC Inference V2
 
-[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-blue?style=flat&logo=https%3A%2F%2Fcolab.research.google.com%2Fimg%2Fcolab_favicon_256px.png)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
+[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
 
 </div>
-
-
 
 
 
@@ -33,6 +31,7 @@ Please support the Applio. This inference won't be possible to make without it.<
 ## Features
 - Support V1 & V2 Model ✅
 - Youtube Audio Downloader ✅
+- TTS ✅
 - Audio-Separator (Voice Splitter) [Internet required for downloading model] ✅
 - Model Downloader ✅ 
 - Gradio WebUI ✅
@@ -76,10 +75,6 @@ The use of the converted voice for the following purposes is prohibited.
 ## Disclaimer
 
 I am not liable for any direct, indirect, consequential, incidental, or special damages arising out of or in any way connected with the use/misuse or inability to use this software.
-
-## Alternative  
-
-- [NeoRVC](https://github.com/TheNeodev/NeoRVC) – A simpler version of this project.  
 
 
 
