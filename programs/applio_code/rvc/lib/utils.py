@@ -105,11 +105,10 @@ def load_embedding(embedder_model, custom_embedder=None):
         os.makedirs(model_path, exist_ok=True)
         if not os.path.exists(bin_file):
             url = online_embedders[embedder_model]
-            print(f"Downloading {url} to {model_path}...")
+            
             wget.download(url, out=bin_file)
         if not os.path.exists(json_file):
             url = config_files[embedder_model]
-            print(f"Downloading {url} to {model_path}...")
             wget.download(url, out=json_file)
 
     models = HubertModelWithFinalProj.from_pretrained(model_path)
