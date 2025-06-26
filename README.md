@@ -6,10 +6,9 @@
 
 
 
-see guide here: [https://youtu.be/8CzEFMmyRag?si=M8SYyal4RWtD07VM](https://youtu.be/8CzEFMmyRag?si=M8SYyal4RWtD07VM)
-
 </div>
 
+see guide here: [https://youtu.be/8CzEFMmyRag?si=M8SYyal4RWtD07VM](https://youtu.be/8CzEFMmyRag?si=M8SYyal4RWtD07VM)
 
 
 ## Table Of content
