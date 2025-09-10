@@ -8,11 +8,7 @@ ffmpeg-python # Apache 2.0
 gradio==5.5.0 # MIT License
 pydantic==2.10.6 # for gradio 5.5.0 fix
 pillow==10.3.0 # for gradio, conda fix
-# beartype>=0.16.1 # workaround for a bug
-soundfile==0.12.1; sys_platform == 'win32' # torchaudio
-# Deepspeed needs to be compiled with DS_BUILD_OPS otherwise pip only install of PyTorch without NVCC will fail.
-# deepspeed==0.16.5; sys_platform == 'win32' # Apache 2.0
-
+git+https://github.com/rsxdalv/extension_audiocraft_plus@legacy#egg=extension_audiocraft_plus
 # https://github.com/rsxdalv/xformers/releases/download/v0.0.30/xformers-0.0.30+cbc9beb.d20250514-cp310-cp310-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.10' # BSD 3-Clause License
 # https://github.com/rsxdalv/xformers/releases/download/v0.0.30/xformers-0.0.30+cbc9beb.d20250514-cp311-cp311-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.11' # BSD 3-Clause License
 # xformers==0.0.30; sys_platform == 'darwin' # Apache 2.0
