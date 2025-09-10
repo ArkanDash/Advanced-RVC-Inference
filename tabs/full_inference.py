@@ -3,8 +3,6 @@ import sys, os
 import gradio as gr
 from tabs.infer.variable import *
 
-from gradio_iconbutton import IconButton
-
 
 
 def download_music_tab():
@@ -48,9 +46,9 @@ def full_inference_tab():
                 allow_custom_value=True,
             )
         with gr.Column():
-            with gr.Row():
-                unload_button = IconButton(i18n("Unload Voice"), scale=0)
-                refresh_button = IconButton(i18n("Refresh"), scale=1)
+            with gr.Row(equal_height=True):
+                unload_button = gr.Button(i18n("Unload Voice"))
+                refresh_button = gr.Button(i18n("Refresh"))
 
             unload_button.click(
                 fn=lambda: (
@@ -779,6 +777,7 @@ def full_inference_tab():
             back_rvc_settings,
         ],
     )
+
 
 
 
