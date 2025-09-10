@@ -46,6 +46,7 @@ extension_demucs @ https://github.com/rsxdalv/extension_demucs/releases/download
 extension_mms @ https://github.com/rsxdalv/extension_mms/releases/download/v0.0.1/extension_mms-0.0.1-py3-none-any.whl
 extension_seamless_m4t @ https://github.com/rsxdalv/extension_seamless_m4t/releases/download/v0.0.3/extension_seamless_m4t-0.0.3-py3-none-any.whl
 extension_vocos @ https://github.com/rsxdalv/extension_vocos/releases/download/v0.0.2/extension_vocos-0.0.2-py3-none-any.whl
+audio-separator[gpu]
 
 matplotlib
 
