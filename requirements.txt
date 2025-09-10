@@ -29,11 +29,12 @@ gradio_client
 bs4
 omegaconf
 matplotlib==3.7.2
-
-gradio_goodtabs @ https://github.com/rsxdalv/gradio_goodtabs/releases/download/v0.0.3/gradio_goodtabs-0.0.3-py3-none-any.whl
-gradio_goodtab @ https://github.com/rsxdalv/gradio_goodtab/releases/download/v0.0.3/gradio_goodtab-0.0.3-py3-none-any.whl
-gradio_iconbutton @ https://github.com/rsxdalv/gradio_iconbutton/releases/download/v0.0.1/gradio_iconbutton-0.0.1-py3-none-any.whl
-
-deprecated >= 1.2.13
-
-extension_kokoro_tts_api @ https://github.com/rsxdalv/extension_kokoro_tts_api/releases/download/v0.10.0/extension_kokoro_tts_api-0.10.0-py3-none-any.whl
+swift_f0
+certifi>=2023.07.22; sys_platform == 'darwin'
+antlr4-python3-runtime==4.8; sys_platform == 'darwin'
+tensorboardX
+edge-tts==7.2.0
+pypresence
+beautifulsoup4
+sounddevice
+webrtcvad
