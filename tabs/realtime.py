@@ -11,7 +11,7 @@ from programs.applio_code.rvc.realtime.callbacks import AudioCallbacks
 from programs.applio_code.rvc.realtime.audio import list_audio_device
 from programs.applio_code.rvc.realtime.core import AUDIO_SAMPLE_RATE
 
-from tabs.inference.inference import (
+from tabs.full_inference import (
     i18n,
     names,
     default_weight,
