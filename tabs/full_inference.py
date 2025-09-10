@@ -49,8 +49,8 @@ def full_inference_tab():
             )
         with gr.Column():
             with gr.Row():
-                unload_button = IconButton(i18n("Unload Voice", scale=0))
-                refresh_button = IconButton(i18n("Refresh", scale=1))
+                unload_button = IconButton(i18n("Unload Voice"), scale=0)
+                refresh_button = IconButton(i18n("Refresh"), scale=1)
 
             unload_button.click(
                 fn=lambda: (
@@ -609,7 +609,7 @@ def full_inference_tab():
                     interactive=True,
                 )
 
-        convert_button = IconButton(i18n("Convert"))
+        convert_button = IconButton(i18n("Convert"), scale=0)
 
         with gr.Row(equal_height=True):
             vc_output1 = gr.Textbox(
@@ -779,6 +779,7 @@ def full_inference_tab():
             back_rvc_settings,
         ],
     )
+
 
 
 
