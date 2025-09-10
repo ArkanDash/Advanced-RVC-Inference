@@ -8,6 +8,7 @@ from programs.applio_code.rvc.lib.tools.prerequisites_download import (
 )
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
+from tabs.extension_vocos.main import ui 
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -33,17 +34,12 @@ with gr.Blocks(title="Advanced RVC Inference", theme="Thatguy099/Sonix") as rvc:
         '<div align="center">this project Maintained by <a href="https://github.com/BF667">BF677</a></div>'
     )
 
-    with gr.Tab(i18n("Full Inference")):
+    with gr.Tab("Full Inference"):
         full_inference_tab()
-    with gr.Tab(i18n("Download Model")):
+    with gr.Tab("Download Model"):
         download_model_tab()
-    with gr.Tab(i18n("Settings")):
-        
-        with gr.Tab("Language Changer"):
-            lang_tab()
-
-        restart_tab()
-    
+    with gr.Tab("Vocos"):
+        ui()
 
 
 def launch(port):
@@ -76,3 +72,4 @@ if __name__ == "__main__":
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             break
+
