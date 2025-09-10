@@ -49,8 +49,8 @@ def full_inference_tab():
             )
         with gr.Column():
             with gr.Row():
-                unload_button = IconButton(i18n("Unload Voice"))
-                refresh_button = IconButton(i18n("Refresh"))
+                unload_button = IconButton(i18n("Unload Voice", scale=0))
+                refresh_button = IconButton(i18n("Refresh", scale=1))
 
             unload_button.click(
                 fn=lambda: (
@@ -779,5 +779,6 @@ def full_inference_tab():
             back_rvc_settings,
         ],
     )
+
 
 
