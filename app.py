@@ -8,7 +8,7 @@ from programs.applio_code.rvc.lib.tools.prerequisites_download import (
 )
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
-from import realtime_tab
+from tabs.realtime import realtime_tab
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
@@ -71,6 +71,7 @@ if __name__ == "__main__":
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             break
+
 
 
 
