@@ -7,9 +7,9 @@ import json
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from rvc.realtime.callbacks import AudioCallbacks
-from rvc.realtime.audio import list_audio_device
-from rvc.realtime.core import AUDIO_SAMPLE_RATE
+from programs.applio_code.rvc.realtime.callbacks import AudioCallbacks
+from programs.applio_code.rvc.realtime.audio import list_audio_device
+from programs.applio_code.rvc.realtime.core import AUDIO_SAMPLE_RATE
 
 from tabs.inference.inference import (
     i18n,
