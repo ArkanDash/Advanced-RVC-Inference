@@ -1,49 +1,34 @@
-tts_webui_core @ https://github.com/rsxdalv/tts_webui_core/releases/download/v0.0.1/tts_webui_core-0.0.1-py3-none-any.whl
+pip>=23.3; sys_platform=='darwin'
+wheel; sys_platform=='darwin'
+PyYAML; sys_platform=='darwin'
+omegaconf>=2.0.6; sys_platform=='darwin'
+numba==0.57.0
+numpy==1.23.5
+ml_collections
+tqdm
+audio-separator[gpu]==0.30.1
+yt_dlp
+wget
+ffmpeg-python>=0.2.0
+faiss-cpu==1.7.3
+soundfile==0.12.1
+noisereduce
 pedalboard
-safetensors
-python-dotenv==1.0.0
-cached_path >= 1.7.3 # Prevent old huggingface-hub fallbacks
- 
-ffmpeg-python # Apache 2.0
-gradio==5.5.0 # MIT License
-pydantic==2.10.6 # for gradio 5.5.0 fix
-pillow==10.3.0 # for gradio, conda fix
-git+https://github.com/rsxdalv/extension_audiocraft_plus@legacy#egg=extension_audiocraft_plus
-# https://github.com/rsxdalv/xformers/releases/download/v0.0.30/xformers-0.0.30+cbc9beb.d20250514-cp310-cp310-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.10' # BSD 3-Clause License
-# https://github.com/rsxdalv/xformers/releases/download/v0.0.30/xformers-0.0.30+cbc9beb.d20250514-cp311-cp311-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.11' # BSD 3-Clause License
+stftpitchshift
+torch==2.3.1
+torchaudio==2.3.1
+torchvision==0.18.1
 torchcrepe==0.0.23
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp310-cp310-win_amd64.whl ; sys_platform == 'win32' and python_version == '3.10' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and python_version == '3.10' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp310-cp310-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.10' # MIT License
-
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp311-cp311-win_amd64.whl ; sys_platform == 'win32' and python_version == '3.11' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and python_version == '3.11' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp311-cp311-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.11' # MIT License
-
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp312-cp312-win_amd64.whl ; sys_platform == 'win32' and python_version == '3.12' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl ; sys_platform == 'linux' and python_version == '3.12' # MIT License
-fairseq @ https://github.com/rsxdalv/fairseq/releases/download/v0.12.3/fairseq-0.12.13-cp312-cp312-macosx_11_0_universal2.whl ; sys_platform == 'darwin' and python_version == '3.12' # MIT License
-
-accelerate>=0.33.0
-# optimum-quanto==0.2.6
-
-# experimental 
-# triton>=3.2.0 ; sys_platform == 'linux',
-# triton-windows>=3.2.0.post18 ; sys_platform == 'win32', # has issues with certain libraries
-
-# flash-attn @ https://github.com/kingbri1/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu124torch2.6.0cxx11abiFALSE-cp310-cp310-win_amd64.whl ; sys_platform == 'win32'
-# flash-attn @ https://github.com/Dao-AILab/flash-attention/releases/download/v2.7.4.post1/flash_attn-2.7.4.post1+cu12torch2.6cxx11abiFALSE-cp310-cp310-linux_x86_64.whl ; sys_platform == 'linux'
-
-
-# extension_bark @ git+https://github.com/rsxdalv/extension_bark@main
-extension_tortoise @ https://github.com/rsxdalv/extension_tortoise/releases/download/v0.0.2/extension_tortoise-0.0.2-py3-none-any.whl
-extension_demucs @ https://github.com/rsxdalv/extension_demucs/releases/download/v0.0.3/extension_demucs-0.0.3-py3-none-any.whl
-extension_mms @ https://github.com/rsxdalv/extension_mms/releases/download/v0.0.1/extension_mms-0.0.1-py3-none-any.whl
-extension_seamless_m4t @ https://github.com/rsxdalv/extension_seamless_m4t/releases/download/v0.0.3/extension_seamless_m4t-0.0.3-py3-none-any.whl
-extension_vocos @ https://github.com/rsxdalv/extension_vocos/releases/download/v0.0.2/extension_vocos-0.0.2-py3-none-any.whl
-audio-separator[gpu]
-
-matplotlib
+torchfcpe
+einops
+libf0
+transformers==4.44.2
+pypresence
+gradio
+gradio_client
+bs4
+omegaconf
+matplotlib==3.7.2
 
 gradio_goodtabs @ https://github.com/rsxdalv/gradio_goodtabs/releases/download/v0.0.3/gradio_goodtabs-0.0.3-py3-none-any.whl
 gradio_goodtab @ https://github.com/rsxdalv/gradio_goodtab/releases/download/v0.0.3/gradio_goodtab-0.0.3-py3-none-any.whl
