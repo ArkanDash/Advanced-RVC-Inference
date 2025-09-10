@@ -8,8 +8,7 @@ from programs.applio_code.rvc.lib.tools.prerequisites_download import (
 )
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
-from tabs.extension_vocos.main import ui 
-from tabs.extension_audiocraft_plus.main import ui_full_inner
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
@@ -38,11 +37,7 @@ with gr.Blocks(title="Advanced RVC Inference", theme="Thatguy099/Sonix") as rvc:
         full_inference_tab()
     with gr.Tab("Download Model"):
         download_model_tab()
-    with gr.Tab("Vocos"):
-        ui()
-    with gr.Tab("AudioCraft Plus"):
-        ui_full_inner()
-
+    
 
 def launch(port):
     rvc.launch(
@@ -74,5 +69,6 @@ if __name__ == "__main__":
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             break
+
 
 
