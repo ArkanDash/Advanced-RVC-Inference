@@ -8,7 +8,7 @@ from programs.applio_code.rvc.lib.tools.prerequisites_download import (
 )
 from assets.i18n.i18n import I18nAuto
 import assets.themes.loadThemes as loadThemes
-
+from import realtime_tab
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
@@ -27,7 +27,7 @@ i18n = I18nAuto()
 
 rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
 
-with gr.Blocks(title="Advanced RVC Inference", theme="Thatguy099/Sonix") as rvc:
+with gr.Blocks(title="Advanced RVC Inference", theme="NoCrypt/miku") as rvc:
     gr.Markdown('<div align="center"><h1>Advanced RVC Inference</h1></a></div>')
     gr.Markdown(
         '<div align="center">this project Maintained by <a href="https://github.com/BF667">BF677</a></div>'
@@ -35,6 +35,8 @@ with gr.Blocks(title="Advanced RVC Inference", theme="Thatguy099/Sonix") as rvc:
 
     with gr.Tab("Full Inference"):
         full_inference_tab()
+    with gr.Tab("Real Time"):
+        realtime_tab()
     with gr.Tab("Download Model"):
         download_model_tab()
     
@@ -69,6 +71,7 @@ if __name__ == "__main__":
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             break
+
 
 
 
