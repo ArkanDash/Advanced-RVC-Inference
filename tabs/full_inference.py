@@ -607,7 +607,7 @@ def full_inference_tab():
                     interactive=True,
                 )
 
-        convert_button = IconButton(i18n("Convert"), scale=0)
+        convert_button = gr.Button(i18n("Convert"))
 
         with gr.Row(equal_height=True):
             vc_output1 = gr.Textbox(
@@ -777,6 +777,7 @@ def full_inference_tab():
             back_rvc_settings,
         ],
     )
+
 
 
 
