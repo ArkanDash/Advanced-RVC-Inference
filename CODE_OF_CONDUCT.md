@@ -1,4 +1,4 @@
-# Advanced RVC Inference V 3.1 - Contributor Code of Conduct
+# Advanced RVC Inference - Contributor Code of Conduct
 
 ## Our Commitment
 
