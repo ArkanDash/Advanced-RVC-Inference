@@ -169,23 +169,26 @@ def start_realtime(
     running = True
 
     if not input_audio_device or not output_audio_device:
-        return (
+        yield (
             "Please select valid input/output devices!",
             interactive_true,
             interactive_false,
         )
+        return
     if use_monitor_device and not monitor_output_device:
-        return (
+        yield (
             "Please select a valid monitor device!",
             interactive_true,
             interactive_false,
         )
+        return
     if not pth_path:
-        return (
+        yield (
             "Model path not provided. Aborting conversion.",
             interactive_true,
             interactive_false,
         )
+        return
 
     yield "Starting Realtime...", interactive_false, interactive_true
 
@@ -198,10 +201,11 @@ def start_realtime(
     monitor_audio_gain /= 100.0
 
     try:
-        input_device_id = int(input_audio_device.split(":")[0])
-        output_device_id = int(output_audio_device.split(":")[0])
+        input_devices, output_devices = get_audio_devices_formatted()
+        input_device_id = input_devices[input_audio_device]
+        output_device_id = output_devices[output_audio_device]
         output_monitor_id = (
-            int(monitor_output_device.split(":")[0]) if use_monitor_device else None
+            output_devices[monitor_output_device] if use_monitor_device else None
         )
     except (ValueError, IndexError):
         yield "Incorrectly formatted audio device. Stopping.", interactive_true, interactive_false
@@ -213,7 +217,7 @@ def start_realtime(
         cross_fade_overlap_size=cross_fade_overlap_size,
         extra_convert_size=extra_convert_size,
         model_path=pth_path,
-        index_path=index_path,
+        index_path=str(index_path),
         f0_method=f0_method,
         embedder_model=embedder_model,
         embedder_model_custom=embedder_model_custom,
@@ -289,12 +293,14 @@ def get_audio_devices_formatted():
             input_devices, key=lambda d: priority(d.name), reverse=True
         )
 
-        input_device_list = [
-            f"{d.index}: {d.name} ({d.host_api})" for d in input_sorted
-        ]
-        output_device_list = [
-            f"{d.index}: {d.name} ({d.host_api})" for d in output_sorted
-        ]
+        input_device_list = {
+            f"{input_sorted.index(d)+1}: {d.name} ({d.host_api})": d.index
+            for d in input_sorted
+        }
+        output_device_list = {
+            f"{output_sorted.index(d)+1}: {d.name} ({d.host_api})": d.index
+            for d in output_sorted
+        }
 
         return input_device_list, output_device_list
     except Exception:
@@ -304,26 +310,37 @@ def get_audio_devices_formatted():
 def realtime_tab():
     gr.Markdown("## Realtime Voice Changer")
     input_devices, output_devices = get_audio_devices_formatted()
+    input_devices, output_devices = list(input_devices.keys()), list(
+        output_devices.keys()
+    )
 
     # Load saved settings
     saved_settings = load_realtime_settings()
 
     with gr.Blocks() as ui:
         with gr.Row():
-            start_button = gr.Button("Start", variant="primary")
-            stop_button = gr.Button("Stop", interactive=False)
+            start_button = gr.Button(i18n("Start"), variant="primary")
+            stop_button = gr.Button(i18n("Stop"), interactive=False)
         latency_info = gr.Label(label=i18n("Status"), value="Realtime not started.")
+        terms_checkbox = gr.Checkbox(
+            label=i18n("I agree to the terms of use"),
+            info=i18n(
+                "Please ensure compliance with the terms and conditions detailed in [this document](https://github.com/IAHispano/Applio/blob/main/TERMS_OF_USE.md) before proceeding with your realtime."
+            ),
+            value=False,
+            interactive=True,
+        )
 
         with gr.Tabs():
             with gr.TabItem("Audio Settings"):
                 with gr.Row():
-                    refresh_devices_button = gr.Button("Refresh Audio Devices")
+                    refresh_devices_button = gr.Button(i18n("Refresh Audio Devices"))
                 with gr.Row():
-                    with gr.Accordion("Input Device", open=True):
+                    with gr.Accordion(i18n("Input Device"), open=True):
                         with gr.Column():
                             input_audio_device = gr.Dropdown(
-                                label="Input Device",
-                                info="Select the microphone or audio interface you will be speaking into.",
+                                label=i18n("Input Device"),
+                                info=i18n("Select the microphone or audio interface you will be speaking into."),
                                 choices=input_devices,
                                 value=get_safe_dropdown_value(
                                     saved_settings["input_device"], input_devices
@@ -334,8 +351,8 @@ def realtime_tab():
                                 minimum=0,
                                 maximum=200,
                                 value=100,
-                                label="Input Gain (%)",
-                                info="Adjusts the input volume before processing. Prevents clipping or boosts a quiet mic.",
+                                label=i18n("Input Gain (%)"),
+                                info=i18n("Adjusts the input volume before processing. Prevents clipping or boosts a quiet mic."),
                                 interactive=True,
                             )
                             input_asio_channels = gr.Slider(
@@ -343,15 +360,15 @@ def realtime_tab():
                                 maximum=16,
                                 value=-1,
                                 step=1,
-                                label="Input ASIO Channel",
-                                info="For ASIO drivers, selects a specific input channel. Leave at -1 for default.",
+                                label=i18n("Input ASIO Channel"),
+                                info=i18n("For ASIO drivers, selects a specific input channel. Leave at -1 for default."),
                                 interactive=True,
                             )
                     with gr.Accordion("Output Device", open=True):
                         with gr.Column():
                             output_audio_device = gr.Dropdown(
-                                label="Output Device",
-                                info="Select the device where the final converted voice will be sent (e.g., a virtual cable).",
+                                label=i18n("Output Device"),
+                                info=i18n("Select the device where the final converted voice will be sent (e.g., a virtual cable)."),
                                 choices=output_devices,
                                 value=get_safe_dropdown_value(
                                     saved_settings["output_device"], output_devices
@@ -362,8 +379,8 @@ def realtime_tab():
                                 minimum=0,
                                 maximum=200,
                                 value=100,
-                                label="Output Gain (%)",
-                                info="Adjusts the final volume of the converted voice after processing.",
+                                label=i18n("Output Gain (%)"),
+                                info=i18n("Adjusts the final volume of the converted voice after processing."),
                                 interactive=True,
                             )
                             output_asio_channels = gr.Slider(
@@ -371,18 +388,18 @@ def realtime_tab():
                                 maximum=16,
                                 value=-1,
                                 step=1,
-                                label="Output ASIO Channel",
-                                info="For ASIO drivers, selects a specific output channel. Leave at -1 for default.",
+                                label=i18n("Output ASIO Channel"),
+                                info=i18n("For ASIO drivers, selects a specific output channel. Leave at -1 for default."),
                                 interactive=True,
                             )
                 with gr.Accordion("Monitor Device (Optional)", open=False):
                     with gr.Column():
                         use_monitor_device = gr.Checkbox(
-                            label="Use Monitor Device", value=False, interactive=True
+                            label=i18n("Use Monitor Device"), value=False, interactive=True
                         )
                         monitor_output_device = gr.Dropdown(
-                            label="Monitor Device",
-                            info="Select the device for monitoring your voice (e.g., your headphones).",
+                            label=i18n("Monitor Device"),
+                            info=i18n("Select the device for monitoring your voice (e.g., your headphones)."),
                             choices=output_devices,
                             value=get_safe_dropdown_value(
                                 saved_settings["monitor_device"], output_devices
@@ -393,8 +410,8 @@ def realtime_tab():
                             minimum=0,
                             maximum=200,
                             value=100,
-                            label="Monitor Gain (%)",
-                            info="Adjusts the volume of the monitor feed, independent of the main output.",
+                            label=i18n("Monitor Gain (%)"),
+                            info=i18n("Adjusts the volume of the monitor feed, independent of the main output."),
                             interactive=True,
                         )
                         monitor_asio_channels = gr.Slider(
@@ -402,20 +419,20 @@ def realtime_tab():
                             maximum=16,
                             value=-1,
                             step=1,
-                            label="Monitor ASIO Channel",
-                            info="For ASIO drivers, selects a specific monitor output channel. Leave at -1 for default.",
+                            label=i18n("Monitor ASIO Channel"),
+                            info=i18n("For ASIO drivers, selects a specific monitor output channel. Leave at -1 for default."),
                             interactive=True,
                         )
                 with gr.Row():
                     exclusive_mode = gr.Checkbox(
-                        label="Exclusive Mode (WASAPI)",
-                        info="For WASAPI (Windows), gives the app exclusive control for potentially lower latency.",
+                        label=i18n("Exclusive Mode (WASAPI)"),
+                        info=i18n("For WASAPI (Windows), gives the app exclusive control for potentially lower latency."),
                         value=True,
                         interactive=True,
                     )
                     vad_enabled = gr.Checkbox(
-                        label="Enable VAD",
-                        info="Enables Voice Activity Detection to only process audio when you are speaking, saving CPU.",
+                        label=i18n("Enable VAD"),
+                        info=i18n("Enables Voice Activity Detection to only process audio when you are speaking, saving CPU."),
                         value=True,
                         interactive=True,
                     )
@@ -597,16 +614,16 @@ def realtime_tab():
                     maximum=2730.7,
                     value=512,
                     step=1,
-                    label="Chunk Size (ms)",
-                    info="Audio buffer size in milliseconds. Lower values may reduce latency but increase CPU load.",
+                    label=i18n("Chunk Size (ms)"),
+                    info=i18n("Audio buffer size in milliseconds. Lower values may reduce latency but increase CPU load."),
                     interactive=True,
                 )
                 cross_fade_overlap_size = gr.Slider(
                     minimum=0.05,
                     maximum=0.2,
                     value=0.01,
-                    label="Crossfade Overlap Size (s)",
-                    info="Duration of the fade between audio chunks to prevent clicks. Higher values create smoother transitions but may increase latency.",
+                    label=i18n("Crossfade Overlap Size (s)"),
+                    info=i18n("Duration of the fade between audio chunks to prevent clicks. Higher values create smoother transitions but may increase latency."),
                     interactive=True,
                 )
                 extra_convert_size = gr.Slider(
@@ -614,8 +631,8 @@ def realtime_tab():
                     maximum=5,
                     value=0.5,
                     step=0.1,
-                    label="Extra Conversion Size (s)",
-                    info="Amount of extra audio processed to provide context to the model. Improves conversion quality at the cost of higher CPU usage.",
+                    label=i18n("Extra Conversion Size (s)"),
+                    info=i18n("Amount of extra audio processed to provide context to the model. Improves conversion quality at the cost of higher CPU usage."),
                     interactive=True,
                 )
                 silent_threshold = gr.Slider(
@@ -623,10 +640,18 @@ def realtime_tab():
                     maximum=-60,
                     value=-90,
                     step=1,
-                    label="Silence Threshold (dB)",
-                    info="Volume level below which audio is treated as silence and not processed. Helps to save CPU resources and reduce background noise.",
+                    label=i18n("Silence Threshold (dB)"),
+                    info=i18n("Volume level below which audio is treated as silence and not processed. Helps to save CPU resources and reduce background noise."),
                     interactive=True,
                 )
+
+        def enforce_terms(terms_accepted, *args):
+            if not terms_accepted:
+                message = "You must agree to the Terms of Use to proceed."
+                gr.Info(message)
+                yield message, interactive_true, interactive_false
+                return
+            yield from start_realtime(*args)
 
         def update_on_model_change(model_path):
             new_index = match_index(model_path)
@@ -646,6 +671,9 @@ def realtime_tab():
 
         def refresh_devices():
             input_choices, output_choices = get_audio_devices_formatted()
+            input_choices, output_choices = list(input_choices.keys()), list(
+                output_choices.keys()
+            )
             return (
                 gr.update(choices=input_choices),
                 gr.update(choices=output_choices),
@@ -695,8 +723,9 @@ def realtime_tab():
         )
 
         start_button.click(
-            fn=start_realtime,
+            fn=enforce_terms,
             inputs=[
+                terms_checkbox,
                 input_audio_device,
                 input_audio_gain,
                 input_asio_channels,
@@ -803,6 +832,9 @@ def realtime_tab():
             ]
             new_indexes = get_indexes()
             input_choices, output_choices = get_audio_devices_formatted()
+            input_choices, output_choices = list(input_choices.keys()), list(
+                output_choices.keys()
+            )
             return (
                 gr.update(choices=sorted(new_names, key=extract_model_and_epoch)),
                 gr.update(choices=new_indexes),
