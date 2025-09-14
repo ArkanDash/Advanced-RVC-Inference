@@ -15,7 +15,6 @@ soundfile==0.12.1
 noisereduce
 pedalboard
 stftpitchshift
-torch==2.8.0
 torchaudio==2.8.0
 torchvision==0.23.0
 torchcrepe==0.0.23
