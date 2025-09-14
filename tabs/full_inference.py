@@ -765,6 +765,15 @@ def update_hop_length_visibility(pitch_extract_value):
         inputs=pitch_extract,
         outputs=hop_length,
     )
+    def change_choices():
+        new_model_choices = sorted(names, key=lambda path: os.path.getsize(path))
+        new_index_choices = get_indexes()
+        new_audio_choices = sorted(audio_paths)
+        return (
+            {"choices": new_model_choices, "__type__": "update"},
+            {"choices": new_index_choices, "__type__": "update"},
+            {"choices": new_audio_choices, "__type__": "update"}
+        )
 
     infer_backing_vocals.change(
         fn=update_visibility_infer_backing,
