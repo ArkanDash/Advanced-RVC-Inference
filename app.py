@@ -1,79 +1,66 @@
+import os
+import sys
 import gradio as gr
-import sys, os
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
-from tabs.settings import lang_tab, restart_tab
-from programs.applio_code.rvc.lib.tools.prerequisites_download import (
-    prequisites_download_pipeline,
-)
+from tabs.tts import tts_tab
+from tabs.settings import lang_tab, theme_tab, audio_tab, performance_tab, notifications_tab, file_management_tab, debug_tab, backup_restore_tab, misc_tab, restart_tab
 from assets.i18n.i18n import I18nAuto
-import assets.themes.loadThemes as loadThemes
-#from tabs.realtime import realtime_tab
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
-DEFAULT_PORT = 7755
-MAX_PORT_ATTEMPTS = 10
-
-
-prequisites_download_pipeline(
-    False,
-    False,
-    True,
-    False,
-)
-
 
 i18n = I18nAuto()
 
-rvc_theme = loadThemes.load_theme() or "NoCrypt/miku"
-
-with gr.Blocks(title="Advanced RVC Inference", theme="NoCrypt/miku") as rvc:
-    gr.Markdown('<div align="center"><h1>Advanced RVC Inference</h1></a></div>')
-    gr.Markdown(
-        '<div align="center">this project Maintained by <a href="https://github.com/BF667">BF677</a></div>'
-    )
-
-    with gr.Tab("Full Inference"):
-        full_inference_tab()
-    #with gr.Tab("Real Time"):
-    #    realtime_tab()
-    with gr.Tab("Download Model"):
-        download_model_tab()
-    
-
-def launch(port):
-    rvc.launch(
-        share="--share" in sys.argv,
-        inbrowser="--open" in sys.argv,
-        server_port=port,
-    )
-
-
-def get_port_from_args():
-    if "--port" in sys.argv:
-        port_index = sys.argv.index("--port") + 1
-        if port_index < len(sys.argv):
-            return int(sys.argv[port_index])
-    return DEFAULT_PORT
-
+def main():
+    with gr.Blocks(theme=gr.themes.Base()) as app:
+        gr.Markdown(
+            """
+            # Advanced RVC Inference
+            ### Made with ❤️ by ArkanDash
+            """
+        )
+        
+        with gr.Tab(i18n("Full Inference")):
+            full_inference_tab()
+            
+        with gr.Tab(i18n("Download Model")):
+            download_model_tab()
+            
+        with gr.Tab(i18n("TTS")):
+            tts_tab()
+            
+        with gr.Tab(i18n("Settings")):
+            with gr.Tab(i18n("Language")):
+                lang_tab()
+            
+            with gr.Tab(i18n("Theme")):
+                theme_tab()
+                
+            with gr.Tab(i18n("Audio")):
+                audio_tab()
+                
+            with gr.Tab(i18n("Performance")):
+                performance_tab()
+                
+            with gr.Tab(i18n("Notifications")):
+                notifications_tab()
+                
+            with gr.Tab(i18n("File Management")):
+                file_management_tab()
+                
+            with gr.Tab(i18n("Debug")):
+                debug_tab()
+                
+            with gr.Tab(i18n("Backup & Restore")):
+                backup_restore_tab()
+                
+            with gr.Tab(i18n("Miscellaneous")):
+                misc_tab()
+                
+            restart_tab()
+            
+    app.launch()
 
 if __name__ == "__main__":
-    port = get_port_from_args()
-    for _ in range(MAX_PORT_ATTEMPTS):
-        try:
-            launch(port)
-            break
-        except OSError:
-            print(
-                f"Failed to launch on port {port}, trying again on port {port - 1}..."
-            )
-            port -= 1
-        except Exception as error:
-            print(f"An error occurred launching Gradio: {error}")
-            break
-
-
-
-
-
-
+    main()
