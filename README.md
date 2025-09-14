@@ -63,8 +63,7 @@ Packed with powerful tools including a model downloader, voice splitter, and mor
 1. **Install Python Dependencies**
 
    ```bash
-   python -m pip install -r requirements.txt
-   pip install torch torchvision torchaudio numpy==1.23.5
+   pip install -r requirements.txt
    ```
 
 2. **Install [ffmpeg](https://ffmpeg.org/)**  
