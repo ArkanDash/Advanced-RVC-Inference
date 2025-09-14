@@ -626,17 +626,17 @@ def full_inference_tab():
 
         return gr.update(visible=checkbox)
 
-    def update_reverb_sliders_visibility(reverb_checked):
+def update_reverb_sliders_visibility(reverb_checked):
 
-        return {
-            reverb_room_size: gr.update(visible=reverb_checked),
-            reverb_damping: gr.update(visible=reverb_checked),
-            reverb_wet_gain: gr.update(visible=reverb_checked),
-            reverb_dry_gain: gr.update(visible=reverb_checked),
-            reverb_width: gr.update(visible=reverb_checked),
-        }
+    return {
+        reverb_room_size: gr.update(visible=reverb_checked),
+        reverb_damping: gr.update(visible=reverb_checked),
+        reverb_wet_gain: gr.update(visible=reverb_checked),
+        reverb_dry_gain: gr.update(visible=reverb_checked),
+        reverb_width: gr.update(visible=reverb_checked),
+    }
 
-    def update_visibility_infer_backing(infer_backing_vocals):
+def update_visibility_infer_backing(infer_backing_vocals):
 
         visible = infer_backing_vocals
 
@@ -648,9 +648,9 @@ def full_inference_tab():
             {"visible": visible, "__type__": "update"},
         )
 
-    def update_hop_length_visibility(pitch_extract_value):
+def update_hop_length_visibility(pitch_extract_value):
 
-        return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
+    return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
 
 
     

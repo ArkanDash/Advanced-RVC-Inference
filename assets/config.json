@@ -1,11 +1,46 @@
 {
   "theme": {
     "file": "Grheme.py",
-    "class": "Grheme"
+    "class": "Grheme",
+    "mode": "light",
+    "primary_hue": "blue",
+    "font_size": "medium"
   },
   "discord_presence": true,
   "lang": {
     "override": false,
     "selected_lang": "en_US"
+  },
+  "audio": {
+    "default_format": "wav",
+    "auto_delete_processed": false,
+    "max_file_size": 100
+  },
+  "performance": {
+    "max_threads": 4,
+    "memory_optimization": true,
+    "gpu_acceleration": true
+  },
+  "notifications": {
+    "show_completion": true,
+    "show_errors": true,
+    "play_sound": true
+  },
+  "file_management": {
+    "auto_cleanup": false,
+    "cleanup_interval": 24,
+    "backup_enabled": false
+  },
+  "debug": {
+    "verbose_logging": false,
+    "save_debug_logs": true,
+    "debug_level": "INFO"
+  },
+  "user_profile": {
+    "username": "User",
+    "email": "",
+    "save_preferences": true,
+    "recent_models": [],
+    "favorite_models": []
   }
 }
