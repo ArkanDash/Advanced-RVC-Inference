@@ -96,13 +96,15 @@ def get_language_settings():
 def get_language_choices():
     """Get language choices with proper display names"""
     choices = ["Language automatically detected in the system"]
-    available_languages = [path.stem for path in os.scandir(os.path.join(now_dir, "assets", "i18n", "languages")) if path.name.endswith('.json')]
+    available_languages = [os.path.splitext(path.name)[0] for path in os.scandir(os.path.join(now_dir, "assets", "i18n", "languages")) if path.name.endswith('.json')]
     
     for lang in available_languages:
         display_name = LANGUAGE_DISPLAY_NAMES.get(lang, lang)
         choices.append(display_name)
     
     return choices
+    
+
 
 def get_language_code_from_display(display_name):
     """Convert display name back to language code"""
