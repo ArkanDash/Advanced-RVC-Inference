@@ -2,8 +2,8 @@ pip>=23.3; sys_platform=='darwin'
 wheel; sys_platform=='darwin'
 PyYAML; sys_platform=='darwin'
 omegaconf>=2.0.6; sys_platform=='darwin'
-numba==0.61.2
-numpy==2.3.3
+numpy>=1.25.2,<2.0.0
+numba>=0.57.0
 ml_collections
 tqdm
 audio-separator[gpu]==0.30.1
