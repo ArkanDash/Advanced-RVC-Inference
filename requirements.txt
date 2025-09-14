@@ -23,8 +23,7 @@ einops
 libf0
 transformers==4.44.2
 pypresence
-gradio
-gradio_client
+gradio==5.23.1
 bs4
 omegaconf
 matplotlib==3.7.2
