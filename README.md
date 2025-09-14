@@ -21,6 +21,7 @@ Watch the full setup and usage guide here:
 - [Features](#features)
 - [Installation](#installation)
 - [Running the WebUI](#running-the-webui)
+- [Language Support](#language-support)
 - [Terms of Use](#terms-of-use)
 - [Disclaimer](#disclaimer)
 - [Credits](#credits)
@@ -53,6 +54,7 @@ Packed with powerful tools including a model downloader, voice splitter, and mor
   *Requires internet to download model*
 - ✅ **Model Downloader**
 - ✅ **Gradio WebUI**
+- ✅ **Multi-language Support (16+ Languages)**
 
 ---
 
@@ -75,6 +77,39 @@ Packed with powerful tools including a model downloader, voice splitter, and mor
 ```bash
 python app.py
 ```
+
+---
+
+## 🌍 Language Support
+
+Advanced RVC Inference now supports 16+ languages, making it accessible to users around the world. The application automatically detects your system language and uses the appropriate translation if available.
+
+### Supported Languages:
+- 🇺🇸 English (US)
+- 🇩🇪 German (Deutsch)
+- 🇪🇸 Spanish (Español)
+- 🇫🇷 French (Français)
+- 🇮🇩 Indonesian (Bahasa Indonesia)
+- 🇯🇵 Japanese (日本語)
+- 🇧🇷 Portuguese (Português)
+- 🇨🇳 Chinese (中文)
+- 🇸🇦 Arabic (العربية)
+- 🇮🇳 Hindi (हिन्दी)
+- 🇮🇹 Italian (Italiano)
+- 🇰🇷 Korean (한국어)
+- 🇳🇱 Dutch (Nederlands)
+- 🇵🇱 Polish (Polski)
+- 🇷🇺 Russian (Русский)
+- 🇹🇷 Turkish (Türkçe)
+
+### Changing Language:
+1. Open the application
+2. Go to the "Settings" tab
+3. Select your preferred language from the dropdown
+4. Restart the application for changes to take effect
+
+### Contributing Translations:
+We welcome translations from the community! If you'd like to add support for your language or improve existing translations, please see our [Translation Guide](TRANSLATION.md).
 
 ---
 
