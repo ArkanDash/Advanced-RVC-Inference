@@ -6,7 +6,7 @@ from tabs.download_model import download_model_tab
 from tabs.tts import tts_tab
 from tabs.settings import lang_tab, theme_tab, audio_tab, performance_tab, notifications_tab, file_management_tab, debug_tab, backup_restore_tab, misc_tab, restart_tab
 from assets.i18n.i18n import I18nAuto
-
+from argparse import ArgumentParser 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
@@ -21,6 +21,9 @@ my_theme = loadThemes.load_theme() or "ParityError/Interstellar"
 
 
 def main():
+    parser = ArgumentParser(description='Advanced RVC Inference made by ArkanDash, NeoDev.', add_help=True)
+    parser.add_argument("--share", action="store_true", dest="share_enabled", default=False, help="Enable sharing")  
+    args = parser.parse_args()
     with gr.Blocks(theme=my_theme, title="Advanced RVC Inference") as app:
         gr.Markdown(
             """
@@ -68,7 +71,7 @@ def main():
                 
             restart_tab()
             
-    app.launch()
+    app.launch(share=args.share_enabled)
 
 if __name__ == "__main__":
     main()
