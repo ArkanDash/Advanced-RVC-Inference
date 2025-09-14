@@ -101,6 +101,9 @@ Advanced RVC Inference now supports 16+ languages, making it accessible to users
 - 🇷🇺 Russian (Русский)
 - 🇹🇷 Turkish (Türkçe)
 
+
+NOTE: the language on this app not 100% translated
+
 ### Changing Language:
 1. Open the application
 2. Go to the "Settings" tab
