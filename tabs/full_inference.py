@@ -4,6 +4,54 @@ import gradio as gr
 from tabs.infer.variable import *
 
 
+# ===========================
+# UTILITY FUNCTIONS
+# ===========================
+
+def change_choices():
+    """Refresh dropdown choices for model, index, and audio files."""
+    new_model_choices = sorted(names, key=lambda path: os.path.getsize(path))
+    new_index_choices = get_indexes()
+    new_audio_choices = sorted(audio_paths)
+    return (
+        {"choices": new_model_choices, "__type__": "update"},
+        {"choices": new_index_choices, "__type__": "update"},
+        {"choices": new_audio_choices, "__type__": "update"}
+    )
+
+
+def update_dropdown_visibility(checkbox):
+    return gr.update(visible=checkbox)
+
+
+def update_reverb_sliders_visibility(reverb_checked):
+    return {
+        reverb_room_size: gr.update(visible=reverb_checked),
+        reverb_damping: gr.update(visible=reverb_checked),
+        reverb_wet_gain: gr.update(visible=reverb_checked),
+        reverb_dry_gain: gr.update(visible=reverb_checked),
+        reverb_width: gr.update(visible=reverb_checked),
+    }
+
+
+def update_visibility_infer_backing(infer_backing_vocals):
+    visible = infer_backing_vocals
+    return (
+        {"visible": visible, "__type__": "update"},
+        {"visible": visible, "__type__": "update"},
+        {"visible": visible, "__type__": "update"},
+        {"visible": visible, "__type__": "update"},
+        {"visible": visible, "__type__": "update"},
+    )
+
+
+def update_hop_length_visibility(pitch_extract_value):
+    return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
+
+
+# ===========================
+# TABS
+# ===========================
 
 def download_music_tab():
     with gr.Row(equal_height=True):
@@ -99,7 +147,7 @@ def full_inference_tab():
 
                 infer_backing_vocals = gr.Checkbox(
                     label=i18n("Infer Backing Vocals"),
-                    info=i18n("Infer the bakcing vocals too."),
+                    info=i18n("Infer the backing vocals too."),
                     visible=True,
                     value=False,
                     interactive=True,
@@ -131,7 +179,6 @@ def full_inference_tab():
                     )
 
                     with gr.Column():
-
                         refresh_button_infer_backing_vocals = gr.Button(
                             i18n("Refresh"),
                             visible=False,
@@ -399,7 +446,6 @@ def full_inference_tab():
                 )
 
             with gr.Accordion(i18n("Audio Separation Settings"), open=False):
-
                 use_tta = gr.Checkbox(
                     label=i18n("Use TTA"),
                     info=i18n("Use Test Time Augmentation."),
@@ -481,7 +527,6 @@ def full_inference_tab():
                 )
 
             with gr.Accordion(i18n("Audio post-process Settings"), open=False):
-
                 change_inst_pitch = gr.Slider(
                     label=i18n("Change Instrumental Pitch"),
                     info=i18n("Change the pitch of the instrumental."),
@@ -597,7 +642,6 @@ def full_inference_tab():
                 )
 
             with gr.Accordion(i18n("Device Settings"), open=False):
-
                 devices = gr.Textbox(
                     label=i18n("Device"),
                     info=i18n(
@@ -617,43 +661,13 @@ def full_inference_tab():
             vc_output2 = gr.Audio(label=i18n("Export Audio"))
 
     with gr.Tab(i18n("Download Music")):
-
         download_music_tab()
 
-    
+    # ===========================
+    # EVENT LISTENERS
+    # ===========================
 
-    def update_dropdown_visibility(checkbox):
-
-        return gr.update(visible=checkbox)
-
-def update_reverb_sliders_visibility(reverb_checked):
-
-    return {
-        reverb_room_size: gr.update(visible=reverb_checked),
-        reverb_damping: gr.update(visible=reverb_checked),
-        reverb_wet_gain: gr.update(visible=reverb_checked),
-        reverb_dry_gain: gr.update(visible=reverb_checked),
-        reverb_width: gr.update(visible=reverb_checked),
-    }
-
-def update_visibility_infer_backing(infer_backing_vocals):
-
-        visible = infer_backing_vocals
-
-        return (
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-        )
-
-def update_hop_length_visibility(pitch_extract_value):
-
-    return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
-
-
-    
+    # Refresh buttons
     refresh_button.click(
         fn=change_choices,
         inputs=[],
@@ -666,18 +680,21 @@ def update_hop_length_visibility(pitch_extract_value):
         outputs=[infer_backing_vocals_model, infer_backing_vocals_index],
     )
 
+    # Upload audio triggers audio dropdown update
     upload_audio.upload(
         fn=save_to_wav,
         inputs=[upload_audio],
         outputs=[audio, output_path],
     )
 
+    # Clear outputs
     clear_outputs_infer.click(
         fn=delete_outputs,
         inputs=[],
         outputs=[],
     )
 
+    # Main conversion
     convert_button.click(
         full_inference_program,
         inputs=[
@@ -736,6 +753,7 @@ def update_hop_length_visibility(pitch_extract_value):
         outputs=[vc_output1, vc_output2],
     )
 
+    # Visibility toggles
     deecho.change(
         fn=update_dropdown_visibility,
         inputs=deecho,
@@ -765,15 +783,6 @@ def update_hop_length_visibility(pitch_extract_value):
         inputs=pitch_extract,
         outputs=hop_length,
     )
-    def change_choices():
-        new_model_choices = sorted(names, key=lambda path: os.path.getsize(path))
-        new_index_choices = get_indexes()
-        new_audio_choices = sorted(audio_paths)
-        return (
-            {"choices": new_model_choices, "__type__": "update"},
-            {"choices": new_index_choices, "__type__": "update"},
-            {"choices": new_audio_choices, "__type__": "update"}
-        )
 
     infer_backing_vocals.change(
         fn=update_visibility_infer_backing,
@@ -786,9 +795,5 @@ def update_hop_length_visibility(pitch_extract_value):
             back_rvc_settings,
         ],
     )
-
-
-
-
 
 
