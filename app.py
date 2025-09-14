@@ -12,8 +12,16 @@ sys.path.append(now_dir)
 
 i18n = I18nAuto()
 
+# Load theme
+import assets.themes.loadThemes as loadThemes
+
+my_theme = loadThemes.load_theme() or "ParityError/Interstellar"
+
+
+
+
 def main():
-    with gr.Blocks(theme=gr.themes.Base()) as app:
+    with gr.Blocks(theme=my_theme, title="Advanced RVC Inference") as app:
         gr.Markdown(
             """
             # Advanced RVC Inference
