@@ -8,6 +8,8 @@ import shutil
 import unicodedata
 import gradio as gr
 from assets.i18n.i18n import I18nAuto
+from functools import lru_cache
+import time
 
 
 i18n = I18nAuto()
@@ -41,34 +43,85 @@ sup_audioext = {
     "ac3",
 }
 
-
-names = [
-    os.path.join(root, file)
-    for root, _, files in os.walk(model_root_relative, topdown=False)
-    for file in files
-    if (
-        file.endswith((".pth", ".onnx"))
-        and not (file.startswith("G_") or file.startswith("D_"))
-    )
-]
+# Cache for file system scans
+_last_scan_time = 0
+_cached_names = []
+_cached_indexes = []
+_cached_audio_paths = {}
 
 
-indexes_list = [
-    os.path.join(root, name)
-    for root, _, files in os.walk(model_root_relative, topdown=False)
-    for name in files
-    if name.endswith(".index") and "trained" not in name
-]
+def _should_rescan():
+    """Check if we should rescan the directories based on a time threshold"""
+    global _last_scan_time
+    current_time = time.time()
+    # Rescan every 30 seconds at most
+    return current_time - _last_scan_time > 30
 
 
-audio_paths = [
-    os.path.join(root, name)
-    for root, _, files in os.walk(audio_root_relative, topdown=False)
-    for name in files
-    if name.endswith(tuple(sup_audioext))
-    and root == audio_root_relative
-    and "_output" not in name
-]
+def _scan_directories():
+    """Scan directories and update cache if needed"""
+    global _last_scan_time, _cached_names, _cached_indexes, _cached_audio_paths
+    
+    if not _should_rescan():
+        return
+    
+    # Scan for model files
+    _cached_names = [
+        os.path.join(root, file)
+        for root, _, files in os.walk(model_root_relative, topdown=False)
+        for file in files
+        if (
+            file.endswith((".pth", ".onnx"))
+            and not (file.startswith("G_") or file.startswith("D_"))
+        )
+    ]
+    
+    # Scan for index files
+    _cached_indexes = [
+        os.path.join(root, name)
+        for root, _, files in os.walk(model_root_relative, topdown=False)
+        for name in files
+        if name.endswith(".index") and "trained" not in name
+    ]
+    
+    # Scan for audio files
+    _cached_audio_paths = [
+        os.path.join(root, name)
+        for root, _, files in os.walk(audio_root_relative, topdown=False)
+        for name in files
+        if name.endswith(tuple(sup_audioext))
+        and root == audio_root_relative
+        and "_output" not in name
+    ]
+    
+    _last_scan_time = time.time()
+
+
+def get_names():
+    """Get cached or freshly scanned model names"""
+    _scan_directories()
+    return _cached_names
+
+
+def get_audio_paths():
+    """Get cached or freshly scanned audio paths"""
+    _scan_directories()
+    return _cached_audio_paths
+
+
+def get_indexes_list():
+    """Get cached or freshly scanned index list"""
+    _scan_directories()
+    return _cached_indexes
+
+
+# Initialize the cache
+_scan_directories()
+
+# Use cached values
+names = get_names()
+indexes_list = get_indexes_list()
+audio_paths = get_audio_paths()
 
 
 vocals_model_names = [
@@ -103,15 +156,9 @@ deeecho_models_names = ["UVR-Deecho-Normal", "UVR-Deecho-Aggressive"]
 
 
 def get_indexes():
-
-    indexes_list = [
-        os.path.join(dirpath, filename)
-        for dirpath, _, filenames in os.walk(model_root_relative)
-        for filename in filenames
-        if filename.endswith(".index") and "trained" not in filename
-    ]
-
-    return indexes_list if indexes_list else ""
+    # Use the cached indexes list
+    indexes = get_indexes_list()
+    return indexes if indexes else ""
 
 
 def match_index(model_file_value):
@@ -198,41 +245,26 @@ def save_to_wav(upload_audio):
 
 def delete_outputs():
     gr.Info(f"Outputs cleared!")
-    for root, _, files in os.walk(audio_root_relative, topdown=False):
-        for name in files:
-            if name.endswith(tuple(sup_audioext)) and name.__contains__("_output"):
-                os.remove(os.path.join(root, name))
+    # Only scan the audio root directory, not subdirectories, to avoid unnecessary loops
+    if os.path.exists(audio_root_relative):
+        for name in os.listdir(audio_root_relative):
+            if name.endswith(tuple(sup_audioext)) and "_output" in name:
+                file_path = os.path.join(audio_root_relative, name)
+                if os.path.isfile(file_path):  # Ensure it's a file
+                    os.remove(file_path)
 
 
 def change_choices():
-    names = [
-        os.path.join(root, file)
-        for root, _, files in os.walk(model_root_relative, topdown=False)
-        for file in files
-        if (
-            file.endswith((".pth", ".onnx"))
-            and not (file.startswith("G_") or file.startswith("D_"))
-        )
-    ]
-
-    indexes_list = [
-        os.path.join(root, name)
-        for root, _, files in os.walk(model_root_relative, topdown=False)
-        for name in files
-        if name.endswith(".index") and "trained" not in name
-    ]
-
-    audio_paths = [
-        os.path.join(root, name)
-        for root, _, files in os.walk(audio_root_relative, topdown=False)
-        for name in files
-        if name.endswith(tuple(sup_audioext))
-        and root == audio_root_relative
-        and "_output" not in name
-    ]
+    # Force refresh the cache
+    _scan_directories()
+    
+    # Use cached values
+    model_names = get_names()
+    indexes_list = get_indexes_list()
+    audio_paths = get_audio_paths()
 
     return (
-        {"choices": sorted(names), "__type__": "update"},
-        {"choices": sorted(indexes_list), "__type__": "update"},
-        {"choices": sorted(audio_paths), "__type__": "update"},
+        gr.update(choices=sorted(model_names)),
+        gr.update(choices=sorted(indexes_list)),
+        gr.update(choices=sorted(audio_paths)),
     )

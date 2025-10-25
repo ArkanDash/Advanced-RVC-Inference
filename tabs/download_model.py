@@ -14,10 +14,11 @@ i18n = I18nAuto()
 
 
 def save_drop_model(dropbox):
-    if "pth" not in dropbox and "index" not in dropbox:
-        raise gr.Error(
+    if dropbox is None or ("pth" not in dropbox and "index" not in dropbox):
+        gr.Error(
             message="The file you dropped is not a valid model file. Please try again."
         )
+        return None
     else:
         file_name = format_title(os.path.basename(dropbox))
         if ".pth" in dropbox:

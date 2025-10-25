@@ -10,13 +10,15 @@ from tabs.infer.variable import *
 
 def change_choices():
     """Refresh dropdown choices for model, index, and audio files."""
-    new_model_choices = sorted(names, key=lambda path: os.path.getsize(path))
-    new_index_choices = get_indexes()
-    new_audio_choices = sorted(audio_paths)
+    # Only refresh from the cached values to avoid repeated file system calls
+    from tabs.infer.variable import get_names, get_indexes_list, get_audio_paths
+    new_model_choices = sorted(get_names(), key=lambda path: os.path.getsize(path))
+    new_index_choices = get_indexes_list()
+    new_audio_choices = sorted(get_audio_paths())
     return (
-        {"choices": new_model_choices, "__type__": "update"},
-        {"choices": new_index_choices, "__type__": "update"},
-        {"choices": new_audio_choices, "__type__": "update"}
+        gr.update(choices=new_model_choices),
+        gr.update(choices=new_index_choices),
+        gr.update(choices=new_audio_choices)
     )
 
 
@@ -37,11 +39,11 @@ def update_reverb_sliders_visibility(reverb_checked):
 def update_visibility_infer_backing(infer_backing_vocals):
     visible = infer_backing_vocals
     return (
-        {"visible": visible, "__type__": "update"},
-        {"visible": visible, "__type__": "update"},
-        {"visible": visible, "__type__": "update"},
-        {"visible": visible, "__type__": "update"},
-        {"visible": visible, "__type__": "update"},
+        gr.update(visible=visible),
+        gr.update(visible=visible),
+        gr.update(visible=visible),
+        gr.update(visible=visible),
+        gr.update(visible=visible),
     )
 
 
@@ -100,8 +102,8 @@ def full_inference_tab():
 
             unload_button.click(
                 fn=lambda: (
-                    {"value": "", "__type__": "update"},
-                    {"value": "", "__type__": "update"},
+                    gr.update(value=""),
+                    gr.update(value=""),
                 ),
                 inputs=[],
                 outputs=[model_file, index_file],
@@ -191,8 +193,8 @@ def full_inference_tab():
 
                         unload_button_infer_backing_vocals.click(
                             fn=lambda: (
-                                {"value": "", "__type__": "update"},
-                                {"value": "", "__type__": "update"},
+                                gr.update(value=""),
+                                gr.update(value=""),
                             ),
                             inputs=[],
                             outputs=[

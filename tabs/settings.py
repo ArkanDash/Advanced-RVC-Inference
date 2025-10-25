@@ -3,6 +3,7 @@ import os, sys
 import json
 import shutil
 import zipfile
+import time
 from datetime import datetime
 from assets.i18n.i18n import I18nAuto
 
@@ -93,16 +94,34 @@ def get_language_settings():
         selected_lang = config["lang"]["selected_lang"]
         return LANGUAGE_DISPLAY_NAMES.get(selected_lang, selected_lang)
 
+# Cache for language choices
+_cached_language_choices = None
+_last_language_scan_time = 0
+
 def get_language_choices():
     """Get language choices with proper display names"""
-    choices = ["Language automatically detected in the system"]
-    available_languages = [os.path.splitext(path.name)[0] for path in os.scandir(os.path.join(now_dir, "assets", "i18n", "languages")) if path.name.endswith('.json')]
+    global _cached_language_choices, _last_language_scan_time
     
-    for lang in available_languages:
-        display_name = LANGUAGE_DISPLAY_NAMES.get(lang, lang)
-        choices.append(display_name)
+    current_time = time.time()
+    # Only rescan every 60 seconds to prevent unnecessary file system operations
+    if _cached_language_choices is None or (current_time - _last_language_scan_time) > 60:
+        choices = ["Language automatically detected in the system"]
+        try:
+            available_languages_dir = os.path.join(now_dir, "assets", "i18n", "languages")
+            if os.path.exists(available_languages_dir):
+                available_languages = [os.path.splitext(path.name)[0] for path in os.scandir(available_languages_dir) if path.name.endswith('.json')]
+                
+                for lang in available_languages:
+                    display_name = LANGUAGE_DISPLAY_NAMES.get(lang, lang)
+                    choices.append(display_name)
+        except:
+            # Fallback in case of error
+            choices = ["Language automatically detected in the system"]
+        
+        _cached_language_choices = choices
+        _last_language_scan_time = current_time
     
-    return choices
+    return _cached_language_choices
     
 
 
@@ -336,18 +355,31 @@ def restore_backup(backup_file):
     except Exception as e:
         gr.Error(i18n(f"Error restoring backup: {str(e)}"))
 
+# Cache for backups
+_cached_backups = None
+_last_backup_scan_time = 0
+
 def get_available_backups():
     """Get list of available backup files"""
-    backup_dir = os.path.join(now_dir, "backups")
-    if not os.path.exists(backup_dir):
-        return []
+    global _cached_backups, _last_backup_scan_time
     
-    backups = []
-    for file in os.listdir(backup_dir):
-        if file.endswith(".zip"):
-            backups.append(os.path.join(backup_dir, file))
+    current_time = time.time()
+    # Only rescan every 30 seconds to prevent unnecessary file system operations
+    if _cached_backups is None or (current_time - _last_backup_scan_time) > 30:
+        backup_dir = os.path.join(now_dir, "backups")
+        if not os.path.exists(backup_dir):
+            _cached_backups = []
+        else:
+            backups = []
+            for file in os.listdir(backup_dir):
+                if file.endswith(".zip"):
+                    backups.append(os.path.join(backup_dir, file))
+            
+            _cached_backups = sorted(backups, reverse=True)
+        
+        _last_backup_scan_time = current_time
     
-    return sorted(backups, reverse=True)
+    return _cached_backups
 
 def lang_tab():
     with gr.Column():

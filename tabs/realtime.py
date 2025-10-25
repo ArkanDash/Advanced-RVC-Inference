@@ -761,20 +761,14 @@ def realtime_tab():
         )
 
         stop_button.click(
-            fn=stop_realtime, outputs=[latency_info, start_button, stop_button]
-        ).then(
-            fn=lambda: (
-                yield gr.update(value="Stopped"),
-                interactive_true,
-                interactive_false,
-            ),
+            fn=stop_realtime, 
             inputs=None,
-            outputs=[latency_info, start_button, stop_button],
+            outputs=[latency_info, start_button, stop_button]
         )
         unload_button.click(
             fn=lambda: (
-                {"value": "", "__type__": "update"},
-                {"value": "", "__type__": "update"},
+                gr.update(value=""),
+                gr.update(value=""),
             ),
             inputs=[],
             outputs=[model_file, index_file],
