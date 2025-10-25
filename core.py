@@ -20,7 +20,7 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 now_dir = os.getcwd()
-sys.path.append(now_dir)
+os.path.dirname(os.path.abspath(__file__))
 
 models_vocals = [
     {
@@ -1072,3 +1072,4 @@ def download_music(link):
     except subprocess.CalledProcessError as e:
         logging.error(f"Download failed: {e.stderr}")
         return f"Error: {e.stderr}"
+
