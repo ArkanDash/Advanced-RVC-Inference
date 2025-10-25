@@ -13,9 +13,9 @@ sys.path.append(now_dir)
 i18n = I18nAuto()
 
 # Load theme
-import assets.themes.loadThemes as loadThemes
+#import assets.themes.loadThemes as loadThemes
 
-my_theme = loadThemes.load_theme() or "ParityError/Interstellar"
+my_theme =  "default" #loadThemes.load_theme() or
 
 
 
