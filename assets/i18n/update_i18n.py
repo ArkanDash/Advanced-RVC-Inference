@@ -1,0 +1,112 @@
+import ast
+import json
+import os
+from pathlib import Path
+from collections import OrderedDict
+
+def extract_i18n_strings(node):
+    i18n_strings = []
+
+    if (
+        isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "i18n"
+    ):
+        for arg in node.args:
+            if isinstance(arg, ast.Constant):  # Python 3.8+
+                i18n_strings.append(arg.value)
+            elif isinstance(arg, ast.Str):  # Python < 3.8
+                i18n_strings.append(arg.s)
+
+    for child_node in ast.iter_child_nodes(node):
+        i18n_strings.extend(extract_i18n_strings(child_node))
+
+    return i18n_strings
+
+def process_file(file_path):
+    try:
+        with open(file_path, "r", encoding="utf8") as file:
+            code = file.read()
+            if "i18n" in code:
+                tree = ast.parse(code)
+                i18n_strings = extract_i18n_strings(tree)
+                print(file_path, len(i18n_strings))
+                return i18n_strings
+    except SyntaxError as e:
+        print(f"Syntax error in {file_path}: {e}")
+    except Exception as e:
+        print(f"Error processing {file_path}: {e}")
+    return []
+
+# Use pathlib for file handling
+py_files = Path(".").rglob("*.py")
+
+# Use a set to store unique strings
+code_keys = set()
+
+for py_file in py_files:
+    strings = process_file(py_file)
+    code_keys.update(strings)
+
+print()
+print("Total unique:", len(code_keys))
+
+standard_file = os.path.join("assets", "i18n", "languages", "en_US.json")
+with open(standard_file, "r", encoding="utf-8") as file:
+    standard_data = json.load(file, object_pairs_hook=OrderedDict)
+standard_keys = set(standard_data.keys())
+
+# Combine unused and missing keys sections
+unused_keys = standard_keys - code_keys
+missing_keys = code_keys - standard_keys
+
+print("Unused keys:", len(unused_keys))
+for unused_key in unused_keys:
+    try:
+        print("\t", unused_key)
+    except UnicodeEncodeError:
+        print("\t", unused_key.encode('ascii', 'ignore').decode('ascii'))
+
+print("Missing keys:", len(missing_keys))
+for missing_key in missing_keys:
+    try:
+        print("\t", missing_key)
+    except UnicodeEncodeError:
+        print("\t", missing_key.encode('ascii', 'ignore').decode('ascii'))
+
+# Create updated key set with all code keys and any existing translations
+all_keys = code_keys
+code_keys_dict = OrderedDict((s, s) for s in sorted(all_keys))
+
+# Use context manager for writing back to the file
+with open(standard_file, "w", encoding="utf-8") as file:
+    json.dump(code_keys_dict, file, ensure_ascii=False, indent=4, sort_keys=True)
+    file.write("\n")
+
+# Now update all other language files to match the standard
+language_dir = Path("assets", "i18n", "languages")
+for lang_file in language_dir.glob("*.json"):
+    if lang_file.name != "en_US.json":  # Skip the standard file since we just updated it
+        print(f"Updating {lang_file.name}")
+        with open(lang_file, "r", encoding="utf-8") as file:
+            existing_data = json.load(file, object_pairs_hook=OrderedDict)
+        
+        # Update the existing data to include new keys while preserving translations
+        updated_data = OrderedDict()
+        for key in sorted(all_keys):
+            if key in existing_data:
+                updated_data[key] = existing_data[key]  # Keep existing translation
+            else:
+                updated_data[key] = key  # Use key as default translation
+        
+        # Remove any keys that are no longer needed
+        for key in list(updated_data.keys()):
+            if key not in all_keys:
+                del updated_data[key]
+        
+        # Write the updated data back to the file
+        with open(lang_file, "w", encoding="utf-8") as file:
+            json.dump(updated_data, file, ensure_ascii=False, indent=4, sort_keys=True)
+            file.write("\n")
+
+print("All language files updated!")

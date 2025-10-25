@@ -1,11 +1,4 @@
 {
-  "theme": {
-    "file": "Grheme.py",
-    "class": "Grheme",
-    "mode": "light",
-    "primary_hue": "blue",
-    "font_size": "medium"
-  },
   "discord_presence": true,
   "lang": {
     "override": false,

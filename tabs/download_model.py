@@ -55,8 +55,7 @@ def save_drop_model(dropbox):
             model_name = model_name.replace("__", "")
 
         model_path = os.path.join(now_dir, "logs", model_name)
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
+        os.makedirs(model_path, exist_ok=True)
         if os.path.exists(os.path.join(model_path, file_name)):
             os.remove(os.path.join(model_path, file_name))
         shutil.copy(dropbox, os.path.join(model_path, file_name))

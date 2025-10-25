@@ -68,12 +68,12 @@ def download_from_url(url):
                 return None
 
             if file_id:
-                os.chdir(zips_path)
                 try:
                     gdown.download(
                         f"https://drive.google.com/uc?id={file_id}",
                         quiet=True,
                         fuzzy=True,
+                        output_dir=zips_path
                     )
                 except Exception as error:
                     error_message = str(
@@ -83,16 +83,13 @@ def download_from_url(url):
                         "Too many users have viewed or downloaded this file recently"
                         in error_message
                     ):
-                        os.chdir(now_dir)
                         return "too much use"
                     elif (
                         "Cannot retrieve the public link of the file." in error_message
                     ):
-                        os.chdir(now_dir)
                         return "private link"
                     else:
                         print(error_message)
-                        os.chdir(now_dir)
                         return None
         elif "disk.yandex.ru" in url:
             base_url = "https://cloud-api.yandex.net/v1/disk/public/resources/download?"
@@ -107,8 +104,8 @@ def download_from_url(url):
                     "filename", [""]
                 )[0]
                 if filename:
-                    os.chdir(zips_path)
-                    with open(filename, "wb") as f:
+                    filepath = os.path.join(zips_path, filename)
+                    with open(filepath, "wb") as f:
                         f.write(download_response.content)
             else:
                 print("Failed to get filename from URL.")
@@ -117,7 +114,6 @@ def download_from_url(url):
         elif "pixeldrain.com" in url:
             try:
                 file_id = url.split("pixeldrain.com/u/")[1]
-                os.chdir(zips_path)
                 print(file_id)
                 response = requests.get(f"https://pixeldrain.com/api/file/{file_id}")
                 if response.status_code == 200:
@@ -129,22 +125,20 @@ def download_from_url(url):
                     os.makedirs(zips_path, exist_ok=True)
                     with open(os.path.join(zips_path, file_name), "wb") as newfile:
                         newfile.write(response.content)
-                        os.chdir(file_path)
                         return "downloaded"
                 else:
-                    os.chdir(file_path)
                     return None
             except Exception as error:
                 print(f"An error occurred downloading the file: {error}")
-                os.chdir(file_path)
                 return None
 
         elif "cdn.discordapp.com" in url:
             file = requests.get(url)
-            os.chdir(zips_path)
             if file.status_code == 200:
                 name = url.split("/")
-                with open(os.path.join(name[-1]), "wb") as newfile:
+                filename = name[-1]
+                filepath = os.path.join(zips_path, filename)
+                with open(filepath, "wb") as newfile:
                     newfile.write(file.content)
             else:
                 return None
@@ -191,7 +185,6 @@ def download_from_url(url):
                 os.chdir(now_dir)
                 return None
         elif "/tree/main" in url:
-            os.chdir(zips_path)
             response = requests.get(url)
             soup = BeautifulSoup(response.content, "html.parser")
             temp_url = ""
@@ -205,9 +198,8 @@ def download_from_url(url):
                 if "huggingface.co" not in url:
                     url = "https://huggingface.co" + url
 
-                    wget.download(url)
+                    wget.download(url, out=zips_path)
             else:
-                os.chdir(now_dir)
                 return None
         elif "applio.org" in url:
             parts = url.split("/")
@@ -236,10 +228,8 @@ def download_from_url(url):
                 return None
         else:
             try:
-                os.chdir(zips_path)
-                wget.download(url)
+                wget.download(url, out=zips_path)
             except Exception as error:
-                os.chdir(now_dir)
                 print(f"An error occurred downloading the file: {error}")
                 return None
 
@@ -250,12 +240,12 @@ def download_from_url(url):
                 filePart.pop()
                 nameFile = "_".join(filePart)
                 realPath = os.path.join(currentPath, Files)
-                os.rename(realPath, nameFile + "." + extensionFile)
+                newNamePath = os.path.join(currentPath, nameFile + "." + extensionFile)
+                if realPath != newNamePath:  # Only rename if paths are different
+                    os.rename(realPath, newNamePath)
 
-        os.chdir(now_dir)
         return "downloaded"
 
-    os.chdir(now_dir)
     return None
 
 

@@ -30,7 +30,10 @@ LANGUAGE_DISPLAY_NAMES = {
     "pl_PL": "🇵🇱 Polski (Polish)",
     "pt_BR": "🇧🇷 Português (Brazilian)",
     "ru_RU": "🇷🇺 Русский (Russian)",
+    "th_TH": "🇹🇭 ไทย (Thai)",
     "tr_TR": "🇹🇷 Türkçe (Turkish)",
+    "uk_UA": "🇺🇦 Українська (Ukrainian)",
+    "vi_VN": "🇻🇳 Tiếng Việt (Vietnamese)",
     "zh_CN": "🇨🇳 中文 (Chinese)"
 }
 
@@ -158,23 +161,7 @@ def restart_applio():
     python = sys.executable
     os.execl(python, python, *sys.argv)
 
-def get_theme_settings():
-    """Get current theme settings"""
-    config = load_config()
-    return (
-        config["theme"]["mode"],
-        config["theme"]["primary_hue"],
-        config["theme"]["font_size"]
-    )
 
-def save_theme_settings(theme_mode, primary_hue, font_size):
-    """Save theme settings"""
-    config = load_config()
-    config["theme"]["mode"] = theme_mode
-    config["theme"]["primary_hue"] = primary_hue
-    config["theme"]["font_size"] = font_size
-    save_config(config)
-    gr.Info(i18n("Theme settings have been saved."))
 
 def get_audio_settings():
     """Get current audio settings"""
@@ -411,44 +398,7 @@ def lang_tab():
         
         gr.Markdown("*" + i18n("Note: You need to restart the application for the language changes to take effect.") + "*")
 
-def theme_tab():
-    with gr.Column():
-        gr.Markdown("### " + i18n("Theme Settings"))
-        gr.Markdown(i18n("Customize the appearance of the application."))
-        
-        theme_mode, primary_hue, font_size = get_theme_settings()
-        
-        with gr.Row():
-            theme_mode_dropdown = gr.Dropdown(
-                label=i18n("Theme Mode"),
-                info=i18n("Select the theme mode for the application."),
-                choices=["light", "dark"],
-                value=theme_mode,
-                interactive=True,
-            )
-            
-            primary_hue_dropdown = gr.Dropdown(
-                label=i18n("Primary Color"),
-                info=i18n("Select the primary color for the application."),
-                choices=["red", "orange", "yellow", "green", "blue", "purple", "pink", "slate", "gray", "zinc"],
-                value=primary_hue,
-                interactive=True,
-            )
-            
-            font_size_dropdown = gr.Dropdown(
-                label=i18n("Font Size"),
-                info=i18n("Select the font size for the application."),
-                choices=["small", "medium", "large"],
-                value=font_size,
-                interactive=True,
-            )
-        
-        theme_save_button = gr.Button(i18n("Save Theme Settings"))
-        theme_save_button.click(
-            fn=save_theme_settings,
-            inputs=[theme_mode_dropdown, primary_hue_dropdown, font_size_dropdown],
-            outputs=[],
-        )
+
 
 def audio_tab():
     with gr.Column():
