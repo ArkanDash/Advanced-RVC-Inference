@@ -1058,7 +1058,7 @@ def download_music(link):
         "--output",
         output_template,
         "--cookies",
-        "./assets/ytdlstuff.txt",
+        f"{now_dir}/assets/ytdlstuff.txt",
         link,
     ]
 
@@ -1072,4 +1072,5 @@ def download_music(link):
     except subprocess.CalledProcessError as e:
         logging.error(f"Download failed: {e.stderr}")
         return f"Error: {e.stderr}"
+
 
