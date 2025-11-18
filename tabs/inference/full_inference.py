@@ -1,7 +1,7 @@
 from core import full_inference_program, download_music
 import sys, os
 import gradio as gr
-from tabs.infer.variable import *
+from tabs.inference.variable import *
 
 
 # ===========================
@@ -11,7 +11,7 @@ from tabs.infer.variable import *
 def change_choices():
     """Refresh dropdown choices for model, index, and audio files."""
     # Only refresh from the cached values to avoid repeated file system calls
-    from tabs.infer.variable import get_names, get_indexes_list, get_audio_paths
+    from tabs.inference.variable import get_names, get_indexes_list, get_audio_paths
     new_model_choices = sorted(get_names(), key=lambda path: os.path.getsize(path))
     new_index_choices = get_indexes_list()
     new_audio_choices = sorted(get_audio_paths())

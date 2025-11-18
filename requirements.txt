@@ -47,7 +47,7 @@ edge-tts>=7.2.0
 torchcrepe==0.0.23
 tensorboard>=2.13.0
 onnx>=1.14.0,<2.0.0
-onnxslim>=0.4.13
+onnxslim>=0.1.0
 onnx2torch>=1.5.15
 webrtcvad-wheels>=2.0.14
 pysrt>=1.1.2

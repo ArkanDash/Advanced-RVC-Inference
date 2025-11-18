@@ -16,10 +16,10 @@ from typing import Optional, Dict, Any
 import argparse
 
 import gradio as gr
-from tabs.full_inference import full_inference_tab
-from tabs.download_model import download_model_tab
-from tabs.tts import tts_tab
-from tabs.training_tab import training_tab
+from tabs.inference.full_inference import full_inference_tab
+from tabs.utilities.download_model import download_model_tab
+from tabs.inference.tts import tts_tab
+from tabs.training.training_tab import training_tab
 from tabs.settings import (
     lang_tab, audio_tab, performance_tab, notifications_tab, 
     file_management_tab, debug_tab, backup_restore_tab, 
