@@ -19,6 +19,7 @@ import gradio as gr
 from tabs.full_inference import full_inference_tab
 from tabs.download_model import download_model_tab
 from tabs.tts import tts_tab
+from tabs.training_tab import training_tab
 from tabs.settings import (
     lang_tab, audio_tab, performance_tab, notifications_tab, 
     file_management_tab, debug_tab, backup_restore_tab, 
@@ -269,6 +270,17 @@ def create_enhanced_app():
                     gr.HTML(f"""
                     <div style="color: red; padding: 20px; text-align: center;">
                         ❌ Error loading TTS: {str(e)}
+                    </div>
+                    """)
+                    
+            with gr.Tab("🎓 Training"):
+                try:
+                    training_tab.create_training_interface()
+                except Exception as e:
+                    logger.error(f"Error loading Training tab: {e}")
+                    gr.HTML(f"""
+                    <div style="color: red; padding: 20px; text-align: center;">
+                        ❌ Error loading Training: {str(e)}
                     </div>
                     """)
                     
