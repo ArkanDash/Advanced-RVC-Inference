@@ -24,6 +24,8 @@ import torch
 import json
 import hashlib
 import mimetypes
+import re
+import requests
 from functools import lru_cache, wraps
 from pathlib import Path
 import shutil
@@ -574,6 +576,273 @@ class PerformanceMonitor:
 # Initialize performance monitor
 performance_monitor = PerformanceMonitor()
 
+# Enhanced model download functionality
+import requests
+import zipfile
+import tempfile
+import urllib.parse
+from typing import List, Dict, Optional
+from bs4 import BeautifulSoup
+
+class VoiceModelsDownloader:
+    """Downloader for public RVC models from voice-models.com"""
+    
+    def __init__(self):
+        self.base_url = "https://voice-models.com/"
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        })
+    
+    def fetch_model_list(self) -> List[Dict[str, str]]:
+        """Fetch available RVC models from voice-models.com"""
+        try:
+            response = self.session.get(self.base_url)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            models = []
+            # Look for model entries in the page structure
+            # This will need to be adjusted based on the actual HTML structure
+            model_containers = soup.find_all('div', class_='model-item') or soup.find_all('tr')
+            
+            for container in model_containers:
+                try:
+                    model_data = self._extract_model_info(container)
+                    if model_data and model_data.get('name') and model_data.get('url'):
+                        models.append(model_data)
+                except Exception as e:
+                    logger.warning(f"Error extracting model info: {e}")
+                    continue
+            
+            logger.info(f"Found {len(models)} models from voice-models.com")
+            return models
+            
+        except Exception as e:
+            logger.error(f"Error fetching model list: {e}")
+            return []
+    
+    def _extract_model_info(self, container) -> Optional[Dict[str, str]]:
+        """Extract model information from HTML container"""
+        try:
+            # Look for model name in the first column
+            name_link = container.find('a', href=re.compile(r'/model/'))
+            if not name_link:
+                return None
+                
+            # Extract model name and details
+            name_text = name_link.get_text(strip=True)
+            model_page_url = urllib.parse.urljoin(self.base_url, name_link['href'])
+            
+            # Look for download link (usually in the second column)
+            download_link = None
+            for link in container.find_all('a', href=True):
+                href = link['href']
+                # Skip model page links and run links
+                if '/model/' not in href and 'easyaivoice.com' not in href:
+                    download_link = href
+                    break
+            
+            if not download_link or 'mega.nz' not in download_link and 'huggingface.co' not in download_link and 'drive.google.com' not in download_link:
+                return None
+            
+            # Ensure absolute URL
+            if not download_link.startswith('http'):
+                download_link = urllib.parse.urljoin(self.base_url, download_link)
+            
+            # Extract model details from name
+            details = {}
+            if '[RVC v2]' in name_text or '[RVCV2]' in name_text:
+                details['version'] = 'RVC v2'
+            elif '[RVC v1]' in name_text or '[RVCV1]' in name_text:
+                details['version'] = 'RVC v1'
+            
+            if 'Legacy core' in name_text:
+                details['core'] = 'Legacy'
+            elif 'RMVPE' in name_text:
+                details['core'] = 'RMVPE'
+            elif 'Hi Fi' in name_text or 'HiFi' in name_text:
+                details['core'] = 'HiFi'
+            
+            # Extract epochs
+            epoch_match = re.search(r'(\d+)\s*Epochs?', name_text)
+            if epoch_match:
+                details['epochs'] = epoch_match.group(1)
+            
+            # Clean up model name (remove version info for display)
+            clean_name = re.sub(r'\s*\[.*?\]', '', name_text).strip()
+            if not clean_name:
+                clean_name = name_text
+            
+            # Create description
+            description_parts = []
+            if details.get('version'):
+                description_parts.append(details['version'])
+            if details.get('core'):
+                description_parts.append(f"Core: {details['core']}")
+            if details.get('epochs'):
+                description_parts.append(f"{details['epochs']} epochs")
+            
+            description = " | ".join(description_parts) if description_parts else "RVC Model"
+            
+            return {
+                'name': clean_name,
+                'url': download_link,
+                'description': description,
+                'source': 'voice-models.com',
+                'model_page_url': model_page_url,
+                'version': details.get('version', 'unknown'),
+                'core': details.get('core', 'unknown'),
+                'epochs': details.get('epochs', 'unknown')
+            }
+            
+        except Exception as e:
+            logger.warning(f"Error extracting model info from container: {e}")
+            return None
+    
+    def download_model(self, model_url: str, model_name: str, output_dir: str = None) -> Dict[str, Any]:
+        """Download RVC model from URL"""
+        if output_dir is None:
+            output_dir = os.path.join(now_dir, "logs", "downloaded_models")
+        
+        os.makedirs(output_dir, exist_ok=True)
+        
+        try:
+            # Download the file
+            logger.info(f"Downloading model from: {model_url}")
+            
+            # Handle different file types
+            if model_url.endswith('.zip'):
+                return self._download_zip_model(model_url, model_name, output_dir)
+            elif any(model_url.endswith(ext) for ext in ['.pth', '.ckpt']):
+                return self._download_single_file(model_url, model_name, output_dir)
+            else:
+                return {
+                    'success': False,
+                    'error': 'Unsupported file format. Only .zip, .pth, and .ckpt files are supported.',
+                    'output': ''
+                }
+                
+        except Exception as e:
+            logger.error(f"Error downloading model {model_name}: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'output': f"Failed to download {model_name}: {e}"
+            }
+    
+    def _download_zip_model(self, model_url: str, model_name: str, output_dir: str) -> Dict[str, Any]:
+        """Download and extract ZIP model"""
+        try:
+            with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
+                # Download file
+                response = self.session.get(model_url, stream=True)
+                response.raise_for_status()
+                
+                for chunk in response.iter_content(chunk_size=8192):
+                    tmp_file.write(chunk)
+                
+                tmp_path = tmp_file.name
+            
+            # Extract ZIP
+            extract_dir = os.path.join(output_dir, model_name)
+            os.makedirs(extract_dir, exist_ok=True)
+            
+            with zipfile.ZipFile(tmp_path, 'r') as zip_ref:
+                zip_ref.extractall(extract_dir)
+            
+            # Clean up
+            os.unlink(tmp_path)
+            
+            logger.info(f"Model {model_name} downloaded and extracted successfully")
+            return {
+                'success': True,
+                'output': f"Model {model_name} downloaded successfully to {extract_dir}",
+                'path': extract_dir
+            }
+            
+        except Exception as e:
+            logger.error(f"Error extracting ZIP model: {e}")
+            return {
+                'success': False,
+                'error': f"Failed to extract model: {e}",
+                'output': f"Failed to extract {model_name}: {e}"
+            }
+    
+    def _download_single_file(self, model_url: str, model_name: str, output_dir: str) -> Dict[str, Any]:
+        """Download single model file"""
+        try:
+            response = self.session.get(model_url, stream=True)
+            response.raise_for_status()
+            
+            file_ext = os.path.splitext(model_url)[1]
+            output_filename = f"{model_name}{file_ext}"
+            output_path = os.path.join(output_dir, output_filename)
+            
+            os.makedirs(output_dir, exist_ok=True)
+            
+            with open(output_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+            
+            logger.info(f"Model file {output_filename} downloaded successfully")
+            return {
+                'success': True,
+                'output': f"Model file {output_filename} downloaded successfully to {output_path}",
+                'path': output_path
+            }
+            
+        except Exception as e:
+            logger.error(f"Error downloading single file: {e}")
+            return {
+                'success': False,
+                'error': f"Failed to download file: {e}",
+                'output': f"Failed to download {model_name}: {e}"
+            }
+
+# Initialize voice models downloader
+voice_models_downloader = VoiceModelsDownloader()
+
+def download_model(url: str) -> str:
+    """
+    Enhanced model download function that handles multiple sources
+    """
+    try:
+        # Determine if it's from voice-models.com
+        if 'voice-models.com' in url or 'easyaivoice.com' in url:
+            # Extract the actual model URL from the voice-models.com link
+            if 'easyaivoice.com' in url:
+                # Extract URL parameter
+                parsed_url = urllib.parse.urlparse(url)
+                query_params = urllib.parse.parse_qs(parsed_url.query)
+                actual_url = query_params.get('url', [''])[0]
+                if actual_url:
+                    url = actual_url
+                else:
+                    return "Error: Could not extract model URL from voice-models.com link"
+            
+            # Generate model name from URL
+            model_name = "voice_models_" + str(int(time.time()))
+            result = voice_models_downloader.download_model(url, model_name)
+            
+            if result['success']:
+                return result['output']
+            else:
+                return f"Download failed: {result['error']}"
+        
+        else:
+            # Use original download pipeline for other URLs
+            return model_download_pipeline(url)
+            
+    except Exception as e:
+        error_msg = f"Error downloading model: {str(e)}"
+        logger.error(error_msg)
+        return error_msg
+
+def get_voice_models_list() -> List[Dict[str, str]]:
+    """Get list of available models from voice-models.com"""
+    return voice_models_downloader.fetch_model_list()
+
 # Export enhanced functions and classes
 __all__ = [
     'MODELS_CONFIG',
@@ -584,7 +853,10 @@ __all__ = [
     'get_system_info',
     'CacheManager',
     'PerformanceMonitor',
-    'performance_monitor'
+    'performance_monitor',
+    'download_model',
+    'get_voice_models_list',
+    'VoiceModelsDownloader'
 ]
 
 logger.info("Enhanced RVC Inference Core module loaded successfully")

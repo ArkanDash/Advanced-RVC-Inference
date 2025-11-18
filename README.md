@@ -52,6 +52,7 @@
 - [🎯 Overview](#-overview)
 - [✨ Key Features](#-key-features)
 - [⚡ Performance Improvements](#-performance-improvements)
+- [🌍 Public Model Repository](#-public-model-repository)
 - [🛠️ Installation](#️-installation)
 - [🚀 Getting Started](#-getting-started)
 - [🎨 UI Components](#-ui-components)
@@ -91,6 +92,14 @@
 - **Multiple Embedder Models**: ContentVec, Chinese-Hubert, Japanese-Hubert, Korean-Hubert, and custom support
 - **Pitch Control**: Adjustable pitch with autotune capabilities
 - **Index Rate Management**: Precision control over voice characteristics
+
+### 🌍 **Public Model Repository**
+- **Voice-Models.com Integration**: Browse and download from 27,900+ public RVC models
+- **Smart Model Listing**: Automatic model categorization with version, core type, and epoch information
+- **One-Click Downloads**: Direct download and extraction of ZIP/PTH model files
+- **Model Metadata**: Detailed descriptions, versions, and characteristics for each model
+- **Browser-Based Discovery**: UI tab for exploring available public models
+- **Command-Line Support**: Programmatic access to model lists via `browse_public_models()` function
 
 ### 🎙️ **Audio Processing Suite**
 - **YouTube Audio Downloader**: Direct download from YouTube with WAV format support
