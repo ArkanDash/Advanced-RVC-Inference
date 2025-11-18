@@ -10,7 +10,7 @@ audio-separator[gpu]==0.30.1
 yt_dlp
 wget
 ffmpeg-python>=0.2.0
-faiss-cpu==1.7.3
+# faiss-cpu==1.7.3  # Optional - makes FAISS optional for Colab compatibility
 soundfile==0.12.1
 noisereduce
 pedalboard

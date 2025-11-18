@@ -8,7 +8,7 @@ import time
 from datetime import datetime
 
 
-os.path.dirname(os.path.abspath(__file__))
+# os.path.dirname(os.path.abspath(__file__))  # Fixed standalone line - not needed since now_dir is defined below
 
 
 from core import download_model, get_voice_models_list

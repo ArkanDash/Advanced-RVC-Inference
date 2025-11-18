@@ -19,12 +19,12 @@ except ImportError:
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from applio_code.rvc.realtime.utils.torch import circular_write
-from applio_code.rvc.configs.config import Config
-from applio_code.rvc.infer.pipeline import Autotune, AudioProcessor
-from applio_code.rvc.lib.algorithm.synthesizers import Synthesizer
-from applio_code.rvc.lib.predictors.f0 import FCPE, RMVPE, SWIFT
-from applio_code.rvc.lib.utils import load_embedding, HubertModelWithFinalProj
+from programs.applio_code.rvc.realtime.utils.torch import circular_write
+from programs.applio_code.rvc.configs.config import Config
+from programs.applio_code.rvc.infer.pipeline import Autotune, AudioProcessor
+from programs.applio_code.rvc.lib.algorithm.synthesizers import Synthesizer
+from programs.applio_code.rvc.lib.predictors.f0 import FCPE, RMVPE, SWIFT
+from programs.applio_code.rvc.lib.utils import load_embedding, HubertModelWithFinalProj
 
 
 class RealtimeVoiceConverter:
