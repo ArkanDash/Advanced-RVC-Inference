@@ -39,7 +39,6 @@ torchaudio>=2.0.0
 
 # Voice processing specific
 torchcrepe>=0.0.23
-torchfcpe>=0.1.0
 swift_f0>=0.1.0
 libf0>=0.2.0
 einops>=0.7.0
