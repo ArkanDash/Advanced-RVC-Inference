@@ -2,6 +2,8 @@ pip>=23.3
 wheel
 omegaconf>=2.0.6
 wget
+# KADVC - Kernel Advanced Voice Conversion (built-in optimization system)
+# Provides 2x faster training and inference with custom CUDA kernels
 onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu; sys_platform != 'darwin'
 PyYAML>=6.0

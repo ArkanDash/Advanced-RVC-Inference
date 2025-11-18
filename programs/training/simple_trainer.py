@@ -19,12 +19,20 @@ from tqdm import tqdm
 # Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 
-def simple_train_rvc_model(config: Dict) -> bool:
+def simple_train_rvc_model(config: Dict, kadvc_settings: Optional[Dict] = None) -> bool:
     """
     Simplified RVC training function that integrates with existing codebase
     """
     try:
-        print(f"Starting simplified RVC training for model: {config.get('model_name', 'rvc_model')}")
+        model_name = config.get('model_name', 'rvc_model')
+        print(f"Starting simplified RVC training for model: {model_name}")
+        
+        # Check for KADVC optimization settings
+        if kadvc_settings and kadvc_settings.get('enabled'):
+            print(f"🚀 KADVC optimization enabled for {model_name}")
+            print(f"   • Mixed precision: {'✅' if kadvc_settings.get('mixed_precision', True) else '❌'}")
+            print(f"   • Custom kernels: {'✅' if kadvc_settings.get('custom_kernels', True) else '❌'}")
+            print(f"   • Memory optimization: {'✅' if kadvc_settings.get('memory_optimization', True) else '❌'}")
         
         # Validate dataset
         dataset_path = config.get('dataset_path', 'dataset')
@@ -74,22 +82,50 @@ def simple_train_rvc_model(config: Dict) -> bool:
         
         print(f"✅ Preprocessed {len(preprocessed_files)} files")
         
-        # Simple feature extraction
+        # Feature extraction with KADVC optimization
         print("🔍 Extracting features...")
         features = []
+        use_kadvc = kadvc_settings and kadvc_settings.get('enabled')
+        
         for i, audio_file in enumerate(preprocessed_files):
             try:
                 # Load preprocessed audio
-                audio, sr = librosa.load(str(audio_file), sr=target_sr, mono=True)
+                audio_np, sr = librosa.load(str(audio_file), sr=target_sr, mono=True)
                 
-                # Extract basic features
-                stft = librosa.stft(audio, hop_length=config.get('hop_length', 160), n_fft=2048)
-                magnitude = np.abs(stft)
-                mel_spec = librosa.feature.melspectrogram(S=magnitude, sr=sr, hop_length=config.get('hop_length', 160), n_mels=80)
-                mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
-                
-                # Simple F0 extraction
-                f0 = librosa.yin(audio, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'), hop_length=config.get('hop_length', 160))
+                if use_kadvc:
+                    # Use KADVC optimized feature extraction
+                    try:
+                        import torch
+                        audio_tensor = torch.from_numpy(audio_np).float().unsqueeze(0).cuda() if torch.cuda.is_available() else torch.from_numpy(audio_np).float().unsqueeze(0)
+                        
+                        # Try to use KADVC fast feature extraction
+                        from programs.kernels import get_kadvc_optimizer
+                        kadvc = get_kadvc_optimizer()
+                        f0_tensor, mel_tensor = kadvc.fast_feature_extraction(audio_tensor, sample_rate=target_sr)
+                        
+                        # Convert back to numpy
+                        f0 = f0_tensor.squeeze().cpu().numpy() if isinstance(f0_tensor, torch.Tensor) else f0_tensor
+                        mel_spec_db = mel_tensor.squeeze().cpu().numpy() if isinstance(mel_tensor, torch.Tensor) else mel_tensor
+                        
+                        print(f"✅ Used KADVC optimized feature extraction for {audio_file.name}")
+                        
+                    except Exception as e:
+                        print(f"⚠️ KADVC extraction failed for {audio_file.name}, using fallback: {e}")
+                        # Fallback to standard extraction
+                        stft = librosa.stft(audio_np, hop_length=config.get('hop_length', 160), n_fft=2048)
+                        magnitude = np.abs(stft)
+                        mel_spec = librosa.feature.melspectrogram(S=magnitude, sr=sr, hop_length=config.get('hop_length', 160), n_mels=80)
+                        mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+                        f0 = librosa.yin(audio_np, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'), hop_length=config.get('hop_length', 160))
+                else:
+                    # Standard feature extraction
+                    stft = librosa.stft(audio_np, hop_length=config.get('hop_length', 160), n_fft=2048)
+                    magnitude = np.abs(stft)
+                    mel_spec = librosa.feature.melspectrogram(S=magnitude, sr=sr, hop_length=config.get('hop_length', 160), n_mels=80)
+                    mel_spec_db = librosa.power_to_db(mel_spec, ref=np.max)
+                    
+                    # Simple F0 extraction
+                    f0 = librosa.yin(audio_np, fmin=librosa.note_to_hz('C2'), fmax=librosa.note_to_hz('C7'), hop_length=config.get('hop_length', 160))
                 
                 features.append({
                     'mel_spec': mel_spec_db,
@@ -289,7 +325,8 @@ def create_training_config(model_name: str, **kwargs) -> Dict:
         'dataset_path': 'dataset',
         'weights_dir': 'weights',
         'index_dir': 'index',
-        'logs_dir': 'logs'
+        'logs_dir': 'logs',
+        'kadvc_settings': kwargs.pop('kadvc_settings', {'enabled': False})
     }
     
     # Update with provided kwargs

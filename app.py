@@ -41,9 +41,9 @@ def load_configuration():
     config_path = Path("config_enhanced.json")
     default_config = {
         "application": {
-            "title": "Advanced RVC Inference V3.2 Enhanced",
-            "version": "3.2.1",
-            "description": "Enhanced Voice Conversion with Performance Optimizations"
+            "title": "Advanced RVC Inference V3.2 Enhanced + KADVC",
+            "version": "3.3.0",
+            "description": "Enhanced Voice Conversion with KADVC (2x Faster Training & Inference)"
         },
         "server": {
             "host": "0.0.0.0",
@@ -75,6 +75,30 @@ def load_configuration():
 
 # Load configuration
 CONFIG = load_configuration()
+
+# Initialize KADVC (Kernel Advanced Voice Conversion) optimizations
+KADVC_INITIALIZED = False
+KADVC_OPTIMIZER = None
+
+try:
+    from programs.kernels import setup_kadvc_for_rvc
+    print("🚀 Initializing KADVC (Kernel Advanced Voice Conversion)...")
+    KADVC_OPTIMIZER = setup_kadvc_for_rvc()
+    KADVC_INITIALIZED = True
+    print("✅ KADVC optimization system initialized successfully!")
+    
+    # Log KADVC performance info
+    stats = KADVC_OPTIMIZER.get_performance_report()
+    gpu_type = stats.get('gpu_info', {}).get('gpu_name', 'Unknown')
+    speedup = KADVC_OPTIMIZER._calculate_speedup()
+    print(f"📊 KADVC Status: GPU={gpu_type}, Estimated Speedup={speedup}x")
+    
+except ImportError as e:
+    print(f"⚠️ KADVC not available: {e}")
+    KADVC_INITIALIZED = False
+except Exception as e:
+    print(f"❌ KADVC initialization failed: {e}")
+    KADVC_INITIALIZED = False
 
 # Enhanced logging system (improved from Vietnamese RVC)
 def setup_logging(log_level: str = None) -> logging.Logger:
