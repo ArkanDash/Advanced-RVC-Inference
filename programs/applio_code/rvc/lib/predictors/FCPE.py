@@ -15,8 +15,18 @@ import math
 from functools import partial
 
 from einops import rearrange, repeat
-from local_attention import LocalAttention
 from torch import nn
+
+# Optional import for local attention (for Colab compatibility)
+try:
+    from local_attention import LocalAttention
+    HAS_LOCAL_ATTENTION = True
+except ImportError:
+    HAS_LOCAL_ATTENTION = False
+    # Create a dummy LocalAttention class for fallback
+    class LocalAttention:
+        def __init__(self, **kwargs):
+            raise ImportError("local_attention module not available. Please install: pip install local-attention")
 
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 
@@ -492,8 +502,8 @@ class SelfAttention(nn.Module):
 
         self.heads = heads
         self.global_heads = heads - local_heads
-        self.local_attn = (
-            LocalAttention(
+        if local_heads > 0 and HAS_LOCAL_ATTENTION:
+            self.local_attn = LocalAttention(
                 window_size=local_window_size,
                 causal=causal,
                 autopad=True,
@@ -501,9 +511,12 @@ class SelfAttention(nn.Module):
                 look_forward=int(not causal),
                 rel_pos_emb_config=(dim_head, local_heads),
             )
-            if local_heads > 0
-            else None
-        )
+        elif local_heads > 0 and not HAS_LOCAL_ATTENTION:
+            # Fallback to fast attention if local_attention is not available
+            self.local_attn = None
+            self.global_heads = heads  # Use all heads as global attention
+        else:
+            self.local_attn = None
 
         self.to_q = nn.Linear(dim, inner_dim)
         self.to_k = nn.Linear(dim, inner_dim)
@@ -550,8 +563,13 @@ class SelfAttention(nn.Module):
             assert (
                 not cross_attend
             ), "local attention is not compatible with cross attention"
-            out = self.local_attn(lq, lk, lv, input_mask=mask)
-            attn_outs.append(out)
+            if self.local_attn is not None:
+                out = self.local_attn(lq, lk, lv, input_mask=mask)
+                attn_outs.append(out)
+            else:
+                # Use fast attention as fallback for local attention
+                out = self.fast_attention(lq, lk, lv)
+                attn_outs.append(out)
 
         out = torch.cat(attn_outs, dim=1)
         out = rearrange(out, "b h n d -> b n (h d)")

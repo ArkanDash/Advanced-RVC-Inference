@@ -486,9 +486,26 @@ The author is **not liable** for any direct, indirect, consequential, incidental
 ### 🎨 **UI Base**
 - **[Shirou's RVC AI Cover Maker UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI.git)**: Initial project structure
 
-### 👤 **Current Maintainer**
+### 👤 **Current Maintainer & Contributors**
 - **[ArkanDash](https://github.com/ArkanDash)**: Original project owner and lead developer
-- **[BF667](https://github.com/BF667)**: Enhanced edition maintainer and performance optimizations
+- **[BF667](https://github.com/BF667)**: Enhanced edition maintainer and critical bug fixes
+
+### 🔧 **Critical Bug Fixes (BF667)**
+- **local_attention Import Fix**: Resolved `ModuleNotFoundError: No module named 'local_attention'` 
+- **FAISS Compatibility**: Made FAISS optional for better Colab support
+- **torchfcpe Conflicts**: Removed problematic torchfcpe dependency
+- **Import Path Corrections**: Fixed module import paths in real-time pipeline
+- **Requirements Enhancement**: Added missing local-attention package dependency
+
+### 🎯 **Technical Improvements**
+- Enhanced dependency management with platform-specific handling
+- Improved error handling and graceful fallbacks
+- Better Colab and cloud environment compatibility
+- Comprehensive configuration system integration
+
+### 📚 **Project Inspiration**
+- **[Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC)**: Architecture patterns and design inspiration
+- **[lucidrains/local-attention](https://github.com/lucidrains/local-attention)**: Windowed attention implementation used in FCPE
 
 ### 💡 **Contributions Welcome**
 This is an open-source project. Contributions, bug reports, and feature suggestions are welcome through GitHub issues and pull requests.

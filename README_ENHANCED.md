@@ -218,10 +218,48 @@ The enhanced edition includes improved dependency management:
 
 ## 🙏 **Credits & Inspiration**
 
-- **Original Project**: ArkanDash/Advanced-RVC-Inference
-- **Architecture Inspiration**: [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) by **PhamHuynhAnh16**
-- **Foundation**: [Applio](https://github.com/IAHispano/Applio) and [RVC Project](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
-- **Enhanced by**: BF667
+### 🏛️ **Project Foundation**
+- **Original Project**: [ArkanDash/Advanced-RVC-Inference](https://github.com/ArkanDash/Advanced-RVC-Inference)
+- **Architecture Inspiration**: [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) by **PhamHuynhAnh16** - Outstanding Vietnamese RVC implementation
+- **Foundation**: [Applio](https://github.com/IAHispano/Applio) - Advanced audio processing framework
+- **Core Technology**: [RVC Project](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) - Retrieval-based Voice Conversion
+
+### 🔧 **Technical Improvements & Bug Fixes**
+- **Enhanced Dependencies**: Added `local-attention` package for FCPE functionality
+- **Import Error Fixes**: Resolved `ModuleNotFoundError: No module named 'local_attention'`
+- **FAISS Compatibility**: Made FAISS optional for better Colab support
+- **torchfcpe Issues**: Resolved Colab installation conflicts
+- **Import Path Corrections**: Fixed module import paths in real-time pipeline
+- **Enhanced Configuration**: Comprehensive JSON-based configuration system
+
+### 🎯 **Key Components & Libraries**
+- **Local Attention**: [lucidrains/local-attention](https://github.com/lucidrains/local-attention) - Windowed attention implementation
+- **FCPE**: Fast Cepstral Pitch Estimator for pitch extraction
+- **ONNX Runtime**: Cross-platform AI inference
+- **FAISS**: Facebook AI Similarity Search (optional)
+- **Gradio**: Web interface framework
+
+### 🤝 **Special Thanks**
+- **PhamHuynhAnh16** for the excellent Vietnamese-RVC architecture reference
+- **lucidrains** for the local-attention implementation
+- **Community Contributors** for testing and feedback
+- **BF667** for enhanced edition development and bug fixes
+
+### 🏆 **Bug Fixes Applied (BF667)**
+- ✅ Fixed `local_attention` import issues
+- ✅ Resolved FAISS dependency conflicts  
+- ✅ Removed torchfcpe conflicts
+- ✅ Corrected module import paths
+- ✅ Enhanced requirements management
+- ✅ Improved Colab compatibility
+
+### 📚 **Inspired By Projects**
+- [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) - Architecture patterns
+- [Applio](https://github.com/IAHispano/Applio) - Audio processing approaches
+- [RVC Project](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) - Core RVC implementation
+- [lucidrains/local-attention](https://github.com/lucidrains/local-attention) - Attention mechanisms
+
+### ✨ **Enhanced By**: BF667
 
 ---
 
