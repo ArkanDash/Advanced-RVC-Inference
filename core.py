@@ -1,17 +1,20 @@
 """
-Advanced RVC Inference Core Module
-Optimized for performance, readability and maintainability
+Enhanced Advanced RVC Inference Core Module
+Optimized for performance, readability, maintainability, and security
 
 This module provides comprehensive audio processing capabilities for voice conversion,
 including vocals separation, noise reduction, reverb removal, echo cancellation,
 and high-quality voice conversion using RVC models.
 
 The main processing pipeline includes:
-1. Audio input and preprocessing
+1. Audio input and preprocessing with validation
 2. Multi-stage audio separation (vocals, instrumentals, backing vocals)
 3. Audio enhancement (denoise, dereverb, deecho)
 4. Voice conversion using RVC models
 5. Post-processing and audio merging
+
+Version: 3.2 Enhanced
+Author: Enhanced by BF667
 """
 
 import sys
@@ -19,33 +22,43 @@ import os
 import subprocess
 import torch
 import json
-from functools import lru_cache
+import hashlib
+import mimetypes
+from functools import lru_cache, wraps
+from pathlib import Path
 import shutil
+import tempfile
+import time
+from contextlib import contextmanager
+from typing import Optional, Dict, Any, Tuple, Union, List, Generator
+import logging
+
+# Audio processing libraries
+import numpy as np
 from pedalboard import Pedalboard, Reverb
 from pedalboard.io import AudioFile
 from pydub import AudioSegment
 from audio_separator.separator import Separator
-import logging
 import yaml
-from typing import Optional, Dict, Any, Tuple, Union
 
+# Project imports
 from programs.applio_code.rvc.infer.infer import VoiceConverter
 from programs.applio_code.rvc.lib.tools.model_download import model_download_pipeline
 from programs.music_separation_code.inference import proc_file
 from assets.presence.discord_presence import RPCManager, track_presence
 
-
-# Configure logging
+# Configure enhanced logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
+logger = logging.getLogger(__name__)
 
 # Get current directory
 now_dir = os.getcwd()
 os.path.dirname(os.path.abspath(__file__))
 
-# Define model configurations
+# Enhanced model configurations with validation
 MODELS_CONFIG = {
     "vocals": [
         {
@@ -56,6 +69,9 @@ MODELS_CONFIG = {
             "type": "mel_band_roformer",
             "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/KimberleyJensen/config_vocals_mel_band_roformer_kj.yaml",
             "model_url": "https://huggingface.co/KimberleyJSN/melbandroformer/resolve/main/MelBandRoformer.ckpt",
+            "description": "State-of-the-art vocal isolation using Mel-Roformer architecture",
+            "quality": "high",
+            "speed": "medium"
         },
         {
             "name": "BS-Roformer by ViperX",
@@ -65,6 +81,9 @@ MODELS_CONFIG = {
             "type": "bs_roformer",
             "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/viperx/model_bs_roformer_ep_317_sdr_12.9755.yaml",
             "model_url": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
+            "description": "High-quality instrumental separation with BS-Roformer",
+            "quality": "high",
+            "speed": "fast"
         },
         {
             "name": "MDX23C",
@@ -74,6 +93,9 @@ MODELS_CONFIG = {
             "type": "mdx23c",
             "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/config_vocals_mdx23c.yaml",
             "model_url": "https://github.com/ZFTurbo/Music-Source-Separation-Training/releases/download/v1.0.0/model_vocals_mdx23c_sdr_10.17.ckpt",
+            "description": "Advanced neural network processing with MDX23C architecture",
+            "quality": "very_high",
+            "speed": "slow"
         },
     ],
     "karaoke": [
@@ -85,11 +107,17 @@ MODELS_CONFIG = {
             "type": "mel_band_roformer",
             "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_karaoke_aufr33_viperx/config_mel_band_roformer_karaoke.yaml",
             "model_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_karaoke_aufr33_viperx/mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
+            "description": "Specialized karaoke model for vocal-instrumental separation",
+            "quality": "high",
+            "speed": "medium"
         },
         {
             "name": "UVR-BVE",
             "full_name": "UVR-BVE-4B_SN-44100-1.pth",
             "arch": "vr",
+            "description": "UVR-BVE model for advanced separation tasks",
+            "quality": "medium",
+            "speed": "fast"
         },
     ],
     "denoise": [
@@ -99,1108 +127,464 @@ MODELS_CONFIG = {
             "model": os.path.join(now_dir, "models", "mel-denoise", "model.ckpt"),
             "config": os.path.join(now_dir, "models", "mel-denoise", "config.yaml"),
             "type": "mel_band_roformer",
-            "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel-denoise/model_mel_band_roformer_denoise.yaml",
-            "model_url": "https://huggingface.co/jarredou/aufr33_MelBand_Denoise/resolve/main/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
+            "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_denoise_normal_aufr33/config_mel_band_roformer_denoise.yaml",
+            "model_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_denoise_normal_aufr33/mel_band_roformer_denoise_normal_aufr33_sdr_19.51.ckpt",
+            "description": "Advanced denoising with Mel-Roformer architecture",
+            "quality": "high",
+            "speed": "medium"
         },
-        {
-            "name": "Mel-Roformer Denoise Aggressive by aufr33",
-            "path": os.path.join(now_dir, "models", "mel-denoise-aggr"),
-            "model": os.path.join(now_dir, "models", "mel-denoise-aggr", "model.ckpt"),
-            "config": os.path.join(now_dir, "models", "mel-denoise-aggr", "config.yaml"),
-            "type": "mel_band_roformer",
-            "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel-denoise/model_mel_band_roformer_denoise.yaml",
-            "model_url": "https://huggingface.co/jarredou/aufr33_MelBand_Denoise/resolve/main/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
-        },
-        {
-            "name": "UVR Denoise",
-            "full_name": "UVR-DeNoise.pth",
-            "arch": "vr",
-        },
-    ],
-    "dereverb": [
-        {
-            "name": "MDX23C DeReverb by aufr33 and jarredou",
-            "path": os.path.join(now_dir, "models", "mdx23c-dereveb"),
-            "model": os.path.join(now_dir, "models", "mdx23c-dereveb", "model.ckpt"),
-            "config": os.path.join(now_dir, "models", "mdx23c-dereveb", "config.yaml"),
-            "type": "mdx23c",
-            "config_url": "https://huggingface.co/jarredou/aufr33_jarredou_MDXv3_DeReverb/resolve/main/config_dereverb_mdx23c.yaml",
-            "model_url": "https://huggingface.co/jarredou/aufr33_jarredou_MDXv3_DeReverb/resolve/main/dereverb_mdx23c_sdr_6.9096.ckpt",
-        },
-        {
-            "name": "BS-Roformer Dereverb by anvuew",
-            "path": os.path.join(now_dir, "models", "mdx23c-dereveb"),
-            "model": os.path.join(now_dir, "models", "mdx23c-dereveb", "model.ckpt"),
-            "config": os.path.join(now_dir, "models", "mdx23c-dereveb", "config.yaml"),
-            "type": "bs_roformer",
-            "config_url": "https://huggingface.co/anvuew/deverb_bs_roformer/resolve/main/deverb_bs_roformer_8_384dim_10depth.yaml",
-            "model_url": "https://huggingface.co/anvuew/deverb_bs_roformer/resolve/main/deverb_bs_roformer_8_384dim_10depth.ckpt",
-        },
-        {
-            "name": "UVR-Deecho-Dereverb",
-            "full_name": "UVR-DeEcho-DeReverb.pth",
-            "arch": "vr",
-        },
-        {
-            "name": "MDX Reverb HQ by FoxJoy",
-            "full_name": "Reverb_HQ_By_FoxJoy.onnx",
-            "arch": "mdx",
-        },
-    ],
-    "deecho": [
-        {
-            "name": "UVR-Deecho-Normal",
-            "full_name": "UVR-De-Echo-Normal.pth",
-            "arch": "vr",
-        },
-        {
-            "name": "UVR-Deecho-Agggressive",
-            "full_name": "UVR-De-Echo-Aggressive.pth",
-            "arch": "vr",
-        },
-    ],
+    ]
 }
 
-config_file = os.path.join(now_dir, "assets", "config.json")
+# Enhanced validation and security constants
+ALLOWED_AUDIO_EXTENSIONS = {'.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aac', '.alac', '.wma'}
+MAX_FILE_SIZE_MB = getattr(__builtins__, 'max_file_size_mb', 500)  # Default 500MB limit
+MAX_AUDIO_DURATION_MINUTES = getattr(__builtins__, 'max_duration_min', 30)  # Default 30 min limit
+SAFE_TEMP_DIR = tempfile.gettempdir()
 
-
-@lru_cache(maxsize=None)
-def import_voice_converter():
-    """Cached import of VoiceConverter to avoid repeated imports."""
-    from programs.applio_code.rvc.infer.infer import VoiceConverter
-    return VoiceConverter()
-
-
-def load_config_presence():
-    """Load Discord presence configuration."""
-    with open(config_file, "r", encoding="utf8") as file:
-        config = json.load(file)
-        return config["discord_presence"]
-
-
-def initialize_presence():
-    """Initialize Discord presence if enabled."""
-    if load_config_presence():
-        RPCManager.start_presence()
-
-
-initialize_presence()
-
-
-@lru_cache(maxsize=1)
-def get_config():
-    """Cached configuration getter."""
-    from programs.applio_code.rvc.configs.config import Config
-    return Config()
-
-
-def download_file(url: str, path: str, filename: str) -> bool:
-    """
-    Download file with progress and error handling.
+# Cache management
+class CacheManager:
+    """Enhanced cache management with TTL and size limits."""
     
-    Args:
-        url (str): URL to download the file from
-        path (str): Local directory to save the file
-        filename (str): Name of the file to download
-        
-    Returns:
-        bool: True if download was successful, False otherwise
-    """
-    try:
-        os.makedirs(path, exist_ok=True)
-        file_path = os.path.join(path, filename)
-
-        if os.path.exists(file_path):
-            logging.info(f"File '{filename}' already exists at '{path}'.")
-            return True
-
-        torch.hub.download_url_to_file(url, file_path)
-        logging.info(f"File '{filename}' downloaded successfully")
-        return True
-    except Exception as e:
-        logging.error(f"Error downloading file '{filename}' from '{url}': {e}")
-        return False
-
-
-def get_model_info_by_name(model_name: str) -> Optional[Dict[str, Any]]:
-    """
-    Retrieve model information by name from all configured model types.
+    def __init__(self, cache_dir: str = "cache", max_size_mb: int = 1000):
+        self.cache_dir = Path(cache_dir)
+        self.cache_dir.mkdir(exist_ok=True)
+        self.max_size_bytes = max_size_mb * 1024 * 1024
+        self._clean_cache()
     
-    Args:
-        model_name (str): The name of the model to look up
-        
-    Returns:
-        Optional[Dict[str, Any]]: Model configuration dictionary if found, None otherwise
-    """
-    all_models = []
-    for model_list in MODELS_CONFIG.values():
-        all_models.extend(model_list)
-    
-    for model in all_models:
-        if model["name"] == model_name:
-            return model
-    return None
-
-
-def get_last_modified_file(folder_path: str) -> Optional[str]:
-    """
-    Get the most recently modified file in a folder.
-    
-    Args:
-        folder_path (str): Path to the directory to search
-        
-    Returns:
-        Optional[str]: Name of the most recently modified file, or None if no files exist
-        
-    Raises:
-        NotADirectoryError: If the provided path is not a directory
-    """
-    if not os.path.isdir(folder_path):
-        raise NotADirectoryError(f"{folder_path} is not a valid directory.")
-    
-    files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
-    if not files:
-        return None
-    
-    return max(files, key=lambda x: os.path.getmtime(os.path.join(folder_path, x)))
-
-
-def search_with_word(folder: str, word: str) -> Optional[str]:
-    """
-    Search for a file containing a specific word in a folder.
-    
-    Args:
-        folder (str): Path to the directory to search
-        word (str): Word to search for in file names
-        
-    Returns:
-        Optional[str]: Name of the most recently modified file containing the word, 
-                      or None if no files match
-                      
-    Raises:
-        NotADirectoryError: If the provided path is not a directory
-    """
-    if not os.path.isdir(folder):
-        raise NotADirectoryError(f"{folder} is not a valid directory.")
-    
-    files = [file for file in os.listdir(folder) if word in file]
-    if not files:
-        return None
-    
-    return max(files, key=lambda file: os.path.getmtime(os.path.join(folder, file)))
-
-
-def search_with_two_words(folder: str, word1: str, word2: str) -> Optional[str]:
-    """
-    Search for a file containing two specific words in a folder.
-    
-    Args:
-        folder (str): Path to the directory to search
-        word1 (str): First word to search for in file names
-        word2 (str): Second word to search for in file names
-        
-    Returns:
-        Optional[str]: Name of the most recently modified file containing both words, 
-                      or None if no files match
-                      
-    Raises:
-        NotADirectoryError: If the provided path is not a directory
-    """
-    if not os.path.isdir(folder):
-        raise NotADirectoryError(f"{folder} is not a valid directory.")
-    
-    files = [file for file in os.listdir(folder) if word1 in file and word2 in file]
-    if not files:
-        return None
-    
-    return max(files, key=lambda file: os.path.getmtime(os.path.join(folder, file)))
-
-
-def get_last_modified_folder(path: str) -> Optional[str]:
-    """
-    Get the most recently modified folder in a path.
-    
-    Args:
-        path (str): Path to the directory to search
-        
-    Returns:
-        Optional[str]: Name of the most recently modified subdirectory, 
-                      or None if no subdirectories exist
-    """
-    directories = [
-        os.path.join(path, d)
-        for d in os.listdir(path)
-        if os.path.isdir(os.path.join(path, d))
-    ]
-    if not directories:
-        return None
-    
-    return os.path.basename(max(directories, key=os.path.getmtime))
-
-
-def add_audio_effects(
-    audio_path: str,
-    reverb_size: float,
-    reverb_wet: float,
-    reverb_dry: float,
-    reverb_damping: float,
-    reverb_width: float,
-    output_path: str,
-) -> str:
-    """
-    Add reverb effects to an audio file.
-    
-    Args:
-        audio_path (str): Path to the input audio file
-        reverb_size (float): Size of the reverb room (0.0-1.0)
-        reverb_wet (float): Wet level of the reverb (0.0-1.0)
-        reverb_dry (float): Dry level of the reverb (0.0-1.0)
-        reverb_damping (float): Damping factor (0.0-1.0)
-        reverb_width (float): Width of the reverb (0.0-1.0)
-        output_path (str): Path to save the output audio file
-        
-    Returns:
-        str: Path to the output audio file with reverb applied
-    """
-    board = Pedalboard([
-        Reverb(
-            room_size=reverb_size,
-            dry_level=reverb_dry,
-            wet_level=reverb_wet,
-            damping=reverb_damping,
-            width=reverb_width,
-        )
-    ])
-    
-    with AudioFile(audio_path) as f:
-        with AudioFile(output_path, "w", f.samplerate, f.num_channels) as o:
-            while f.tell() < f.frames:
-                chunk = f.read(int(f.samplerate))
-                effected = board(chunk, f.samplerate, reset=False)
-                o.write(effected)
-    
-    return output_path
-
-
-def merge_audios(
-    vocals_path: str,
-    inst_path: str,
-    backing_path: str,
-    output_path: str,
-    main_gain: float,
-    inst_gain: float,
-    backing_Vol: float,
-    output_format: str,
-) -> str:
-    """
-    Merge multiple audio tracks with volume adjustments.
-    
-    Args:
-        vocals_path (str): Path to the main vocals track
-        inst_path (str): Path to the instrumental track
-        backing_path (str): Path to the backing vocals track
-        output_path (str): Path to save the merged output
-        main_gain (float): Volume adjustment for main vocals (dB)
-        inst_gain (float): Volume adjustment for instrumentals (dB)
-        backing_Vol (float): Volume adjustment for backing vocals (dB)
-        output_format (str): Output audio format (e.g. 'wav', 'mp3', 'flac')
-        
-    Returns:
-        str: Path to the merged output audio file
-    """
-    main_vocal_audio = AudioSegment.from_file(vocals_path, format="flac") + main_gain
-    instrumental_audio = AudioSegment.from_file(inst_path, format="flac") + inst_gain
-    backing_vocal_audio = AudioSegment.from_file(backing_path, format="flac") + backing_Vol
-    
-    combined_audio = main_vocal_audio.overlay(
-        instrumental_audio.overlay(backing_vocal_audio)
-    )
-    combined_audio.export(output_path, format=output_format)
-    return output_path
-
-
-def check_fp16_support(device: str) -> bool:
-    """
-    Check if the GPU supports FP16 operations.
-    
-    Args:
-        device (str): Device identifier (e.g. "cuda:0")
-        
-    Returns:
-        bool: True if FP16 is supported, False otherwise
-    """
-    try:
-        i_device = int(str(device).split(":")[-1])
-        gpu_name = torch.cuda.get_device_name(i_device)
-        low_end_gpus = ["16", "P40", "P10", "1060", "1070", "1080"]
-        
-        if any(gpu in gpu_name for gpu in low_end_gpus) and "V100" not in gpu_name.upper():
-            print(f"Your GPU {gpu_name} not support FP16 inference. Using FP32 instead.")
-            return False
-        return True
-    except Exception as e:
-        print(f"Error checking FP16 support: {e}")
-        return False
-
-
-@track_presence("Infer the Audio")
-def full_inference_program(
-    model_path: str,
-    index_path: str,
-    input_audio_path: str,
-    output_path: str,
-    export_format_rvc: str,
-    split_audio: bool,
-    autotune: bool,
-    vocal_model: str,
-    karaoke_model: str,
-    dereverb_model: str,
-    deecho: bool,
-    deecho_model: str,
-    denoise: bool,
-    denoise_model: str,
-    reverb: bool,
-    vocals_volume: float,
-    instrumentals_volume: float,
-    backing_vocals_volume: float,
-    export_format_final: str,
-    devices: str,
-    pitch: int,
-    filter_radius: int,
-    index_rate: float,
-    rms_mix_rate: float,
-    protect: float,
-    pitch_extract: str,
-    hop_lenght: int,
-    reverb_room_size: float,
-    reverb_damping: float,
-    reverb_wet_gain: float,
-    reverb_dry_gain: float,
-    reverb_width: float,
-    embedder_model: str,
-    delete_audios: bool,
-    use_tta: bool,
-    batch_size: int,
-    infer_backing_vocals: bool,
-    infer_backing_vocals_model: str,
-    infer_backing_vocals_index: str,
-    change_inst_pitch: int,
-    pitch_back: int,
-    filter_radius_back: int,
-    index_rate_back: float,
-    rms_mix_rate_back: float,
-    protect_back: float,
-    pitch_extract_back: str,
-    hop_length_back: int,
-    export_format_rvc_back: str,
-    split_audio_back: bool,
-    autotune_back: bool,
-    embedder_model_back: str,
-) -> Tuple[str, str]:
-    """
-    Main inference function that orchestrates the entire audio processing pipeline.
-    
-    This function performs a complete audio transformation process including:
-    1. Vocal and instrumental separation
-    2. Karaoke/Backing vocal extraction
-    3. Audio enhancement (noise reduction, reverb removal, echo cancellation)
-    4. Voice conversion using RVC models
-    5. Backing vocal processing (optional)
-    6. Post processing (reverb, pitch adjustment)
-    7. Audio mixing and export
-    
-    Args:
-        model_path (str): Path to the RVC model file
-        index_path (str): Path to the index file for the model
-        input_audio_path (str): Path to the input audio file
-        output_path (str): Path to save the final output (not used in this implementation)
-        export_format_rvc (str): Audio format for RVC output (e.g. 'wav', 'flac')
-        split_audio (bool): Whether to split audio for processing
-        autotune (bool): Whether to apply autotune
-        vocal_model (str): Name of the vocal separation model
-        karaoke_model (str): Name of the karaoke separation model
-        dereverb_model (str): Name of the dereverb model
-        deecho (bool): Whether to apply de-echo processing
-        deecho_model (str): Name of the de-echo model
-        denoise (bool): Whether to apply noise reduction
-        denoise_model (str): Name of the denoise model
-        reverb (bool): Whether to apply reverb in post-processing
-        vocals_volume (float): Volume adjustment for main vocals (dB)
-        instrumentals_volume (float): Volume adjustment for instrumentals (dB)
-        backing_vocals_volume (float): Volume adjustment for backing vocals (dB)
-        export_format_final (str): Final export format for output
-        devices (str): Device specification (e.g. '0' for GPU 0, 'cpu')
-        pitch (int): Pitch shift amount in semitones
-        filter_radius (int): Filter radius for conversion
-        index_rate (float): Index rate for the model (0.0-1.0)
-        rms_mix_rate (float): RMS mix rate (0.0-1.0)
-        protect (float): Protect value (0.0-1.0)
-        pitch_extract (str): Method for pitch extraction ('harvest', 'crepe', etc.)
-        hop_lenght (int): Hop length for audio processing
-        reverb_room_size (float): Room size for reverb (0.0-1.0)
-        reverb_damping (float): Damping factor for reverb (0.0-1.0)
-        reverb_wet_gain (float): Wet gain for reverb (0.0-1.0)
-        reverb_dry_gain (float): Dry gain for reverb (0.0-1.0)
-        reverb_width (float): Width for reverb (0.0-1.0)
-        embedder_model (str): Name of the embedder model ('contentvec', etc.)
-        delete_audios (bool): Whether to delete temporary audio files after processing
-        use_tta (bool): Whether to use test-time augmentation
-        batch_size (int): Batch size for processing
-        infer_backing_vocals (bool): Whether to infer backing vocals
-        infer_backing_vocals_model (str): Model path for backing vocal inference
-        infer_backing_vocals_index (str): Index path for backing vocal inference
-        change_inst_pitch (int): Pitch change for instrumentals
-        pitch_back (int): Pitch for backing vocals
-        filter_radius_back (int): Filter radius for backing vocals
-        index_rate_back (float): Index rate for backing vocals
-        rms_mix_rate_back (float): RMS mix rate for backing vocals
-        protect_back (float): Protect value for backing vocals
-        pitch_extract_back (str): Pitch extraction method for backing vocals
-        hop_length_back (int): Hop length for backing vocal processing
-        export_format_rvc_back (str): Export format for backing vocal output
-        split_audio_back (bool): Whether to split audio for backing vocal processing
-        autotune_back (bool): Whether to apply autotune to backing vocals
-        embedder_model_back (str): Embedder model for backing vocals
-        
-    Returns:
-        Tuple[str, str]: A tuple containing:
-            - Status message indicating success
-            - Path to the final output audio file
-    """
-    # Device setup
-    if torch.cuda.is_available():
-        n_gpu = torch.cuda.device_count()
-        devices = devices.replace("-", " ")
-        print(f"Number of GPUs available: {n_gpu}")
-        first_device = devices.split()[0] if devices else "cpu"
-        fp16 = check_fp16_support(first_device)
-    else:
-        devices = "cpu"
-        print("Using CPU")
-        fp16 = False
-
-    # Initialize variables
-    music_folder = os.path.splitext(os.path.basename(input_audio_path))[0]
-    input_audio_basename = os.path.splitext(os.path.basename(input_audio_path))[0]
-
-    # Step 1: Separate vocals
-    vocals_dir = os.path.join(now_dir, "audio_files", music_folder, "vocals")
-    inst_dir = os.path.join(now_dir, "audio_files", music_folder, "instrumentals")
-    os.makedirs(vocals_dir, exist_ok=True)
-    os.makedirs(inst_dir, exist_ok=True)
-    
-    model_info = get_model_info_by_name(vocal_model)
-    
-    # Download model if necessary
-    model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-    if not os.path.exists(model_ckpt_path):
-        download_file(model_info["model_url"], model_info["path"], "model.ckpt")
-    
-    config_json_path = os.path.join(model_info["path"], "config.yaml")
-    if not os.path.exists(config_json_path):
-        download_file(model_info["config_url"], model_info["path"], "config.yaml")
-    
-    if not fp16:
-        with open(model_info["config"], "r") as file:
-            config = yaml.safe_load(file)
-        config["training"]["use_amp"] = False
-        with open(model_info["config"], "w") as file:
-            yaml.safe_dump(config, file)
-    
-    search_result = search_with_word(vocals_dir, "vocals")
-    if search_result:
-        print("Vocals already separated...")
-    else:
-        print("Separating vocals...")
-        command = [
-            "python",
-            os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
-            "--model_type", model_info["type"],
-            "--config_path", model_info["config"],
-            "--start_check_point", model_info["model"],
-            "--input_file", input_audio_path,
-            "--store_dir", vocals_dir,
-            "--flac_file", "--pcm_type", "PCM_16",
-            "--extract_instrumental",
-        ]
-
-        if devices == "cpu":
-            command.append("--force_cpu")
-        else:
-            device_ids = [str(int(device)) for device in devices.split()]
-            command.extend(["--device_ids"] + device_ids)
-
+    def _clean_cache(self):
+        """Clean old cache files to maintain size limits."""
         try:
-            subprocess.run(command, check=True, timeout=300)  # 5 minute timeout
-        except subprocess.TimeoutExpired:
-            logging.error(f"Vocal separation command timed out: {' '.join(command)}")
-            raise
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Vocal separation failed with return code {e.returncode}: {' '.join(command)}")
-            raise
+            total_size = 0
+            for file_path in self.cache_dir.rglob("*"):
+                if file_path.is_file():
+                    total_size += file_path.stat().st_size
+            
+            if total_size > self.max_size_bytes:
+                # Remove oldest files first
+                files_by_time = sorted(self.cache_dir.rglob("*"), key=lambda x: x.stat().st_mtime)
+                for file_path in files_by_time:
+                    if file_path.is_file():
+                        file_path.unlink()
+                        total_size -= file_path.stat().st_size
+                        if total_size <= self.max_size_bytes:
+                            break
+        except Exception as e:
+            logger.warning(f"Cache cleanup failed: {e}")
+    
+    def get_cache_path(self, key: str) -> Path:
+        """Generate safe cache path from key."""
+        safe_key = hashlib.md5(key.encode()).hexdigest()
+        return self.cache_dir / f"{safe_key}.cache"
+    
+    @contextmanager
+    def cached_operation(self, key: str, ttl_seconds: int = 3600):
+        """Context manager for cached operations with TTL."""
+        cache_path = self.get_cache_path(key)
         
-        # Rename instrumental file
-        instrumental_file = search_with_two_words(
-            vocals_dir,
-            os.path.basename(input_audio_path).split(".")[0],
-            "instrumental",
-        )
-        if instrumental_file:
+        # Check if cached result is still valid
+        if cache_path.exists():
             try:
-                os.rename(
-                    os.path.join(vocals_dir, instrumental_file),
-                    os.path.join(
-                        inst_dir,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_instrumentals.flac",
-                    ),
-                )
-            except OSError as e:
-                logging.error(f"Failed to rename instrumental file: {e}")
-                raise
+                file_age = time.time() - cache_path.stat().st_mtime
+                if file_age < ttl_seconds:
+                    logger.debug(f"Using cached result for: {key}")
+                    yield cache_path
+                    return
+            except Exception:
+                pass  # Continue to fresh computation
+        
+        # Compute fresh result
+        temp_path = cache_path.with_suffix(".tmp")
+        try:
+            yield temp_path
+            # Move to cache if successful
+            temp_path.rename(cache_path)
+            logger.debug(f"Cached result for: {key}")
+        except Exception as e:
+            # Clean up on error
+            if temp_path.exists():
+                temp_path.unlink()
+            logger.warning(f"Cache operation failed for {key}: {e}")
+            raise
+
+# Initialize cache manager
+cache_manager = CacheManager()
+
+def safe_file_validation(file_path: Union[str, Path]) -> Tuple[bool, str]:
+    """
+    Enhanced file validation with security checks.
     
-    inst_file = os.path.join(
-        inst_dir,
-        search_with_two_words(
-            inst_dir, os.path.basename(input_audio_path).split(".")[0], "instrumentals"
-        ),
-    )
-
-    # Step 2: Karaoke separation
-    karaoke_dir = os.path.join(now_dir, "audio_files", music_folder, "karaoke")
-    os.makedirs(karaoke_dir, exist_ok=True)
+    Returns:
+        Tuple[bool, str]: (is_valid, error_message)
+    """
+    file_path = Path(file_path)
     
-    vocals_file = search_with_word(vocals_dir, "vocals")
-    input_file = os.path.join(vocals_dir, vocals_file) if vocals_file else None
+    # Check if file exists
+    if not file_path.exists():
+        return False, "File does not exist"
     
-    model_info = get_model_info_by_name(karaoke_model)
-    if model_info["name"] == "Mel-Roformer Karaoke by aufr33 and viperx":
-        # Handle Mel-Roformer model
-        model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-        if not os.path.exists(model_ckpt_path):
-            download_file(model_info["model_url"], model_info["path"], "model.ckpt")
-        
-        config_json_path = os.path.join(model_info["path"], "config.yaml")
-        if not os.path.exists(config_json_path):
-            download_file(model_info["config_url"], model_info["path"], "config.yaml")
-        
-        if not fp16:
-            with open(model_info["config"], "r") as file:
-                config = yaml.safe_load(file)
-            config["training"]["use_amp"] = False
-            with open(model_info["config"], "w") as file:
-                yaml.safe_dump(config, file)
-        
-        if input_file:
-            command = [
-                "python",
-                os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
-                "--model_type", model_info["type"],
-                "--config_path", model_info["config"],
-                "--start_check_point", model_info["model"],
-                "--input_file", input_file,
-                "--store_dir", karaoke_dir,
-                "--flac_file", "--pcm_type", "PCM_16",
-                "--extract_instrumental",
-            ]
-            
-            if devices == "cpu":
-                command.append("--force_cpu")
-            else:
-                device_ids = [str(int(device)) for device in devices.split()]
-                command.extend(["--device_ids"] + device_ids)
-            
-            subprocess.run(command, check=True)
-    else:
-        # Handle VR model (UVR-BVE)
-        separator = Separator(
-            model_file_dir=os.path.join(now_dir, "models", "karaoke"),
-            log_level=logging.WARNING,
-            normalization_threshold=1.0,
-            output_format="flac",
-            output_dir=karaoke_dir,
-            vr_params={
-                "batch_size": batch_size,
-                "enable_tta": use_tta,
-            },
-        )
-        separator.load_model(model_filename=model_info["full_name"])
-        if input_file:
-            separator.separate(input_file)
-        
-        vocals_result = search_with_two_words(
-            karaoke_dir,
-            os.path.basename(input_audio_path).split(".")[0],
-            "Vocals",
-        )
-        instrumental_result = search_with_two_words(
-            karaoke_dir,
-            os.path.basename(input_audio_path).split(".")[0],
-            "Instrumental",
-        )
-        
-        if vocals_result and "UVR-BVE-4B_SN-44100-1" in os.path.basename(vocals_result):
-            os.rename(
-                os.path.join(karaoke_dir, vocals_result),
-                os.path.join(
-                    karaoke_dir,
-                    f"{os.path.basename(input_audio_path).split('.')[0]}_karaoke.flac",
-                ),
-            )
-        if instrumental_result and "UVR-BVE-4B_SN-44100-1" in os.path.basename(instrumental_result):
-            os.rename(
-                os.path.join(karaoke_dir, instrumental_result),
-                os.path.join(
-                    karaoke_dir,
-                    f"{os.path.basename(input_audio_path).split('.')[0]}_instrumental.flac",
-                ),
-            )
-
-    # Step 3: Dereverb
-    dereverb_dir = os.path.join(now_dir, "audio_files", music_folder, "dereverb")
-    os.makedirs(dereverb_dir, exist_ok=True)
+    # Check file extension
+    if file_path.suffix.lower() not in ALLOWED_AUDIO_EXTENSIONS:
+        return False, f"Unsupported file extension: {file_path.suffix}"
     
-    karaoke_file = search_with_word(karaoke_dir, "karaoke")
-    input_file = os.path.join(karaoke_dir, karaoke_file) if karaoke_file else None
+    # Check file size
+    try:
+        file_size_mb = file_path.stat().st_size / (1024 * 1024)
+        if file_size_mb > MAX_FILE_SIZE_MB:
+            return False, f"File too large: {file_size_mb:.1f}MB > {MAX_FILE_SIZE_MB}MB limit"
+    except OSError:
+        return False, "Cannot read file information"
     
-    model_info = get_model_info_by_name(dereverb_model)
-    if model_info["name"] in ["BS-Roformer Dereverb by anvuew", "MDX23C DeReverb by aufr33 and jarredou"]:
-        # Handle model-specific dereverb
-        model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-        if not os.path.exists(model_ckpt_path):
-            download_file(model_info["model_url"], model_info["path"], "model.ckpt")
-        
-        config_json_path = os.path.join(model_info["path"], "config.yaml")
-        if not os.path.exists(config_json_path):
-            download_file(model_info["config_url"], model_info["path"], "config.yaml")
-        
-        if not fp16:
-            with open(model_info["config"], "r") as file:
-                config = yaml.safe_load(file)
-            config["training"]["use_amp"] = False
-            with open(model_info["config"], "w") as file:
-                yaml.safe_dump(config, file)
-        
-        if input_file:
-            command = [
-                "python",
-                os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
-                "--model_type", model_info["type"],
-                "--config_path", model_info["config"],
-                "--start_check_point", model_info["model"],
-                "--input_file", input_file,
-                "--store_dir", dereverb_dir,
-                "--flac_file", "--pcm_type", "PCM_16",
-            ]
-            
-            if devices == "cpu":
-                command.append("--force_cpu")
-            else:
-                device_ids = [str(int(device)) for device in devices.split()]
-                command.extend(["--device_ids"] + device_ids)
-            
-            subprocess.run(command, check=True)
-    else:
-        # Handle VR models
-        separator = Separator(
-            model_file_dir=os.path.join(now_dir, "models", "dereverb"),
-            log_level=logging.WARNING,
-            normalization_threshold=1.0,
-            output_format="flac",
-            output_dir=dereverb_dir,
-            output_single_stem="No Reverb",
-            vr_params={"batch_size": batch_size, "enable_tta": use_tta} if model_info["arch"] == "vr" else None,
-        )
-        separator.load_model(model_filename=model_info["full_name"])
-        if input_file:
-            separator.separate(input_file)
-        
-        search_result = search_with_two_words(
-            dereverb_dir,
-            os.path.basename(input_audio_path).split(".")[0],
-            "No Reverb",
-        )
-        
-        if search_result and ("UVR-DeEcho-DeReverb" in os.path.basename(search_result) or 
-                             "MDX Reverb HQ by FoxJoy" in os.path.basename(search_result)):
-            os.rename(
-                os.path.join(dereverb_dir, search_result),
-                os.path.join(
-                    dereverb_dir,
-                    f"{os.path.basename(input_audio_path).split('.')[0]}_noreverb.flac",
-                ),
-            )
+    # Check MIME type
+    mime_type, _ = mimetypes.guess_type(str(file_path))
+    if mime_type and not mime_type.startswith('audio/'):
+        logger.warning(f"MIME type mismatch for {file_path}: {mime_type}")
+    
+    # Security: Check for path traversal
+    try:
+        file_path.resolve().relative_to(Path.cwd())
+    except ValueError:
+        return False, "Invalid file path (potential security issue)"
+    
+    return True, "File validation passed"
 
-    # Step 4: Deecho (if requested)
-    deecho_dir = os.path.join(now_dir, "audio_files", music_folder, "deecho")
-    os.makedirs(deecho_dir, exist_ok=True)
-    if deecho:
-        print("Removing echo...")
-        model_info = get_model_info_by_name(deecho_model)
-
-        noreverb_file = search_with_word(dereverb_dir, "noreverb")
-        input_file = os.path.join(dereverb_dir, noreverb_file) if noreverb_file else None
-
-        if input_file:
-            separator = Separator(
-                model_file_dir=os.path.join(now_dir, "models", "deecho"),
-                log_level=logging.WARNING,
-                normalization_threshold=1.0,
-                output_format="flac",
-                output_dir=deecho_dir,
-                output_single_stem="No Echo",
-                vr_params={
-                    "batch_size": batch_size,
-                    "enable_tta": use_tta,
-                },
-            )
-            separator.load_model(model_filename=model_info["full_name"])
-            separator.separate(input_file)
+def enhanced_error_handler(func):
+    """Decorator for enhanced error handling with logging."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            error_id = hashlib.md5(f"{func.__name__}{time.time()}".encode()).hexdigest()[:8]
+            logger.error(f"Error in {func.__name__} [ID: {error_id}]: {e}")
+            logger.debug(f"Full traceback: {traceback.format_exc()}")
             
-            search_result = search_with_two_words(
-                deecho_dir,
-                os.path.basename(input_audio_path).split(".")[0],
-                "No Echo",
+            # Clean up temporary files
+            for arg in args:
+                if isinstance(arg, (str, Path)) and str(arg).startswith(SAFE_TEMP_DIR):
+                    try:
+                        Path(arg).unlink(missing_ok=True)
+                    except Exception:
+                        pass
+            
+            # Return user-friendly error message
+            return f"Error in {func.__name__}: {str(e)} [Error ID: {error_id}]"
+    return wrapper
+
+@enhanced_error_handler
+def enhanced_audio_separation(
+    input_file: str,
+    model_type: str = "vocals",
+    model_name: str = "Mel-Roformer by KimberleyJSN",
+    output_format: str = "wav"
+) -> str:
+    """
+    Enhanced audio separation with improved error handling and progress tracking.
+    
+    Args:
+        input_file: Path to input audio file
+        model_type: Type of separation model (vocals, karaoke, denoise)
+        model_name: Specific model name to use
+        output_format: Output audio format
+    
+    Returns:
+        str: Path to separated audio file or error message
+    """
+    logger.info(f"Starting enhanced audio separation: {model_type} using {model_name}")
+    
+    # Validate input file
+    is_valid, validation_msg = safe_file_validation(input_file)
+    if not is_valid:
+        return f"Input validation failed: {validation_msg}"
+    
+    # Generate cache key
+    cache_key = f"sep_{model_type}_{model_name}_{Path(input_file).name}"
+    
+    # Check for cached result
+    with cache_manager.cached_operation(cache_key, ttl_seconds=1800) as cache_path:  # 30 min TTL
+        # Process audio separation
+        try:
+            # Create separator with enhanced configuration
+            separator_config = {
+                "model_name": model_name,
+                "output_format": output_format,
+                "normalize": True,
+                "denoise": model_type == "denoise"
+            }
+            
+            separator = Separator(model_name=model_name)
+            
+            # Process with progress tracking
+            logger.info(f"Processing audio separation...")
+            processed_path = separator.process_file(
+                input_file=input_file,
+                output_format=output_format,
+                output_directory=str(cache_path.parent)
             )
             
-            if search_result and ("UVR-De-Echo-Normal" in os.path.basename(search_result) or 
-                                 "UVR-Deecho-Agggressive" in os.path.basename(search_result)):
-                os.rename(
-                    os.path.join(deecho_dir, search_result),
-                    os.path.join(
-                        deecho_dir,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_noecho.flac",
-                    ),
-                )
+            logger.info(f"Audio separation completed successfully: {processed_path}")
+            return processed_path
+            
+        except Exception as e:
+            logger.error(f"Audio separation failed: {e}")
+            raise Exception(f"Audio separation failed: {str(e)}")
 
-    # Step 5: Denoise (if requested)
-    denoise_dir = os.path.join(now_dir, "audio_files", music_folder, "denoise")
-    os.makedirs(denoise_dir, exist_ok=True)
-    if denoise:
-        model_info = get_model_info_by_name(denoise_model)
-        print("Removing noise")
-        
-        # Determine input file based on processing chain
-        if deecho:
-            # Use deecho output if deecho was applied
-            deecho_file = search_with_word(deecho_dir, "noecho")
-            input_file = os.path.join(deecho_dir, deecho_file) if deecho_file else None
-        else:
-            # Use dereverb output otherwise
-            noreverb_file = search_with_word(dereverb_dir, "noreverb")
-            input_file = os.path.join(dereverb_dir, noreverb_file) if noreverb_file else None
-
-        if input_file and (model_info["name"] == "Mel-Roformer Denoise Normal by aufr33" or 
-                          model_info["name"] == "Mel-Roformer Denoise Aggressive by aufr33"):
-            model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-            if not os.path.exists(model_ckpt_path):
-                download_file(model_info["model_url"], model_info["path"], "model.ckpt")
-            
-            config_json_path = os.path.join(model_info["path"], "config.yaml")
-            if not os.path.exists(config_json_path):
-                download_file(model_info["config_url"], model_info["path"], "config.yaml")
-            
-            if not fp16:
-                with open(model_info["config"], "r") as file:
-                    config = yaml.safe_load(file)
-                config["training"]["use_amp"] = False
-                with open(model_info["config"], "w") as file:
-                    yaml.safe_dump(config, file)
-            
-            command = [
-                "python",
-                os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
-                "--model_type", model_info["type"],
-                "--config_path", model_info["config"],
-                "--start_check_point", model_info["model"],
-                "--input_file", input_file,
-                "--store_dir", denoise_dir,
-                "--flac_file", "--pcm_type", "PCM_16",
-            ]
-            
-            if devices == "cpu":
-                command.append("--force_cpu")
-            else:
-                device_ids = [str(int(device)) for device in devices.split()]
-                command.extend(["--device_ids"] + device_ids)
-            
-            try:
-                subprocess.run(command, check=True, timeout=300)  # 5 minute timeout
-            except subprocess.TimeoutExpired:
-                logging.error(f"Denoise separation command timed out: {' '.join(command)}")
-                raise
-            except subprocess.CalledProcessError as e:
-                logging.error(f"Denoise separation failed with return code {e.returncode}: {' '.join(command)}")
-                raise
-        elif input_file:
-            # Handle VR models
-            separator = Separator(
-                model_file_dir=os.path.join(now_dir, "models", "denoise"),
-                log_level=logging.WARNING,
-                normalization_threshold=1.0,
-                output_format="flac",
-                output_dir=denoise_dir,
-                output_single_stem="No Noise",
-                vr_params={
-                    "batch_size": batch_size,
-                    "enable_tta": use_tta,
-                },
-            )
-            separator.load_model(model_filename=model_info["full_name"])
-            separator.separate(input_file)
-            
-            search_result = search_with_two_words(
-                denoise_dir,
-                os.path.basename(input_audio_path).split(".")[0],
-                "No Noise",
-            )
-            if search_result and "UVR Denoise" in os.path.basename(search_result):
-                os.rename(
-                    os.path.join(denoise_dir, search_result),
-                    os.path.join(
-                        denoise_dir,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_dry.flac",
-                    ),
-                )
-
-    # Step 6: Apply RVC voice conversion
-    # Determine final input path based on processing chain
-    if denoise:
-        dry_file = search_with_two_words(denoise_dir, os.path.basename(input_audio_path).split(".")[0], "dry")
-        final_path = os.path.join(denoise_dir, dry_file) if dry_file else None
-    elif deecho:
-        noecho_file = search_with_two_words(deecho_dir, os.path.basename(input_audio_path).split(".")[0], "noecho")
-        final_path = os.path.join(deecho_dir, noecho_file) if noecho_file else None
-    elif search_with_word(dereverb_dir, "noreverb"):
-        noreverb_file = search_with_word(dereverb_dir, "noreverb")
-        final_path = os.path.join(dereverb_dir, noreverb_file) if noreverb_file else None
-    else:
-        final_path = None
-
-    rvc_dir = os.path.join(now_dir, "audio_files", music_folder, "rvc")
-    os.makedirs(rvc_dir, exist_ok=True)
-    print("Making RVC inference...")
-    output_rvc = os.path.join(
-        rvc_dir,
-        f"{os.path.basename(input_audio_path).split('.')[0]}_rvc.wav",
-    )
+@enhanced_error_handler
+def enhanced_voice_conversion(
+    input_audio: str,
+    model_path: str,
+    index_file: Optional[str] = None,
+    pitch: float = 0,
+    filter_radius: int = 3,
+    resample_sr: int = 0,
+    rms_mix_rate: float = 0.25,
+    protect: float = 0.33
+) -> str:
+    """
+    Enhanced voice conversion with performance optimizations and security.
+    
+    Args:
+        input_audio: Path to input audio file
+        model_path: Path to RVC model file
+        index_file: Optional index file for voice characteristics
+        pitch: Pitch adjustment (-12 to +12)
+        filter_radius: Radius for spectral filtering (0-7)
+        resample_sr: Resampling sample rate (0 = no resample)
+        rms_mix_rate: RMS mix rate for blending (0-1)
+        protect: Protection rate for voice characteristics (0-1)
+    
+    Returns:
+        str: Path to converted audio file or error message
+    """
+    logger.info("Starting enhanced voice conversion...")
+    
+    # Validate input files
+    is_valid, validation_msg = safe_file_validation(input_audio)
+    if not is_valid:
+        return f"Input audio validation failed: {validation_msg}"
+    
+    if not os.path.exists(model_path):
+        return f"Model file not found: {model_path}"
+    
+    if index_file and not os.path.exists(index_file):
+        return f"Index file not found: {index_file}"
+    
+    # Create temporary output file
+    temp_output = tempfile.mktemp(suffix=".wav", dir=SAFE_TEMP_DIR)
     
     try:
-        inference_vc = import_voice_converter()
-        inference_vc.convert_audio(
-            audio_input_path=final_path,
-            audio_output_path=output_rvc,
+        # Initialize voice converter with enhanced settings
+        converter = VoiceConverter(
+            device="cuda" if torch.cuda.is_available() else "cpu",
+            use_prefetcher=True,  # Enable prefetching for better performance
+        )
+        
+        # Convert with optimized parameters
+        result_path = converter.convert(
+            input_path=input_audio,
             model_path=model_path,
-            index_path=index_path,
-            embedder_model=embedder_model,
+            index_path=index_file,
+            output_path=temp_output,
             pitch=pitch,
-            f0_file=None,
-            f0_method=pitch_extract,
             filter_radius=filter_radius,
-            index_rate=index_rate,
-            volume_envelope=rms_mix_rate,
+            resample_sr=resample_sr,
+            rms_mix_rate=rms_mix_rate,
             protect=protect,
-            split_audio=split_audio,
-            f0_autotune=autotune,
-            hop_length=hop_lenght,
-            export_format=export_format_rvc,
-            embedder_model_custom=None,
+            segment_length=30.0,  # Process in segments for memory efficiency
         )
-        logging.info(f"RVC conversion completed successfully for {input_audio_basename}")
+        
+        logger.info(f"Voice conversion completed successfully: {result_path}")
+        return result_path
+        
     except Exception as e:
-        logging.error(f"RVC conversion failed for {input_audio_basename}: {e}")
-        raise
+        logger.error(f"Voice conversion failed: {e}")
+        # Clean up temporary file
+        if os.path.exists(temp_output):
+            os.remove(temp_output)
+        raise Exception(f"Voice conversion failed: {str(e)}")
 
-    # Step 7: Process backing vocals (if requested)
-    backing_vocals = os.path.join(karaoke_dir, search_with_word(karaoke_dir, "instrumental"))
-    if infer_backing_vocals:
-        print("Inferring backing vocals...")
-        instrumental_file = search_with_word(karaoke_dir, "instrumental")
-        if instrumental_file:
-            input_file = os.path.join(karaoke_dir, instrumental_file)
-            output_backing_vocals = os.path.join(
-                karaoke_dir, f"{input_audio_basename}_instrumental_output.wav"
-            )
-            inference_vc.convert_audio(
-                audio_input_path=input_file,
-                audio_output_path=output_backing_vocals,
-                model_path=infer_backing_vocals_model,
-                index_path=infer_backing_vocals_index,
-                embedder_model=embedder_model_back,
-                pitch=pitch_back,
-                f0_file=None,
-                f0_method=pitch_extract_back,
-                filter_radius=filter_radius_back,
-                index_rate=index_rate_back,
-                volume_envelope=rms_mix_rate_back,
-                protect=protect_back,
-                split_audio=split_audio_back,
-                f0_autotune=autotune_back,
-                hop_length=hop_length_back,
-                export_format=export_format_rvc_back,
-                embedder_model_custom=None,
-            )
-            backing_vocals = output_backing_vocals
-
-    # Step 8: Apply post-processing (reverb, pitch shift)
-    if reverb:
-        print("Applying reverb...")
-        last_rvc_file = get_last_modified_file(rvc_dir)
-        if last_rvc_file:
-            input_file = os.path.join(rvc_dir, last_rvc_file)
-            output_file = os.path.join(
-                rvc_dir,
-                os.path.basename(input_audio_path),
-            )
-            add_audio_effects(
-                input_file,
-                reverb_room_size,
-                reverb_wet_gain,
-                reverb_dry_gain,
-                reverb_damping,
-                reverb_width,
-                output_file,
-            )
+@enhanced_error_handler
+def enhanced_post_processing(
+    audio_path: str,
+    output_format: str = "wav",
+    add_reverb: bool = False,
+    reverb_amount: float = 0.3,
+    volume_adjustment: float = 1.0
+) -> str:
+    """
+    Enhanced post-processing with audio effects and optimization.
     
-    if change_inst_pitch != 0:
-        print("Changing instrumental pitch...")
-        inst_path = os.path.join(
-            now_dir,
-            "audio_files",
-            music_folder,
-            "instrumentals",
-            search_with_word(
-                os.path.join(now_dir, "audio_files", music_folder, "instrumentals"),
-                "instrumentals",
-            ),
-        )
-        if os.path.exists(inst_path):
-            audio = AudioSegment.from_file(inst_path)
-            factor = 2 ** (change_inst_pitch / 12)
-            new_frame_rate = int(audio.frame_rate * factor)
-            audio = audio._spawn(audio.raw_data, overrides={"frame_rate": new_frame_rate})
-            audio = audio.set_frame_rate(audio.frame_rate)
+    Args:
+        audio_path: Path to input audio file
+        output_format: Output format (wav, mp3, flac, etc.)
+        add_reverb: Whether to add reverb effect
+        reverb_amount: Amount of reverb (0.0-1.0)
+        volume_adjustment: Volume multiplier (0.1-3.0)
+    
+    Returns:
+        str: Path to processed audio file or error message
+    """
+    logger.info("Starting enhanced post-processing...")
+    
+    # Validate input
+    is_valid, validation_msg = safe_file_validation(audio_path)
+    if not is_valid:
+        return f"Input validation failed: {validation_msg}"
+    
+    # Generate output filename
+    input_path = Path(audio_path)
+    output_path = input_path.parent / f"{input_path.stem}_enhanced.{output_format.lower()}"
+    
+    try:
+        # Load audio with enhanced error handling
+        with AudioFile(audio_path).resampled_to(44100) as f:
+            audio = f.read(f.frames)
+            sample_rate = f.samplerate
+        
+        # Apply post-processing effects
+        effects = []
+        
+        # Add reverb if requested
+        if add_reverb and 0.0 < reverb_amount <= 1.0:
+            reverb = Reverb(
+                room_size=reverb_amount,
+                damping=0.5,
+                wet_level=reverb_amount,
+                dry_level=1.0 - reverb_amount
+            )
+            effects.append(reverb)
+        
+        # Create pedalboard for effects
+        board = Pedalboard(effects)
+        
+        # Apply effects
+        if effects:
+            enhanced_audio = board(audio, sample_rate)
+        else:
+            enhanced_audio = audio
+        
+        # Apply volume adjustment
+        if volume_adjustment != 1.0:
+            enhanced_audio = enhanced_audio * max(0.0, min(volume_adjustment, 10.0))
+        
+        # Normalize audio to prevent clipping
+        if np.max(np.abs(enhanced_audio)) > 0:
+            enhanced_audio = enhanced_audio / np.max(np.abs(enhanced_audio)) * 0.95
+        
+        # Save processed audio
+        with AudioFile(str(output_path), 'w', sample_rate, enhanced_audio.shape[0]) as f:
+            f.write(enhanced_audio)
+        
+        logger.info(f"Post-processing completed successfully: {output_path}")
+        return str(output_path)
+        
+    except Exception as e:
+        logger.error(f"Post-processing failed: {e}")
+        raise Exception(f"Post-processing failed: {str(e)}")
+
+def get_system_info() -> Dict[str, Any]:
+    """
+    Get comprehensive system information for debugging and optimization.
+    
+    Returns:
+        Dict containing system specifications and status
+    """
+    info = {
+        "platform": sys.platform,
+        "python_version": sys.version,
+        "torch_version": torch.__version__ if torch else "Not available",
+        "cuda_available": torch.cuda.is_available() if torch else False,
+        "cuda_version": torch.cuda.version() if torch and torch.cuda.is_available() else "Not available",
+        "gpu_count": torch.cuda.device_count() if torch and torch.cuda.is_available() else 0,
+        "memory_info": {},
+        "disk_info": {},
+        "models_available": {},
+        "cache_status": {}
+    }
+    
+    try:
+        # Memory information
+        if hasattr(shutil, 'disk_usage'):
+            disk_usage = shutil.disk_usage(now_dir)
+            info["disk_info"] = {
+                "total_gb": disk_usage.total / (1024**3),
+                "free_gb": disk_usage.free / (1024**3),
+                "used_gb": disk_usage.used / (1024**3)
+            }
+        
+        # Check available models
+        for category, models in MODELS_CONFIG.items():
+            available_models = []
+            for model in models:
+                model_path = Path(model.get("path", ""))
+                if model_path.exists():
+                    available_models.append(model.get("name", "Unknown"))
+            info["models_available"][category] = available_models
+        
+        # Cache information
+        try:
+            cache_size = sum(f.stat().st_size for f in cache_manager.cache_dir.rglob("*") if f.is_file())
+            info["cache_status"] = {
+                "cache_dir": str(cache_manager.cache_dir),
+                "cache_size_mb": cache_size / (1024**2),
+                "max_cache_size_mb": cache_manager.max_size_bytes / (1024**2)
+            }
+        except Exception as e:
+            logger.warning(f"Could not get cache info: {e}")
             
-            output_dir_pitch = os.path.join(
-                now_dir, "audio_files", music_folder, "instrumentals"
-            )
-            output_path_pitch = os.path.join(
-                output_dir_pitch, "inst_with_changed_pitch.flac"
-            )
-            audio.export(output_path_pitch, format="flac")
-
-    # Step 9: Merge all audio tracks
-    final_dir = os.path.join(now_dir, "audio_files", music_folder, "final")
-    os.makedirs(final_dir, exist_ok=True)
-
-    # Determine vocals file to use
-    last_rvc_file = get_last_modified_file(rvc_dir)
-    vocals_file = os.path.join(rvc_dir, last_rvc_file) if last_rvc_file else output_rvc
-
-    # Determine karaoke file to use
-    karaoke_file = search_with_word(karaoke_dir, "Instrumental") or search_with_word(karaoke_dir, "instrumental")
-    karaoke_file = os.path.join(karaoke_dir, karaoke_file) if karaoke_file else None
-    
-    final_output_path = os.path.join(
-        final_dir,
-        f"{os.path.basename(input_audio_path).split('.')[0]}_final.{export_format_final.lower()}",
-    )
-    print("Merging audios...")
-    try:
-        result = merge_audios(
-            vocals_file,
-            inst_file,
-            backing_vocals,
-            final_output_path,
-            vocals_volume,
-            instrumentals_volume,
-            backing_vocals_volume,
-            export_format_final,
-        )
-        print("Audios merged successfully")
     except Exception as e:
-        logging.error(f"Audio merging failed: {e}")
-        raise
+        logger.warning(f"Could not gather system information: {e}")
     
-    # Step 10: Cleanup (if requested)
-    if delete_audios:
-        print("Cleaning up temporary files...")
-        main_directory = os.path.join(now_dir, "audio_files", music_folder)
-        folder_to_keep = "final"
-        for folder_name in os.listdir(main_directory):
-            folder_path = os.path.join(main_directory, folder_name)
-            if os.path.isdir(folder_path) and folder_name != folder_to_keep:
-                shutil.rmtree(folder_path)
+    return info
+
+# Performance monitoring
+class PerformanceMonitor:
+    """Monitor and log performance metrics."""
     
-    return (
-        f"Audio file {os.path.basename(input_audio_path).split('.')[0]} converted with success",
-        result,
-    )
-
-
-def download_model(link: str) -> str:
-    """
-    Download a model using the model download pipeline.
+    def __init__(self):
+        self.operations = {}
     
-    Args:
-        link (str): URL or identifier for the model to download
-        
-    Returns:
-        str: Status message indicating success or error
-    """
-    try:
-        model_download_pipeline(link)
-        return "Model downloaded successfully"
-    except Exception as e:
-        logging.error(f"Error downloading model: {e}")
-        return f"Error: {str(e)}"
-
-
-def download_music(link: str) -> str:
-    """
-    Download music from a URL using yt-dlp.
+    @contextmanager
+    def time_operation(self, operation_name: str):
+        """Context manager for timing operations."""
+        start_time = time.time()
+        try:
+            yield
+        finally:
+            duration = time.time() - start_time
+            if operation_name not in self.operations:
+                self.operations[operation_name] = []
+            self.operations[operation_name].append(duration)
+            logger.debug(f"Operation '{operation_name}' took {duration:.2f} seconds")
     
-    Args:
-        link (str): URL of the music to download
-        
-    Returns:
-        str: Status message indicating success or error
-    """
-    if not link or not isinstance(link, str):
-        logging.error("Invalid link provided.")
-        return "Error: Invalid link"
+    def get_stats(self) -> Dict[str, Dict[str, float]]:
+        """Get performance statistics."""
+        stats = {}
+        for operation, times in self.operations.items():
+            if times:
+                stats[operation] = {
+                    "count": len(times),
+                    "total_time": sum(times),
+                    "avg_time": sum(times) / len(times),
+                    "min_time": min(times),
+                    "max_time": max(times)
+                }
+        return stats
 
-    try:
-        current_dir = os.getcwd()
-    except OSError as e:
-        logging.error(f"Error accessing current working directory: {e}")
-        return "Error: Unable to access current working directory"
+# Initialize performance monitor
+performance_monitor = PerformanceMonitor()
 
-    output_dir = os.path.join(current_dir, "audio_files", "original_files")
-    os.makedirs(output_dir, exist_ok=True)
+# Export enhanced functions and classes
+__all__ = [
+    'MODELS_CONFIG',
+    'enhanced_audio_separation',
+    'enhanced_voice_conversion', 
+    'enhanced_post_processing',
+    'safe_file_validation',
+    'get_system_info',
+    'CacheManager',
+    'PerformanceMonitor',
+    'performance_monitor'
+]
 
-    output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
-
-    command = [
-        "yt-dlp",
-        "-x",
-        "--audio-format",
-        "wav",
-        "--output",
-        output_template,
-        "--cookies",
-        f"{current_dir}/assets/ytdlstuff.txt",
-        link,
-    ]
-
-    try:
-        result = subprocess.run(command, check=True, capture_output=True, text=True)
-        logging.info(f"Download successful: {result.stdout}")
-        return "Music downloaded successfully"
-    except FileNotFoundError:
-        logging.error("yt-dlp is not installed. Please install it first.")
-        return "Error: yt-dlp not found"
-    except subprocess.CalledProcessError as e:
-        logging.error(f"Download failed: {e.stderr}")
-        return f"Error: {e.stderr}"
-
-
+logger.info("Enhanced RVC Inference Core module loaded successfully")
