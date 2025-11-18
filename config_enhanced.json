@@ -1,0 +1,143 @@
+{
+    "application": {
+        "title": "Advanced RVC Inference V3.2 Enhanced",
+        "version": "3.2.1",
+        "description": "Enhanced Voice Conversion with Performance Optimizations",
+        "author": "Enhanced by BF667",
+        "based_on": "Vietnamese-RVC architecture improvements"
+    },
+    "language": {
+        "default": "en-US",
+        "supported": [
+            "en-US", "de-DE", "es-ES", "fr-FR", "id-ID", 
+            "ja-JP", "pt-BR", "zh-CN", "ar-SA", "hi-IN",
+            "it-IT", "ko-KR", "nl-NL", "pl-PL", "ru-RU", "tr-TR"
+        ],
+        "auto_detect": true
+    },
+    "theme": {
+        "default": "gradio/default",
+        "available": [
+            "gradio/default", "gradio/dracula_revamped", 
+            "gradio/glass", "gradio/soft", "gradio/monochrome"
+        ],
+        "dark_mode": true,
+        "custom_css": true
+    },
+    "performance": {
+        "max_threads": 8,
+        "memory_optimization": true,
+        "gpu_acceleration": true,
+        "cache_enabled": true,
+        "cache_ttl": 300,
+        "chunk_size": 2730.7,
+        "crossfade_overlap": 0.1,
+        "extra_conversion": 1.0,
+        "silence_threshold": -70
+    },
+    "audio": {
+        "default_sample_rate": 44100,
+        "supported_formats": [
+            "wav", "mp3", "flac", "ogg", "m4a", "aac", "alac"
+        ],
+        "max_file_size_mb": 500,
+        "max_duration_minutes": 30,
+        "default_format": "wav",
+        "quality": "high"
+    },
+    "voice_models": {
+        "supported_versions": ["v1", "v2"],
+        "supported_algorithms": [
+            "RMVPE", "CREPE", "FCPE", "SWIFT"
+        ],
+        "supported_embedders": [
+            "ContentVec", "Chinese-Hubert", "Japanese-Hubert", 
+            "Korean-Hubert", "custom"
+        ],
+        "index_rate_range": [0.0, 1.0],
+        "pitch_range": [-24, 24],
+        "autotune": true
+    },
+    "tts": {
+        "default_voice": "en-US-AvaNeural",
+        "speech_rate_range": [-50, 50],
+        "voices_count": 150,
+        "output_format": "wav"
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 7860,
+        "share_mode": false,
+        "debug_mode": false,
+        "log_level": "INFO"
+    },
+    "directories": {
+        "models": "logs",
+        "audio_original": "audio_files/original_files",
+        "audio_rvc": "audio_files/rvc",
+        "audio_tts": "audio_files/tts",
+        "cache": "cache",
+        "temp": "temp",
+        "backups": "backups"
+    },
+    "security": {
+        "input_validation": true,
+        "file_size_limits": true,
+        "path_traversal_protection": true,
+        "audit_logging": false
+    },
+    "realtime": {
+        "enabled": true,
+        "low_latency": true,
+        "vad_enabled": true,
+        "vad_sensitivity": 3,
+        "input_gain": 100,
+        "output_gain": 100,
+        "monitor_device": true
+    },
+    "notifications": {
+        "completion_alerts": true,
+        "error_alerts": true,
+        "sound_effects": false,
+        "progress_updates": true
+    },
+    "model_repository": {
+        "enabled": true,
+        "source": "voice-models.com",
+        "auto_update": true,
+        "cache_models": true,
+        "model_metadata": true
+    },
+    "experimental": {
+        "onnx_inference": true,
+        "hybrid_pitch_extraction": false,
+        "advanced_fx": false,
+        "batch_processing": true
+    },
+    "logging": {
+        "level": "INFO",
+        "file_logging": true,
+        "console_logging": true,
+        "log_rotation": true,
+        "max_log_files": 10
+    },
+    "ui": {
+        "multi_tab_interface": true,
+        "progress_bars": true,
+        "real_time_updates": true,
+        "responsive_design": true,
+        "accessibility_features": true
+    },
+    "compatibility": {
+        "colab_friendly": true,
+        "optional_deps": ["faiss-cpu"],
+        "fallback_modes": true,
+        "graceful_degradation": true
+    },
+    "training": {
+        "enabled": false,
+        "basic_support": true,
+        "model_validation": true,
+        "training_data_generation": false
+    }
+}

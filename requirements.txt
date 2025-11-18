@@ -1,31 +1,66 @@
-pip>=23.3; sys_platform=='darwin'
-wheel; sys_platform=='darwin'
-PyYAML; sys_platform=='darwin'
-omegaconf>=2.0.6; sys_platform=='darwin'
-numba==0.57.0
-numpy==1.23.5
-ml_collections
-tqdm
-audio-separator[gpu]==0.30.1
-yt_dlp
-wget
-ffmpeg-python>=0.2.0
-# faiss-cpu==1.7.3  # Optional - makes FAISS optional for Colab compatibility
-soundfile==0.12.1
-noisereduce
+# Platform-specific requirements (improved from Vietnamese-RVC)
+pip>=23.3
+wheel
+omegaconf>=2.0.6
+
+# Platform-specific ONNX handling
+onnxruntime; sys_platform == 'darwin'
+onnxruntime-gpu; sys_platform != 'darwin'
+
+# Core dependencies
+PyYAML>=6.0
+tiktoken
+hyperpyyaml
+torch>=2.3.1
+tqdm>=4.63.1
+sortedcontainers
+torchvision>=0.18.1
+torchaudio>=2.3.1
+
+# Platform-specific FAISS handling (like Vietnamese-RVC)
+faiss-cpu==1.7.3; python_version < "3.12"
+faiss-cpu>=1.7.3; python_version >= "3.12"
+
+# Machine learning, NLP and deep learning
+transformers>=4.44.2
+scikit-learn
+einops>=0.8.0
+
+# Pitch and sound processing
+librosa>=0.10.2
+pydub>=0.25.1
+praat-parselmouth
+soundfile>=0.12.1
 pedalboard
+
+# Data processing and calculation (improved bounds)
+numpy>=1.25.2,<2.0.0
+numba>=0.57.0
+scipy>=1.15.0
+matplotlib>=3.7.2
+
+# Implementation and web framework
+gradio>=5.23.3
+requests>=2.32.3
+aiohttp
+
+# Utility section
+yt_dlp
+ffmpy==0.3.1
+ffmpeg-python>=0.2.0
+beautifulsoup4
+
+# Audio and processing
+audio-separator[gpu]==0.30.1
+noisereduce
 stftpitchshift
-torch==2.3.1
-torchaudio==2.3.1
-torchvision==0.18.1
-torchcrepe==0.0.23
-# torchfcpe  # Removed to resolve Colab installation conflicts
-einops
+
+# Additional dependencies from Vietnamese RVC
 libf0
-transformers==4.44.2
 pypresence
-gradio
-gradio_client
-bs4
-omegaconf
-matplotlib==3.7.2
+pycryptodome>=3.9.6,<4.0.0
+sounddevice>=0.5.2
+edge-tts>=7.2.0
+
+# Legacy compatibility
+torchcrepe==0.0.23

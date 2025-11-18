@@ -1,12 +1,16 @@
 """
-Enhanced Advanced RVC Inference Application
-Improved with performance optimizations, better error handling, and enhanced user experience.
+Enhanced Advanced RVC Inference Application V3.2
+Improved with Vietnamese-RVC architecture and performance optimizations.
+Based on improvements from https://github.com/PhamHuynhAnh16/Vietnamese-RVC
 """
 
 import os
 import sys
+import json
 import logging
 import traceback
+import warnings
+import ssl
 from pathlib import Path
 from typing import Optional, Dict, Any
 import argparse
@@ -22,23 +26,84 @@ from tabs.settings import (
 )
 from assets.i18n.i18n import I18nAuto
 
-# Configure logging
-def setup_logging(log_level: str = "INFO") -> logging.Logger:
+# Enhanced SSL handling (from Vietnamese RVC)
+ssl._create_default_https_context = ssl._create_unverified_context
+
+# Suppress warnings (from Vietnamese RVC)
+warnings.filterwarnings("ignore")
+for logger_name in ["httpx", "gradio", "uvicorn", "httpcore", "urllib3", "faiss"]:
+    logging.getLogger(logger_name).setLevel(logging.ERROR)
+
+# Enhanced configuration system (from Vietnamese RVC)
+def load_configuration():
+    """Load application configuration from JSON file."""
+    config_path = Path("config_enhanced.json")
+    default_config = {
+        "application": {
+            "title": "Advanced RVC Inference V3.2 Enhanced",
+            "version": "3.2.1",
+            "description": "Enhanced Voice Conversion with Performance Optimizations"
+        },
+        "server": {
+            "host": "0.0.0.0",
+            "port": 7860,
+            "share_mode": False,
+            "debug_mode": False,
+            "log_level": "INFO"
+        },
+        "language": {
+            "default": "en-US",
+            "supported": ["en-US", "de-DE", "es-ES", "fr-FR"]
+        },
+        "theme": {
+            "default": "gradio/default",
+            "dark_mode": True
+        }
+    }
+    
+    if config_path.exists():
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            logging.warning(f"Failed to load config: {e}. Using defaults.")
+            return default_config
+    else:
+        logging.info("Config file not found. Using default configuration.")
+        return default_config
+
+# Load configuration
+CONFIG = load_configuration()
+
+# Enhanced logging system (improved from Vietnamese RVC)
+def setup_logging(log_level: str = None) -> logging.Logger:
     """Setup comprehensive logging for the application."""
+    if log_level is None:
+        log_level = CONFIG.get("server", {}).get("log_level", "INFO")
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     
-    # Create console handler
-    handler = logging.StreamHandler()
-    handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+    # Clear existing handlers
+    logger.handlers.clear()
     
-    # Create formatter
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+    
+    # File handler (if enabled)
+    if CONFIG.get("logging", {}).get("file_logging", True):
+        file_handler = logging.FileHandler("rvc_inference.log")
+        file_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+        logger.addHandler(file_handler)
+    
+    # Formatter
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
     
-    logger.addHandler(handler)
     return logger
 
 # Setup logging
@@ -88,58 +153,91 @@ def validate_configuration():
         logger.info(f"Created missing directories: {missing_dirs}")
 
 def create_enhanced_app():
-    """Create the enhanced Gradio application with improved error handling."""
+    """Create the enhanced Gradio application with Vietnamese RVC-inspired improvements."""
     try:
         # Validate configuration before launching
         validate_configuration()
         
+        # Get configuration values
+        app_title = CONFIG.get("application", {}).get("title", "Advanced RVC Inference")
+        app_version = CONFIG.get("application", {}).get("version", "3.2")
+        dark_mode = CONFIG.get("theme", {}).get("dark_mode", True)
+        font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
+        
+        # Enhanced CSS with Vietnamese RVC-inspired styling
+        enhanced_css = f"""
+        @import url('{font_url}');
+        * {{font-family: 'Roboto', sans-serif !important;}}
+        body, html {{font-family: 'Roboto', sans-serif !important;}}
+        .enhanced-tab {{ 
+            padding: 15px; 
+            border-radius: 10px; 
+            margin: 8px;
+            border: 1px solid #e0e0e0;
+        }}
+        .enhanced-header {{
+            text-align: center; 
+            padding: 25px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; 
+            border-radius: 15px; 
+            margin-bottom: 25px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }}
+        .status-indicator {{
+            padding: 12px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            text-align: center;
+            font-weight: bold;
+        }}
+        .status-success {{ background-color: #d4edda; color: #155724; }}
+        .status-error {{ background-color: #f8d7da; color: #721c24; }}
+        .status-info {{ background-color: #cce7ff; color: #004085; }}
+        .config-panel {{
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }}
+        """
+        
         with gr.Blocks(
             theme=my_theme, 
-            title="Advanced RVC Inference V3.2 Enhanced",
-            css="""
-            .enhanced-tab { 
-                padding: 10px; 
-                border-radius: 8px; 
-                margin: 5px;
-            }
-            .status-success { color: #28a745; }
-            .status-error { color: #dc3545; }
-            .status-info { color: #17a2b8; }
-            """
+            title=app_title,
+            css=enhanced_css
         ) as app:
             
-            # Enhanced header with better styling
+            # Enhanced header with configuration-based styling
             gr.HTML(
-                """
-                <div style="
-                    text-align: center; 
-                    padding: 20px; 
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white; 
-                    border-radius: 10px; 
-                    margin-bottom: 20px;
-                ">
-                    <h1>🚀 Advanced RVC Inference V3.2 Enhanced Edition</h1>
-                    <p>Revolutionizing Voice Conversion with State-of-the-Art AI Technology</p>
-                    <p><em>Made with ❤️ Enhanced for Performance & Security</em></p>
+                f"""
+                <div class="enhanced-header">
+                    <h1>🚀 {app_title}</h1>
+                    <p>Enhanced with Vietnamese-RVC Architecture & Performance Optimizations</p>
+                    <p><strong>Version:</strong> {app_version} | <strong>Language:</strong> {CONFIG.get('language', {}).get('default', 'en-US')}</p>
+                    <p><em>✨ Revolutionary Voice Conversion with State-of-the-Art AI Technology ✨</em></p>
+                    <p><small>Based on improvements from Vietnamese-RVC by PhamHuynhAnh16</small></p>
                 </div>
                 """
             )
             
-            # Status indicator
-            status_display = gr.HTML(
-                """
-                <div id="status-indicator" style="
-                    padding: 10px; 
-                    margin: 10px 0; 
-                    border-radius: 5px; 
-                    background: #e9ecef;
-                    text-align: center;
-                ">
+            # Enhanced status indicator with system information
+            status_html = f"""
+            <div class="config-panel">
+                <h3>🔧 System Status</h3>
+                <div class="status-indicator status-success">
                     ✅ System Ready - All components loaded successfully
                 </div>
-                """
-            )
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                    <div><strong>🖥️ Platform:</strong> {os.name}</div>
+                    <div><strong>🐍 Python:</strong> {sys.version.split()[0]}</div>
+                    <div><strong>📁 Working Dir:</strong> {now_dir}</div>
+                    <div><strong>⚙️ Config:</strong> Loaded</div>
+                </div>
+            </div>
+            """
+            
+            status_display = gr.HTML(status_html)
             
             with gr.Tab("🎤 Full Inference"):
                 try:
@@ -218,17 +316,30 @@ def create_enhanced_app():
         raise
 
 def main():
-    """Enhanced main function with better argument parsing and error handling."""
+    """Enhanced main function with Vietnamese RVC-inspired configuration."""
+    # Get default values from configuration
+    config_server = CONFIG.get("server", {})
+    default_host = config_server.get("host", "0.0.0.0")
+    default_port = config_server.get("port", 7860)
+    default_share = config_server.get("share_mode", False)
+    default_debug = config_server.get("debug_mode", False)
+    default_log_level = config_server.get("log_level", "INFO")
+    
     parser = argparse.ArgumentParser(
-        description='Advanced RVC Inference V3.2 Enhanced Edition - Made by ArkanDash, Enhanced by BF667',
+        description=f"🚀 {CONFIG.get('application', {}).get('title', 'Advanced RVC Inference')} V{CONFIG.get('application', {}).get('version', '3.2')}",
         add_help=True,
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
+        epilog=f"""
+Enhanced Configuration System (from Vietnamese RVC):
+  • Configuration file: config_enhanced.json
+  • Default language: {CONFIG.get('language', {}).get('default', 'en-US')}
+  • Theme: {CONFIG.get('theme', {}).get('default', 'gradio/default')}
+
 Examples:
-  python app.py                                    # Launch locally
-  python app.py --share                           # Launch with public sharing
-  python app.py --port 7860 --share              # Custom port with sharing
-  python app.py --debug                           # Enable debug logging
+  python app.py                                    # Run with config defaults
+  python app.py --share --port 8080               # Public sharing on custom port
+  python app.py --debug --log-level DEBUG         # Enhanced debug mode
+  python app.py --host 127.0.0.1                  # Localhost only
         """
     )
     
@@ -236,22 +347,22 @@ Examples:
         "--share", 
         action="store_true", 
         dest="share_enabled", 
-        default=False, 
-        help="Enable public sharing of the application"
+        default=default_share, 
+        help=f"Enable public sharing of the application (default: {default_share})"
     )
     
     parser.add_argument(
         "--port",
         type=int,
-        default=7860,
-        help="Port to run the application on (default: 7860)"
+        default=default_port,
+        help=f"Port to run the application on (default: {default_port})"
     )
     
     parser.add_argument(
         "--host",
         type=str,
-        default="0.0.0.0",
-        help="Host to bind to (default: 0.0.0.0)"
+        default=default_host,
+        help=f"Host to bind to (default: {default_host})"
     )
     
     parser.add_argument(
@@ -266,8 +377,8 @@ Examples:
         "--log-level",
         type=str,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
-        help="Set logging level (default: INFO)"
+        default=default_log_level,
+        help=f"Set logging level (default: {default_log_level})"
     )
     
     try:
