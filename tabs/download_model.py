@@ -7,6 +7,10 @@ import threading
 import time
 from datetime import datetime
 
+
+os.path.dirname(os.path.abspath(__file__))
+
+
 from core import download_model, get_voice_models_list
 from programs.applio_code.rvc.lib.utils import format_title
 from assets.i18n.i18n import I18nAuto
