@@ -21,8 +21,14 @@ from programs.applio_code.rvc.configs.config import Config
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)
-logging.getLogger("faiss").setLevel(logging.WARNING)
-logging.getLogger("faiss.loader").setLevel(logging.WARNING)
+
+# Optional FAISS logging setup
+try:
+    import faiss
+    logging.getLogger("faiss").setLevel(logging.WARNING)
+    logging.getLogger("faiss.loader").setLevel(logging.WARNING)
+except ImportError:
+    pass  # FAISS not available, skip logging setup
 
 
 class VoiceConverter:

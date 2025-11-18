@@ -5,11 +5,19 @@ import sys
 import torch
 import torch.nn.functional as F
 import torchcrepe
-import faiss
 import librosa
 import numpy as np
 from scipy import signal
 from torch import Tensor
+
+# Optional FAISS import with fallback
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    faiss = None
+    FAISS_AVAILABLE = False
+    print("Warning: FAISS not available. Speaker embedding retrieval will be disabled.")
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -555,7 +563,7 @@ class Pipeline:
             f0_autotune: Whether to apply autotune to the F0 contour.
             f0_file: Path to a file containing an F0 contour to use.
         """
-        if file_index != "" and os.path.exists(file_index) == True and index_rate != 0:
+        if file_index != "" and os.path.exists(file_index) == True and index_rate != 0 and FAISS_AVAILABLE:
             try:
                 index = faiss.read_index(file_index)
                 big_npy = index.reconstruct_n(0, index.ntotal)

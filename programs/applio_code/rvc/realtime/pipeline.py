@@ -1,12 +1,20 @@
 import os
 import sys
-import faiss
 import numpy as np
 import torch
 import torch.nn.utils.parametrize
 import torch.nn.functional as F
 import torchaudio.transforms as tat
 from torch import Tensor
+
+# Optional FAISS import with fallback
+try:
+    import faiss
+    FAISS_AVAILABLE = True
+except ImportError:
+    faiss = None
+    FAISS_AVAILABLE = False
+    print("Warning: FAISS not available. Speaker embedding retrieval will be disabled.")
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -349,7 +357,7 @@ class Realtime_Pipeline:
 
 
 def load_faiss_index(file_index):
-    if file_index != "" and os.path.exists(file_index):
+    if file_index != "" and os.path.exists(file_index) and FAISS_AVAILABLE:
         try:
             index = faiss.read_index(file_index)
             big_npy = index.reconstruct_n(0, index.ntotal)

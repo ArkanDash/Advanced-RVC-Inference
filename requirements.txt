@@ -47,9 +47,9 @@ einops>=0.7.0
 transformers>=4.44.0,<5.0.0
 accelerate>=0.24.0
 
-# Enhanced dependency management
-faiss-cpu==1.7.3; platform_machine == 'x86_64'
-faiss-gpu>=1.7.0; platform_machine == 'x86_64' and platform_system != 'Darwin'
+# Enhanced dependency management (optional for advanced features)
+faiss-cpu>=1.7.0,<1.7.4; platform_machine == 'x86_64'
+faiss-gpu>=1.7.0,<1.8.0; platform_machine == 'x86_64' and platform_system != 'Darwin'
 
 # GUI and interface
 gradio>=5.20.0,<6.0.0
