@@ -1,14 +1,9 @@
-# Core system requirements
 pip>=23.3
 wheel
 omegaconf>=2.0.6
 wget
-
-# Platform-specific ONNX handling
 onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu; sys_platform != 'darwin'
-
-# Core dependencies
 PyYAML>=6.0
 tiktoken
 hyperpyyaml
@@ -17,57 +12,37 @@ tqdm>=4.63.1
 sortedcontainers
 torchvision>=0.18.1
 torchaudio>=2.3.1
-
-# FAISS handling
 faiss-cpu==1.7.3; python_version < "3.12"
 faiss-cpu>=1.7.3; python_version >= "3.12"
-
-# Machine learning, NLP and deep learning
 transformers>=4.44.2
 scikit-learn
 einops>=0.8.0
 local-attention>=1.11.2
-
-# Pitch and sound processing
 librosa>=0.10.2
 pydub>=0.25.1
 praat-parselmouth
 soundfile>=0.12.1
 pedalboard
-
-# Data processing and calculation
 numpy>=1.25.2,<2.0.0
 numba>=0.57.0
 scipy>=1.15.0
 matplotlib>=3.7.2
-
-# Implementation and web framework
 gradio>=5.23.3
 requests>=2.32.3
 aiohttp
-
-# Utility section
 yt_dlp
 ffmpy==0.3.1
 ffmpeg-python>=0.2.0
 beautifulsoup4
-
-# Audio and processing
 audio-separator[gpu]==0.30.1
 noisereduce
 stftpitchshift
-
-# Additional dependencies
 libf0
 pypresence
 pycryptodome>=3.9.6,<4.0.0
 sounddevice>=0.5.2
 edge-tts>=7.2.0
-
-# Legacy compatibility
 torchcrepe==0.0.23
-
-# Training dependencies
 tensorboard>=2.13.0
 onnx>=1.14.0,<2.0.0
 onnxslim>=0.4.13
