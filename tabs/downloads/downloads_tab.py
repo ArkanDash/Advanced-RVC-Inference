@@ -9,11 +9,15 @@ from urllib.parse import urlparse
 import threading
 
 import gradio as gr
+from assets.i18n.i18n import I18nAuto
 
 sys.path.append(os.getcwd())
 
 # Initialize global state for search results
 search_results_state = gr.State([])
+
+# Initialize internationalization
+i18n = I18nAuto()
 
 def update_status(message):
     """Update the global download status"""
@@ -22,7 +26,7 @@ def update_status(message):
 def download_model_from_url(url, model_name, status_callback=update_status):
     """Download model from various URL sources"""
     try:
-        status_callback(f"Bắt đầu tải xuống {model_name}...")
+        status_callback(i18n("Starting download") + f" {model_name}...")
         
         # Ensure weights directory exists
         os.makedirs("weights", exist_ok=True)
@@ -38,15 +42,15 @@ def download_model_from_url(url, model_name, status_callback=update_status):
         elif "mega.nz" in url:
             return download_from_mega(url, model_name, status_callback)
         else:
-            return f"URL không được hỗ trợ: {url}"
+            return i18n("Unsupported URL") + f": {url}"
             
     except Exception as e:
-        return f"Lỗi tải xuống: {str(e)}"
+        return i18n("Download error") + f": {str(e)}"
 
 def download_from_huggingface(url, model_name, status_callback):
     """Download from HuggingFace Hub"""
     try:
-        status_callback(f"Đang tải xuống từ HuggingFace: {model_name}")
+        status_callback(i18n("Downloading from HuggingFace") + f": {model_name}")
         
         # Parse HuggingFace URL
         if "huggingface.co" in url:
@@ -74,15 +78,15 @@ this would download the real model from HuggingFace using:
                 with open(model_path, 'w', encoding='utf-8') as f:
                     f.write(content)
                 
-                status_callback(f"Tải xuống hoàn tất: {repo_name}")
-                return f"✅ Đã tải xuống thành công {repo_name} vào thư mục weights/"
+                status_callback(i18n("Download completed") + f": {repo_name}")
+                return f"✅ {i18n('Successfully downloaded')} {repo_name} {i18n('into weights directory')}"
             else:
-                return f"❌ Định dạng URL HuggingFace không hợp lệ: {url}"
+                return f"❌ {i18n('Invalid HuggingFace URL format')}: {url}"
         else:
-            return f"❌ Không phải URL HuggingFace: {url}"
+            return f"❌ {i18n('Not a HuggingFace URL')}: {url}"
             
     except Exception as e:
-        return f"❌ Lỗi tải xuống từ HuggingFace: {str(e)}"
+        return f"❌ {i18n('HuggingFace download error')}: {str(e)}"
 
 def download_from_gdrive(url, model_name, status_callback):
     """Download from Google Drive"""
@@ -115,12 +119,12 @@ this would download the real model using gdown library.
             return f"❌ URL Google Drive không hợp lệ: {url}"
             
     except Exception as e:
-        return f"❌ Lỗi tải xuống từ Google Drive: {str(e)}"
+        return f"❌ {i18n('Google Drive download error')}: {str(e)}"
 
 def download_from_mediafire(url, model_name, status_callback):
     """Download from MediaFire"""
     try:
-        status_callback(f"Đang tải xuống từ MediaFire: {model_name}")
+        status_callback(i18n("Downloading from MediaFire") + f": {model_name}")
         
         model_path = f"weights/{model_name}.pth"
         content = f"""Vietnamese-RVC Model: {model_name}
@@ -136,16 +140,16 @@ this would download the real model from MediaFire.
         with open(model_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        status_callback(f"Tải xuống hoàn tất: {model_name}")
-        return f"✅ Đã tải xuống thành công {model_name} từ MediaFire"
+        status_callback(i18n("Download completed") + f": {model_name}")
+        return f"✅ {i18n('Successfully downloaded')} {model_name} {i18n('from MediaFire')}"
         
     except Exception as e:
-        return f"❌ Lỗi tải xuống từ MediaFire: {str(e)}"
+        return f"❌ {i18n('MediaFire download error')}: {str(e)}"
 
 def download_from_pixeldrain(url, model_name, status_callback):
     """Download from PixelDrain"""
     try:
-        status_callback(f"Đang tải xuống từ PixelDrain: {model_name}")
+        status_callback(i18n("Downloading from PixelDrain") + f": {model_name}")
         
         model_path = f"weights/{model_name}.pth"
         content = f"""Vietnamese-RVC Model: {model_name}
@@ -161,16 +165,16 @@ this would download the real model from PixelDrain.
         with open(model_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        status_callback(f"Tải xuống hoàn tất: {model_name}")
-        return f"✅ Đã tải xuống thành công {model_name} từ PixelDrain"
+        status_callback(i18n("Download completed") + f": {model_name}")
+        return f"✅ {i18n('Successfully downloaded')} {model_name} {i18n('from PixelDrain')}"
         
     except Exception as e:
-        return f"❌ Lỗi tải xuống từ PixelDrain: {str(e)}"
+        return f"❌ {i18n('PixelDrain download error')}: {str(e)}"
 
 def download_from_mega(url, model_name, status_callback):
     """Download from Mega.nz"""
     try:
-        status_callback(f"Đang tải xuống từ Mega.nz: {model_name}")
+        status_callback(i18n("Downloading from Mega.nz") + f": {model_name}")
         
         model_path = f"weights/{model_name}.pth"
         content = f"""Vietnamese-RVC Model: {model_name}
@@ -186,18 +190,18 @@ this would download the real model from Mega.nz.
         with open(model_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        status_callback(f"Tải xuống hoàn tất: {model_name}")
-        return f"✅ Đã tải xuống thành công {model_name} từ Mega.nz"
+        status_callback(i18n("Download completed") + f": {model_name}")
+        return f"✅ {i18n('Successfully downloaded')} {model_name} {i18n('from Mega.nz')}"
         
     except Exception as e:
-        return f"❌ Lỗi tải xuống từ Mega.nz: {str(e)}"
+        return f"❌ {i18n('Mega.nz download error')}: {str(e)}"
 
 def upload_model(files, status_callback=update_status):
     """Handle uploaded model files"""
     if not files:
-        return "Không có file nào được tải lên"
+        return i18n("No files uploaded")
     
-    status_callback("Đang xử lý các file được tải lên...")
+    status_callback(i18n("Processing uploaded files..."))
     
     uploaded_files = []
     weights_path = "weights"
@@ -215,15 +219,15 @@ def upload_model(files, status_callback=update_status):
             uploaded_files.append(filename)
             status_callback(f"Đã tải lên: {filename}")
         except Exception as e:
-            uploaded_files.append(f"Không thể tải lên {filename}: {str(e)}")
+            uploaded_files.append(f"{i18n('Could not upload')} {filename}: {str(e)}")
     
-    status_callback("Tải lên hoàn tất")
-    return f"✅ Đã tải lên thành công {len(uploaded_files)} file(s): {', '.join(uploaded_files)}"
+    status_callback(i18n("Upload completed"))
+    return f"✅ {i18n('Successfully uploaded')} {len(uploaded_files)} {i18n('file(s)')}: {', '.join(uploaded_files)}"
 
 def search_models_huggingface(search_term):
     """Search for RVC models on HuggingFace"""
     if not search_term or len(search_term.strip()) < 2:
-        return gr.update(choices=[]), "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm"
+        return gr.update(choices=[]), i18n("Please enter at least 2 characters to search")
     
     try:
         # Use HuggingFace API to search for RVC models
@@ -249,7 +253,7 @@ def search_models_huggingface(search_term):
                 downloads = model.get('downloads', 0)
                 
                 # Create display name and URL
-                display_name = f"{model_name} (bởi {author}) - {downloads:,} lượt tải"
+                display_name = f"{model_name} ({i18n('by')} {author}) - {downloads:,} {i18n('downloads')}"
                 model_url = f"https://huggingface.co/{model_id}"
                 
                 # Only include models that are likely RVC-related
@@ -258,9 +262,9 @@ def search_models_huggingface(search_term):
                     choices.append((display_name, model_url))
             
             if choices:
-                return gr.update(choices=choices), f"Tìm thấy {len(choices)} mô hình RVC"
+                return gr.update(choices=choices), f"{i18n('Found')} {len(choices)} {i18n('RVC models')}"
             else:
-                return gr.update(choices=[]), f"Không tìm thấy mô hình RVC nào cho '{search_term}'. Hãy thử từ khóa khác như 'voice', 'audio', hoặc 'rvc'"
+                return gr.update(choices=[]), f"{i18n('No RVC models found for')} '{search_term}'. {i18n('Try other keywords like')} 'voice', 'audio', {i18n('or')} 'rvc'"
         
         else:
             # Fallback to local demo models if API fails
@@ -270,7 +274,7 @@ def search_models_huggingface(search_term):
         # Fallback to local demo models if API fails
         return search_models_fallback(search_term)
     except Exception as e:
-        return gr.update(choices=[]), f"Lỗi tìm kiếm: {str(e)}"
+        return gr.update(choices=[]), f"{i18n('Search error')}: {str(e)}"
 
 def search_models_fallback(search_term):
     """Fallback search with curated Vietnamese RVC model examples"""
@@ -291,14 +295,14 @@ def search_models_fallback(search_term):
     choices = [(name, url) for name, url in curated_models if search_term.lower() in name.lower()]
     
     if choices:
-        return gr.update(choices=choices), f"Tìm thấy {len(choices)} mô hình được tuyển chọn"
+        return gr.update(choices=choices), f"{i18n('Found')} {len(choices)} {i18n('curated models')}"
     else:
-        return gr.update(choices=[]), f"Không tìm thấy mô hình nào cho '{search_term}'. Hãy thử 'homer', 'lana', 'genshin', 'haikyuu', hoặc 'male'"
+        return gr.update(choices=[]), f"{i18n('No models found for')} '{search_term}'. {i18n('Try')} 'homer', 'lana', 'genshin', 'haikyuu', {i18n('or')} 'male'"
 
 def search_models(search_term):
     """Enhanced search that uses both API and fallback"""
     if not search_term or len(search_term.strip()) < 2:
-        return gr.update(choices=[]), "Vui lòng nhập ít nhất 2 ký tự để tìm kiếm"
+        return gr.update(choices=[]), i18n("Please enter at least 2 characters to search")
     
     # First try HuggingFace API search
     choices, status = search_models_huggingface(search_term)
@@ -312,14 +316,14 @@ def search_models(search_term):
 def download_pretrained_model(model_info, status_callback=update_status):
     """Download pretrained models based on selection"""
     if not model_info:
-        return "Không có mô hình nào được chọn"
+        return i18n("No model selected")
     
     try:
         model_name, model_url = model_info
-        status_callback(f"Đang tải xuống mô hình: {model_name}")
+        status_callback(i18n("Downloading model") + f": {model_name}")
         return download_model_from_url(model_url, model_name, status_callback)
     except Exception as e:
-        return f"❌ Lỗi tải xuống mô hình: {str(e)}"
+        return f"❌ {i18n('Model download error')}: {str(e)}"
 
 def downloads_tab_enhanced():
     """Enhanced downloads tab with Vietnamese-RVC method - Single Tab"""
@@ -327,59 +331,59 @@ def downloads_tab_enhanced():
     # Ensure required directories exist
     os.makedirs("weights", exist_ok=True)
     
-    with gr.TabItem("📥 Tải Xuống Mô Hình", visible=True):
-        gr.Markdown("# 🔍 Vietnamese-RVC Model Download Center\nTìm kiếm, duyệt và tải xuống các mô hình RVC từ HuggingFace và các nguồn khác")
+    with gr.TabItem("📥 " + i18n("Download Models"), visible=True):
+        gr.Markdown(f"# 🔍 {i18n('Vietnamese-RVC Model Download Center')}\n{i18n('Search, browse and download RVC models from HuggingFace and other sources')}")
         
         # Status display
         status_display = gr.Textbox(
-            label="📊 Trạng Thái & Tiến Trình Tải Xuống",
+            label="📊 " + i18n("Download Status & Progress"),
             lines=4,
             max_lines=15,
             interactive=False,
-            value="Sẵn sàng tải xuống các mô hình..."
+            value=i18n("Ready to download models...")
         )
         
         # Search Section
         with gr.Row():
             with gr.Column(scale=3):
-                gr.Markdown("### 🔍 Tìm Kiếm Mô Hình")
-                gr.Markdown("*Tìm kiếm từ 3,400+ mô hình RVC có sẵn trên HuggingFace*")
+                gr.Markdown("### 🔍 " + i18n("Search Models"))
+                gr.Markdown("*" + i18n("Search from 3400+ RVC models available on HuggingFace") + "*")
                 
                 search_term = gr.Textbox(
-                    label="Tìm Kiếm Mô Hình",
+                    label=i18n("Search Models"),
                     placeholder="Nhập tên mô hình, tác giả, nhân vật hoặc từ khóa (ví dụ: 'homer', 'lana', 'genshin', 'voice')",
                     scale=8
                 )
-                search_btn = gr.Button("🔍 Tìm Kiếm", variant="primary", scale=2)
+                search_btn = gr.Button("🔍 " + i18n("Search"), variant="primary", scale=2)
                 
                 search_results = gr.Dropdown(
-                    label="Kết Quả Tìm Kiếm",
+                    label=i18n("Search Results"),
                     choices=[]
                 )
                 search_status = gr.Textbox(
-                    label="Trạng Thái Tìm Kiếm",
+                    label=i18n("Search Status"),
                     interactive=False,
-                    value="Nhập từ khóa tìm kiếm để tìm mô hình RVC"
+                    value=i18n("Enter search keywords to find RVC models")
                 )
                 
-                download_selected_btn = gr.Button("📥 Tải Xuống Mô Hình Đã Chọn", variant="primary")
+                download_selected_btn = gr.Button("📥 " + i18n("Download Selected Model"), variant="primary")
                 
             with gr.Column(scale=2):
-                gr.Markdown("### 🔗 Tải Từ URL Trực Tiếp")
-                gr.Markdown("Nhập URL tải xuống trực tiếp từ HuggingFace, Google Drive, MediaFire hoặc các nền tảng khác")
+                gr.Markdown("### 🔗 " + i18n("Direct URL Download"))
+                gr.Markdown(i18n("Enter direct download URL from HuggingFace, Google Drive, MediaFire or other platforms"))
                 
                 direct_model_url = gr.Textbox(
-                    label="URL Mô Hình",
-                    placeholder="Nhập URL tải xuống trực tiếp (HuggingFace, Google Drive, MediaFire, v.v.)"
+                    label=i18n("Model URL"),
+                    placeholder=i18n("Enter direct download URL (HuggingFace, Google Drive, MediaFire, etc.)")
                 )
                 model_display_name = gr.Textbox(
-                    label="Tên Mô Hình",
-                    placeholder="Nhập tên hiển thị cho mô hình"
+                    label=i18n("Model Name"),
+                    placeholder=i18n("Enter display name for the model")
                 )
                 
-                url_download_btn = gr.Button("📥 Tải Từ URL", variant="primary")
+                url_download_btn = gr.Button("📥 " + i18n("Download from URL"), variant="primary")
                 
-                gr.Markdown("#### Các Nền Tảng Được Hỗ Trợ:")
+                gr.Markdown("#### " + i18n("Supported Platforms") + ":")
                 gr.Markdown("- **HuggingFace**: `https://huggingface.co/{username}/{model-name}`")
                 gr.Markdown("- **Google Drive**: `https://drive.google.com/file/d/{file-id}/view`")
                 gr.Markdown("- **MediaFire**: Liên kết MediaFire trực tiếp")
@@ -389,22 +393,22 @@ def downloads_tab_enhanced():
         # Upload Section
         with gr.Row():
             with gr.Column():
-                gr.Markdown("### 📤 Tải Lên Mô Hình Của Bạn")
-                gr.Markdown("Tải lên trực tiếp các file mô hình RVC đã được đào tạo của bạn vào thư mục weights")
+                gr.Markdown("### 📤 " + i18n("Upload Your Models"))
+                gr.Markdown(i18n("Upload your trained RVC model files directly to the weights directory"))
                 
                 uploaded_models = gr.File(
-                    label="Tải Lên File Mô Hình",
+                    label=i18n("Upload Model Files"),
                     file_count="multiple",
                     file_types=[".pth", ".pt", ".ckpt", ".safetensors"]
                 )
                 
-                upload_models_btn = gr.Button("📤 Tải Lên Các File")
+                upload_models_btn = gr.Button("📤 " + i18n("Upload Files"))
                 
-                gr.Markdown("#### Các Định Dạng File Được Hỗ Trợ:")
-                gr.Markdown("- **.pth** - File mô hình PyTorch (phổ biến nhất)")
-                gr.Markdown("- **.pt** - File tensor PyTorch")
-                gr.Markdown("- **.ckpt** - File checkpoint PyTorch")
-                gr.Markdown("- **.safetensors** - Định dạng SafeTensor")
+                gr.Markdown("#### " + i18n("Supported File Formats") + ":")
+                gr.Markdown(f"- **.pth** - {i18n('PyTorch model file (most common)')}")
+                gr.Markdown(f"- **.pt** - {i18n('PyTorch tensor file')}")
+                gr.Markdown(f"- **.ckpt** - {i18n('PyTorch checkpoint file')}")
+                gr.Markdown(f"- **.safetensors** - {i18n('SafeTensor format')}")
         
         # Event handlers
         search_btn.click(
@@ -416,7 +420,7 @@ def downloads_tab_enhanced():
         download_selected_btn.click(
             fn=lambda selected_model: download_pretrained_model(
                 selected_model
-            ) if selected_model else "Không có mô hình nào được chọn",
+            ) if selected_model else i18n("No model selected"),
             inputs=[search_results],
             outputs=[status_display]
         )
