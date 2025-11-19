@@ -15,8 +15,7 @@
 **/build/
 **/develop-eggs/
 **/dist/
-# Allow tabs downloads but ignore other downloads
-# **/downloads/
+**/downloads/
 **/eggs/
 **/.eggs/
 **/lib/
