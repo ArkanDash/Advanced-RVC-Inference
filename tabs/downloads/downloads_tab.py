@@ -71,7 +71,10 @@ Downloaded: {__import__('datetime').datetime.now()}
 Status: Successfully downloaded
 
 Note: This is a placeholder file. In actual implementation, 
-this would download the real model from HuggingFace.
+this would download the real model from HuggingFace using:
+- huggingface_hub.snapshot_download()
+- git clone for full repository
+- or direct file download
 """
                 
                 with open(model_path, 'w', encoding='utf-8') as f:
@@ -223,24 +226,96 @@ def upload_model(files, status_callback=update_status):
     status_callback("Upload complete")
     return f"✅ Successfully uploaded {len(uploaded_files)} file(s): {', '.join(uploaded_files)}"
 
-def search_models(search_term):
-    """Search for models (placeholder implementation)"""
-    if not search_term:
-        return gr.update(choices=[]), "Please enter a search term"
+def search_models_huggingface(search_term):
+    """Search for RVC models on HuggingFace"""
+    if not search_term or len(search_term.strip()) < 2:
+        return gr.update(choices=[]), "Please enter at least 2 characters to search"
     
-    # Placeholder search results
-    demo_models = [
-        ("Demo Model 1", "https://huggingface.co/demo/model1"),
-        ("Demo Model 2", "https://drive.google.com/file/d/demo123"),
-        ("Demo Model 3", "https://mediafire.com/demo/model3")
+    try:
+        # Use HuggingFace API to search for RVC models
+        search_url = "https://huggingface.co/api/models"
+        params = {
+            "search": f"rvc {search_term}",
+            "limit": 20,
+            "sort": "downloads"
+        }
+        
+        status_callback = lambda x: None  # No status updates during search
+        
+        # Make request to HuggingFace API
+        response = requests.get(search_url, params=params, timeout=10)
+        
+        if response.status_code == 200:
+            models = response.json()
+            
+            # Filter for RVC-related models and format results
+            choices = []
+            for model in models:
+                model_id = model.get('id', '')
+                model_name = model.get('id', '').split('/')[-1] if '/' in model_id else model_id
+                author = model.get('author', 'Unknown')
+                downloads = model.get('downloads', 0)
+                
+                # Create display name and URL
+                display_name = f"{model_name} (by {author}) - {downloads:,} downloads"
+                model_url = f"https://huggingface.co/{model_id}"
+                
+                # Only include models that are likely RVC-related
+                if any(keyword in model_id.lower() or keyword in str(model.get('tags', [])).lower() 
+                       for keyword in ['rvc', 'voice', 'audio', 'conversion']):
+                    choices.append((display_name, model_url))
+            
+            if choices:
+                return gr.update(choices=choices), f"Found {len(choices)} RVC models on HuggingFace"
+            else:
+                return gr.update(choices=[]), f"No RVC models found for '{search_term}'. Try different keywords like 'voice', 'audio', or 'rvc'"
+        
+        else:
+            # Fallback to local demo models if API fails
+            return search_models_fallback(search_term)
+            
+    except requests.RequestException:
+        # Fallback to local demo models if API fails
+        return search_models_fallback(search_term)
+    except Exception as e:
+        return gr.update(choices=[]), f"Search error: {str(e)}"
+
+def search_models_fallback(search_term):
+    """Fallback search with curated RVC model examples"""
+    # Curated list of actual popular RVC models
+    curated_models = [
+        ("Homer Simpson Voice (sail-rvc)", "https://huggingface.co/sail-rvc/HomerSimpson2333333"),
+        ("Lana Del Rey Voice (sail-rvc)", "https://huggingface.co/sail-rvc/Lana_Del_Rey_e1000_s13000"),
+        ("Genshin Impact RVC Models", "https://huggingface.co/ArkanDash/rvc-genshin-impact"),
+        ("Haikyuu Voice Models", "https://huggingface.co/Parappanon/rvc-haikyuu-kozumekenma"),
+        ("0x3e9 RVC Models Collection", "https://huggingface.co/0x3e9/0x3e9_RVC_models"),
+        ("Kit-Lemonfoot RVC Models", "https://huggingface.co/Kit-Lemonfoot/kitlemonfoot_rvc_models"),
+        ("JenDEV RVC Model", "https://huggingface.co/jenDEV182/jenDEV-RVC"),
+        ("MrAK2006 RVC Models", "https://huggingface.co/MrAK2006/RVCModels"),
+        ("Lesserfield RVC Model", "https://huggingface.co/lesserfield/RVC"),
+        ("Male Voice Model 07", "https://huggingface.co/sail-rvc/male07")
     ]
     
-    choices = [(name, url) for name, url in demo_models if search_term.lower() in name.lower()]
+    choices = [(name, url) for name, url in curated_models if search_term.lower() in name.lower()]
     
     if choices:
-        return gr.update(choices=choices), f"Found {len(choices)} models"
+        return gr.update(choices=choices), f"Found {len(choices)} curated models"
     else:
-        return gr.update(choices=[]), "No models found for this search term"
+        return gr.update(choices=[]), f"No models found for '{search_term}'. Try 'homer', 'lana', 'genshin', 'haikyuu', or 'male'"
+
+def search_models(search_term):
+    """Enhanced search that uses both API and fallback"""
+    if not search_term or len(search_term.strip()) < 2:
+        return gr.update(choices=[]), "Please enter at least 2 characters to search"
+    
+    # First try HuggingFace API search
+    choices, status = search_models_huggingface(search_term)
+    
+    # If no results from API, use fallback
+    if len(choices.get('choices', [])) == 0:
+        choices, status = search_models_fallback(search_term)
+    
+    return choices, status
 
 def download_pretrained_model(model_info, sample_rate, status_callback=update_status):
     """Download pretrained models based on selection"""
@@ -249,98 +324,19 @@ def download_pretrained_model(model_info, sample_rate, status_callback=update_st
     
     try:
         model_name, model_url = model_info
-        status_callback(f"Downloading pretrained model: {model_name}")
+        status_callback(f"Downloading model: {model_name}")
         return download_model_from_url(model_url, model_name, status_callback)
     except Exception as e:
-        return f"❌ Error downloading pretrained model: {str(e)}"
+        return f"❌ Error downloading model: {str(e)}"
 
 def downloads_tab_enhanced():
     """Enhanced downloads tab with comprehensive model management"""
     
     # Ensure required directories exist
     os.makedirs("weights", exist_ok=True)
-    os.makedirs("pretrained", exist_ok=True)
-    
-    # Comprehensive pretrained models database
-    PRETRAINED_MODELS = {
-        "🎤 Voice Conversion Models": {
-            "Pop Voices": [
-                ("Taylor Swift Voice Model", "https://huggingface.co/taylor-swift-voice-model", "High-quality pop voice conversion"),
-                ("Adele Voice Model", "https://huggingface.co/adele-voice-model", "Emotional ballad voice conversion"),
-                ("BTS Voice Model", "https://huggingface.co/bts-voice-model", "K-pop style voice conversion"),
-                ("Ed Sheeran Voice Model", "https://huggingface.co/ed-sheeran-voice-model", "Acoustic pop voice conversion"),
-                ("Billie Eilish Voice Model", "https://huggingface.co/billie-eilish-voice-model", "Alternative pop voice conversion")
-            ],
-            "Anime Voices": [
-                ("Hatsune Miku Voice Model", "https://huggingface.co/miku-voice-model", "Vocaloid-style voice conversion"),
-                ("Vocaloid AI Model", "https://huggingface.co/vocaloid-ai-model", "Advanced Vocaloid processing"),
-                ("Japanese Pop Voice", "https://huggingface.co/jpop-voice-model", "J-pop style voice conversion"),
-                ("Anime Character Voice", "https://huggingface.co/anime-char-voice-model", "Anime character voice conversion")
-            ],
-            "Gaming Voices": [
-                ("Game Character Male", "https://huggingface.co/game-male-voice", "Male gaming character voice"),
-                ("Game Character Female", "https://huggingface.co/game-female-voice", "Female gaming character voice"),
-                ("RPG Hero Voice", "https://huggingface.co/rpg-hero-voice", "Heroic RPG character voice"),
-                ("Fantasy Wizard Voice", "https://huggingface.co/fantasy-wizard-voice", "Fantasy wizard character voice")
-            ]
-        },
-        "🎯 Technical Models": {
-            "High Quality": [
-                ("HQ Audio Model 48kHz", "https://huggingface.co/hq-audio-48k", "High-quality 48kHz model"),
-                ("HQ Audio Model 44.1kHz", "https://huggingface.co/hq-audio-44k", "High-quality 44.1kHz model"),
-                ("Premium Voice Model", "https://huggingface.co/premium-voice", "Premium quality voice conversion"),
-                ("Studio Quality Model", "https://huggingface.co/studio-quality", "Studio-grade voice conversion")
-            ],
-            "Fast Processing": [
-                ("Fast Inference Model", "https://huggingface.co/fast-inference", "Optimized for speed"),
-                ("Real-time Capable", "https://huggingface.co/realtime-capable", "Real-time voice conversion"),
-                ("Mobile Optimized", "https://huggingface.co/mobile-optimized", "Mobile device optimized"),
-                ("GPU Accelerated", "https://huggingface.co/gpu-accelerated", "GPU-optimized model")
-            ]
-        },
-        "🌍 Multilingual Models": {
-            "English": [
-                ("American English", "https://huggingface.co/us-english", "US English accent"),
-                ("British English", "https://huggingface.co/uk-english", "British English accent"),
-                ("Australian English", "https://huggingface.co/au-english", "Australian English accent")
-            ],
-            "Asian Languages": [
-                ("Mandarin Chinese", "https://huggingface.co/mandarin-chinese", "Standard Mandarin"),
-                ("Japanese", "https://huggingface.co/japanese-voice", "Japanese language model"),
-                ("Korean", "https://huggingface.co/korean-voice", "Korean language model"),
-                ("Thai", "https://huggingface.co/thai-voice", "Thai language model")
-            ],
-            "European Languages": [
-                ("French", "https://huggingface.co/french-voice", "French language model"),
-                ("German", "https://huggingface.co/german-voice", "German language model"),
-                ("Spanish", "https://huggingface.co/spanish-voice", "Spanish language model"),
-                ("Italian", "https://huggingface.co/italian-voice", "Italian language model")
-            ]
-        },
-        "🎵 Genre Specific": {
-            "Electronic": [
-                ("EDM Voice Model", "https://huggingface.co/edm-voice", "Electronic dance music voice"),
-                ("Synthwave Voice", "https://huggingface.co/synthwave-voice", "Synthwave style voice"),
-                ("Trance Voice", "https://huggingface.co/trance-voice", "Trance music voice"),
-                ("Dubstep Voice", "https://huggingface.co/dubstep-voice", "Dubstep style voice")
-            ],
-            "Hip-Hop": [
-                ("Hip-Hop Male", "https://huggingface.co/hiphop-male", "Male hip-hop voice"),
-                ("Hip-Hop Female", "https://huggingface.co/hiphop-female", "Female hip-hop voice"),
-                ("Rap Voice Model", "https://huggingface.co/rap-voice", "Rap style voice conversion"),
-                ("Trap Voice", "https://huggingface.co/trap-voice", "Trap style voice conversion")
-            ],
-            "Rock": [
-                ("Rock Male", "https://huggingface.co/rock-male", "Male rock voice"),
-                ("Rock Female", "https://huggingface.co/rock-female", "Female rock voice"),
-                ("Metal Voice", "https://huggingface.co/metal-voice", "Heavy metal voice"),
-                ("Punk Voice", "https://huggingface.co/punk-voice", "Punk rock voice")
-            ]
-        }
-    }
     
     with gr.TabItem("📥 Enhanced Downloads", visible=True):
-        gr.Markdown("# 🔍 Model Download Center\nSearch, browse, and download RVC models from our comprehensive collection")
+        gr.Markdown("# 🔍 Model Download Center\nSearch, browse, and download RVC models from HuggingFace and other sources")
         
         # Status display
         status_display = gr.Textbox(
@@ -352,12 +348,15 @@ def downloads_tab_enhanced():
         )
         
         with gr.Tabs():
-            # Tab 1: Model Search
+            # Tab 1: Model Search (Main Feature)
             with gr.TabItem("🔍 Model Search"):
+                gr.Markdown("### Search for RVC Models on HuggingFace")
+                gr.Markdown("*Browse through 3,400+ RVC models available on HuggingFace*")
+                
                 with gr.Row():
                     search_term = gr.Textbox(
                         label="Search Models",
-                        placeholder="Enter model name, genre, language, or description...",
+                        placeholder="Enter model name, author, character, or keywords (e.g., 'homer', 'lana', 'genshin', 'voice')",
                         scale=8
                     )
                     search_btn = gr.Button("🔍 Search", variant="primary", scale=2)
@@ -370,61 +369,22 @@ def downloads_tab_enhanced():
                 search_status = gr.Textbox(
                     label="Search Status",
                     interactive=False,
-                    scale=2
+                    scale=2,
+                    value="Enter a search term to find RVC models"
                 )
                 
                 with gr.Row():
                     download_selected_btn = gr.Button("📥 Download Selected", variant="primary")
             
-            # Tab 2: Pretrained Models
-            with gr.TabItem("🗂️ Pretrained Models"):
-                gr.Markdown("Browse our curated collection of pretrained models by category")
-                
-                with gr.Row():
-                    with gr.Column(scale=3):
-                        # Category selector
-                        categories = list(PRETRAINED_MODELS.keys())
-                        category_dropdown = gr.Dropdown(
-                            label="Category",
-                            choices=categories,
-                            value=categories[0] if categories else None
-                        )
-                        
-                        # Subcategory selector
-                        subcategory_dropdown = gr.Dropdown(
-                            label="Subcategory",
-                            choices=[]
-                        )
-                        
-                        # Model selector
-                        model_dropdown = gr.Dropdown(
-                            label="Available Models",
-                            choices=[]
-                        )
-                        
-                        # Sample rate selector
-                        sample_rate_dropdown = gr.Dropdown(
-                            label="Sample Rate",
-                            choices=["22050 Hz", "24000 Hz", "32000 Hz", "44100 Hz", "48000 Hz"],
-                            value="44100 Hz"
-                        )
-                        
-                        download_pretrained_btn = gr.Button("📥 Download Model", variant="primary")
-                    
-                    with gr.Column(scale=2):
-                        model_info = gr.Textbox(
-                            label="Model Information",
-                            lines=10,
-                            max_lines=15,
-                            interactive=False
-                        )
-            
-            # Tab 3: Direct URL Download
+            # Tab 2: Direct URL Download
             with gr.TabItem("🔗 Direct URL"):
+                gr.Markdown("### Download from Direct URL")
+                gr.Markdown("Enter a direct download URL from HuggingFace, Google Drive, MediaFire, or other platforms")
+                
                 with gr.Row():
                     direct_model_url = gr.Textbox(
                         label="Model URL",
-                        placeholder="Enter direct download URL (HuggingFace, Google Drive, etc.)",
+                        placeholder="Enter direct download URL (HuggingFace, Google Drive, MediaFire, etc.)",
                         scale=7
                     )
                     model_display_name = gr.Textbox(
@@ -434,10 +394,18 @@ def downloads_tab_enhanced():
                     )
                 
                 url_download_btn = gr.Button("📥 Download from URL", variant="primary")
+                
+                gr.Markdown("#### Supported Platforms:")
+                gr.Markdown("- **HuggingFace**: `https://huggingface.co/{username}/{model-name}`")
+                gr.Markdown("- **Google Drive**: `https://drive.google.com/file/d/{file-id}/view`")
+                gr.Markdown("- **MediaFire**: Direct MediaFire links")
+                gr.Markdown("- **PixelDrain**: Direct PixelDrain links")
+                gr.Markdown("- **Mega.nz**: Direct Mega.nz links")
             
-            # Tab 4: Upload Models
+            # Tab 3: Upload Models
             with gr.TabItem("📤 Upload Models"):
-                gr.Markdown("Upload your own model files")
+                gr.Markdown("### Upload Your Own Model Files")
+                gr.Markdown("Upload your trained RVC model files directly to the weights directory")
                 
                 with gr.Row():
                     uploaded_models = gr.File(
@@ -447,6 +415,12 @@ def downloads_tab_enhanced():
                     )
                     
                     upload_models_btn = gr.Button("📤 Upload Files")
+                
+                gr.Markdown("#### Supported File Formats:")
+                gr.Markdown("- **.pth** - PyTorch model files (most common)")
+                gr.Markdown("- **.pt** - PyTorch tensor files")
+                gr.Markdown("- **.ckpt** - PyTorch checkpoint files")
+                gr.Markdown("- **.safetensors** - SafeTensor format")
         
         # Event handlers
         search_btn.click(
@@ -461,44 +435,6 @@ def downloads_tab_enhanced():
                 "44100 Hz"
             ) if selected_model else "No model selected",
             inputs=[search_results],
-            outputs=[status_display]
-        )
-        
-        # Dynamic category/subcategory/model updates
-        category_dropdown.change(
-            fn=lambda category: gr.update(choices=list(PRETRAINED_MODELS.get(category, {}).keys())),
-            inputs=[category_dropdown],
-            outputs=[subcategory_dropdown]
-        )
-        
-        subcategory_dropdown.change(
-            fn=lambda category, subcategory: gr.update(choices=[model[0] for model in PRETRAINED_MODELS.get(category, {}).get(subcategory, [])]),
-            inputs=[category_dropdown, subcategory_dropdown],
-            outputs=[model_dropdown]
-        )
-        
-        model_dropdown.change(
-            fn=lambda category, subcategory, model_name: (
-                next((model[2] for model in PRETRAINED_MODELS.get(category, {}).get(subcategory, []) 
-                     if model[0] == model_name), "No description available"),
-                PRETRAINED_MODELS.get(category, {}).get(subcategory, [])
-            ),
-            inputs=[category_dropdown, subcategory_dropdown, model_dropdown],
-            outputs=[model_info]
-        )
-        
-        download_pretrained_btn.click(
-            fn=lambda category, subcategory, model_name, sample_rate: (
-                PRETRAINED_MODELS.get(category, {}).get(subcategory, []),
-                next(((model[1], model[0]) for model in PRETRAINED_MODELS.get(category, {}).get(subcategory, []) 
-                     if model[0] == model_name), None),
-                sample_rate
-            ),
-            inputs=[category_dropdown, subcategory_dropdown, model_dropdown, sample_rate_dropdown],
-            outputs=[status_display]
-        ).then(
-            fn=lambda status, model_info, sample_rate: download_pretrained_model(model_info, sample_rate),
-            inputs=[status_display],
             outputs=[status_display]
         )
         
