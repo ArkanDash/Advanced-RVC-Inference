@@ -389,24 +389,30 @@ def enhanced_voice_conversion(
     temp_output = tempfile.mktemp(suffix=".wav", dir=SAFE_TEMP_DIR)
     
     try:
-        # Initialize voice converter with enhanced settings
-        converter = VoiceConverter(
-            device="cuda" if torch.cuda.is_available() else "cpu",
-            use_prefetcher=True,  # Enable prefetching for better performance
-        )
+        # Initialize voice converter
+        converter = VoiceConverter()
         
         # Convert with optimized parameters
-        result_path = converter.convert(
-            input_path=input_audio,
+        result_path = converter.convert_audio(
+            audio_input_path=input_audio,
+            audio_output_path=temp_output,
             model_path=model_path,
-            index_path=index_file,
-            output_path=temp_output,
-            pitch=pitch,
-            filter_radius=filter_radius,
-            resample_sr=resample_sr,
-            rms_mix_rate=rms_mix_rate,
+            index_path=index_file or "",
+            embedder_model="contentvec",
+            pitch=int(pitch),
+            f0_file="",  # No F0 file provided
+            f0_method=pitch_extract,
+            index_rate=0.75,  # Default index rate
+            volume_envelope=1,  # Default volume envelope
             protect=protect,
-            segment_length=30.0,  # Process in segments for memory efficiency
+            hop_length=hop_length,
+            split_audio=True,  # Enable chunking for memory efficiency
+            f0_autotune=autotune,
+            filter_radius=filter_radius,
+            embedder_model_custom="",  # No custom embedder
+            export_format="wav",
+            resample_sr=resample_sr,
+            sid=0,  # Default speaker ID
         )
         
         logger.info(f"Voice conversion completed successfully: {result_path}")
