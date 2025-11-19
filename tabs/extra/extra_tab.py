@@ -28,8 +28,7 @@ def convert_model_pytorch_to_onnx():
                 
                 model_name_input = gr.Textbox(
                     label="Model Name",
-                    placeholder="my_model",
-                    info="Name for the converted model"
+                    placeholder="my_model"
                 )
                 
                 conversion_options = gr.CheckboxGroup(
@@ -102,8 +101,7 @@ def extract_f0_separate():
                     minimum=32,
                     maximum=512,
                     value=128,
-                    step=1,
-                    info="Hop length for F0 extraction"
+                    step=1
                 )
                 
                 extract_f0_btn = gr.Button("🎵 Extract F0", variant="primary")
@@ -118,8 +116,7 @@ def extract_f0_separate():
                 )
                 
                 f0_file_output = gr.File(
-                    label="F0 Output File (.txt)",
-                    info="Generated F0 file"
+                    label="F0 Output File (.txt)"
                 )
         
         extract_f0_btn.click(
@@ -167,8 +164,7 @@ def create_srt_subtitles():
                     minimum=0.1,
                     maximum=1.0,
                     value=0.7,
-                    step=0.1,
-                    info="Minimum confidence for transcriptions"
+                    step=0.1
                 )
                 
                 create_srt_btn = gr.Button("📝 Generate SRT", variant="primary")
@@ -183,8 +179,7 @@ def create_srt_subtitles():
                 )
                 
                 srt_file_output = gr.File(
-                    label="Generated SRT File",
-                    info="Output subtitle file"
+                    label="Generated SRT File"
                 )
         
         create_srt_btn.click(
@@ -211,8 +206,7 @@ def model_info_viewer():
         with gr.Row():
             with gr.Column():
                 model_info_output = gr.JSON(
-                    label="Model Information",
-                    info="Detailed model metadata and structure"
+                    label="Model Information"
                 )
         
         view_model_btn.click(
@@ -299,8 +293,7 @@ def audio_fusion_tool():
                 )
                 
                 mixed_audio_output = gr.File(
-                    label="Mixed Audio Output",
-                    info="Combined audio file"
+                    label="Mixed Audio Output"
                 )
         
         mix_btn.click(
