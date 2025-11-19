@@ -362,8 +362,7 @@ def downloads_tab_enhanced():
                     uploaded_models = gr.Files(
                         label="Upload Model Files (.pth, .onnx, .zip, .index)",
                         file_types=[".pth", ".onnx", ".zip", ".index"],
-                        file_count="multiple",
-                        info="Select multiple files to upload"
+                        file_count="multiple"
                     )
                     upload_models_btn = gr.Button("📤 Upload")
                 
