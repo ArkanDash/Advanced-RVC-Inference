@@ -4,7 +4,7 @@
 
 **Revolutionizing Voice Conversion with State-of-the-Art AI Technology**
 
-[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/BF667/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
+[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-green?style=for-the-badge&logo=python)](https://python.org)
 [![Gradio](https://img.shields.io/badge/Gradio-5.23.1-orange?style=for-the-badge&logo=gradio)](https://gradio.app)
@@ -537,9 +537,9 @@ This is an open-source project. Contributions, bug reports, and feature suggesti
 
 **Get started today with Advanced RVC Inference V3.2 Enhanced Edition - The most powerful and user-friendly voice conversion platform available.**
 
-[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/BF667/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
-[![GitHub Stars](https://img.shields.io/github/stars/BF667/Advanced-RVC-Inference?style=social)](https://github.com/BF667/Advanced-RVC-Inference)
-[![GitHub Forks](https://img.shields.io/github/forks/BF667/Advanced-RVC-Inference?style=social)](https://github.com/BF667/Advanced-RVC-Inference)
+[![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
+[![GitHub Stars](https://img.shields.io/github/stars/ArkanDash/Advanced-RVC-Inference?style=social)](https://github.com/ArkanDash/Advanced-RVC-Inference)
+[![GitHub Forks](https://img.shields.io/github/forks/ArkanDash/Advanced-RVC-Inference?style=social)](https://github.com/ArkanDash/Advanced-RVC-Inference)
 
 </div>
 
