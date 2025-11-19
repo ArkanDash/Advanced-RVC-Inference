@@ -1,4 +1,4 @@
-# 🚀 Advanced RVC Inference V3.3 - Enhanced with Vietnamese-RVC Integration
+# Advanced RVC Inference 3.3
 
 <div align="center">
 
