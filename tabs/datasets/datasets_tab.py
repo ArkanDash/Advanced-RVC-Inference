@@ -6,7 +6,10 @@ from pathlib import Path
 
 sys.path.append(os.getcwd())
 
-from tabs.inference.i18n import i18n
+from assets.i18n.i18n import I18nAuto
+
+# Initialize i18n
+i18n = I18nAuto()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
