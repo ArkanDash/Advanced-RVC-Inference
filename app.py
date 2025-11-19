@@ -28,6 +28,7 @@ from tabs.settings.settings import (
 from tabs.credits.credits_tab import credits_tab
 from tabs.downloads.downloads_tab import downloads_tab_enhanced
 from tabs.extra.extra_tab import extra_tools_tab
+from tabs.datasets.datasets_tab import datasets_tab
 from assets.i18n.i18n import I18nAuto
 
 # Enhanced SSL handling (from Vietnamese RVC)
@@ -297,6 +298,17 @@ def create_enhanced_app():
                     gr.HTML(f"""
                     <div style="color: red; padding: 20px; text-align: center;">
                         ❌ Error loading Download Model: {str(e)}
+                    </div>
+                    """)
+                    
+            with gr.Tab("🎵 Datasets Maker"):
+                try:
+                    datasets_tab()
+                except Exception as e:
+                    logger.error(f"Error loading Datasets Maker tab: {e}")
+                    gr.HTML(f"""
+                    <div style="color: red; padding: 20px; text-align: center;">
+                        ❌ Error loading Datasets Maker: {str(e)}
                     </div>
                     """)
                     

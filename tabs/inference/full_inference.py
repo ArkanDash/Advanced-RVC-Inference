@@ -309,22 +309,29 @@ def full_inference_tab():
 
                     embedder_model_back = gr.Radio(
                         label=i18n("Embedder Model"),
-                        info=i18n("Model used for learning speaker embedding."),
+                        info=i18n("Model used for learning speaker embedding. Enhanced from Vietnamese-RVC."),
                         choices=[
-                            # Standard models
-                            "contentvec",
-                            "chinese-hubert-base",
-                            "japanese-hubert-base",
-                            "korean-hubert-base",
-                            "vietnamese-hubert-base",
+                            # Base contentvec models
+                            "contentvec_base",
+                            # Base Hubert models
                             "hubert_base",
-                            # Enhanced models from Vietnamese-RVC
+                            # Language-specific Hubert models from Vietnamese-RVC
+                            "vietnamese_hubert_base",
+                            "japanese_hubert_base", 
+                            "korean_hubert_base",
+                            "chinese_hubert_base",
+                            "portuguese_hubert_base",
+                            # SPIN models (advanced speaker modeling)
                             "spin-v1",
                             "spin-v2",
-                            "whisper-base",
-                            "whisper-small",
-                            "whisper-medium",
-                            "whisper-large",
+                            # Whisper models (multilingual support)
+                            "whisper-tiny", "whisper-tiny.en",
+                            "whisper-base", "whisper-base.en", 
+                            "whisper-small", "whisper-small.en",
+                            "whisper-medium", "whisper-medium.en",
+                            "whisper-large-v1", "whisper-large-v2", 
+                            "whisper-large-v3", "whisper-large-v3-turbo",
+                            # Custom model option
                             "custom"
                         ],
                         value="contentvec",
@@ -460,43 +467,36 @@ def full_inference_tab():
 
                 pitch_extract = gr.Radio(
                     label=i18n("Pitch Extractor"),
-                    info=i18n("Pitch extract Algorithm. Enhanced methods from Vietnamese-RVC."),
+                    info=i18n("Comprehensive F0 extraction algorithms from Vietnamese-RVC."),
                     choices=[
-                        # Core methods
-                        "rmvpe",  # Original methods
-                        "crepe", 
-                        "crepe-tiny", 
-                        "crepe-small",
-                        "crepe-medium", 
-                        "crepe-large", 
-                        "crepe-full",
-                        "fcpe",
-                        # Vietnamese-RVC additional methods
-                        "harvest", 
-                        "pyin", 
-                        "dio",
-                        "pm",
-                        "yin",
-                        "swipe",
-                        "piptrack",
+                        # Core Vietnamese-RVC methods
+                        "pm-ac", "pm-cc", "pm-shs",  # PM variants
+                        "dio",  # Direct implementation
+                        # CREPE variants (standard)
+                        "crepe-tiny", "crepe-small", "crepe-medium", "crepe-large", "crepe-full",
+                        # FCPE variants
+                        "fcpe", "fcpe-legacy", "fcpe-previous",
+                        # RMVPE variants
+                        "rmvpe", "rmvpe-clipping", "rmvpe-medfilt", "rmvpe-clipping-medfilt",
                         # Mangio variants
-                        "mangio-crepe-full",  # Enhanced CREPE variants
-                        "mangio-crepe-large",
-                        "mangio-crepe-medium",
-                        "mangio-crepe-small",
-                        "mangio-crepe-tiny",
-                        # Hybrid methods from Vietnamese-RVC
-                        "hybrid[rmvpe+crepe]",
-                        "hybrid[pm+crepe]",
-                        "hybrid[crepe+harvest]",
-                        "hybrid[rmvpe+harvest]",
-                        "hybrid[fcpe+crepe]",
-                        "hybrid[fcpe+harvest]",
-                        "hybrid[crepe+fcpe]",
-                        "hybrid[pm+rmvpe]",
-                        "hybrid[dio+crepe]",
-                        "hybrid[harvest+crepe]",
-                        "hybrid[all]",
+                        "mangio-crepe-tiny", "mangio-crepe-small", "mangio-crepe-medium", 
+                        "mangio-crepe-large", "mangio-crepe-full",
+                        # Traditional pitch methods
+                        "harvest", "yin", "pyin", "swipe", "piptrack", "penn", "mangio-penn",
+                        # DJCM variants (advanced processing)
+                        "djcm", "djcm-clipping", "djcm-medfilt", "djcm-clipping-medfilt",
+                        # Modern algorithms
+                        "swift", "pesto",
+                        # Hybrid combinations (all possible)
+                        "hybrid[pm+dio]", "hybrid[pm+crepe-tiny]", "hybrid[pm+crepe]", 
+                        "hybrid[pm+fcpe]", "hybrid[pm+rmvpe]", "hybrid[pm+harvest]", "hybrid[pm+yin]",
+                        "hybrid[dio+crepe-tiny]", "hybrid[dio+crepe]", "hybrid[dio+fcpe]", 
+                        "hybrid[dio+rmvpe]", "hybrid[dio+harvest]", "hybrid[dio+yin]",
+                        "hybrid[crepe-tiny+crepe]", "hybrid[crepe-tiny+fcpe]", "hybrid[crepe-tiny+rmvpe]", 
+                        "hybrid[crepe-tiny+harvest]",
+                        "hybrid[crepe+fcpe]", "hybrid[crepe+rmvpe]", "hybrid[crepe+harvest]", "hybrid[crepe+yin]",
+                        "hybrid[fcpe+rmvpe]", "hybrid[fcpe+harvest]", "hybrid[fcpe+yin]",
+                        "hybrid[rmvpe+harvest]", "hybrid[rmvpe+yin]", "hybrid[harvest+yin]",
                         # Advanced methods
                         "penn",
                         "djcm",
@@ -519,14 +519,32 @@ def full_inference_tab():
 
                 embedder_model = gr.Radio(
                     label=i18n("Embedder Model"),
-                    info=i18n("Model used for learning speaker embedding."),
+                    info=i18n("Model used for learning speaker embedding. Enhanced from Vietnamese-RVC."),
                     choices=[
-                        "contentvec",
-                        "chinese-hubert-base",
-                        "japanese-hubert-base",
-                        "korean-hubert-base",
+                        # Base contentvec models
+                        "contentvec_base",
+                        # Base Hubert models
+                        "hubert_base",
+                        # Language-specific Hubert models from Vietnamese-RVC
+                        "vietnamese_hubert_base",
+                        "japanese_hubert_base", 
+                        "korean_hubert_base",
+                        "chinese_hubert_base",
+                        "portuguese_hubert_base",
+                        # SPIN models (advanced speaker modeling)
+                        "spin-v1",
+                        "spin-v2",
+                        # Whisper models (multilingual support)
+                        "whisper-tiny", "whisper-tiny.en",
+                        "whisper-base", "whisper-base.en", 
+                        "whisper-small", "whisper-small.en",
+                        "whisper-medium", "whisper-medium.en",
+                        "whisper-large-v1", "whisper-large-v2", 
+                        "whisper-large-v3", "whisper-large-v3-turbo",
+                        # Custom model option
+                        "custom",
                     ],
-                    value="contentvec",
+                    value="contentvec_base",
                     interactive=True,
                 )
 

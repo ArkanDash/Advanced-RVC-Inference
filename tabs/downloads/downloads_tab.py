@@ -384,6 +384,181 @@ def downloads_tab_enhanced():
                         )
                     pretrained_download_btn = gr.Button("⬇️ Download Pretrained", variant="secondary")
         
+        # Dataset Search Section (Vietnamese-RVC Inspired)
+        with gr.Accordion("🎵 Dataset Search & Resources", open=False):
+            
+            gr.Markdown("""
+            ### Dataset Search and Audio Resources
+            Find datasets and audio resources for training Vietnamese-RVC models.
+            """)
+            
+            with gr.Row():
+                with gr.Column():
+                    
+                    dataset_search_term = gr.Textbox(
+                        label="Dataset Search Term",
+                        placeholder="e.g., Vietnamese singing, karaoke, clean vocals",
+                        info="Search for datasets and audio resources",
+                        scale=3
+                    )
+                    
+                    search_source = gr.Dropdown(
+                        label="Search Source",
+                        choices=[
+                            "GitHub",
+                            "Kaggle", 
+                            "HuggingFace",
+                            "Local Directory",
+                            "YouTube Audio"
+                        ],
+                        value="GitHub",
+                        scale=1
+                    )
+                    
+                with gr.Column():
+                    
+                    dataset_category = gr.Dropdown(
+                        label="Dataset Category",
+                        choices=[
+                            "Singing Voice",
+                            "Speech",
+                            "Clean Vocals", 
+                            "Karaoke",
+                            "Multilingual",
+                            "Vietnamese",
+                            "Noisy Audio",
+                            "Musical Instruments"
+                        ],
+                        value="Singing Voice",
+                        scale=2
+                    )
+                    
+                    search_datasets_btn = gr.Button("🔍 Search Datasets", variant="primary")
+            
+            with gr.Row():
+                with gr.Column():
+                    
+                    dataset_results = gr.Dropdown(
+                        label="Available Datasets",
+                        choices=[],
+                        info="Select a dataset from search results",
+                        interactive=True,
+                        scale=4
+                    )
+                    
+                    dataset_info = gr.Textbox(
+                        label="Dataset Information",
+                        lines=6,
+                        max_lines=15,
+                        info="Details about the selected dataset",
+                        interactive=False
+                    )
+                
+                with gr.Column():
+                    
+                    download_dataset_btn = gr.Button("📥 Download Dataset", variant="secondary")
+                    open_dataset_btn = gr.Button("🌐 Open Source", variant="secondary")
+                    preview_audio_btn = gr.Button("▶️ Preview Audio", variant="secondary")
+            
+            # Audio Preview Section
+            audio_preview = gr.Audio(
+                label="Audio Preview",
+                visible=False,
+                interactive=False
+            )
+            
+            # Add dataset search function
+            def search_datasets(search_term, source, category):
+                """Search for datasets based on criteria."""
+                
+                if not search_term:
+                    return [], "Please enter a search term", gr.update(visible=False)
+                
+                results = []
+                status_msg = f"Searching {source} for datasets in category '{category}' with term '{search_term}'...\n"
+                
+                # This is a simplified implementation
+                # In practice, you would integrate with actual APIs
+                
+                example_datasets = {
+                    "GitHub": [
+                        {"name": f"Vietnamese Singing Dataset - {search_term}", "url": "https://github.com/example/vn-singing", "description": "High-quality Vietnamese singing dataset"},
+                        {name: f"Clean Vocal Dataset - {search_term}", "url": "https://github.com/example/clean-vocals", "description": "Professional clean vocal recordings"}
+                    ],
+                    "Kaggle": [
+                        {"name": f"Kaggle Audio Dataset - {search_term}", "url": "https://kaggle.com/datasets/example/audio", "description": "Kaggle audio dataset collection"}
+                    ],
+                    "HuggingFace": [
+                        {"name": f"HuggingFace Audio - {search_term}", "url": "https://huggingface.co/datasets/example/audio", "description": "HuggingFace audio dataset"}
+                    ]
+                }
+                
+                if source in example_datasets:
+                    results = example_datasets[source]
+                    status_msg += f"Found {len(results)} datasets:\n"
+                    for dataset in results:
+                        status_msg += f"• {dataset['name']}\n"
+                        status_msg += f"  Description: {dataset['description']}\n"
+                        status_msg += f"  URL: {dataset['url']}\n\n"
+                else:
+                    status_msg += f"Source '{source}' search not implemented yet."
+                
+                choices = [f"{d['name']} | {d['description']}" for d in results] if results else []
+                return choices, status_msg, gr.update(visible=False)
+            
+            def get_dataset_info(selected_dataset):
+                """Get detailed information about selected dataset."""
+                
+                if not selected_dataset:
+                    return "No dataset selected", gr.update(visible=False)
+                
+                # Parse selection
+                name = selected_dataset.split(" | ")[0] if " | " in selected_dataset else selected_dataset
+                
+                info_msg = f"""
+                **Dataset: {name}**
+                
+                **Description:** High-quality audio dataset suitable for Vietnamese-RVC training
+                
+                **Format:** WAV/MP3
+                **Sample Rate:** 44.1kHz/48kHz
+                **Channels:** Mono/Stereo
+                **Quality:** Professional/Semi-professional
+                
+                **Contents:**
+                • Clean vocal recordings
+                • Various singing styles
+                • Different languages including Vietnamese
+                • Metadata included
+                
+                **Usage Instructions:**
+                1. Download the dataset
+                2. Extract to a clean directory
+                3. Use the Datasets Maker tab to process
+                4. Apply Vietnamese-RVC preprocessing
+                
+                **Training Notes:**
+                • Minimum 10 minutes of clean audio recommended
+                • Remove background noise and reverb
+                • Ensure consistent recording quality
+                • Label speaker characteristics if available
+                """
+                
+                return info_msg, gr.update(visible=False)
+            
+            # Wire up dataset search events
+            search_datasets_btn.click(
+                fn=search_datasets,
+                inputs=[dataset_search_term, search_source, dataset_category],
+                outputs=[dataset_results, download_status, audio_preview]
+            )
+            
+            dataset_results.change(
+                fn=get_dataset_info,
+                inputs=[dataset_results],
+                outputs=[dataset_info, audio_preview]
+            )
+        
         # Download status
         download_status = gr.Textbox(
             label="Download Status & Progress",
