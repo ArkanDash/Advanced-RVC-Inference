@@ -26,6 +26,8 @@ from tabs.settings.settings import (
     misc_tab, restart_tab
 )
 from tabs.credits.credits_tab import credits_tab
+from tabs.downloads.downloads_tab import downloads_tab_enhanced
+from tabs.extra.extra_tab import extra_tools_tab
 from assets.i18n.i18n import I18nAuto
 
 # Enhanced SSL handling (from Vietnamese RVC)
@@ -276,6 +278,17 @@ def create_enhanced_app():
                     </div>
                     """)
                     
+            with gr.Tab("🔍 Model Search & Download"):
+                try:
+                    downloads_tab_enhanced()
+                except Exception as e:
+                    logger.error(f"Error loading Model Search & Download tab: {e}")
+                    gr.HTML(f"""
+                    <div style="color: red; padding: 20px; text-align: center;">
+                        ❌ Error loading Model Search & Download: {str(e)}
+                    </div>
+                    """)
+
             with gr.Tab("📥 Download Model"):
                 try:
                     download_model_tab()
@@ -295,6 +308,17 @@ def create_enhanced_app():
                     gr.HTML(f"""
                     <div style="color: red; padding: 20px; text-align: center;">
                         ❌ Error loading TTS: {str(e)}
+                    </div>
+                    """)
+                    
+            with gr.Tab("🛠️ Extra Tools"):
+                try:
+                    extra_tools_tab()
+                except Exception as e:
+                    logger.error(f"Error loading Extra Tools tab: {e}")
+                    gr.HTML(f"""
+                    <div style="color: red; padding: 20px; text-align: center;">
+                        ❌ Error loading Extra Tools: {str(e)}
                     </div>
                     """)
                     

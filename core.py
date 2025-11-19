@@ -340,7 +340,21 @@ def enhanced_voice_conversion(
     filter_radius: int = 3,
     resample_sr: int = 0,
     rms_mix_rate: float = 0.25,
-    protect: float = 0.33
+    protect: float = 0.33,
+    # Vietnamese-RVC Enhanced Features
+    pitch_extract: str = "rmvpe",
+    hop_length: int = 128,
+    embedder_model: str = "contentvec",
+    formant_shifting: float = 0.0,
+    formant_qfrency: float = 1.0,
+    formant_timbre: float = 1.0,
+    proposal_pitch: float = 0.0,
+    proposal_pitch_threshold: float = 0.0,
+    audio_processing: bool = True,
+    alpha: float = 0.5,
+    autotune: bool = False,
+    use_tta: bool = False,
+    batch_size: int = 1
 ) -> str:
     """
     Enhanced voice conversion with performance optimizations and security.

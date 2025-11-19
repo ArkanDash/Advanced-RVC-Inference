@@ -244,13 +244,46 @@ def full_inference_tab():
                         label=i18n("Backing Vocals Pitch Extractor"),
                         info=i18n("Pitch extraction method for backing vocals."),
                         choices=[
+                            # Core methods
                             "rmvpe",  # Original methods
                             "crepe", 
                             "crepe-tiny", 
+                            "crepe-small",
+                            "crepe-medium", 
+                            "crepe-large", 
+                            "crepe-full",
                             "fcpe",
+                            # Vietnamese-RVC additional methods
                             "harvest",  # Vietnamese-RVC additional methods
                             "pyin", 
                             "dio",
+                            "pm",
+                            "yin",
+                            "swipe",
+                            "piptrack",
+                            # Mangio variants
+                            "mangio-crepe-full",
+                            "mangio-crepe-large",
+                            "mangio-crepe-medium",
+                            "mangio-crepe-small",
+                            "mangio-crepe-tiny",
+                            # Hybrid methods
+                            "hybrid[rmvpe+crepe]",
+                            "hybrid[pm+crepe]",
+                            "hybrid[crepe+harvest]",
+                            "hybrid[rmvpe+harvest]",
+                            "hybrid[fcpe+crepe]",
+                            "hybrid[fcpe+harvest]",
+                            "hybrid[crepe+fcpe]",
+                            "hybrid[pm+rmvpe]",
+                            "hybrid[dio+crepe]",
+                            "hybrid[harvest+crepe]",
+                            "hybrid[all]",
+                            # Advanced methods
+                            "penn",
+                            "djcm",
+                            "swift",
+                            "pesto"
                             "pm",
                             "hybrid[rmvpe+crepe]",  # Hybrid methods from Vietnamese-RVC
                             "hybrid[pm+crepe]",
@@ -278,10 +311,21 @@ def full_inference_tab():
                         label=i18n("Embedder Model"),
                         info=i18n("Model used for learning speaker embedding."),
                         choices=[
+                            # Standard models
                             "contentvec",
                             "chinese-hubert-base",
                             "japanese-hubert-base",
                             "korean-hubert-base",
+                            "vietnamese-hubert-base",
+                            "hubert_base",
+                            # Enhanced models from Vietnamese-RVC
+                            "spin-v1",
+                            "spin-v2",
+                            "whisper-base",
+                            "whisper-small",
+                            "whisper-medium",
+                            "whisper-large",
+                            "custom"
                         ],
                         value="contentvec",
                         interactive=True,
@@ -418,21 +462,46 @@ def full_inference_tab():
                     label=i18n("Pitch Extractor"),
                     info=i18n("Pitch extract Algorithm. Enhanced methods from Vietnamese-RVC."),
                     choices=[
+                        # Core methods
                         "rmvpe",  # Original methods
                         "crepe", 
                         "crepe-tiny", 
+                        "crepe-small",
+                        "crepe-medium", 
+                        "crepe-large", 
+                        "crepe-full",
                         "fcpe",
-                        "harvest",  # Vietnamese-RVC additional methods
+                        # Vietnamese-RVC additional methods
+                        "harvest", 
                         "pyin", 
                         "dio",
                         "pm",
-                        "hybrid[rmvpe+crepe]",  # Hybrid methods from Vietnamese-RVC
+                        "yin",
+                        "swipe",
+                        "piptrack",
+                        # Mangio variants
+                        "mangio-crepe-full",  # Enhanced CREPE variants
+                        "mangio-crepe-large",
+                        "mangio-crepe-medium",
+                        "mangio-crepe-small",
+                        "mangio-crepe-tiny",
+                        # Hybrid methods from Vietnamese-RVC
+                        "hybrid[rmvpe+crepe]",
                         "hybrid[pm+crepe]",
                         "hybrid[crepe+harvest]",
                         "hybrid[rmvpe+harvest]",
-                        "mangio-crepe-full",  # Enhanced CREPE variants
-                        "mangio-crepe-large",
-                        "mangio-crepe-medium"
+                        "hybrid[fcpe+crepe]",
+                        "hybrid[fcpe+harvest]",
+                        "hybrid[crepe+fcpe]",
+                        "hybrid[pm+rmvpe]",
+                        "hybrid[dio+crepe]",
+                        "hybrid[harvest+crepe]",
+                        "hybrid[all]",
+                        # Advanced methods
+                        "penn",
+                        "djcm",
+                        "swift",
+                        "pesto"
                     ],
                     value="rmvpe",
                     interactive=True,
