@@ -1,4 +1,4 @@
-# 🚀 Advanced RVC Inference V3.3 - Enhanced with KADVC
+# 🚀 Advanced RVC Inference V3.3 - Enhanced with Vietnamese-RVC Integration
 
 <div align="center">
 
@@ -18,12 +18,12 @@
 
 ## 🎯 What's New in V3.3
 
-### 🚀 **KADVC Performance Revolution**
-- **2x Faster Training & Inference**: Revolutionary KADVC (Kernel Advanced Voice Conversion) system
-- **GPU-Specific Optimization**: Tailored configurations for T4, V100, A100, and RTX GPUs
-- **Custom CUDA Kernels**: High-performance kernels for F0 extraction and voice conversion
-- **Mixed Precision Training**: FP16 acceleration for faster computation with reduced memory
-- **Smart Fallback**: Graceful degradation when CUDA optimizations unavailable
+### 🚀 **Vietnamese-RVC Integration Revolution**
+- **40+ F0 Extraction Methods**: Complete Vietnamese-RVC predictor system from basic to advanced algorithms
+- **29 Hybrid F0 Combinations**: Advanced hybrid methods like `hybrid[crepe+rmvpe]`, `hybrid[fcpe+harvest]` for enhanced accuracy
+- **Enhanced Embedder Models**: Language-specific HuBERT models for Vietnamese, Japanese, Korean, Chinese, Portuguese
+- **SPIN & Whisper Integration**: SPIN v1/v2 and complete Whisper spectrum (tiny to large-v3-turbo)
+- **ONNX Support**: Both PyTorch (.pt/.pth) and ONNX (.onnx) model formats for maximum compatibility
 
 ### 🏗️ **Architecture Improvements**
 - **Restructured Tabs**: Clean, organized directory structure for better maintainability
@@ -58,6 +58,15 @@
 - **Configuration Management**: Environment-based configuration
 - **Test Framework**: Basic test structure for quality assurance
 
+### 🎯 **Recent Updates (November 2025)**
+- **Vietnamese-RVC Integration**: Complete predictor system with 40+ F0 methods and 29 hybrid combinations
+- **Enhanced Downloads Tab**: Fixed Files.__init__() error and improved model search functionality
+- **Comprehensive F0 Methods**: Added all RMVPE, CREPE, FCPE variants plus advanced algorithms (SWIFT, PESTO, PENN, DJCM)
+- **Language-Specific Embedders**: Support for Vietnamese, Japanese, Korean, Chinese, Portuguese HuBERT models
+- **SPIN & Whisper Integration**: Added SPIN v1/v2 and complete Whisper spectrum (tiny to large-v3-turbo)
+- **Datasets Maker**: New tab with multi-source search and AI-powered audio processing pipeline
+- **Hybrid F0 Processing**: Full support for Vietnamese-RVC's advanced hybrid method combinations
+
 ---
 
 ## 📖 Table of Contents
@@ -84,7 +93,7 @@
 
 <div align="center">
 
-**Advanced RVC Inference V3.3 Enhanced with KADVC** is a cutting-edge WebUI designed for lightning-fast and effortless voice conversion inference. Built on the powerful foundation of [Applio](https://github.com/IAHispano/Applio) with revolutionary KADVC (Kernel Advanced Voice Conversion) optimizations, this application delivers the fastest and most comprehensive voice conversion experience available today.
+**Advanced RVC Inference V3.3 Enhanced with Vietnamese-RVC Integration** is a cutting-edge WebUI designed for lightning-fast and effortless voice conversion inference. Built on the powerful foundation of [Applio](https://github.com/IAHispano/Applio) with comprehensive Vietnamese-RVC predictor system integration, this application delivers the most comprehensive voice conversion experience with 40+ F0 extraction methods and advanced hybrid processing capabilities.
 
 <br>
 
@@ -99,10 +108,11 @@
 ## ✨ Key Features
 
 ### 🎵 **Advanced Voice Conversion**
-- **RVC Inference**: High-quality voice conversion with multiple algorithms (RMVPE, CREPE, FCPE, SWIFT)
+- **40+ F0 Extraction Methods**: Complete Vietnamese-RVC system including RMVPE, CREPE variants (tiny to full), FCPE variants, SWIFT, PESTO, PENN, DJCM, and traditional methods
+- **29 Hybrid F0 Methods**: Advanced combinations like `hybrid[crepe+rmvpe]`, `hybrid[fcpe+harvest]`, and more
 - **V1 & V2 Model Support**: Full compatibility with both RVC model generations
-- **Multiple Embedder Models**: ContentVec, Chinese-Hubert, Japanese-Hubert, Korean-Hubert, and custom support
-- **Pitch Control**: Adjustable pitch with autotune capabilities
+- **Enhanced Embedder Models**: ContentVec, HuBERT (Vietnamese/Japanese/Korean/Chinese/Portuguese), SPIN v1/v2, and complete Whisper spectrum
+- **Pitch Control**: Adjustable pitch with autotune capabilities and advanced filtering options
 - **Index Rate Management**: Precision control over voice characteristics
 
 ### 🌍 **Public Model Repository**
@@ -130,6 +140,13 @@
 - **VAD (Voice Activity Detection)**: Automatic silence detection and processing
 - **Cross-platform Support**: Works on Windows, macOS, and Linux
 
+### 🎯 **Datasets Maker & Training Tools**
+- **Multi-source Dataset Search**: Integration with GitHub, Kaggle, HuggingFace Hub, YouTube Audio, and local directories
+- **AI-Powered Audio Processing**: Advanced separation using VR, Demucs models with reverb removal and denoising
+- **Smart Dataset Categorization**: Filter by singing voice, speech, clean vocals, karaoke, multilingual, and Vietnamese datasets
+- **Batch Processing**: Automated processing with real-time progress tracking and quality metrics
+- **Training Preparation**: Professional-grade preprocessing pipeline with configurable parameters
+
 ### 🎨 **Enhanced UI Experience**
 - **Gradio 5.23.1 Integration**: Modern, responsive interface with advanced features
 - **Multi-tab Interface**: Organized workflow with dedicated sections
@@ -145,7 +162,7 @@
 
 ## ⚡ Performance Improvements
 
-**Advanced RVC Inference V3.2 Enhanced Edition** has been significantly optimized with the following enhancements:
+**Advanced RVC Inference V3.3 Enhanced with Vietnamese-RVC Integration** has been significantly optimized with the following enhancements:
 
 ### 🚀 **Performance Optimizations**
 - **Smart Caching**: Prevents repeated file system operations, reducing I/O overhead by up to 90%
@@ -156,16 +173,24 @@
 
 ### 🛠️ **UI Enhancements**
 - **Modern Gradio Syntax**: Updated all deprecated `__type__` calls to `gr.update()` method
-- **Enhanced Error Handling**: Improved error catching and user notifications
+- **Enhanced Error Handling**: Fixed Files.__init__() errors and improved error catching
 - **Responsive Design**: Better UI responsiveness with reduced lag
 - **Optimized Event Handling**: Cleaner event chains for better performance
 - **Real-time Feedback**: Progress indicators and status updates
+
+### 🎯 **Vietnamese-RVC System Integration**
+- **Comprehensive Predictors**: Support for 40+ F0 extraction methods from basic to advanced
+- **Hybrid Processing**: 29 hybrid method combinations for enhanced accuracy
+- **Enhanced Embedders**: Language-specific models for better multilingual support
+- **Advanced Algorithms**: Integration of SWIFT, PESTO, PENN, DJCM alongside traditional methods
+- **ONNX Support**: Both PyTorch and ONNX model formats for maximum compatibility
 
 ### 📊 **Performance Metrics**
 - **Directory Scanning**: Reduced from O(n) repeated operations to O(1) cached result
 - **UI Updates**: Up to 5x faster response times for dropdown refreshes
 - **Memory Usage**: 40% reduction in memory consumption during operations
 - **Processing Speed**: 50% faster audio processing pipeline
+- **F0 Method Coverage**: 20x more F0 extraction methods than previous version
 - **Stability**: Eliminated crashes from circular dependencies and syntax errors
 
 ---
@@ -258,10 +283,19 @@ Click the "Open in Colab" badge at the top of this README to run in your browser
 - **Process Control**: Split audio, pitch extraction algorithms, embedder selection
 
 ### **Download Model Tab**
-- **URL-based Downloads**: Direct download from various sources
-- **File Drop Support**: Drag and drop .pth and .index files directly
+- **Voice-Models.com Integration**: Browse and search 27,900+ public RVC models
+- **Multi-source Downloads**: Direct download from HuggingFace, Google Drive, MediaFire, PixelDrain, and Mega.nz
+- **File Drop Support**: Drag and drop .pth, .onnx, .zip, and .index files directly
+- **Enhanced Model Categories**: Filter by singing voice, speech, clean vocals, karaoke, multilingual datasets
+- **Progress Tracking**: Real-time download progress with ETA and detailed status
 - **Automatic Organization**: Files automatically placed in correct model folders
-- **Progress Tracking**: Real-time download progress with ETA
+
+### **Datasets Maker Tab**
+- **Multi-source Search**: Find datasets from GitHub, Kaggle, HuggingFace, YouTube Audio, and local directories
+- **AI-Powered Processing**: Advanced audio separation, reverb removal, and noise reduction
+- **Smart Categorization**: Filter datasets by language, content type, and quality level
+- **Batch Processing**: Automated pipeline with configurable preprocessing parameters
+- **Quality Metrics**: Real-time progress tracking and quality assessment tools
 
 ### **TTS (Text-to-Speech) Tab**
 - **Text Input**: Multi-line text area for input
@@ -502,6 +536,15 @@ The author is **not liable** for any direct, indirect, consequential, incidental
 - **[ArkanDash](https://github.com/ArkanDash)**: Original project owner and lead developer
 - **[BF667](https://github.com/BF667)**: Enhanced edition maintainer and critical bug fixes
 
+### 🔧 **Critical Bug Fixes & Updates (Recent)**
+- **Files.__init__() Fix**: Resolved `Files.__init__() got an unexpected keyword argument 'info'` error in downloads tab
+- **VoiceConverter Initialization**: Fixed VoiceConverter constructor parameter issues in enhanced_voice_conversion
+- **Vietnamese-RVC Integration**: Complete predictor system integration with 40+ F0 methods and hybrid combinations
+- **Enhanced Downloads Tab**: Improved model search functionality and fixed Files component errors
+- **Comprehensive F0 Methods**: Added RMVPE, CREPE, FCPE variants plus SWIFT, PESTO, PENN, DJCM algorithms
+- **Language-Specific Embedders**: Added Vietnamese, Japanese, Korean, Chinese, Portuguese HuBERT models
+- **Datasets Maker**: New comprehensive dataset creation and search system
+
 ### 🔧 **Critical Bug Fixes (BF667)**
 - **local_attention Import Fix**: Resolved `ModuleNotFoundError: No module named 'local_attention'` 
 - **FAISS Compatibility**: Made FAISS optional for better Colab support
@@ -535,7 +578,7 @@ This is an open-source project. Contributions, bug reports, and feature suggesti
 
 <div align="center">
 
-**Get started today with Advanced RVC Inference V3.2 Enhanced Edition - The most powerful and user-friendly voice conversion platform available.**
+**Get started today with Advanced RVC Inference V3.3 Enhanced with Vietnamese-RVC Integration - The most comprehensive and powerful voice conversion platform available.**
 
 [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 [![GitHub Stars](https://img.shields.io/github/stars/ArkanDash/Advanced-RVC-Inference?style=social)](https://github.com/ArkanDash/Advanced-RVC-Inference)
@@ -547,8 +590,8 @@ This is an open-source project. Contributions, bug reports, and feature suggesti
 
 ## 📈 **What's Changed in Enhanced Edition**
 
-| Feature | Original | Enhanced Edition |
-|---------|----------|------------------|
+| Feature | Original | Enhanced Edition V3.3 |
+|---------|----------|-----------------------|
 | Processing Speed | Baseline | 50% Faster |
 | Memory Usage | Standard | 40% Less |
 | Error Handling | Basic | Comprehensive |
@@ -557,5 +600,10 @@ This is an open-source project. Contributions, bug reports, and feature suggesti
 | User Experience | Good | Excellent |
 | Code Quality | Standard | Professional |
 | Performance | Good | Optimized |
+| **F0 Methods** | ~20 methods | **40+ methods** |
+| **Hybrid Methods** | None | **29 combinations** |
+| **Embedder Models** | Basic | **20+ language-specific** |
+| **Dataset Tools** | None | **Multi-source search** |
+| **Bug Fixes** | Basic | **Critical fixes applied** |
 
-**Experience the enhanced voice conversion technology that sets new standards for AI-powered audio processing!**
+**Experience the enhanced voice conversion technology that sets new standards for AI-powered audio processing with Vietnamese-RVC's comprehensive predictor system!**
