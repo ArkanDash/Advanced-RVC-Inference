@@ -279,7 +279,7 @@ def create_enhanced_app():
                     </div>
                     """)
                     
-            with gr.Tab("🔍 Model Search & Download"):
+            with gr.Tab("📥 Enhanced Downloads"):
                 try:
                     downloads_tab_enhanced()
                 except Exception as e:
