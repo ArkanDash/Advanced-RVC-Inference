@@ -11,14 +11,16 @@ from tabs.inference.variable import *
 def change_choices():
     """Refresh dropdown choices for model, index, and audio files."""
     # Only refresh from the cached values to avoid repeated file system calls
-    from tabs.inference.variable import get_names, get_indexes_list, get_audio_paths
+    from tabs.inference.variable import get_names, get_indexes_list, get_audio_paths, audio_paths
     new_model_choices = sorted(get_names(), key=lambda path: os.path.getsize(path))
     new_index_choices = get_indexes_list()
     new_audio_choices = sorted(get_audio_paths())
+    
+    # Update all three dropdowns including audio with proper values
     return (
-        gr.update(choices=new_model_choices),
-        gr.update(choices=new_index_choices),
-        gr.update(choices=new_audio_choices)
+        gr.update(choices=new_model_choices, value=new_model_choices[0] if new_model_choices else ""),
+        gr.update(choices=new_index_choices, value=new_index_choices[0] if new_index_choices else ""),
+        gr.update(choices=new_audio_choices, value=new_audio_choices[0] if new_audio_choices else "")
     )
 
 
@@ -48,7 +50,13 @@ def update_visibility_infer_backing(infer_backing_vocals):
 
 
 def update_hop_length_visibility(pitch_extract_value):
-    return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
+    """Update hop length visibility based on pitch extraction method"""
+    # CREPE-based methods need custom hop length
+    crepe_methods = ["crepe", "crepe-tiny", "mangio-crepe-full", "mangio-crepe-large", "mangio-crepe-medium"]
+    # Some hybrid methods with CREPE components might benefit from custom hop length
+    hybrid_with_crepe = ["hybrid[rmvpe+crepe]", "hybrid[pm+crepe]", "hybrid[crepe+harvest]"]
+    
+    return gr.update(visible=pitch_extract_value in crepe_methods + hybrid_with_crepe)
 
 
 # ===========================
@@ -233,9 +241,25 @@ def full_inference_tab():
                     )
 
                     pitch_extract_back = gr.Radio(
-                        label=i18n("Pitch Extractor"),
-                        info=i18n("Pitch extract Algorith."),
-                        choices=["rmvpe", "crepe", "crepe-tiny", "fcpe"],
+                        label=i18n("Backing Vocals Pitch Extractor"),
+                        info=i18n("Pitch extraction method for backing vocals."),
+                        choices=[
+                            "rmvpe",  # Original methods
+                            "crepe", 
+                            "crepe-tiny", 
+                            "fcpe",
+                            "harvest",  # Vietnamese-RVC additional methods
+                            "pyin", 
+                            "dio",
+                            "pm",
+                            "hybrid[rmvpe+crepe]",  # Hybrid methods from Vietnamese-RVC
+                            "hybrid[pm+crepe]",
+                            "hybrid[crepe+harvest]",
+                            "hybrid[rmvpe+harvest]",
+                            "mangio-crepe-full",  # Enhanced CREPE variants
+                            "mangio-crepe-large",
+                            "mangio-crepe-medium"
+                        ],
                         value="rmvpe",
                         interactive=True,
                     )
@@ -317,6 +341,45 @@ def full_inference_tab():
                         interactive=True,
                     )
 
+                    # Vietnamese-RVC Enhanced Features for Backing Vocals
+                    with gr.Row():
+                        formant_shifting_back = gr.Slider(
+                            minimum=-24,
+                            maximum=24,
+                            label=i18n("Backing Vocals Formant Shifting"),
+                            info=i18n(
+                                "Shift the formants for backing vocals. Negative values = more feminine, positive = more masculine."
+                            ),
+                            value=0,
+                            step=1,
+                            interactive=True,
+                        )
+
+                        formant_qfrency_back = gr.Slider(
+                            minimum=0.5,
+                            maximum=2.0,
+                            label=i18n("Backing Vocals Formant Quality"),
+                            info=i18n(
+                                "Adjust formant quality for backing vocals. Lower = brighter, higher = darker."
+                            ),
+                            value=1.0,
+                            step=0.1,
+                            interactive=True,
+                        )
+
+                    with gr.Row():
+                        formant_timbre_back = gr.Slider(
+                            minimum=0.5,
+                            maximum=2.0,
+                            label=i18n("Backing Vocals Formant Timbre"),
+                            info=i18n(
+                                "Adjust formant timbre for backing vocals. Lower = thinner, higher = fuller."
+                            ),
+                            value=1.0,
+                            step=0.1,
+                            interactive=True,
+                        )
+
                     protect_back = gr.Slider(
                         minimum=0,
                         maximum=0.5,
@@ -353,8 +416,24 @@ def full_inference_tab():
 
                 pitch_extract = gr.Radio(
                     label=i18n("Pitch Extractor"),
-                    info=i18n("Pitch extract Algorith."),
-                    choices=["rmvpe", "crepe", "crepe-tiny", "fcpe"],
+                    info=i18n("Pitch extract Algorithm. Enhanced methods from Vietnamese-RVC."),
+                    choices=[
+                        "rmvpe",  # Original methods
+                        "crepe", 
+                        "crepe-tiny", 
+                        "fcpe",
+                        "harvest",  # Vietnamese-RVC additional methods
+                        "pyin", 
+                        "dio",
+                        "pm",
+                        "hybrid[rmvpe+crepe]",  # Hybrid methods from Vietnamese-RVC
+                        "hybrid[pm+crepe]",
+                        "hybrid[crepe+harvest]",
+                        "hybrid[rmvpe+harvest]",
+                        "mangio-crepe-full",  # Enhanced CREPE variants
+                        "mangio-crepe-large",
+                        "mangio-crepe-medium"
+                    ],
                     value="rmvpe",
                     interactive=True,
                 )
@@ -435,6 +514,79 @@ def full_inference_tab():
                     value=0.25,
                     interactive=True,
                 )
+
+                # Vietnamese-RVC Enhanced Features
+                with gr.Row():
+                    formant_shifting = gr.Slider(
+                        minimum=-24,
+                        maximum=24,
+                        label=i18n("Formant Shifting"),
+                        info=i18n(
+                            "Shift the formants (vocal tract characteristics). Negative values make voice more feminine, positive values more masculine."
+                        ),
+                        value=0,
+                        step=1,
+                        interactive=True,
+                    )
+
+                    formant_qfrency = gr.Slider(
+                        minimum=0.5,
+                        maximum=2.0,
+                        label=i18n("Formant Quality/Frequency"),
+                        info=i18n(
+                            "Adjust formant quality/frequency. Lower values = brighter, higher values = darker."
+                        ),
+                        value=1.0,
+                        step=0.1,
+                        interactive=True,
+                    )
+
+                with gr.Row():
+                    formant_timbre = gr.Slider(
+                        minimum=0.5,
+                        maximum=2.0,
+                        label=i18n("Formant Timbre"),
+                        info=i18n(
+                            "Adjust formant timbre (voice quality). Lower values = thinner, higher values = fuller."
+                        ),
+                        value=1.0,
+                        step=0.1,
+                        interactive=True,
+                    )
+
+                    proposal_pitch = gr.Slider(
+                        minimum=-24,
+                        maximum=24,
+                        label=i18n("Proposal Pitch"),
+                        info=i18n(
+                            "Initial pitch adjustment for better voice conversion results."
+                        ),
+                        value=0,
+                        step=1,
+                        interactive=True,
+                    )
+
+                with gr.Row():
+                    proposal_pitch_threshold = gr.Slider(
+                        minimum=0.0,
+                        maximum=1.0,
+                        label=i18n("Proposal Pitch Threshold"),
+                        info=i18n(
+                            "Threshold for proposal pitch adjustment. Lower values = more conservative."
+                        ),
+                        value=0.5,
+                        step=0.05,
+                        interactive=True,
+                    )
+
+                    audio_processing = gr.Checkbox(
+                        label=i18n("Enhanced Audio Processing"),
+                        info=i18n(
+                            "Enable advanced audio processing features inspired by Vietnamese-RVC."
+                        ),
+                        value=False,
+                        interactive=True,
+                    )
 
                 protect = gr.Slider(
                     minimum=0,
@@ -751,6 +903,16 @@ def full_inference_tab():
             split_audio_back,
             autotune_back,
             embedder_model_back,
+            # Vietnamese-RVC Enhanced Features
+            formant_shifting,
+            formant_qfrency,
+            formant_timbre,
+            proposal_pitch,
+            proposal_pitch_threshold,
+            audio_processing,
+            formant_shifting_back,
+            formant_qfrency_back,
+            formant_timbre_back,
         ],
         outputs=[vc_output1, vc_output2],
     )

@@ -25,6 +25,7 @@ from tabs.settings.settings import (
     file_management_tab, debug_tab, backup_restore_tab, 
     misc_tab, restart_tab
 )
+from tabs.credits.credits_tab import credits_tab
 from assets.i18n.i18n import I18nAuto
 
 # Enhanced SSL handling (from Vietnamese RVC)
@@ -305,6 +306,17 @@ def create_enhanced_app():
                     gr.HTML(f"""
                     <div style="color: red; padding: 20px; text-align: center;">
                         ❌ Error loading Training: {str(e)}
+                    </div>
+                    """)
+                    
+            with gr.Tab("📜 Credits"):
+                try:
+                    credits_tab()
+                except Exception as e:
+                    logger.error(f"Error loading Credits tab: {e}")
+                    gr.HTML(f"""
+                    <div style="color: red; padding: 20px; text-align: center;">
+                        ❌ Error loading Credits: {str(e)}
                     </div>
                     """)
                     

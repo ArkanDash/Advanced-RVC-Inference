@@ -875,7 +875,11 @@ def full_inference_program(
     change_inst_pitch, pitch_back, filter_radius_back, index_rate_back,
     rms_mix_rate_back, protect_back, pitch_extract_back, hop_length_back,
     export_format_rvc_back, split_audio_back, autotune_back,
-    embedder_model_back
+    embedder_model_back,
+    # Vietnamese-RVC Enhanced Features
+    formant_shifting, formant_qfrency, formant_timbre, proposal_pitch,
+    proposal_pitch_threshold, audio_processing,
+    formant_shifting_back, formant_qfrency_back, formant_timbre_back
 ):
     """
     Legacy full inference program wrapper for backward compatibility.

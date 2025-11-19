@@ -183,8 +183,13 @@ class KADVCConfig:
         torch.backends.cuda.matmul.allow_tf32 = self.cuda_allow_tf32
         
         if torch.cuda.is_available():
-            torch.backends.cuda.matmul.allow_bf16 = self.enable_tensor_cores
-            torch.backends.cuda.enable_tensor_core_math = self.enable_tensor_cores
+            # Note: allow_bf16 is deprecated in newer PyTorch versions
+            # Use the newer tensor core API
+            if hasattr(torch.backends.cuda.matmul, 'allow_bf16'):
+                torch.backends.cuda.matmul.allow_bf16 = self.enable_tensor_cores
+            
+            # This property doesn't exist in PyTorch, removing the incorrect line
+            # torch.backends.cuda.enable_tensor_core_math = self.enable_tensor_cores
 
 
 # Default configurations
