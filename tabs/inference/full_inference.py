@@ -334,7 +334,7 @@ def full_inference_tab():
                             # Custom model option
                             "custom"
                         ],
-                        value="contentvec",
+                        value="contentvec_base",
                         interactive=True,
                     )
 
