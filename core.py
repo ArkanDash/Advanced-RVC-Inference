@@ -963,6 +963,7 @@ def download_music(url: str) -> str:
             ydl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': f'{temp_dir}/%(title)s.%(ext)s',
+                'cookies': './assets/ytdlstuff.txt',
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'wav',
