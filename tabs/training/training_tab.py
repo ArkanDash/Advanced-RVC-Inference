@@ -387,8 +387,7 @@ class TrainingTab:
                 
                 # Model output
                 model_output = gr.File(
-                    label="🎯 Model Output",
-                    info="Download trained model and related files"
+                    label="🎯 Model Output"
                 )
         
         # Set up event handlers
