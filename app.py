@@ -192,8 +192,6 @@ def create_enhanced_app():
         app_version = CONFIG.get("application", {}).get("version", "3.2")
         dark_mode = CONFIG.get("theme", {}).get("dark_mode", True)
         font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-        
-        # Enhanced CSS with Vietnamese RVC-inspired styling
         enhanced_css = f"""
         @import url('{font_url}');
         * {{font-family: 'Roboto', sans-serif !important;}}
@@ -238,17 +236,8 @@ def create_enhanced_app():
         ) as app:
             
             # Enhanced header with configuration-based styling
-            gr.HTML(
-                f"""
-                <div class="enhanced-header">
-                    <h1>🚀 {app_title}</h1>
-                    <p>Enhanced with Vietnamese-RVC Architecture & Performance Optimizations</p>
-                    <p><strong>Version:</strong> {app_version} | <strong>Language:</strong> {CONFIG.get('language', {}).get('default', 'en-US')}</p>
-                    <p><em>✨ Revolutionary Voice Conversion with State-of-the-Art AI Technology ✨</em></p>
-                    <p><small>Based on improvements from Vietnamese-RVC by PhamHuynhAnh16</small></p>
-                </div>
-                """
-            )
+            
+            gr.Markdown(f"# {app_title}")
             
             # Enhanced status indicator with system information
             status_html = f"""
