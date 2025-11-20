@@ -60,7 +60,7 @@
 
 ### 🎯 **Recent Updates (November 2025)**
 - **Vietnamese-RVC Integration**: Complete predictor system with 40+ F0 methods and 29 hybrid combinations
-- **Enhanced Downloads Tab**: Fixed Files.__init__() error and improved model search functionality
+
 - **Comprehensive F0 Methods**: Added all RMVPE, CREPE, FCPE variants plus advanced algorithms (SWIFT, PESTO, PENN, DJCM)
 - **Language-Specific Embedders**: Support for Vietnamese, Japanese, Korean, Chinese, Portuguese HuBERT models
 - **SPIN & Whisper Integration**: Added SPIN v1/v2 and complete Whisper spectrum (tiny to large-v3-turbo)
@@ -540,7 +540,7 @@ The author is **not liable** for any direct, indirect, consequential, incidental
 - **Files.__init__() Fix**: Resolved `Files.__init__() got an unexpected keyword argument 'info'` error in downloads tab
 - **VoiceConverter Initialization**: Fixed VoiceConverter constructor parameter issues in enhanced_voice_conversion
 - **Vietnamese-RVC Integration**: Complete predictor system integration with 40+ F0 methods and hybrid combinations
-- **Enhanced Downloads Tab**: Improved model search functionality and fixed Files component errors
+
 - **Comprehensive F0 Methods**: Added RMVPE, CREPE, FCPE variants plus SWIFT, PESTO, PENN, DJCM algorithms
 - **Language-Specific Embedders**: Added Vietnamese, Japanese, Korean, Chinese, Portuguese HuBERT models
 - **Datasets Maker**: New comprehensive dataset creation and search system

@@ -26,7 +26,7 @@ from tabs.settings.settings import (
     misc_tab, restart_tab
 )
 from tabs.credits.credits_tab import credits_tab
-from tabs.downloads.downloads_tab import downloads_tab_enhanced
+
 from tabs.extra.extra_tab import extra_tools_tab
 from tabs.datasets.datasets_tab import datasets_tab
 from assets.i18n.i18n import I18nAuto
@@ -279,17 +279,6 @@ def create_enhanced_app():
                     </div>
                     """)
                     
-            with gr.Tab("📥 Enhanced Downloads"):
-                try:
-                    downloads_tab_enhanced()
-                except Exception as e:
-                    logger.error(f"Error loading Model Search & Download tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Model Search & Download: {str(e)}
-                    </div>
-                    """)
-
             with gr.Tab("📥 Download Model"):
                 try:
                     download_model_tab()
