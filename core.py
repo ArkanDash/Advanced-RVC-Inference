@@ -933,7 +933,7 @@ def full_inference_program(
 
 def download_music(url: str) -> str:
     """
-    Download music from URL for processing.
+    Download music from URL and save to audio_files/original_files.
     
     Args:
         url: URL to download audio from
@@ -944,8 +944,17 @@ def download_music(url: str) -> str:
     try:
         import yt_dlp
         import tempfile
+        import shutil
+        from pathlib import Path
         
         logger.info(f"Downloading music from URL: {url}")
+        
+        # Get the current working directory and setup audio paths
+        now_dir = os.getcwd()
+        audio_root = os.path.join(now_dir, "audio_files", "original_files")
+        
+        # Ensure the audio directory exists
+        os.makedirs(audio_root, exist_ok=True)
         
         # Create temporary directory for download
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -971,8 +980,22 @@ def download_music(url: str) -> str:
                 # Change extension to .wav
                 wav_filename = filename.rsplit('.', 1)[0] + '.wav'
                 
-                logger.info(f"Downloaded music to: {wav_filename}")
-                return wav_filename
+                # Clean filename for safe filesystem usage
+                video_title = info.get('title', 'audio')
+                # Remove invalid characters and replace spaces
+                safe_title = re.sub(r'[<>:"/\\|?*]', '', video_title)
+                safe_title = re.sub(r'\s+', '_', safe_title)
+                safe_title = safe_title[:100]  # Limit length
+                
+                # Create output path in audio_files/original_files
+                output_filename = f"{safe_title}.wav"
+                output_path = os.path.join(audio_root, output_filename)
+                
+                # Copy downloaded file to final destination
+                shutil.copy2(wav_filename, output_path)
+                
+                logger.info(f"Downloaded music to: {output_path}")
+                return output_path
                 
     except Exception as e:
         error_msg = f"Failed to download music: {str(e)}"
