@@ -26,6 +26,7 @@ import hashlib
 import mimetypes
 import re
 import requests
+import traceback
 from functools import lru_cache, wraps
 from pathlib import Path
 import shutil
