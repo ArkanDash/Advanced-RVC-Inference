@@ -1001,7 +1001,7 @@ def full_inference_tab():
             formant_qfrency_back,
             formant_timbre_back,
         ],
-        outputs=[vc_output1, vc_output2],
+        outputs=[vc_output2, vc_output1],
     )
 
     # Visibility toggles
