@@ -12,9 +12,10 @@ from pathlib import Path
 from typing import Optional, Dict, Any, Union
 import importlib.util
 
-# Import the F0 models manager
+# Import the F0 models manager and prerequisites functions
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from f0_models_manager import F0ModelsManager
+from prerequisites_download import get_modelname_from_f0_method
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class F0ModelAutoLoader:
                 return all(results.values())
         
         # Get required model file name
-        modelname = self.manager.get_modelname_from_f0_method(f0_method)
+        modelname = get_modelname_from_f0_method(f0_method)
         if not modelname:
             logger.error(f"No model mapping found for F0 method: {f0_method}")
             return False
@@ -104,7 +105,7 @@ class F0ModelAutoLoader:
                 from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
                 
                 # Get model path
-                modelname = self.manager.get_modelname_from_f0_method(f0_method)
+                modelname = get_modelname_from_f0_method(f0_method)
                 model_path = self.manager.get_model_path(modelname)
                 
                 # Determine precision
@@ -129,27 +130,27 @@ class F0ModelAutoLoader:
                 
             elif f0_method == "penn":
                 from programs.applio_code.rvc.lib.predictors.PENN.PENN import PENNPredictor
-                modelname = self.manager.get_modelname_from_f0_method(f0_method)
+                modelname = get_modelname_from_f0_method(f0_method)
                 model_path = self.manager.get_model_path(modelname)
                 model = PENNPredictor(str(model_path), device=device)
                 
             elif f0_method == "djcm":
                 from programs.applio_code.rvc.lib.predictors.DJCM.DJCM import DJCMPredictor
-                modelname = self.manager.get_modelname_from_f0_method(f0_method)
+                modelname = get_modelname_from_f0_method(f0_method)
                 model_path = self.manager.get_model_path(modelname)
                 model = DJCMPredictor(str(model_path), device=device)
                 
             elif f0_method == "swift":
                 # SWIFT is typically ONNX-based
                 import onnxruntime as ort
-                modelname = self.manager.get_modelname_from_f0_method(f0_method)
+                modelname = get_modelname_from_f0_method(f0_method)
                 model_path = self.manager.get_model_path(modelname)
                 providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if device == 'cuda' else ['CPUExecutionProvider']
                 model = ort.InferenceSession(str(model_path), providers=providers)
                 
             elif f0_method == "pesto":
                 from programs.applio_code.rvc.lib.predictors.PESTO.PESTO import PESTOPredictor
-                modelname = self.manager.get_modelname_from_f0_method(f0_method)
+                modelname = get_modelname_from_f0_method(f0_method)
                 model_path = self.manager.get_model_path(modelname)
                 model = PESTOPredictor(str(model_path), device=device)
                 
