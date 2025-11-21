@@ -895,3 +895,4 @@
 # uploads/
 # downloads/
 
+*.pt
