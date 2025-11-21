@@ -186,7 +186,9 @@ def check_predictors_downloaded(f0_methods, f0_onnx=False):
     Check if required predictors are already downloaded.
     Vietnamese-RVC style implementation.
     """
-    predictors_path = "programs/applio_code/rvc/models/predictors"
+    # Use absolute path resolution like in other files
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    predictors_path = os.path.join(script_dir, "..", "..", "..", "models", "predictors")
     models_to_download = download_predictor_files(f0_methods, f0_onnx)
     
     missing_models = []

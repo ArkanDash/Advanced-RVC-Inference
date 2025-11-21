@@ -25,6 +25,43 @@ sys.path.append(now_dir)
 from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
 from programs.applio_code.rvc.lib.predictors.FCPE import FCPEF0Predictor
 
+# Import additional f0 predictors from Vietnamese-RVC
+try:
+    from programs.applio_code.rvc.lib.predictors.CREPE.CREPE import CREPE0Predictor
+    CREPE_AVAILABLE = True
+except ImportError:
+    CREPE_AVAILABLE = False
+
+try:
+    from programs.applio_code.rvc.lib.predictors.DJCM.DJCM import DJCM0Predictor
+    DJCM_AVAILABLE = True
+except ImportError:
+    DJCM_AVAILABLE = False
+
+try:
+    from programs.applio_code.rvc.lib.predictors.PENN.PENN import PENN0Predictor
+    PENN_AVAILABLE = True
+except ImportError:
+    PENN_AVAILABLE = False
+
+try:
+    from programs.applio_code.rvc.lib.predictors.PESTO.PESTO import PESTO0Predictor
+    PESTO_AVAILABLE = True
+except ImportError:
+    PESTO_AVAILABLE = False
+
+try:
+    from programs.applio_code.rvc.lib.predictors.SWIFT.SWIFT import SWIFT0Predictor
+    SWIFT_AVAILABLE = True
+except ImportError:
+    SWIFT_AVAILABLE = False
+
+try:
+    from programs.applio_code.rvc.lib.predictors.WORLD.WORLD import WORLD0Predictor
+    WORLD_AVAILABLE = True
+except ImportError:
+    WORLD_AVAILABLE = False
+
 import logging
 
 logging.getLogger("faiss").setLevel(logging.WARNING)
@@ -272,30 +309,25 @@ class Pipeline:
                     x, f0_min, f0_max, p_len, int(hop_length)
                 )
             elif method == "rmvpe":
+                # Use absolute path resolution like in F0Extractor.py
+                predictor_dir = os.path.dirname(os.path.abspath(__file__))
+                models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
+                model_path = os.path.join(models_dir, "rmvpe.pt")
+                
                 self.model_rmvpe = RMVPE0Predictor(
-                    os.path.join(
-                        "programs",
-                        "applio_code",
-                        "rvc",
-                        "models",
-                        "predictors",
-                        "rmvpe.pt",
-                    ),
+                    model_path,
                     is_half=self.is_half,
                     device=self.device,
                 )
                 f0 = self.model_rmvpe.infer_from_audio(x, thred=0.03)
                 f0 = f0[1:]
             elif method == "fcpe":
+                predictor_dir = os.path.dirname(os.path.abspath(__file__))
+                models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
+                model_path = os.path.join(models_dir, "fcpe.pt")
+                
                 self.model_fcpe = FCPEF0Predictor(
-                    os.path.join(
-                        "programs",
-                        "applio_code",
-                        "rvc",
-                        "models",
-                        "predictors",
-                        "fcpe.pt",
-                    ),
+                    model_path,
                     f0_min=int(f0_min),
                     f0_max=int(f0_max),
                     dtype=torch.float32,
@@ -305,6 +337,61 @@ class Pipeline:
                 )
                 f0 = self.model_fcpe.compute_f0(x, p_len=p_len)
                 del self.model_fcpe
+                gc.collect()
+            elif method == "djcm" and DJCM_AVAILABLE:
+                self.model_djcm = DJCM0Predictor(
+                    f0_min=int(f0_min),
+                    f0_max=int(f0_max),
+                    sample_rate=self.sample_rate,
+                    hop_size=int(hop_length),
+                    device=self.device,
+                )
+                f0 = self.model_djcm.compute_f0(x, p_len=p_len)
+                del self.model_djcm
+                gc.collect()
+            elif method == "penn" and PENN_AVAILABLE:
+                self.model_penn = PENN0Predictor(
+                    f0_min=int(f0_min),
+                    f0_max=int(f0_max),
+                    sample_rate=self.sample_rate,
+                    hop_size=int(hop_length),
+                    device=self.device,
+                )
+                f0 = self.model_penn.compute_f0(x, p_len=p_len)
+                del self.model_penn
+                gc.collect()
+            elif method == "pesto" and PESTO_AVAILABLE:
+                self.model_pesto = PESTO0Predictor(
+                    f0_min=int(f0_min),
+                    f0_max=int(f0_max),
+                    sample_rate=self.sample_rate,
+                    hop_size=int(hop_length),
+                    device=self.device,
+                )
+                f0 = self.model_pesto.compute_f0(x, p_len=p_len)
+                del self.model_pesto
+                gc.collect()
+            elif method == "swift" and SWIFT_AVAILABLE:
+                self.model_swift = SWIFT0Predictor(
+                    f0_min=int(f0_min),
+                    f0_max=int(f0_max),
+                    sample_rate=self.sample_rate,
+                    hop_size=int(hop_length),
+                    device=self.device,
+                )
+                f0 = self.model_swift.compute_f0(x, p_len=p_len)
+                del self.model_swift
+                gc.collect()
+            elif method == "world" and WORLD_AVAILABLE:
+                self.model_world = WORLD0Predictor(
+                    f0_min=int(f0_min),
+                    f0_max=int(f0_max),
+                    sample_rate=self.sample_rate,
+                    hop_size=int(hop_length),
+                    device=self.device,
+                )
+                f0 = self.model_world.compute_f0(x, p_len=p_len)
+                del self.model_world
                 gc.collect()
             f0_computation_stack.append(f0)
 
@@ -350,19 +437,24 @@ class Pipeline:
                 x, self.f0_min, self.f0_max, p_len, int(hop_length), "tiny"
             )
         elif f0_method == "rmvpe":
+            # Use absolute path resolution like in F0Extractor.py
+            predictor_dir = os.path.dirname(os.path.abspath(__file__))
+            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
+            model_path = os.path.join(models_dir, "rmvpe.pt")
+            
             self.model_rmvpe = RMVPE0Predictor(
-                os.path.join(
-                    "programs", "applio_code", "rvc", "models", "predictors", "rmvpe.pt"
-                ),
+                model_path,
                 is_half=self.is_half,
                 device=self.device,
             )
             f0 = self.model_rmvpe.infer_from_audio(x, thred=0.03)
         elif f0_method == "fcpe":
+            predictor_dir = os.path.dirname(os.path.abspath(__file__))
+            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
+            model_path = os.path.join(models_dir, "fcpe.pt")
+            
             self.model_fcpe = FCPEF0Predictor(
-                os.path.join(
-                    "programs", "applio_code", "rvc", "models", "predictors", "fcpe.pt"
-                ),
+                model_path,
                 f0_min=int(self.f0_min),
                 f0_max=int(self.f0_max),
                 dtype=torch.float32,
@@ -383,6 +475,63 @@ class Pipeline:
                 p_len,
                 hop_length,
             )
+        elif f0_method == "crepe" and CREPE_AVAILABLE:
+            f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
+        elif f0_method == "djcm" and DJCM_AVAILABLE:
+            self.model_djcm = DJCM0Predictor(
+                f0_min=int(self.f0_min),
+                f0_max=int(self.f0_max),
+                sample_rate=self.sample_rate,
+                hop_size=int(hop_length),
+                device=self.device,
+            )
+            f0 = self.model_djcm.compute_f0(x, p_len=p_len)
+            del self.model_djcm
+            gc.collect()
+        elif f0_method == "penn" and PENN_AVAILABLE:
+            self.model_penn = PENN0Predictor(
+                f0_min=int(self.f0_min),
+                f0_max=int(self.f0_max),
+                sample_rate=self.sample_rate,
+                hop_size=int(hop_length),
+                device=self.device,
+            )
+            f0 = self.model_penn.compute_f0(x, p_len=p_len)
+            del self.model_penn
+            gc.collect()
+        elif f0_method == "pesto" and PESTO_AVAILABLE:
+            self.model_pesto = PESTO0Predictor(
+                f0_min=int(self.f0_min),
+                f0_max=int(self.f0_max),
+                sample_rate=self.sample_rate,
+                hop_size=int(hop_length),
+                device=self.device,
+            )
+            f0 = self.model_pesto.compute_f0(x, p_len=p_len)
+            del self.model_pesto
+            gc.collect()
+        elif f0_method == "swift" and SWIFT_AVAILABLE:
+            self.model_swift = SWIFT0Predictor(
+                f0_min=int(self.f0_min),
+                f0_max=int(self.f0_max),
+                sample_rate=self.sample_rate,
+                hop_size=int(hop_length),
+                device=self.device,
+            )
+            f0 = self.model_swift.compute_f0(x, p_len=p_len)
+            del self.model_swift
+            gc.collect()
+        elif f0_method == "world" and WORLD_AVAILABLE:
+            self.model_world = WORLD0Predictor(
+                f0_min=int(self.f0_min),
+                f0_max=int(self.f0_max),
+                sample_rate=self.sample_rate,
+                hop_size=int(hop_length),
+                device=self.device,
+            )
+            f0 = self.model_world.compute_f0(x, p_len=p_len)
+            del self.model_world
+            gc.collect()
 
         if f0_autotune == "True":
             f0 = Autotune.autotune_f0(self, f0)
