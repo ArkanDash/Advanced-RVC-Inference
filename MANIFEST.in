@@ -1,19 +1,39 @@
-# Include package data
+# Advanced RVC Inference PyPI Package Manifest
+# Version 3.4.0 - Professional PyPI Package Distribution
+
+# Core package files
 include README.md
 include LICENSE
 include ENHANCEMENT_SUMMARY.md
 include *.py
 include *.ini
 include *.json
+include *.toml
+include *.txt
 
-# Include assets
+# Documentation files
+include *.md
+recursive-include docs *.md
+include CHANGELOG.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+
+# Configuration files
+include config.py
+include config.ini
+include config_enhanced.json
+include docker-compose.yml
+
+# Assets and resources
+recursive-include assets *
 recursive-include src/advanced_rvc_inference/assets *
 
-# Include documentation
-recursive-include *.md
-recursive-include docs *.md
+# Programs module (additional utilities)
+recursive-include programs *.py
+recursive-include programs *.json
+recursive-include programs *.md
 
-# Exclude test files
+# Exclude build artifacts and cache
 global-exclude *.pyc
 global-exclude *.pyo
 global-exclude *~
@@ -21,3 +41,21 @@ global-exclude .git*
 global-exclude .coverage
 global-exclude .pytest_cache*
 global-exclude __pycache__
+global-exclude .tox
+global-exclude .eggs
+global-exclude *.egg-info
+global-exclude build
+global-exclude dist
+
+# Exclude development files
+global-exclude .vscode
+global-exclude .idea
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+
+# Exclude temporary files
+global-exclude .DS_Store
+global-exclude Thumbs.db
+global-exclude *.tmp
+global-exclude *.temp
