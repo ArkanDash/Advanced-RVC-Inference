@@ -22,47 +22,20 @@ except ImportError:
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
-from programs.applio_code.rvc.lib.predictors.FCPE import FCPEF0Predictor
+# F0 model imports are now handled by auto-loader
 
-# Import additional f0 predictors from Vietnamese-RVC
-try:
-    from programs.applio_code.rvc.lib.predictors.CREPE.CREPE import CREPE0Predictor
-    CREPE_AVAILABLE = True
-except ImportError:
-    CREPE_AVAILABLE = False
-
-try:
-    from programs.applio_code.rvc.lib.predictors.DJCM.DJCM import DJCM0Predictor
-    DJCM_AVAILABLE = True
-except ImportError:
-    DJCM_AVAILABLE = False
-
-try:
-    from programs.applio_code.rvc.lib.predictors.PENN.PENN import PENN0Predictor
-    PENN_AVAILABLE = True
-except ImportError:
-    PENN_AVAILABLE = False
-
-try:
-    from programs.applio_code.rvc.lib.predictors.PESTO.PESTO import PESTO0Predictor
-    PESTO_AVAILABLE = True
-except ImportError:
-    PESTO_AVAILABLE = False
-
-try:
-    from programs.applio_code.rvc.lib.predictors.SWIFT.SWIFT import SWIFT0Predictor
-    SWIFT_AVAILABLE = True
-except ImportError:
-    SWIFT_AVAILABLE = False
-
-try:
-    from programs.applio_code.rvc.lib.predictors.WORLD.WORLD import WORLD0Predictor
-    WORLD_AVAILABLE = True
-except ImportError:
-    WORLD_AVAILABLE = False
+# F0 model imports are now handled by auto-loader
+# These imports are kept for compatibility checks
+CREPE_AVAILABLE = True  # Always available through torchcrepe
+DJCM_AVAILABLE = True   # Checked by auto-loader
+PENN_AVAILABLE = True   # Checked by auto-loader
+PESTO_AVAILABLE = True  # Checked by auto-loader
+SWIFT_AVAILABLE = True  # Checked by auto-loader
+WORLD_AVAILABLE = True  # Checked by auto-loader
 
 import logging
+
+from programs.applio_code.rvc.lib.tools.f0_model_auto_loader import get_auto_loader
 
 logging.getLogger("faiss").setLevel(logging.WARNING)
 
@@ -295,46 +268,49 @@ class Pipeline:
             p_len: Desired length of the F0 output.
             hop_length: Hop length for F0 estimation methods.
         """
-        methods_str = re.search("hybrid\[(.+)\]", methods_str)
+        methods_str = re.search(r"hybrid\[(.+)\]", methods_str)
         if methods_str:
             methods = [method.strip() for method in methods_str.group(1).split("+")]
         f0_computation_stack = []
         print(f"Calculating f0 pitch estimations for methods {str(methods)}")
         x = x.astype(np.float32)
         x /= np.quantile(np.abs(x), 0.999)
+        # Get the auto-loader instance
+        auto_loader = get_auto_loader()
+        
         for method in methods:
             f0 = None
             if method == "crepe":
-                f0 = self.get_f0_crepe_computation(
+                f0 = self.get_f0_crepe(
                     x, f0_min, f0_max, p_len, int(hop_length)
                 )
             elif method == "rmvpe":
-                # Use absolute path resolution like in F0Extractor.py
-                predictor_dir = os.path.dirname(os.path.abspath(__file__))
-                models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
-                model_path = os.path.join(models_dir, "rmvpe.pt")
+                # Auto-load RMVPE model using auto-loader
+                if not auto_loader.ensure_model_available(method):
+                    raise RuntimeError(f"Failed to ensure RMVPE model availability for method: {method}")
                 
-                self.model_rmvpe = RMVPE0Predictor(
-                    model_path,
-                    is_half=self.is_half,
-                    device=self.device,
+                is_half = False if self.device == "cpu" else self.is_half
+                self.model_rmvpe = auto_loader.load_f0_model(
+                    method, 
+                    device=self.device, 
+                    is_half=is_half
                 )
+                
+                if self.model_rmvpe is None:
+                    raise RuntimeError(f"Failed to load RMVPE model for method: {method}")
+                
                 f0 = self.model_rmvpe.infer_from_audio(x, thred=0.03)
                 f0 = f0[1:]
             elif method == "fcpe":
-                predictor_dir = os.path.dirname(os.path.abspath(__file__))
-                models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
-                model_path = os.path.join(models_dir, "fcpe.pt")
+                # Auto-load FCPE model using auto-loader
+                if not auto_loader.ensure_model_available(method):
+                    raise RuntimeError(f"Failed to ensure FCPE model availability for method: {method}")
                 
-                self.model_fcpe = FCPEF0Predictor(
-                    model_path,
-                    f0_min=int(f0_min),
-                    f0_max=int(f0_max),
-                    dtype=torch.float32,
-                    device=self.device,
-                    sample_rate=self.sample_rate,
-                    threshold=0.03,
-                )
+                self.model_fcpe = auto_loader.load_f0_model(method, device=self.device)
+                
+                if self.model_fcpe is None:
+                    raise RuntimeError(f"Failed to load FCPE model for method: {method}")
+                
                 f0 = self.model_fcpe.compute_f0(x, p_len=p_len)
                 del self.model_fcpe
                 gc.collect()
@@ -357,41 +333,27 @@ class Pipeline:
                     hop_size=int(hop_length),
                     device=self.device,
                 )
-                f0 = self.model_penn.compute_f0(x, p_len=p_len)
-                del self.model_penn
-                gc.collect()
-            elif method == "pesto" and PESTO_AVAILABLE:
-                self.model_pesto = PESTO0Predictor(
-                    f0_min=int(f0_min),
-                    f0_max=int(f0_max),
-                    sample_rate=self.sample_rate,
-                    hop_size=int(hop_length),
-                    device=self.device,
-                )
-                f0 = self.model_pesto.compute_f0(x, p_len=p_len)
-                del self.model_pesto
-                gc.collect()
-            elif method == "swift" and SWIFT_AVAILABLE:
-                self.model_swift = SWIFT0Predictor(
-                    f0_min=int(f0_min),
-                    f0_max=int(f0_max),
-                    sample_rate=self.sample_rate,
-                    hop_size=int(hop_length),
-                    device=self.device,
-                )
-                f0 = self.model_swift.compute_f0(x, p_len=p_len)
-                del self.model_swift
-                gc.collect()
-            elif method == "world" and WORLD_AVAILABLE:
-                self.model_world = WORLD0Predictor(
-                    f0_min=int(f0_min),
-                    f0_max=int(f0_max),
-                    sample_rate=self.sample_rate,
-                    hop_size=int(hop_length),
-                    device=self.device,
-                )
-                f0 = self.model_world.compute_f0(x, p_len=p_len)
-                del self.model_world
+                # Auto-load other models using auto-loader
+                if not auto_loader.ensure_model_available(method):
+                    raise RuntimeError(f"Failed to ensure model availability for method: {method}")
+                
+                model = auto_loader.load_f0_model(method, device=self.device)
+                
+                if model is None:
+                    raise RuntimeError(f"Failed to load model for method: {method}")
+                
+                if method == "djcm":
+                    f0 = model.compute_f0(x, p_len=p_len)
+                elif method == "penn":
+                    f0 = model.compute_f0(x, p_len=p_len)
+                elif method == "pesto":
+                    f0 = model.compute_f0(x, p_len=p_len)
+                elif method == "swift":
+                    f0 = model.compute_f0(x, p_len=p_len)
+                elif method == "world":
+                    f0 = model.compute_f0(x, p_len=p_len)
+                
+                del model
                 gc.collect()
             f0_computation_stack.append(f0)
 
@@ -436,32 +398,35 @@ class Pipeline:
             f0 = self.get_f0_crepe(
                 x, self.f0_min, self.f0_max, p_len, int(hop_length), "tiny"
             )
-        elif f0_method == "rmvpe":
-            # Use absolute path resolution like in F0Extractor.py
-            predictor_dir = os.path.dirname(os.path.abspath(__file__))
-            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
-            model_path = os.path.join(models_dir, "rmvpe.pt")
+        # Get the auto-loader instance
+        auto_loader = get_auto_loader()
+        
+        if f0_method == "rmvpe":
+            # Auto-load RMVPE model using auto-loader
+            if not auto_loader.ensure_model_available(f0_method):
+                raise RuntimeError(f"Failed to ensure RMVPE model availability for method: {f0_method}")
             
-            self.model_rmvpe = RMVPE0Predictor(
-                model_path,
-                is_half=self.is_half,
-                device=self.device,
+            is_half = False if self.device == "cpu" else self.is_half
+            self.model_rmvpe = auto_loader.load_f0_model(
+                f0_method, 
+                device=self.device, 
+                is_half=is_half
             )
+            
+            if self.model_rmvpe is None:
+                raise RuntimeError(f"Failed to load RMVPE model for method: {f0_method}")
+            
             f0 = self.model_rmvpe.infer_from_audio(x, thred=0.03)
         elif f0_method == "fcpe":
-            predictor_dir = os.path.dirname(os.path.abspath(__file__))
-            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
-            model_path = os.path.join(models_dir, "fcpe.pt")
+            # Auto-load FCPE model using auto-loader
+            if not auto_loader.ensure_model_available(f0_method):
+                raise RuntimeError(f"Failed to ensure FCPE model availability for method: {f0_method}")
             
-            self.model_fcpe = FCPEF0Predictor(
-                model_path,
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                dtype=torch.float32,
-                device=self.device,
-                sample_rate=self.sample_rate,
-                threshold=0.03,
-            )
+            self.model_fcpe = auto_loader.load_f0_model(f0_method, device=self.device)
+            
+            if self.model_fcpe is None:
+                raise RuntimeError(f"Failed to load FCPE model for method: {f0_method}")
+            
             f0 = self.model_fcpe.compute_f0(x, p_len=p_len)
             del self.model_fcpe
             gc.collect()
@@ -477,60 +442,34 @@ class Pipeline:
             )
         elif f0_method == "crepe" and CREPE_AVAILABLE:
             f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
-        elif f0_method == "djcm" and DJCM_AVAILABLE:
-            self.model_djcm = DJCM0Predictor(
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                sample_rate=self.sample_rate,
-                hop_size=int(hop_length),
-                device=self.device,
-            )
-            f0 = self.model_djcm.compute_f0(x, p_len=p_len)
-            del self.model_djcm
-            gc.collect()
-        elif f0_method == "penn" and PENN_AVAILABLE:
-            self.model_penn = PENN0Predictor(
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                sample_rate=self.sample_rate,
-                hop_size=int(hop_length),
-                device=self.device,
-            )
-            f0 = self.model_penn.compute_f0(x, p_len=p_len)
-            del self.model_penn
-            gc.collect()
-        elif f0_method == "pesto" and PESTO_AVAILABLE:
-            self.model_pesto = PESTO0Predictor(
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                sample_rate=self.sample_rate,
-                hop_size=int(hop_length),
-                device=self.device,
-            )
-            f0 = self.model_pesto.compute_f0(x, p_len=p_len)
-            del self.model_pesto
-            gc.collect()
-        elif f0_method == "swift" and SWIFT_AVAILABLE:
-            self.model_swift = SWIFT0Predictor(
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                sample_rate=self.sample_rate,
-                hop_size=int(hop_length),
-                device=self.device,
-            )
-            f0 = self.model_swift.compute_f0(x, p_len=p_len)
-            del self.model_swift
-            gc.collect()
-        elif f0_method == "world" and WORLD_AVAILABLE:
-            self.model_world = WORLD0Predictor(
-                f0_min=int(self.f0_min),
-                f0_max=int(self.f0_max),
-                sample_rate=self.sample_rate,
-                hop_size=int(hop_length),
-                device=self.device,
-            )
-            f0 = self.model_world.compute_f0(x, p_len=p_len)
-            del self.model_world
+        elif f0_method in ["djcm", "penn", "pesto", "swift", "world"] and (
+            (f0_method == "djcm" and DJCM_AVAILABLE) or
+            (f0_method == "penn" and PENN_AVAILABLE) or
+            (f0_method == "pesto" and PESTO_AVAILABLE) or
+            (f0_method == "swift" and SWIFT_AVAILABLE) or
+            (f0_method == "world" and WORLD_AVAILABLE)
+        ):
+            # Auto-load other models using auto-loader
+            if not auto_loader.ensure_model_available(f0_method):
+                raise RuntimeError(f"Failed to ensure model availability for method: {f0_method}")
+            
+            model = auto_loader.load_f0_model(f0_method, device=self.device)
+            
+            if model is None:
+                raise RuntimeError(f"Failed to load model for method: {f0_method}")
+            
+            if f0_method == "djcm":
+                f0 = model.compute_f0(x, p_len=p_len)
+            elif f0_method == "penn":
+                f0 = model.compute_f0(x, p_len=p_len)
+            elif f0_method == "pesto":
+                f0 = model.compute_f0(x, p_len=p_len)
+            elif f0_method == "swift":
+                f0 = model.compute_f0(x, p_len=p_len)
+            elif f0_method == "world":
+                f0 = model.compute_f0(x, p_len=p_len)
+            
+            del model
             gc.collect()
 
         if f0_autotune == "True":
