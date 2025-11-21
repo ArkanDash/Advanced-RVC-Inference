@@ -40,12 +40,16 @@ class Config:
 
     def load_config_json(self) -> dict:
         configs = {}
+        # Get the directory where this config.py file is located
+        config_dir = os.path.dirname(os.path.abspath(__file__))
         for config_file in version_config_paths:
-            config_path = os.path.join(
-                "programs", "applio_code", "rvc", "configs", config_file
-            )
-            with open(config_path, "r") as f:
-                configs[config_file] = json.load(f)
+            config_path = os.path.join(config_dir, config_file)
+            try:
+                with open(config_path, "r") as f:
+                    configs[config_file] = json.load(f)
+            except FileNotFoundError as e:
+                print(f"Config file not found: {config_path}")
+                raise e
         return configs
 
     def has_mps(self) -> bool:
@@ -71,10 +75,10 @@ class Config:
             "preprocess.py",
         )
 
+        # Get the directory where this config.py file is located
+        config_dir = os.path.dirname(os.path.abspath(__file__))
         for config_path in version_config_paths:
-            full_config_path = os.path.join(
-                "programs", "applio_code", "rvc", "configs", config_path
-            )
+            full_config_path = os.path.join(config_dir, config_path)
             try:
                 with open(full_config_path, "r") as f:
                     config = json.load(f)
@@ -99,9 +103,9 @@ class Config:
         if not version_config_paths:
             raise FileNotFoundError("No configuration paths provided.")
 
-        full_config_path = os.path.join(
-            "programs", "applio_code", "rvc", "configs", version_config_paths[0]
-        )
+        # Get the directory where this config.py file is located
+        config_dir = os.path.dirname(os.path.abspath(__file__))
+        full_config_path = os.path.join(config_dir, version_config_paths[0])
         try:
             with open(full_config_path, "r") as f:
                 config = json.load(f)
