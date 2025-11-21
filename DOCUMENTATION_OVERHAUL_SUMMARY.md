@@ -15,7 +15,7 @@ Successfully completed a comprehensive documentation overhaul for the Advanced R
 **Implementation:**
 - **Master Notebook Location**: `notebooks/Advanced_RVC_Inference.ipynb`
 - **Badge Implementation**: Dynamic badge linking to latest version
-- **URL Structure**: `https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/main/notebooks/Advanced_RVC_Inference.ipynb`
+- **URL Structure**: `https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb`
 - **Documentation**: Created comprehensive SSOT strategy guide
 
 **Key Features Implemented:**
@@ -99,7 +99,7 @@ Advanced-RVC-Inference/
 
 ### Single Source of Truth Strategy
 ```markdown
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/main/notebooks/Advanced_RVC_Inference.ipynb)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb)
 ```
 
 ### Professional Documentation Structure

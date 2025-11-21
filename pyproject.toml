@@ -107,7 +107,7 @@ Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
 Documentation = "https://arkan-dash.github.io/Advanced-RVC-Inference/"
 Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference"
 "Bug Tracker" = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
-"Changelog" = "https://github.com/ArkanDash/Advanced-RVC-Inference/blob/main/CHANGELOG.md"
+"Changelog" = "https://github.com/ArkanDash/Advanced-RVC-Inference/blob/master/CHANGELOG.md"
 
 # [project.scripts]  # Commented out for local development
 # advanced-rvc = "advanced_rvc_inference.cli:main"

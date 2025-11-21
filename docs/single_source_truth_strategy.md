@@ -20,20 +20,20 @@ This is the **only** location where Colab installation and setup code exists.
 ### Markdown Badge Code
 
 ```markdown
-[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/main/notebooks/Advanced_RVC_Inference.ipynb)
+[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb)
 ```
 
 ### Badge URL Structure
 
 The badge uses this specific URL pattern:
 ```
-https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/main/notebooks/Advanced_RVC_Inference.ipynb
+https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb
 ```
 
 **URL Components:**
 - Base: `https://colab.research.google.com/github/`
 - Repository: `ArkanDash/Advanced-RVC-Inference`
-- Branch: `main`
+- Branch: `master`
 - File path: `notebooks/Advanced_RVC_Inference.ipynb`
 
 ### Badge Placement
@@ -78,7 +78,7 @@ See the main README for the interactive badge.
 ### 3. Version Control Integration
 
 #### Branch Strategy
-- **Main Branch**: `main` - Always contains the latest stable notebook
+- **Main Branch**: `master` - Always contains the latest stable notebook
 - **Development**: Any feature branches should update the notebook in the same location
 - **Tags**: Use Git tags to mark notebook versions if needed
 
@@ -87,7 +87,7 @@ See the main README for the interactive badge.
 # Update the master notebook
 git add notebooks/Advanced_RVC_Inference.ipynb
 git commit -m "Update Colab notebook with latest features"
-git push origin main
+git push origin master
 
 # The badge will automatically point to the updated version
 ```
@@ -183,7 +183,7 @@ elif gpu_config["optimization"] == "conservative":
 1. **Edit**: Make changes to `notebooks/Advanced_RVC_Inference.ipynb`
 2. **Test**: Run the notebook in Colab to verify functionality
 3. **Commit**: `git add notebooks/Advanced_RVC_Inference.ipynb && git commit -m "Update master Colab notebook"`
-4. **Push**: `git push origin main`
+4. **Push**: `git push origin master`
 5. **Verify**: Check that the badge link works correctly
 
 ### Documentation Updates Required
@@ -257,8 +257,8 @@ git commit -m "Archive deprecated notebooks"
 
 **Solution**:
 1. Verify the file exists: `ls -la notebooks/Advanced_RVC_Inference.ipynb`
-2. Check the URL format matches exactly: `blob/main/notebooks/Advanced_RVC_Inference.ipynb`
-3. Ensure the branch name is correct (main vs master)
+2. Check the URL format matches exactly: `blob/master/notebooks/Advanced_RVC_Inference.ipynb`
+3. Ensure the branch name is correct (master vs main)
 
 ### Notebook Execution Fails
 
