@@ -1,6 +1,5 @@
 import dataclasses
 import pathlib
-import libf0
 import librosa
 import numpy as np
 import resampy
@@ -9,9 +8,21 @@ import torchcrepe
 import torchfcpe
 import os
 
+# Additional f0 predictor imports
+try:
+    import parselmouth
+    from scipy.signal import medfilt
+    from scipy.stats import mode
+except ImportError:
+    parselmouth = None
+
 # from tools.anyf0.rmvpe import RMVPE
 from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
 from programs.applio_code.rvc.configs.config import Config
+
+def hz_to_cents(frequency_hz, midi_ref):
+    """Convert frequency in Hz to cents relative to a MIDI reference."""
+    return 1200 * np.log2(frequency_hz / midi_ref)
 
 config = Config()
 
@@ -82,19 +93,109 @@ class F0Extractor:
             f0 = f0.squeeze().cpu().numpy()
         elif method == "rmvpe":
             is_half = False if device == "cpu" else config.is_half
+            # Get the directory where this F0Extractor.py file is located
+            predictor_dir = os.path.dirname(os.path.abspath(__file__))
+            # Go up to the models directory level (2 levels up from predictors)
+            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
+            rmvpe_model_path = os.path.join(models_dir, "rmvpe.pt")
             model_rmvpe = RMVPE0Predictor(
-                os.path.join(
-                    "programs", "applio_code", "rvc", "models", "predictors", "rmvpe.pt"
-                ),
+                rmvpe_model_path,
                 is_half=is_half,
                 device=device,
                 # hop_length=80
             )
             f0 = model_rmvpe.infer_from_audio(self.wav16k, thred=0.03)
-
+        elif method == "world":
+            # Use WORLD-based F0 extraction
+            if parselmouth is None:
+                raise ImportError("parselmouth is required for world method")
+            
+            sound = parselmouth.Sound(self.wav16k, sampling_frequency=16000)
+            pitch = sound.to_pitch_ac(
+                time_step=self.hop_size,
+                pitch_floor=self.f0_min,
+                pitch_ceiling=self.f0_max,
+                very_accurate=False,
+                octave_cost=0.01,
+                voiced_cost=0.14,
+                voiced_unvoiced_cost=0.14,
+                silence_cost=0.115
+            )
+            f0 = pitch.selected_array["frequency"]
+            # Fill unvoiced frames with interpolated values
+            f0[f0 == 0] = np.nan
+            f0 = np.interp(np.arange(len(f0)), np.arange(len(f0))[~np.isnan(f0)], f0[~np.isnan(f0)])
+        elif method == "pyin":
+            # Use librosa's pyin method
+            f0, voiced_flag, voiced_probs = librosa.pyin(
+                self.wav16k,
+                fmin=self.f0_min,
+                fmax=self.f0_max,
+                hop_length=self.hop_length,
+                threshold=0.1
+            )
+            # Fill unvoiced frames with interpolated values
+            f0[~voiced_flag] = np.interp(
+                np.arange(len(f0)),
+                np.arange(len(f0))[voiced_flag],
+                f0[voiced_flag]
+            )
+        elif method == "yin":
+            # Use librosa's yin method
+            f0 = librosa.yin(
+                self.wav16k,
+                fmin=self.f0_min,
+                fmax=self.f0_max,
+                hop_length=self.hop_length
+            )
+        elif method == "harvest":
+            # Use WORLD's harvest method
+            try:
+                import pyworld as pw
+            except ImportError:
+                raise ImportError("pyworld is required for harvest method")
+            
+            f0, voiced_flag = pw.dio(
+                self.wav16k.astype(np.float64),
+                16000,
+                fmin=self.f0_min,
+                fmax=self.f0_max
+            )
+            f0 = pw.stonemask(self.wav16k.astype(np.float64), f0, voiced_flag, 16000)
+            # Fill unvoiced frames with interpolated values
+            f0[~voiced_flag] = np.interp(
+                np.arange(len(f0)),
+                np.arange(len(f0))[voiced_flag],
+                f0[voiced_flag]
+            )
+        elif method == "parselmouth":
+            # Use Parselmouth for F0 extraction
+            if parselmouth is None:
+                raise ImportError("parselmouth is required for parselmouth method")
+            
+            sound = parselmouth.Sound(self.wav16k, sampling_frequency=16000)
+            pitch = sound.to_pitch()
+            f0 = pitch.selected_array["frequency"]
+            # Fill unvoiced frames with interpolated values
+            f0[f0 == 0] = np.nan
+            f0 = np.interp(np.arange(len(f0)), np.arange(len(f0))[~np.isnan(f0)], f0[~np.isnan(f0)])
+        elif method == "swipe":
+            # Use SWIPE (if available)
+            try:
+                from swipepy import swipe
+            except ImportError:
+                raise ImportError("swipepy is required for swipe method")
+            
+            f0 = swipe(
+                self.wav16k,
+                16000,
+                fmin=self.f0_min,
+                fmax=self.f0_max,
+                step=self.hop_length
+            )
         else:
             raise ValueError(f"Unknown method: {self.method}")
-        return libf0.hz_to_cents(f0, librosa.midi_to_hz(0))
+        return hz_to_cents(f0, librosa.midi_to_hz(0))
 
     def plot_f0(self, f0):
         from matplotlib import pyplot as plt

@@ -18,7 +18,10 @@
 **/downloads/
 **/eggs/
 **/.eggs/
-**/lib/
+**/lib/build/
+**/lib/dist/
+**/lib/*.egg-info/
+!**/lib/predictors/
 **/lib64/
 **/parts/
 **/sdist/
