@@ -19,6 +19,7 @@ except ImportError:
 # from tools.anyf0.rmvpe import RMVPE
 from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
 from programs.applio_code.rvc.configs.config import Config
+from programs.applio_code.rvc.lib.tools.f0_model_auto_loader import get_auto_loader
 
 def hz_to_cents(frequency_hz, midi_ref):
     """Convert frequency in Hz to cents relative to a MIDI reference."""
@@ -59,7 +60,14 @@ class F0Extractor:
             else config.device
         )
 
-        if method == "crepe":
+        # Get the auto-loader instance
+        auto_loader = get_auto_loader()
+
+        if method == "crepe" or "crepe" in method:
+            # Auto-load CREPE model if needed
+            if not auto_loader.ensure_model_available(method):
+                raise RuntimeError(f"Failed to ensure CREPE model availability for method: {method}")
+            
             wav16k_torch = torch.FloatTensor(self.wav16k).unsqueeze(0).to(device)
             f0 = torchcrepe.predict(
                 wav16k_torch,
@@ -71,7 +79,11 @@ class F0Extractor:
                 device=device,
             )
             f0 = f0[0].cpu().numpy()
-        elif method == "fcpe":
+        elif method == "fcpe" or "fcpe" in method or "ddsp" in method:
+            # Auto-load FCPE model if needed
+            if not auto_loader.ensure_model_available(method):
+                raise RuntimeError(f"Failed to ensure FCPE model availability for method: {method}")
+            
             audio = librosa.to_mono(self.x)
             audio_length = len(audio)
             f0_target_length = (audio_length // self.hop_length) + 1
@@ -91,20 +103,46 @@ class F0Extractor:
                 output_interp_target_length=f0_target_length,
             )
             f0 = f0.squeeze().cpu().numpy()
-        elif method == "rmvpe":
+        elif method == "rmvpe" or "rmvpe" in method:
+            # Auto-load RMVPE model if needed
+            if not auto_loader.ensure_model_available(method):
+                raise RuntimeError(f"Failed to ensure RMVPE model availability for method: {method}")
+            
             is_half = False if device == "cpu" else config.is_half
-            # Get the directory where this F0Extractor.py file is located
-            predictor_dir = os.path.dirname(os.path.abspath(__file__))
-            # Go up to the models directory level (2 levels up from predictors)
-            models_dir = os.path.join(predictor_dir, "..", "..", "models", "predictors")
-            rmvpe_model_path = os.path.join(models_dir, "rmvpe.pt")
-            model_rmvpe = RMVPE0Predictor(
-                rmvpe_model_path,
-                is_half=is_half,
-                device=device,
-                # hop_length=80
+            
+            # Load RMVPE model using auto-loader
+            model_rmvpe = auto_loader.load_f0_model(
+                method, 
+                device=device, 
+                is_half=is_half
             )
+            
+            if model_rmvpe is None:
+                raise RuntimeError(f"Failed to load RMVPE model for method: {method}")
+            
             f0 = model_rmvpe.infer_from_audio(self.wav16k, thred=0.03)
+        elif method in ["penn", "djcm", "swift", "pesto"]:
+            # Auto-load other model-based methods
+            if not auto_loader.ensure_model_available(method):
+                raise RuntimeError(f"Failed to ensure model availability for method: {method}")
+            
+            # Load the specific model
+            model = auto_loader.load_f0_model(method, device=device)
+            
+            if model is None:
+                raise RuntimeError(f"Failed to load model for method: {method}")
+            
+            # Extract F0 based on the model type
+            if method == "penn":
+                f0 = model.infer(self.wav16k)
+            elif method == "djcm":
+                f0 = model.infer(self.wav16k)
+            elif method == "swift":
+                # SWIFT is ONNX-based, handle accordingly
+                audio_input = torch.FloatTensor(self.wav16k).unsqueeze(0).numpy()
+                f0 = model.run(None, {'input': audio_input})[0]
+            elif method == "pesto":
+                f0 = model.infer(self.wav16k)
         elif method == "world":
             # Use WORLD-based F0 extraction
             if parselmouth is None:
@@ -193,6 +231,60 @@ class F0Extractor:
                 fmax=self.f0_max,
                 step=self.hop_length
             )
+        elif method.startswith("hybrid[") and method.endswith("]"):
+            # Handle hybrid methods by combining multiple F0 estimates
+            import re
+            
+            # Extract individual methods from hybrid specification
+            methods_str = re.search(r'\[(.+)\]', method)
+            if not methods_str:
+                raise ValueError(f"Invalid hybrid method format: {method}")
+            
+            individual_methods = [m.strip() for m in methods_str.group(1).split('+')]
+            
+            if len(individual_methods) < 2:
+                raise ValueError(f"Hybrid method must contain at least 2 methods: {method}")
+            
+            # Extract F0 for each method and combine
+            f0_estimates = []
+            weights = []
+            
+            for individual_method in individual_methods:
+                # Create temporary F0Extractor for this method
+                temp_extractor = F0Extractor(
+                    wav_path=self.wav_path,
+                    sample_rate=self.sample_rate,
+                    hop_length=self.hop_length,
+                    f0_min=self.f0_min,
+                    f0_max=self.f0_max,
+                    method=individual_method
+                )
+                
+                # Extract F0 for this method
+                temp_f0 = temp_extractor.extract_f0()
+                f0_estimates.append(temp_f0)
+                
+                # Assign weights based on method quality/reliability
+                if individual_method in ["rmvpe", "fcpe", "crepe-large", "crepe-full"]:
+                    weights.append(1.0)  # High quality methods get higher weight
+                elif individual_method in ["harvest", "yin", "pyin"]:
+                    weights.append(0.8)  # Good quality methods
+                else:
+                    weights.append(0.6)  # Other methods
+            
+            # Weighted average of F0 estimates
+            weights = np.array(weights)
+            weights = weights / np.sum(weights)  # Normalize weights
+            
+            # Calculate weighted average
+            f0_combined = np.average(f0_estimates, axis=0, weights=weights)
+            
+            # Apply median filtering to reduce outliers
+            try:
+                from scipy.signal import medfilt
+                f0 = medfilt(f0_combined, kernel_size=3)
+            except ImportError:
+                f0 = f0_combined  # Fallback if scipy is not available
         else:
             raise ValueError(f"Unknown method: {self.method}")
         return hz_to_cents(f0, librosa.midi_to_hz(0))
