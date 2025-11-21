@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.1] - 2025-11-21
+
+### 🎯 **Major Restructuring (Current)**
+- **[BREAKING]** **Complete program consolidation**: Moved all `programs/` content into main package
+- **[REMOVED]** PyPI installation recommendations from README
+- **[NEW]** Unified package structure with all modules accessible
+- **[UPDATED]** Local development focus with proper import paths
+- **[UPDATED]** MANIFEST.in for local development structure
+
+### 📦 **Package Consolidation**
+- **[MOVED]** `programs/applio_code/` → `src/advanced_rvc_inference/applio_code/`
+- **[MOVED]** `programs/kernels/` → `src/advanced_rvc_inference/kernels/`
+- **[MOVED]** `programs/music_separation_code/` → `src/advanced_rvc_inference/music_separation_code/`
+- **[MOVED]** `programs/training/` → `src/advanced_rvc_inference/training/`
+- **[REMOVED]** `programs/` directory entirely
+
+### 🔧 **Package Exports Update**
+- **[NEW]** `APPLIO_AVAILABLE` flag for Applio compatibility
+- **[NEW]** `TRAINING_AVAILABLE` flag for training capabilities  
+- **[NEW]** `SEPARATION_AVAILABLE` flag for music separation
+- **[NEW]** VoiceConverter, RVC_Inference_Pipeline exports
+- **[NEW]** DemucsInference, MDXInference, BSRoformerInference exports
+- **[NEW]** RVC_Trainer, SimpleTrainer, RVC_Dataset exports
+
+### 📚 **Documentation Update**
+- **[UPDATED]** README.md - Removed PyPI installation, focused on local development
+- **[UPDATED]** Installation methods - Local installation and Docker only
+- **[UPDATED]** Package structure documentation
+- **[UPDATED]** Development setup guide
+- **[UPDATED]** Import examples and API usage
+
+### 🛠️ **Development Experience**
+- **[IMPROVED]** Simplified module access through unified imports
+- **[IMPROVED]** Direct Python API usage examples
+- **[IMPROVED]** Local development installation process
+- **[IMPROVED]** Module availability checking with flags
+
 ## [3.4.0] - 2025-11-21
 
 ### 🎯 **Major Refactoring**

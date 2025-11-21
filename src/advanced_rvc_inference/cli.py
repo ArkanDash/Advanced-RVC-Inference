@@ -86,16 +86,29 @@ def main():
         print(f"Host: {args.host}")
     
     if args.mode == "web":
-        from .app import run_web_interface
-        run_web_interface(
-            theme=args.theme,
-            share=args.share,
-            port=args.port,
-            host=args.host,
-            debug=args.debug,
-            cpu_only=args.cpu_only,
-            models_path=args.models_path
-        )
+        # Import the local app module
+        import sys
+        import os
+        
+        # Add the parent directory to Python path to access app.py
+        parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.insert(0, parent_dir)
+        
+        try:
+            from app import run_web_interface
+            run_web_interface(
+                theme=args.theme,
+                share=args.share,
+                port=args.port,
+                host=args.host,
+                debug=args.debug,
+                cpu_only=args.cpu_only,
+                models_path=args.models_path
+            )
+        except ImportError as e:
+            print(f"Error importing app module: {e}")
+            print("Please ensure app.py is in the same directory as this package.")
+            sys.exit(1)
     elif args.mode == "cli":
         print("CLI mode selected - Feature coming soon")
         sys.exit(1)

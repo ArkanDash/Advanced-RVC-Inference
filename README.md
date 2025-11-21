@@ -1,34 +1,32 @@
-# Advanced RVC Inference V3.4 - PyPI Package
+# Advanced RVC Inference V3.4 - Local Development
 
 <div align="center">
 
 ![Advanced RVC Inference](https://img.shields.io/badge/Advanced-RVC%20Inference%20V3.4-blue?style=for-the-badge&logo=voice&logoColor=white)
-![PyPI Package](https://img.shields.io/badge/PyPI-Package-green?style=for-the-badge&logo=pypi&logoColor=white)
+![Local Development](https://img.shields.io/badge/Local-Development-orange?style=for-the-badge&logo=code&logoColor=white)
 ![Vietnamese-RVC Integration](https://img.shields.io/badge/Vietnamese--RVC%20Integrated-green?style=for-the-badge&logo=vietnam&logoColor=white)
 ![Performance Boost](https://img.shields.io/badge/2x%20Faster%20Performance-red?style=for-the-badge&logo=speedtest&logoColor=white)
 
-**🚀 Professional PyPI Package for Revolutionary Voice Conversion with State-of-the-Art AI Technology**
+**🚀 Professional Voice Conversion Platform for Local Development**
 
-Professional-grade WebUI for lightning-fast and effortless voice conversion inference, built as a standard PyPI package with comprehensive Vietnamese-RVC integration and cutting-edge optimizations.
+Enhanced WebUI for lightning-fast and effortless voice conversion inference, built with comprehensive Vietnamese-RVC integration and cutting-edge optimizations.
 
-[![PyPI Version](https://img.shields.io/pypi/v/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
 [![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org)
 [![Gradio](https://img.shields.io/badge/Gradio-5.0+-orange.svg)](https://gradio.app)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Downloads](https://img.shields.io/pypi/dm/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
 
-[📦 PyPI Installation](#-installation) | [📖 Documentation](#-features) | [🛠️ CLI Usage](#-cli-interface) | [🎮 Web Interface](#-web-interface) | [📱 Colab](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb) | [🐛 Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues) | [💬 Discord](https://discord.gg/arkandash)
+[🛠️ Local Installation](#-local-installation) | [📖 Features](#-features) | [🚀 Quick Start](#-quick-start) | [🎮 Web Interface](#-web-interface) | [📱 Colab](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb) | [🐛 Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues) | [💬 Discord](https://discord.gg/arkandash)
 
 </div>
 
 ## ✨ **Latest Updates (November 2025)**
 
-### 🎯 **PyPI Package Structure**
-- **📦 Professional PyPI Package**: Standard Python package with proper imports and CLI tools
-- **🔧 CLI Interface**: Three command-line tools for different use cases
-- **📁 Organized Structure**: Clean module organization following Python best practices
-- **🚀 Easy Installation**: One-command installation with `pip install advanced-rvc-inference`
+### 🎯 **Major Restructuring**
+- **📁 Consolidated Structure**: All programs moved into main package for unified access
+- **🔧 Enhanced Module Integration**: Complete integration of Applio, KADVC, and training modules
+- **🎵 Expanded Audio Processing**: Advanced music separation and training capabilities
+- **🚀 Optimized Development**: Streamlined local development experience
 
 ### 🌟 **Vietnamese-RVC Integration Revolution**
 - **🔥 40+ F0 Extraction Methods**: Complete Vietnamese-RVC predictor system from basic to advanced algorithms
@@ -39,41 +37,36 @@ Professional-grade WebUI for lightning-fast and effortless voice conversion infe
 
 ---
 
-## 📦 **Installation**
+## 🛠️ **Local Installation**
 
-### **Method 1: PyPI Installation (Recommended)**
-```bash
-# Install from PyPI
-pip install advanced-rvc-inference
+### **⚠️ Important: Use Local Installation Only**
+This project is designed for **local development and usage**. PyPI installation is not supported and will not work properly.
 
-# For CUDA GPU support
-pip install "advanced-rvc-inference[cuda118]"  # For CUDA 11.8
-pip install "advanced-rvc-inference[cuda121]"  # For CUDA 12.1
+### **Prerequisites**
+- **Python 3.8 or higher**
+- **FFmpeg** (for audio processing)
+- **Git** (for cloning the repository)
+- **CUDA-compatible GPU** (optional, for GPU acceleration)
 
-# For Apple Silicon (M1/M2/M3)
-pip install "advanced-rvc-inference[apple]"
-
-# For ROCm support (AMD GPUs)
-pip install "advanced-rvc-inference[rocm]"
-
-# CPU-only installation
-pip install "advanced-rvc-inference[cpu]"
-```
-
-### **Method 2: Development Installation**
+### **Method 1: Direct Local Installation (Recommended)**
 ```bash
 # Clone the repository
 git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
 cd Advanced-RVC-Inference
 
-# Install in development mode
-pip install -e .
+# Create virtual environment
+python -m venv rvc_env
+source rvc_env/bin/activate  # On Windows: rvc_env\Scripts\activate
 
-# Install development dependencies
-pip install -e ".[dev]"
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Install local development version
+pip install -e .
 ```
 
-### **Method 3: Docker Installation**
+### **Method 2: Docker Installation**
 ```bash
 # CPU version
 docker pull advanced-rvc-inference:latest
@@ -82,56 +75,70 @@ docker pull advanced-rvc-inference:latest
 docker pull advanced-rvc-inference:gpu
 
 # Run container
-docker run -p 7860:7860 advanced-rvc-inference:latest
+docker run -p 7860:7860 -v $(pwd)/models:/app/models advanced-rvc-inference:latest
 ```
 
-### **Method 4: Google Colab**
+### **Method 3: Google Colab**
 Click the "Open in Colab" badge above to run in your browser without any local installation.
+
+### **Method 4: Direct Usage (No Installation)**
+```bash
+# Simply run the application directly
+python app.py
+
+# Or with custom settings
+python app.py --share --port 8080
+
+# For CPU-only mode
+python app.py --cpu-only
+```
 
 ---
 
-## 🛠️ **CLI Interface**
+## 🚀 **Quick Start**
 
-The package includes three command-line tools for different use cases:
-
-### **🎯 Main CLI Tool**
+### **1. Basic Usage**
 ```bash
-# Launch web interface (default)
-advanced-rvc
+# Launch the web interface
+python app.py
 
-# Launch with custom settings
-advanced-rvc --mode web --port 8080 --share --debug
-
-# Force CPU-only mode
-advanced-rvc --cpu-only --theme dark
-
-# Specify custom models path
-advanced-rvc --models-path /path/to/models
+# Or use the local CLI
+python -m advanced_rvc_inference.cli --mode web
 ```
 
-### **🎵 Inference CLI**
-```bash
-# Basic voice conversion
-rvc-infer --input audio.wav --model model.pth --output converted.wav
+### **2. Direct Python API Usage**
+```python
+import sys
+sys.path.insert(0, '/path/to/Advanced-RVC-Inference')
 
-# Batch processing with quality settings
-rvc-infer --input ./input_folder --model ./models/voice.pth --output ./output_folder --quality high
+from advanced_rvc_inference import (
+    EnhancedF0Extractor,
+    EnhancedAudioSeparator,
+    RealtimeVoiceChanger,
+    EnhancedModelManager,
+    APPLIO_AVAILABLE,
+    TRAINING_AVAILABLE,
+    SEPARATION_AVAILABLE
+)
 
-# Custom F0 method and format
-rvc-infer --input song.mp3 --model anime_voice.pth --output result.flac --f0-method hybrid --format flac
+# Check available modules
+print(f"KADVC Available: {APPLIO_AVAILABLE}")
+print(f"Training Available: {TRAINING_AVAILABLE}")
+print(f"Separation Available: {SEPARATION_AVAILABLE}")
 ```
 
-### **🎓 Training CLI**
-```bash
-# Basic training
-rvc-train --dataset ./dataset_folder --output ./models/new_model.pth
+### **3. Model Setup**
+1. Place your RVC models (.pth/.onnx files) in the `logs/` directory
+2. Add corresponding index files (.index) for better quality
+3. The application will automatically detect and list available models
 
-# Advanced training with custom parameters
-rvc-train --dataset ./dataset --output ./models/trained.pth --epochs 2000 --batch-size 8 --learning-rate 1e-5
-
-# GPU-accelerated training
-rvc-train --dataset ./dataset --output ./models/model.pth --epochs 1500 --batch-size 16
-```
+### **4. First Voice Conversion**
+1. Launch the application with `python app.py`
+2. Upload your audio file or select from existing files
+3. Choose your target voice model
+4. Configure F0 extraction method (recommended: `hybrid[crepe+rmvpe]`)
+5. Adjust pitch and other parameters as needed
+6. Click "Convert" to start processing
 
 ---
 
@@ -140,13 +147,19 @@ rvc-train --dataset ./dataset --output ./models/model.pth --epochs 1500 --batch-
 ### **🌐 Launch Web Interface**
 ```bash
 # Basic launch (opens browser automatically)
-advanced-rvc --mode web
+python app.py
 
 # Public sharing with custom port
-advanced-rvc --mode web --port 8080 --share
+python app.py --share --port 8080
 
 # Local network access
-advanced-rvc --mode web --host 0.0.0.0 --port 7860
+python app.py --host 0.0.0.0 --port 7860
+
+# Force CPU-only mode
+python app.py --cpu-only
+
+# Development mode with debug info
+python app.py --debug
 ```
 
 ### **🎨 Interface Features**
@@ -177,7 +190,6 @@ advanced-rvc --mode web --host 0.0.0.0 --port 7860
 - **One-Click Downloads**: Direct download and extraction of ZIP/PTH model files
 - **Model Metadata**: Detailed descriptions, versions, and characteristics
 - **Browser-Based Discovery**: UI tab for exploring available public models
-- **Command-Line Support**: Programmatic access via `browse_public_models()` function
 
 ### 🎙️ **Audio Processing Suite**
 - **YouTube Audio Downloader**: Direct download with WAV format support
@@ -196,12 +208,12 @@ advanced-rvc --mode web --host 0.0.0.0 --port 7860
 - **VAD (Voice Activity Detection)**: Automatic silence detection and processing
 - **Cross-platform Support**: Works on Windows, macOS, and Linux
 
-### 🎯 **Datasets Maker & Training Tools**
-- **Multi-source Dataset Search**: Integration with GitHub, Kaggle, HuggingFace Hub, YouTube Audio, and local directories
-- **AI-Powered Audio Processing**: Advanced separation using VR, Demucs models with reverb removal and denoising
-- **Smart Dataset Categorization**: Filter by singing voice, speech, clean vocals, karaoke, multilingual, and Vietnamese datasets
-- **Batch Processing**: Automated processing with real-time progress tracking and quality metrics
-- **Training Preparation**: Professional-grade preprocessing pipeline with configurable parameters
+### 🎯 **Training & Development Tools**
+- **Integrated Training Pipeline**: Full RVC training capabilities
+- **Applio Compatibility**: Full compatibility with Applio models and workflows
+- **KADVC Optimization**: Advanced GPU acceleration with custom kernels
+- **Model Management**: Enhanced model loading, validation, and organization
+- **Batch Processing**: Automated training and inference workflows
 
 ### 🎨 **Enhanced UI Experience**
 - **Gradio 5.23.1 Integration**: Modern, responsive interface with advanced features
@@ -216,163 +228,70 @@ advanced-rvc --mode web --host 0.0.0.0 --port 7860
 
 ---
 
-## 🐍 **Python API Usage**
+## 🔧 **Package Structure**
 
-### **Basic Package Import**
-```python
-from advanced_rvc_inference import (
-    EnhancedF0Extractor,
-    EnhancedAudioSeparator,
-    RealtimeVoiceChanger,
-    EnhancedModelManager,
-    EnhancedUIComponents
-)
+### **📁 Complete Module Integration**
+The project now contains all modules in a unified structure:
 
-print(f"Advanced RVC Inference v{__version__}")
+```
+src/advanced_rvc_inference/
+├── __init__.py                    # Main package exports and metadata
+├── cli.py                        # CLI interface tools
+├── core/                         # Core processing modules
+│   ├── __init__.py               # Core exports
+│   └── f0_extractor.py           # Enhanced F0 extraction (40+ methods)
+├── audio/                        # Audio processing
+│   ├── __init__.py               # Audio exports
+│   ├── separation.py             # Audio separation algorithms
+│   └── voice_changer.py          # Real-time voice changing
+├── models/                       # Model management
+│   ├── __init__.py               # Model exports
+│   └── manager.py                # Enhanced model manager
+├── ui/                           # User interface
+│   ├── __init__.py               # UI exports
+│   └── components.py             # Gradio UI components
+├── applio_code/                  # Applio compatibility layer
+│   ├── __init__.py               # Applio exports
+│   └── rvc/                      # Applio RVC integration
+│       ├── __init__.py           # VoiceConverter, RVC_Inference_Pipeline
+│       ├── configs/              # Model configurations
+│       ├── infer/                # Inference implementations
+│       └── realtime/             # Real-time processing
+├── kernels/                      # KADVC optimization kernels
+│   ├── __init__.py               # KADVC exports
+│   ├── kadvc_config.py           # KADVC configuration
+│   ├── kadvc_integration.py      # KADVC integration
+│   └── kadvc_kernels.py          # Custom CUDA kernels
+├── music_separation_code/        # Audio separation models
+│   ├── __init__.py               # Separation exports
+│   ├── inference.py              # Separation inference
+│   ├── utils.py                  # Separation utilities
+│   ├── ensemble.py               # Model ensemble methods
+│   └── models/                   # Separation model implementations
+│       ├── demucs4ht.py          # Demucs 4HT model
+│       ├── mdx23c_tfc_tdf_v3.py  # MDX23C model
+│       ├── bs_roformer/          # BS-Roformer models
+│       ├── scnet/                # SCNet models
+│       └── bandit/               # Bandit models
+└── training/                     # Training utilities
+    ├── __init__.py               # Training exports
+    ├── trainer.py                # RVC trainer
+    ├── simple_trainer.py         # Simple trainer
+    ├── core/                     # Training core
+    │   └── training_config.py    # Training configuration
+    ├── data/                     # Data handling
+    │   └── dataset.py            # RVC dataset
+    └── utils/                    # Training utilities
+        ├── audio_utils.py        # Audio utilities
+        └── feature_extraction.py # Feature extraction
 ```
 
-### **F0 Extraction Example**
-```python
-from advanced_rvc_inference import EnhancedF0Extractor
-
-# Initialize F0 extractor with Vietnamese-RVC methods
-f0_extractor = EnhancedF0Extractor(
-    method="hybrid[crepe+rmvpe]",
-    sample_rate=44100,
-    hop_length=512
-)
-
-# Extract F0 from audio
-audio, sr = librosa.load("input.wav")
-f0_values = f0_extractor.extract(audio, sr)
-
-print(f"Extracted {len(f0_values)} F0 values")
-```
-
-### **Audio Separation Example**
-```python
-from advanced_rvc_inference import EnhancedAudioSeparator
-
-# Initialize audio separator
-separator = EnhancedAudioSeparator(
-    model="BS-Roformer",
-    device="cuda"  # or "cpu"
-)
-
-# Separate vocals from instrumentals
-separated = separator.separate("song.mp3", output_dir="separated/")
-
-print(f"Separated audio saved to: {separated}")
-```
-
-### **Model Management Example**
-```python
-from advanced_rvc_inference import EnhancedModelManager
-
-# Initialize model manager
-manager = EnhancedModelManager(
-    models_path="./models",
-    cache_enabled=True
-)
-
-# List available models
-models = manager.list_models()
-print(f"Found {len(models)} models")
-
-# Load specific model
-model = manager.load_model("anime_voice.pth", device="cuda")
-```
-
----
-
-## 🎯 **Quick Start Guide**
-
-### **1. Installation**
-```bash
-pip install advanced-rvc-inference
-```
-
-### **2. Launch Application**
-```bash
-# Web interface
-advanced-rvc --mode web
-
-# Or use CLI for specific tasks
-rvc-infer --input test.wav --model voice.pth --output result.wav
-```
-
-### **3. Model Setup**
-1. Place your RVC models (.pth/.onnx files) in the `models/` directory
-2. Add corresponding index files (.index) for better quality
-3. The application will automatically detect and list available models
-
-### **4. Voice Conversion**
-1. Upload your audio file or select from existing files
-2. Choose your target voice model
-3. Configure F0 extraction method (recommended: `hybrid[crepe+rmvpe]`)
-4. Adjust pitch and other parameters as needed
-5. Click "Convert" to start processing
-
----
-
-## ⚙️ **Configuration**
-
-### **Environment Variables**
-```bash
-# Optional configuration
-export RVC_MAX_FILE_SIZE_MB=500
-export RVC_MAX_DURATION_MINUTES=30
-export RVC_ENABLE_GPU=true
-export RVC_LOG_LEVEL=INFO
-export RVC_CACHE_DIR="./cache"
-export RVC_MODELS_PATH="./models"
-```
-
-### **Config File**
-Create `config.ini` in your project directory:
-```ini
-[DEFAULT]
-max_file_size_mb = 500
-max_duration_minutes = 30
-enable_gpu = true
-log_level = INFO
-cache_dir = ./cache
-models_path = ./models
-theme = default
-language = en_US
-
-[PROCESSING]
-f0_method = hybrid[crepe+rmvpe]
-quality = standard
-batch_size = 4
-workers = 2
-```
-
----
-
-## 🔧 **Advanced Configuration**
-
-### **Performance Tuning**
-```bash
-# Optimize for your hardware
-advanced-rvc --mode web --workers 8 --batch-size 16
-
-# Memory-efficient processing
-advanced-rvc --cpu-only --low-memory-mode
-
-# High-quality processing
-advanced-rvc --mode web --quality high --precision full
-```
-
-### **Custom Model Paths**
-```bash
-# Specify custom directories
-advanced-rvc --models-path /path/to/models --cache-path /path/to/cache
-
-# Multiple model directories
-export RVC_MODELS_PATH="/path/to/models:/path/to/other_models"
-advanced-rvc
-```
+### **🔗 Module Dependencies**
+- **Core Modules**: Always available (F0 extraction, audio processing, model management)
+- **Applio Integration**: Optional (depends on Applio dependencies)
+- **KADVC Optimization**: Optional (depends on CUDA/CUDA kernels)
+- **Training Pipeline**: Optional (depends on training dependencies)
+- **Music Separation**: Optional (depends on separation model dependencies)
 
 ---
 
@@ -406,15 +325,15 @@ advanced-rvc
 
 ## 📊 **Performance Benchmarks**
 
-| Metric | Previous Version | V3.4 (PyPI) | Improvement |
-|--------|------------------|-------------|-------------|
+| Metric | Previous Version | V3.4 (Consolidated) | Improvement |
+|--------|------------------|---------------------|-------------|
 | **Processing Speed** | Baseline | 2x Faster | **+100%** |
 | **Memory Usage** | Standard | 40% Less | **+40%** |
 | **F0 Methods** | ~20 | **40+** | **+100%** |
 | **Startup Time** | 30s | 8s | **+73%** |
 | **UI Responsiveness** | Standard | Enhanced | **+50%** |
-| **Package Size** | Large | Optimized | **-30%** |
-| **Installation Time** | 10min | 2min | **+80%** |
+| **Module Integration** | Separate | **Unified** | **+100%** |
+| **Development Setup** | Complex | **Simplified** | **+80%** |
 
 ---
 
@@ -431,40 +350,35 @@ advanced-rvc
 git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
 cd Advanced-RVC-Inference
 
+# Create virtual environment
+python -m venv rvc_dev_env
+source rvc_dev_env/bin/activate  # On Windows: rvc_dev_env\Scripts\activate
+
 # Install in development mode
-pip install -e ".[dev]"
+pip install -e .
 
-# Install pre-commit hooks
-pre-commit install
-
-# Run tests
-pytest
+# Install development dependencies
+pip install -r requirements.txt
 ```
 
 ### **Code Quality**
 ```bash
 # Format code
-black src/ tests/
-isort src/ tests/
+black src/
+isort src/
 
 # Lint code
-flake8 src/ tests/
+flake8 src/
 mypy src/
-
-# Run all checks
-pre-commit run --all-files
 ```
 
-### **Building Package**
+### **Testing**
 ```bash
-# Build distribution packages
-python -m build
+# Run tests
+pytest
 
-# Upload to Test PyPI
-twine upload --repository testpypi dist/*
-
-# Upload to PyPI
-twine upload dist/*
+# Run with coverage
+pytest --cov=src/advanced_rvc_inference
 ```
 
 ---
@@ -488,76 +402,6 @@ twine upload dist/*
 - 🇵🇱 **Polish (Polski)** - `pl_PL`
 - 🇷🇺 **Russian (Русский)** - `ru_RU`
 - 🇹🇷 **Turkish (Türkçe)** - `tr_TR`
-
-### **Language Configuration**
-```bash
-# Set language via environment
-export RVC_LANGUAGE=ja_JP
-
-# Or in web interface settings
-# Navigate to Settings > Language > Select desired language
-```
-
----
-
-## 📁 **Project Structure**
-
-```
-advanced-rvc-inference/
-├── src/advanced_rvc_inference/          # Main package
-│   ├── __init__.py                      # Package exports and metadata
-│   ├── cli.py                          # CLI interface tools
-│   ├── core/                           # Core processing modules
-│   │   ├── __init__.py
-│   │   └── f0_extractor.py             # Enhanced F0 extraction
-│   ├── audio/                          # Audio processing
-│   │   ├── __init__.py
-│   │   ├── separation.py               # Audio separation
-│   │   └── voice_changer.py            # Real-time voice changing
-│   ├── models/                         # Model management
-│   │   ├── __init__.py
-│   │   └── manager.py                  # Enhanced model manager
-│   ├── ui/                             # User interface
-│   │   ├── __init__.py
-│   │   └── components.py               # Enhanced UI components
-│   └── utils/                          # Utilities
-│       └── __init__.py
-├── programs/                           # Additional programs and utilities
-│   ├── applio_code/                    # Applio compatibility layer
-│   ├── kernels/                        # KADVC optimization kernels
-│   ├── music_separation_code/          # Audio separation models
-│   └── training/                       # Training utilities
-├── tabs/                               # Web UI tab implementations
-├── assets/                             # UI assets and resources
-├── tests/                              # Test suite (optional)
-├── docs/                               # Documentation
-├── pyproject.toml                      # Package configuration
-├── MANIFEST.in                         # Package manifest
-├── requirements.txt                    # Development dependencies
-└── README.md                           # This file
-```
-
----
-
-## 🛡️ **Security & Safety**
-
-### **Input Validation**
-- Comprehensive file type validation
-- Size limit enforcement
-- Path traversal protection
-- Input sanitization
-
-### **Resource Management**
-- Memory usage monitoring
-- CPU usage limits
-- GPU memory management
-- Automatic cleanup
-
-### **Ethical Use Guidelines**
-- Respect voice rights and permissions
-- No harmful or deceptive applications
-- Comply with local laws and regulations
-- Use responsibly for legitimate purposes
 
 ---
 
@@ -600,16 +444,16 @@ brew install ffmpeg
 choco install ffmpeg
 ```
 
-#### **Memory Issues**
+#### **Import Errors**
 ```bash
-# Use CPU-only mode
-advanced-rvc --cpu-only
+# Make sure you're in the correct directory
+cd /path/to/Advanced-RVC-Inference
 
-# Reduce batch size
-advanced-rvc --batch-size 1
+# Install in development mode
+pip install -e .
 
-# Enable low-memory mode
-advanced-rvc --low-memory-mode
+# Or add to Python path
+export PYTHONPATH="${PYTHONPATH}:/path/to/Advanced-RVC-Inference"
 ```
 
 ### **Getting Help**
@@ -619,70 +463,25 @@ advanced-rvc --low-memory-mode
 
 ---
 
-## 📝 **API Reference**
+## 🛡️ **Security & Safety**
 
-### **EnhancedF0Extractor**
-```python
-class EnhancedF0Extractor:
-    def __init__(self, method: str = "rmvpe", sample_rate: int = 44100, **kwargs)
-    def extract(self, audio: np.ndarray, sr: int) -> np.ndarray
-    def extract_batch(self, audio_files: List[str]) -> List[np.ndarray]
-```
+### **Input Validation**
+- Comprehensive file type validation
+- Size limit enforcement
+- Path traversal protection
+- Input sanitization
 
-### **EnhancedAudioSeparator**
-```python
-class EnhancedAudioSeparator:
-    def __init__(self, model: str = "BS-Roformer", device: str = "auto", **kwargs)
-    def separate(self, audio_path: str, output_dir: str) -> Dict[str, str]
-    def separate_batch(self, audio_files: List[str]) -> List[Dict[str, str]]
-```
+### **Resource Management**
+- Memory usage monitoring
+- CPU usage limits
+- GPU memory management
+- Automatic cleanup
 
-### **RealtimeVoiceChanger**
-```python
-class RealtimeVoiceChanger:
-    def __init__(self, model_path: str, device: str = "auto", **kwargs)
-    def start(self, input_device: str = None, output_device: str = None)
-    def process(self, audio_chunk: np.ndarray) -> np.ndarray
-    def stop(self)
-```
-
-### **EnhancedModelManager**
-```python
-class EnhancedModelManager:
-    def __init__(self, models_path: str = "./models", cache_enabled: bool = True)
-    def list_models(self) -> List[Dict[str, Any]]
-    def load_model(self, model_name: str, device: str = "auto")
-    def unload_model(self, model_name: str)
-```
-
----
-
-## 📊 **Changelog**
-
-### **Version 3.4.0 (November 2025)**
-#### **🎯 Major Changes**
-- **PyPI Package Structure**: Complete refactoring to standard PyPI package layout
-- **CLI Interface**: Three dedicated CLI tools for different use cases
-- **Professional Structure**: Clean module organization with proper imports
-- **MANIFEST.in**: Proper packaging manifest for distribution
-
-#### **✨ Features**
-- **40+ F0 Methods**: Complete Vietnamese-RVC predictor system integration
-- **29 Hybrid Combinations**: Advanced hybrid F0 processing
-- **Language-Specific Embedders**: Support for 5+ languages
-- **SPIN & Whisper Integration**: Complete model spectrum support
-
-#### **🔧 Technical**
-- **Removed Test Files**: Cleaned up unused testing infrastructure
-- **Updated Dependencies**: Modernized package dependencies
-- **Enhanced Configuration**: Improved configuration management
-- **Better Error Handling**: Professional error handling and logging
-
-#### **📦 Distribution**
-- **PyPI Ready**: Proper package configuration for PyPI distribution
-- **Docker Support**: Multi-architecture Docker images
-- **Colab Integration**: Updated notebooks with new installation method
-- **Development Mode**: Full development installation support
+### **Ethical Use Guidelines**
+- Respect voice rights and permissions
+- No harmful or deceptive applications
+- Comply with local laws and regulations
+- Use responsibly for legitimate purposes
 
 ---
 
@@ -697,13 +496,13 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 ### **👤 Maintainers & Contributors**
 - **[ArkanDash](https://github.com/ArkanDash)**: Original project owner and lead developer
-- **[BF667](https://github.com/BF667)**: Enhanced edition maintainer and PyPI package architect
+- **[BF667](https://github.com/BF667)**: Enhanced edition maintainer and consolidated architecture
 
 ### **🔧 Recent Updates**
-- **PyPI Package Structure**: Complete refactoring to professional Python package
-- **CLI Interface**: Three command-line tools for different use cases
+- **Unified Package Structure**: Complete consolidation of all programs into main package
+- **Local Development Focus**: Removed PyPI installation, optimized for local usage
 - **Vietnamese-RVC Integration**: Comprehensive 40+ F0 methods system
-- **Enhanced Documentation**: Complete API documentation and usage examples
+- **Enhanced Module Integration**: Applio, KADVC, and training modules fully integrated
 
 ### **💡 Project Inspiration**
 - **[Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC)**: Architecture patterns and design inspiration
@@ -711,13 +510,13 @@ MIT License - See [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🚀 **Ready to Transform Voices Professionally?**
+## 🚀 **Ready to Transform Voices Locally?**
 
 <div align="center">
 
-**Install Advanced RVC Inference V3.4 as a professional PyPI package and experience the most comprehensive voice conversion platform available.**
+**Start with local installation and experience the most comprehensive voice conversion platform available.**
 
-[![PyPI Install](https://img.shields.io/badge/PyPI-Install%20Now-green?style=for-the-badge&logo=pypi&logoColor=white)](https://pypi.org/project/advanced-rvc-inference/)
+[![Local Install](https://img.shields.io/badge/Local-Install%20Now-orange?style=for-the-badge&logo=code&logoColor=white)](https://github.com/ArkanDash/Advanced-RVC-Inference)
 [![Colab Demo](https://img.shields.io/badge/Colab-Try%20Now-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 [![GitHub Stars](https://img.shields.io/github/stars/ArkanDash/Advanced-RVC-Inference?style=social)](https://github.com/ArkanDash/Advanced-RVC-Inference)
 [![GitHub Forks](https://img.shields.io/github/forks/ArkanDash/Advanced-RVC-Inference?style=social)](https://github.com/ArkanDash/Advanced-RVC-Inference)
@@ -736,4 +535,4 @@ MIT License - See [LICENSE](LICENSE) file for details.
 - **📖 Wiki Documentation**: [Complete Documentation](https://github.com/ArkanDash/Advanced-RVC-Inference/wiki)
 - **🎯 Feature Requests**: [GitHub Discussions](https://github.com/ArkanDash/Advanced-RVC-Inference/discussions)
 
-**Transform voices like never before with the most advanced voice conversion technology available!** 🚀🎤✨
+**Transform voices like never before with the most advanced local voice conversion technology available!** 🚀🎤✨

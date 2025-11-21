@@ -109,10 +109,10 @@ Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference"
 "Bug Tracker" = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
 "Changelog" = "https://github.com/ArkanDash/Advanced-RVC-Inference/blob/main/CHANGELOG.md"
 
-[project.scripts]
-advanced-rvc = "advanced_rvc_inference.cli:main"
-rvc-infer = "advanced_rvc_inference.cli:inference_cli"
-rvc-train = "advanced_rvc_inference.cli:training_cli"
+# [project.scripts]  # Commented out for local development
+# advanced-rvc = "advanced_rvc_inference.cli:main"
+# rvc-infer = "advanced_rvc_inference.cli:inference_cli"
+# rvc-train = "advanced_rvc_inference.cli:training_cli"
 
 [tool.setuptools]
 packages = ["advanced_rvc_inference"]

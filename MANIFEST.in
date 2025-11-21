@@ -1,5 +1,5 @@
-# Advanced RVC Inference PyPI Package Manifest
-# Version 3.4.0 - Professional PyPI Package Distribution
+# Advanced RVC Inference Local Development Manifest
+# Version 3.4.0 - Local Development Distribution
 
 # Core package files
 include README.md
@@ -10,11 +10,13 @@ include *.ini
 include *.json
 include *.toml
 include *.txt
+include requirements.txt
 
 # Documentation files
 include *.md
 recursive-include docs *.md
 include CHANGELOG.md
+include DEVELOPMENT.md
 include CONTRIBUTING.md
 include CODE_OF_CONDUCT.md
 
@@ -23,15 +25,25 @@ include config.py
 include config.ini
 include config_enhanced.json
 include docker-compose.yml
+include Dockerfile.*
+include *.sh
+include *.bat
 
 # Assets and resources
 recursive-include assets *
 recursive-include src/advanced_rvc_inference/assets *
+recursive-include tabs *
+recursive-include app.py
+recursive-include enhanced_app.py
 
-# Programs module (additional utilities)
-recursive-include programs *.py
-recursive-include programs *.json
-recursive-include programs *.md
+# Main package structure (all modules now consolidated)
+recursive-include src/advanced_rvc_inference *.py
+recursive-include src/advanced_rvc_inference *.json
+recursive-include src/advanced_rvc_inference *.md
+
+# Include Colab notebooks
+include *.ipynb
+include *.ipynb.backup
 
 # Exclude build artifacts and cache
 global-exclude *.pyc
@@ -59,3 +71,7 @@ global-exclude .DS_Store
 global-exclude Thumbs.db
 global-exclude *.tmp
 global-exclude *.temp
+
+# Exclude old structure references
+global-exclude programs/*
+global-exclude programs/
