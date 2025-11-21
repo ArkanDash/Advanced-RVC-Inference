@@ -160,24 +160,9 @@ warn_unreachable = true
 strict_equality = true
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = "-v --tb=short --strict-markers --cov=src/advanced_rvc_inference --cov-report=term-missing"
+addopts = "-v --tb=short"
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
-]
-
-[tool.coverage.run]
-source = ["src/advanced_rvc_inference"]
-omit = [
-    "tests/*",
-    "*/tests/*",
-    "setup.py",
-    "*/migrations/*",
-    "*/venv/*",
-    "*/virtualenv/*",
 ]

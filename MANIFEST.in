@@ -1,0 +1,23 @@
+# Include package data
+include README.md
+include LICENSE
+include ENHANCEMENT_SUMMARY.md
+include *.py
+include *.ini
+include *.json
+
+# Include assets
+recursive-include src/advanced_rvc_inference/assets *
+
+# Include documentation
+recursive-include *.md
+recursive-include docs *.md
+
+# Exclude test files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *~
+global-exclude .git*
+global-exclude .coverage
+global-exclude .pytest_cache*
+global-exclude __pycache__
