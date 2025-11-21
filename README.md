@@ -1,22 +1,39 @@
-# Advanced RVC Inference 3.3
+# Enhanced Advanced RVC Inference V3.4
 
 <div align="center">
 
-**Revolutionizing Voice Conversion with State-of-the-Art AI Technology**
+![Advanced RVC Inference](https://img.shields.io/badge/Advanced-RVC%20Inference%20V3.4-blue?style=for-the-badge&logo=voice&logoColor=white)
+![Vietnamese-RVC Integration](https://img.shields.io/badge/Vietnamese--RVC%20Integrated-green?style=for-the-badge&logo=vietnam&logoColor=white)
+![Performance Boost](https://img.shields.io/badge/2x%20Faster%20Performance-red?style=for-the-badge&logo=speedtest&logoColor=white)
+
+**🚀 Revolutionary Voice Conversion with State-of-the-Art AI Technology**
+
+Enhanced WebUI for lightning-fast and effortless voice conversion inference, built with comprehensive Vietnamese-RVC integration and cutting-edge optimizations.
 
 [![Open In Colab](https://img.shields.io/badge/Open%20in%20Colab-yellow?style=for-the-badge&logo=google-colab&logoColor=white)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.8%2B-green?style=for-the-badge&logo=python)](https://python.org)
-[![Gradio](https://img.shields.io/badge/Gradio-5.23.1-orange?style=for-the-badge&logo=gradio)](https://gradio.app)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.4%2B-red?style=for-the-badge&logo=pytorch)](https://pytorch.org)
+[![Python](https://img.shields.io/badge/Python-3.8+-green.svg)](https://python.org)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org)
+[![Gradio](https://img.shields.io/badge/Gradio-5.0+-orange.svg)](https://gradio.app)
+[![Docker](https://img.shields.io/badge/Docker-Supported-blue.svg)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+[🎤 Live Demo](#quick-start) | [📖 Documentation](#features) | [🔧 Installation](#installation) | [🐛 Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues) | [💬 Discord](https://discord.gg/arkandash)
 
 </div>
 
----
+## ✨ What's New in V3.4
 
-**The Ultimate Voice Conversion Experience - Enhanced with KADVC Optimizations, Clean Architecture, and 2x Faster Processing**
+### 🎯 Revolutionary Improvements
 
-## 🎯 What's New in V3.3
+- **🔥 2x Performance Boost**: Enhanced KADVC (Kernel Advanced Voice Conversion) optimization system
+- **🌍 Vietnamese-RVC Integration**: Complete integration with Vietnamese-RVC architecture and optimizations
+- **⚡ 40+ F0 Extraction Methods**: Expanded from 20 to 40+ methods with 29 hybrid combinations
+- **🔀 Advanced Audio Separation**: Multi-architecture support (MDX-Net, BS-Roformer, Demucs, MDXC)
+- **🎚️ Real-time Voice Changer**: Low-latency processing with VAD and audio device management
+- **📦 Enhanced Model Management**: Multi-source downloads, validation, and organization
+- **🐳 Docker Support**: Complete containerization for CPU, CUDA, ROCm, and Apple Silicon
+- **🎨 Modern UI**: Enhanced interface with 16+ languages and theme support
+- **🔧 CLI Interface**: Command-line tools for batch processing and automation
 
 ### 🚀 **Vietnamese-RVC Integration Revolution**
 - **40+ F0 Extraction Methods**: Complete Vietnamese-RVC predictor system from basic to advanced algorithms

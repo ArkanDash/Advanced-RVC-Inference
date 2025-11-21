@@ -1,0 +1,183 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "advanced-rvc-inference"
+version = "3.4.0"
+description = "Advanced RVC Inference with Vietnamese-RVC Integration and Performance Optimizations"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "ArkanDash", email = "arkandash@example.com"},
+    {name = "BF667", email = "bf667@example.com"}
+]
+maintainers = [
+    {name = "BF667", email = "bf667@example.com"}
+]
+keywords = ["voice-conversion", "rvc", "audio-processing", "ai", "ml"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=1.12.0",
+    "torchaudio>=0.12.0",
+    "torchvision>=0.13.0",
+    "gradio>=5.0.0",
+    "numpy>=1.21.0",
+    "scipy>=1.7.0",
+    "librosa>=0.9.0",
+    "soundfile>=0.10.0",
+    "pydub>=0.25.0",
+    "ffmpeg-python>=0.2.0",
+    "ffmpeg>=4.4",
+    "requests>=2.28.0",
+    "tqdm>=4.64.0",
+    "colorama>=0.4.4",
+    "pedalboard>=0.5.0",
+    "onnx>=1.12.0",
+    "onnxruntime>=1.13.0",
+    "transformers>=4.20.0",
+    "fairseq>=0.12.0",
+    "pyyaml>=6.0",
+    "Pillow>=8.0.0",
+    "psutil>=5.8.0",
+    "GPUtil>=1.4.0",
+    "yt-dlp>=2022.9.1",
+    "huggingface-hub>=0.12.0",
+    "gdown>=4.5.0",
+    "pyannote.audio>=3.0.0",
+    "noisereduce>=2.0.0",
+    "python-audio-separator>=0.39.0",
+    "hubert-librispeech>=1.0",
+    "rvc-project>=0.1.0",
+    "whisper-timestamped>=1.10.0",
+    "kaldi>=0.1.0",
+    "webrtcvad>=2.0.0",
+    "pygobject>=3.0.0",
+    "pyaudio>=0.2.11",
+    "sounddevice>=0.4.5",
+    "asyncio>=3.4.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=22.0.0",
+    "isort>=5.10.0",
+    "flake8>=5.0.0",
+    "mypy>=1.0.0",
+    "pre-commit>=2.20.0",
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+]
+cuda118 = [
+    "torch>=1.12.0 torchvision>=0.13.0 torchaudio>=0.12.0 --index-url https://download.pytorch.org/whl/cu118"
+]
+cuda121 = [
+    "torch>=2.0.0 torchvision>=0.15.0 torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/cu121"
+]
+rocm = [
+    "torch>=2.0.0 torchvision>=0.15.0 torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/rocm5.4.3"
+]
+cpu = [
+    "torch==2.0.0 torchvision==0.15.0 torchaudio==2.0.0 --index-url https://download.pytorch.org/whl/cpu"
+]
+apple = [
+    "torch>=2.0.0 torchvision>=0.15.0 torchaudio>=2.0.0 --index-url https://download.pytorch.org/whl/cpu"
+]
+
+[project.urls]
+Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
+Documentation = "https://arkan-dash.github.io/Advanced-RVC-Inference/"
+Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference"
+"Bug Tracker" = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
+"Changelog" = "https://github.com/ArkanDash/Advanced-RVC-Inference/blob/main/CHANGELOG.md"
+
+[project.scripts]
+advanced-rvc = "advanced_rvc_inference.cli:main"
+rvc-infer = "advanced_rvc_inference.cli:inference_cli"
+rvc-train = "advanced_rvc_inference.cli:training_cli"
+
+[tool.setuptools]
+packages = ["advanced_rvc_inference"]
+
+[tool.setuptools.package-dir]
+"advanced_rvc_inference" = "src/advanced_rvc_inference"
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["advanced_rvc_inference"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers --cov=src/advanced_rvc_inference --cov-report=term-missing"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+[tool.coverage.run]
+source = ["src/advanced_rvc_inference"]
+omit = [
+    "tests/*",
+    "*/tests/*",
+    "setup.py",
+    "*/migrations/*",
+    "*/venv/*",
+    "*/virtualenv/*",
+]
