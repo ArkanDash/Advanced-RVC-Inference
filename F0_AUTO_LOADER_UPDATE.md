@@ -2,12 +2,12 @@
 
 ## Summary
 
-Successfully updated the `programs/applio_code/rvc/infer/pipeline.py` file to use the F0 model auto-loader system, ensuring consistent F0 model loading across the entire codebase.
+Successfully updated the `applio_code/rvc/infer/pipeline.py` file to use the F0 model auto-loader system, ensuring consistent F0 model loading across the entire codebase.
 
 ## Changes Made
 
 ### 1. **Pipeline Integration**
-- **File**: `programs/applio_code/rvc/infer/pipeline.py`
+- **File**: `applio_code/rvc/infer/pipeline.py`
 - **Updated Methods**:
   - `get_f0_hybrid()` - Now uses auto-loader for RMVPE, FCPE, and other models
   - `get_f0()` - Now uses auto-loader system for consistent model loading
@@ -60,7 +60,7 @@ Created integration test (`test_integration.py`) to verify:
 
 ## Files Updated
 
-- `programs/applio_code/rvc/infer/pipeline.py` - Main integration changes
+- `applio_code/rvc/infer/pipeline.py` - Main integration changes
 - `.gitignore` - Added model file exclusion
 - `test_integration.py` - Integration testing
 

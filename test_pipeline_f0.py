@@ -10,8 +10,8 @@ import torch
 # Add the project root to Python path
 sys.path.append('/workspace/Advanced-RVC-Inference')
 
-from programs.applio_code.rvc.infer.pipeline import Pipeline
-from programs.applio_code.rvc.configs.config import Config
+from applio_code.rvc.infer.pipeline import Pipeline
+from applio_code.rvc.configs.config import Config
 
 def test_f0_methods():
     """Test different F0 extraction methods using the updated pipeline"""

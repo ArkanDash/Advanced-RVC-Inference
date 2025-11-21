@@ -12,7 +12,7 @@ def download_prerequisites():
     try:
         # Execute the prerequisites download script
         result = subprocess.run(
-            ["python", "programs/applio_code/rvc/lib/tools/prerequisites_download.py"],
+            ["python", "applio_code/rvc/lib/tools/prerequisites_download.py"],
             check=True,
             capture_output=True,
             text=True

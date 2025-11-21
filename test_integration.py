@@ -14,7 +14,7 @@ def test_auto_loader_import():
     print("Testing F0 model auto-loader integration...")
     
     try:
-        from programs.applio_code.rvc.lib.tools.f0_model_auto_loader import get_auto_loader
+        from applio_code.rvc.lib.tools.f0_model_auto_loader import get_auto_loader
         print("✅ Auto-loader import: SUCCESS")
         
         # Test getting auto-loader instance
@@ -43,7 +43,7 @@ def test_pipeline_import():
     print("\nTesting updated pipeline import...")
     
     try:
-        from programs.applio_code.rvc.infer.pipeline import Pipeline
+        from applio_code.rvc.infer.pipeline import Pipeline
         print("✅ Pipeline import: SUCCESS")
         
         # Test that Pipeline class has expected methods
@@ -66,7 +66,7 @@ def test_model_files():
     
     print("\nTesting F0 model files...")
     
-    models_dir = "/workspace/Advanced-RVC-Inference/programs/applio_code/models/predictors"
+    models_dir = "/workspace/Advanced-RVC-Inference/applio_code/models/predictors"
     
     if os.path.exists(models_dir):
         print(f"✅ Models directory exists: {models_dir}")

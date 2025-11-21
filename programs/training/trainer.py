@@ -51,8 +51,8 @@ class AdvancedRVCTrainer:
         """Setup the RVC model for training"""
         try:
             # Import RVC model components
-            from programs.applio_code.rvc.lib.models import SynthesizerTrn
-            from programs.applio_code.rvc.lib.models import DiscriminatorV3
+            from applio_code.rvc.lib.models import SynthesizerTrn
+            from applio_code.rvc.lib.models import DiscriminatorV3
             
             # Model parameters based on configuration
             if self.config.model_version == "v1":

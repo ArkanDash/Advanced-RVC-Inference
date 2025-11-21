@@ -45,8 +45,8 @@ from audio_separator.separator import Separator
 import yaml
 
 # Project imports
-from programs.applio_code.rvc.infer.infer import VoiceConverter
-from programs.applio_code.rvc.lib.tools.model_download import model_download_pipeline
+from applio_code.rvc.infer.infer import VoiceConverter
+from applio_code.rvc.lib.tools.model_download import model_download_pipeline
 from programs.music_separation_code.inference import proc_file
 from assets.presence.discord_presence import RPCManager, track_presence
 

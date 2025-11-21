@@ -12,7 +12,7 @@ from datetime import datetime
 
 
 from core import download_model, get_voice_models_list
-from programs.applio_code.rvc.lib.utils import format_title
+from applio_code.rvc.lib.utils import format_title
 from assets.i18n.i18n import I18nAuto
 
 now_dir = os.getcwd()
