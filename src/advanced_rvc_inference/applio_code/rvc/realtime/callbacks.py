@@ -5,8 +5,8 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from programs.applio_code.rvc.realtime.audio import Audio
-from programs.applio_code.rvc.realtime.core import VoiceChanger
+from .audio import Audio
+from .core import VoiceChanger
 
 
 class AudioCallbacks:
