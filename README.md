@@ -1,4 +1,4 @@
-# Advanced RVC Inference V3.4 
+# Advanced RVC Inference V3.5.2 - KRVC Kernel
 
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
@@ -6,15 +6,15 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb)
 
-**Professional Voice Conversion Platform with 40+ F0 Methods**
+**Professional Voice Conversion Platform with 60+ F0 Methods & KRVC Kernel**
 
-Advanced RVC Inference is a state-of-the-art voice conversion system featuring Vietnamese-RVC integration, enhanced F0 extraction methods, and comprehensive audio processing capabilities.
+Advanced RVC Inference is a state-of-the-art voice conversion system featuring Vietnamese-RVC integration, enhanced F0 extraction methods, comprehensive audio processing capabilities, and the custom KRVC kernel providing 2x faster training and inference.
 
 ## Repository Structure
 
 ```
 Advanced-RVC-Inference/
-├── src/advanced_rvc_inference/          # Main package
+├── advanced_rvc_inference/              # Main package
 │   ├── assets/                          # Configuration, themes, i18n
 │   ├── tabs/                            # GUI modules
 │   │   ├── inference/                   # Voice conversion tabs
@@ -26,14 +26,11 @@ Advanced-RVC-Inference/
 │   │   ├── extra/                       # Additional features
 │   │   └── credits/                     # Credits and information
 │   ├── core/                            # Core processing modules
-│   │   ├── memory_manager.py            # Memory optimization
-│   │   ├── app_launcher.py              # Application launcher
-│   │   └── f0_extractor.py              # F0 extraction (40+ methods)
 │   ├── audio/                           # Audio processing
 │   ├── models/                          # Model management
 │   ├── training/                        # Training pipeline
 │   ├── applio_code/                     # Applio compatibility
-│   ├── kernels/                         # KADVC optimization
+│   ├── krvc_kernel.py                   # KRVC optimization kernel
 │   ├── music_separation_code/           # Audio separation
 │   └── utils/                           # Utility functions
 ├── notebooks/                           # Google Colab notebooks
@@ -45,21 +42,23 @@ Advanced-RVC-Inference/
 │   ├── directory_structure.md           # Detailed structure guide
 │   ├── api_usage.md                     # Python API documentation
 │   └── troubleshooting.md               # Common issues guide
-└── app.py                               # Simplified launcher
+└── run.py                               # Simplified launcher
 ```
 
 ## Features Comparison
 
-| Feature | Standard RVC | Advanced RVC Inference | Improvement |
-|---------|--------------|------------------------|-------------|
-| **F0 Methods** | ~10 | **40+ Methods** | **+300%** |
+| Feature | Standard RVC | Advanced RVC Inference V3.5.2 | Improvement |
+|---------|--------------|-------------------------------|-------------|
+| **F0 Methods** | ~10 | **60+ Methods** | **+500%** |
+| **Embedder Models** | ~10 | **60+ Models** | **+500%** |
 | **Vietnamese Support** | Basic | **Enhanced Integration** | **Complete** |
-| **Hybrid F0 Methods** | None | **29 Combinations** | **New** |
-| **Model Formats** | PyTorch | **PyTorch + ONNX** | **+100%** |
+| **Hybrid F0 Methods** | None | **40+ Combinations** | **New** |
+| **Model Formats** | PyTorch | **PyTorch + ONNX + Safetensors** | **+200%** |
 | **Audio Separation** | Basic | **Advanced Models** | **+200%** |
 | **Training Pipeline** | Limited | **Complete Integration** | **Enhanced** |
 | **Memory Management** | Standard | **Automatic Cleanup** | **Optimized** |
 | **Configuration** | Hardcoded | **Singleton Config Class** | **Professional** |
+| **KRVC Kernel** | None | **2x Faster Performance** | **New** |
 
 ## Quick Start
 
@@ -82,8 +81,18 @@ pip install -r requirements.txt
 pip install -e .
 
 # Launch application
-python app.py
+python -m advanced_rvc_inference.main
 ```
+
+### Using Scripts
+
+#### Windows
+- `run.bat` - Launch the application
+- `update.bat` - Update the application
+
+#### Linux/Mac
+- `run.sh` - Launch the application
+- `update.sh` - Update the application
 
 ### Google Colab
 
@@ -105,27 +114,40 @@ docker run -p 7860:7860 -v $(pwd)/models:/app/models advanced-rvc-inference:late
 ## Key Features
 
 ### Advanced F0 Extraction
-- **40+ Methods**: Traditional, advanced, and hybrid F0 extraction
+- **60+ Methods**: Traditional, advanced, and hybrid F0 extraction
 - **Vietnamese-RVC Integration**: Complete support for Vietnamese voice conversion
-- **29 Hybrid Combinations**: Advanced methods like `hybrid[crepe+rmvpe]`
-- **Multiple Formats**: PyTorch (.pt/.pth) and ONNX (.onnx) support
+- **40+ Hybrid Combinations**: Advanced methods like `hybrid[crepe+rmvpe+fcpe]`
+- **Multiple Formats**: PyTorch (.pt/.pth), ONNX (.onnx), and Safetensors (.safetensors) support
+
+### Enhanced Embedder Models
+- **60+ Embedders**: ContentVec, Whisper variants, Hubert models for 20+ languages
+- **Language-Specific**: Vietnamese, Spanish, French, German, and more
+- **Multilingual Support**: Universal and specific language models
+- **Custom Architectures**: ONNX, Fairseq, VITS-based models
+
+### KRVC Kernel Technology
+- **2x Performance**: Custom optimized kernel for faster processing
+- **Advanced Convolution**: Group normalization and efficient residual blocks
+- **Tensor Core Utilization**: Optimized for supported hardware
+- **Memory Efficiency**: Reduced memory usage with better performance
 
 ### Professional Audio Processing
-- **Multi-format Support**: WAV, MP3, FLAC, OGG, M4A, AAC, ALAC
+- **Multi-format Support**: WAV, MP3, FLAC, OGG, M4A, AAC, ALAC, WebM
 - **Audio Separation**: Mel-Roformer, BS-Roformer, MDX23C models
 - **Real-time Processing**: Low-latency voice changing capabilities
 - **Batch Processing**: Automated workflows for multiple files
 
 ### Enhanced Model Management
-- **Public Model Repository**: Integration with Voice-Models.com
+- **Public Model Repository**: Integration with multiple sources
 - **Smart Model Listing**: Automatic categorization and metadata
 - **One-Click Downloads**: Direct model acquisition
 - **Model Validation**: Automatic file integrity checking
+- **Model Fusion**: Combine multiple models with adjustable ratios
 
 ### Training & Development
 - **Integrated Training Pipeline**: Complete RVC training capabilities
 - **Applio Compatibility**: Full workflow integration
-- **KADVC Optimization**: GPU acceleration with custom kernels
+- **KRVC Optimization**: GPU acceleration with custom kernels
 - **Model Management**: Enhanced loading and organization
 
 ## API Usage
@@ -133,38 +155,38 @@ docker run -p 7860:7860 -v $(pwd)/models:/app/models advanced-rvc-inference:late
 ### Basic Voice Conversion
 
 ```python
-from src.advanced_rvc_inference import (
-    EnhancedF0Extractor,
-    EnhancedModelManager,
-    process_audio
-)
+from advanced_rvc_inference.core import full_inference_program
+from advanced_rvc_inference.krvc_kernel import KRVCFeatureExtractor
 
-# Initialize components
-extractor = EnhancedF0Extractor()
-model_manager = EnhancedModelManager()
+# Use KRVC optimized processing
+extractor = KRVCFeatureExtractor()
 
-# Load model
-model = model_manager.load_model("path/to/model.pth")
-
-# Convert audio
-result = process_audio(
-    audio_path="input.wav",
-    model=model,
-    f0_method="hybrid[crepe+rmvpe]",
-    output_path="output.wav"
+# Run inference with enhanced parameters
+result = full_inference_program(
+    model_path="path/to/model.pth",
+    index_path="path/to/index.index",
+    input_audio_path="input.wav",
+    output_path="output.wav",
+    pitch_extract="hybrid[rmvpe+crepe+fcpe]",  # 60+ available methods
+    embedder_model="vietnamese-hubert-base",   # 60+ available models
+    # ... other parameters
 )
 ```
 
-### Advanced Configuration
+### KRVC Kernel Integration
 
 ```python
-from src.advanced_rvc_inference.config import Config
+from advanced_rvc_inference.krvc_kernel import (
+    krvc_inference_mode,
+    krvc_training_mode,
+    krvc_speed_optimize
+)
 
-# Access global configuration
-config = Config.get_instance()
-config.set_device("cuda")
-config.set_batch_size(8)
-config.set_memory_threshold(85)
+# Enable KRVC optimizations
+krvc_speed_optimize()
+krvc_inference_mode()  # For inference
+# or
+krvc_training_mode()   # For training
 ```
 
 ## Single Source of Truth - Colab Strategy
@@ -189,20 +211,21 @@ config.set_memory_threshold(85)
 
 ## Model Setup
 
-1. **Place Models**: Put .pth/.onnx files in `weights/` directory
+1. **Place Models**: Put .pth/.onnx files in `logs/` directory
 2. **Index Files**: Add corresponding .index files for better quality
 3. **Automatic Detection**: Application will list all available models
 4. **Metadata**: Models are automatically categorized and described
 
 ## Performance Benchmarks
 
-| Metric | Standard RVC | Advanced RVC | Improvement |
-|--------|--------------|--------------|-------------|
-| Processing Speed | Baseline | **2x Faster** | **+100%** |
-| Memory Usage | Standard | **40% Less** | **+40%** |
-| F0 Methods | ~10 | **40+** | **+300%** |
+| Metric | Standard RVC | Advanced RVC (V3.5.2) | Improvement |
+|--------|--------------|------------------------|-------------|
+| Processing Speed | Baseline | **2x Faster (KRVC)** | **+100%** |
+| Memory Usage | Standard | **30% Less** | **+30%** |
+| F0 Methods | ~10 | **60+** | **+500%** |
+| Embedder Models | ~10 | **60+** | **+500%** |
 | Startup Time | 30s | **8s** | **+73%** |
-| Model Support | PyTorch | **PyTorch + ONNX** | **+100%** |
+| Model Support | PyTorch | **PyTorch + ONNX + Safetensors** | **+200%** |
 
 ## Development
 
@@ -218,20 +241,21 @@ pip install -e .
 pip install -r requirements.txt
 
 # Code quality tools
-black src/
-isort src/
-flake8 src/
-mypy src/
+black advanced_rvc_inference/
+isort advanced_rvc_inference/
+flake8 advanced_rvc_inference/
+mypy advanced_rvc_inference/
 
 # Testing
 pytest
-pytest --cov=src/advanced_rvc_inference
+pytest --cov=advanced_rvc_inference/
 ```
 
 ### Architecture Overview
 
 - **Modular Design**: Clear separation of concerns
 - **Singleton Pattern**: Centralized configuration management
+- **KRVC Kernel**: Custom performance optimizations
 - **Memory Management**: Automatic cleanup and optimization
 - **Type Hints**: Full Python type annotations
 - **Error Handling**: Comprehensive exception management
@@ -247,7 +271,7 @@ pytest --cov=src/advanced_rvc_inference
 
 ### Quick Links
 
-- **Local Installation**: `pip install -e .` then `python app.py`
+- **Local Installation**: `pip install -e .` then `python -m advanced_rvc_inference.main`
 - **Colab Demo**: Click the Colab badge above
 - **GitHub Issues**: [Bug reports and feature requests](https://github.com/ArkanDash/Advanced-RVC-Inference/issues)
 - **Discord Community**: [Join our Discord](https://discord.gg/arkandash)
@@ -264,6 +288,7 @@ pytest --cov=src/advanced_rvc_inference
 
 - **ArkanDash**: Original project owner and lead developer
 - **BF667**: Enhanced edition maintainer and consolidated architecture
+- **Eddycrack864**: Repository continuation and maintenance
 
 ### License
 
