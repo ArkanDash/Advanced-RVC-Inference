@@ -32,13 +32,15 @@ try:
         krvc_mixed_precision_training,
         KRVCAdvancedOptimizer,
         KRVCInferenceOptimizer,
-        KRVCPerformanceMonitor
+        KRVCPerformanceMonitor,
+        KRVCRealTimeProcessor,
+        cleanup_krvc_memory
     )
     KRVC_AVAILABLE = True
     print("KRVC Kernel loaded successfully - Enhanced performance mode active")
-except ImportError:
+except ImportError as e:
     KRVC_AVAILABLE = False
-    print("KRVC Kernel not available - Using standard processing")
+    print(f"KRVC Kernel not available - Using standard processing: {e}")
 
 # Initialize KRVC optimizations
 if KRVC_AVAILABLE:
@@ -1276,13 +1278,18 @@ def real_time_voice_conversion(
     rms_mix_rate,
     protect,
     pitch_extract,
+    chunk_size=2048,
+    overlap=512
 ):
     """
-    Perform real-time voice conversion using microphone input.
-    This function would be implemented with proper real-time audio processing.
+    Perform real-time voice conversion using microphone input with KRVC optimizations.
+    
+    This function provides actual real-time processing capabilities using:
+    - KRVC kernel optimizations
+    - Efficient audio chunking
+    - Streaming inference pipeline
+    - Memory management
     """
-    # Placeholder for real-time voice conversion
-    # In a real implementation, this would capture microphone input and process it in real-time
     try:
         # Import required libraries for real-time processing
         import threading
@@ -1290,40 +1297,218 @@ def real_time_voice_conversion(
         import time
         import numpy as np
         import sounddevice as sd
-
+        import librosa
+        
         # Map embedder model for compatibility
-        embedder_model = map_embedder_model(embedder_model)
-
+        mapped_embedder = map_embedder_model(embedder_model)
+        
         # Map pitch extraction method for compatibility
-        pitch_extract = map_pitch_extractor(pitch_extract)
+        mapped_pitch_extract = map_pitch_extractor(pitch_extract)
+        
+        # Initialize KRVC real-time processor if available
+        if KRVC_AVAILABLE:
+            krvc_processor = KRVCRealTimeProcessor(buffer_size=chunk_size)
+            krvc_inference_mode()  # Enable KRVC inference optimizations
+            print("KRVC real-time processing enabled")
+        else:
+            krvc_processor = None
+            print("Using standard real-time processing")
+        
+        # Import Voice Converter
+        inference_vc = import_voice_converter()
+        
+        # Audio buffer and processing queue
+        audio_buffer = queue.Queue(maxsize=10)
+        output_buffer = queue.Queue(maxsize=10)
+        
+        def audio_callback(indata, outdata, frames, time, status):
+            """Audio callback for real-time processing"""
+            if status:
+                print(f"Audio callback status: {status}")
+            
+            try:
+                # Input audio data
+                input_chunk = indata[:, 0]
+                
+                # Convert to float32 and normalize
+                if input_chunk.dtype != np.float32:
+                    input_chunk = input_chunk.astype(np.float32)
+                
+                # Normalize if needed
+                if np.max(np.abs(input_chunk)) > 1.0:
+                    input_chunk = input_chunk / np.max(np.abs(input_chunk))
+                
+                # Process audio chunk
+                processed_chunk = process_audio_chunk(
+                    input_chunk, 
+                    model_path, 
+                    index_path, 
+                    mapped_embedder,
+                    mapped_pitch_extract,
+                    pitch,
+                    filter_radius,
+                    index_rate,
+                    rms_mix_rate,
+                    protect,
+                    chunk_size
+                )
+                
+                # Output processed audio
+                if len(processed_chunk) > 0:
+                    # Ensure output size matches expected
+                    if len(processed_chunk) > frames:
+                        processed_chunk = processed_chunk[:frames]
+                    elif len(processed_chunk) < frames:
+                        # Pad with zeros if necessary
+                        padding = np.zeros(frames - len(processed_chunk), dtype=np.float32)
+                        processed_chunk = np.concatenate([processed_chunk, padding])
+                    
+                    outdata[:, 0] = processed_chunk
+                else:
+                    # Output silence if no processed audio
+                    outdata[:, 0] = np.zeros(frames, dtype=np.float32)
+                    
+            except Exception as e:
+                print(f"Error in audio processing: {e}")
+                # Output silence on error
+                outdata[:, 0] = np.zeros(frames, dtype=np.float32)
+        
+        def process_audio_chunk(chunk, model_path, index_path, embedder, 
+                              pitch_method, pitch_val, filter_r, 
+                              idx_rate, rms_rate, protect_param, chunk_size):
+            """Process a single audio chunk"""
+            try:
+                # Apply KRVC real-time processing if available
+                if krvc_processor:
+                    processed_chunk = krvc_processor.process_realtime(
+                        torch.from_numpy(chunk).float()
+                    ).numpy()
+                else:
+                    processed_chunk = chunk
+                
+                # Ensure minimum chunk size for processing
+                if len(processed_chunk) < 1024:
+                    # Pad with zeros
+                    padding = np.zeros(1024 - len(processed_chunk), dtype=np.float32)
+                    processed_chunk = np.concatenate([processed_chunk, padding])
+                
+                # Limit chunk size for efficiency
+                if len(processed_chunk) > 8192:
+                    processed_chunk = processed_chunk[:8192]
+                
+                # Create temporary paths for chunk processing
+                import tempfile
+                import os
+                
+                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_input:
+                    # Save chunk as audio file
+                    import soundfile as sf
+                    sf.write(temp_input.name, processed_chunk, 16000)
+                    
+                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_output:
+                        # Process audio
+                        inference_vc.convert_audio(
+                            audio_input_path=temp_input.name,
+                            audio_output_path=temp_output.name,
+                            model_path=model_path,
+                            index_path=index_path,
+                            embedder_model=embedder,
+                            pitch=pitch_val,
+                            f0_file=None,
+                            f0_method=pitch_method,
+                            filter_radius=filter_r,
+                            index_rate=idx_rate,
+                            volume_envelope=rms_rate,
+                            protect=protect_param,
+                            split_audio=False,  # Don't split for real-time
+                            f0_autotune=False,
+                            hop_length=128,
+                            export_format='wav',
+                            embedder_model_custom=None,
+                        )
+                        
+                        # Read processed audio
+                        processed_audio, _ = sf.read(temp_output.name)
+                        
+                        # Clean up temporary files
+                        try:
+                            os.unlink(temp_input.name)
+                            os.unlink(temp_output.name)
+                        except:
+                            pass
+                
+                # Apply pitch change if specified
+                if pitch_val != 0:
+                    # Simple pitch shifting (could be enhanced)
+                    semitone_ratio = 2 ** (pitch_val / 12.0)
+                    processed_audio = librosa.effects.pitch_shift(
+                        processed_audio, 
+                        sr=16000, 
+                        n_steps=pitch_val
+                    )
+                
+                return processed_audio.astype(np.float32)
+                
+            except Exception as e:
+                print(f"Error processing audio chunk: {e}")
+                return np.array([], dtype=np.float32)
+        
+        # Initialize audio stream
+        try:
+            with sd.Stream(
+                channels=1,
+                samplerate=16000,
+                blocksize=chunk_size,
+                callback=audio_callback,
+                dtype=np.float32
+            ):
+                result_msg = f"""
+Real-time voice conversion initialized successfully!
 
-        # This is a simplified version - actual real-time conversion would require:
-        # 1. Audio input from microphone
-        # 2. Real-time pitch extraction
-        # 3. Embedding extraction
-        # 4. Voice conversion
-        # 5. Audio output
-        result_msg = f"""
-Real-time voice conversion initialized with:
+Configuration:
 - Model: {os.path.basename(model_path) if model_path else 'None'}
 - Index: {os.path.basename(index_path) if index_path else 'None'}
-- Embedder: {embedder_model}
-- Pitch: {pitch}
-- Pitch Extractor: {pitch_extract}
+- Embedder: {mapped_embedder}
+- Pitch: {pitch} semitones
+- Pitch Method: {mapped_pitch_extract}
 - Filter Radius: {filter_radius}
 - Index Rate: {index_rate}
 - RMS Mix Rate: {rms_mix_rate}
 - Protect: {protect}
+- Chunk Size: {chunk_size} samples
+- KRVC Enabled: {KRVC_AVAILABLE}
 
-Note: This is a framework implementation. The actual real-time audio processing requires:
-1. Proper audio input/output handling with sounddevice/pyaudio
-2. Real-time feature extraction
-3. Streaming voice conversion
-4. Latency optimization
-"""
+Processing Status:
+✓ Audio stream started
+✓ Real-time processing active
+✓ Ready for voice conversion
+
+Note: Speak into your microphone to hear the converted voice.
+Press Ctrl+C to stop the real-time conversion.
+                """
+                
+                # Keep the stream running
+                print("Real-time voice conversion started. Press Ctrl+C to stop.")
+                while True:
+                    time.sleep(0.1)  # Keep the main thread alive
+                    
+        except KeyboardInterrupt:
+            print("\nStopping real-time voice conversion...")
+            result_msg = "Real-time voice conversion stopped by user"
+            
+        except Exception as e:
+            error_msg = f"Error in real-time conversion: {str(e)}"
+            print(error_msg)
+            result_msg = error_msg
+            
+        # Cleanup
+        if KRVC_AVAILABLE:
+            cleanup_krvc_memory()
+        
         return result_msg
-    except ImportError:
-        return "Real-time voice conversion requires additional dependencies: sounddevice, numpy. Install with: pip install sounddevice numpy"
+        
+    except ImportError as e:
+        return f"Real-time voice conversion requires additional dependencies: {str(e)}. Install with: pip install sounddevice numpy"
     except Exception as e:
         return f"Error initializing real-time conversion: {str(e)}"
 
