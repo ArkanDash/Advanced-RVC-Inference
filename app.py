@@ -11,13 +11,15 @@ import traceback
 from pathlib import Path
 
 # Add src to Python path for imports
-src_path = Path(__file__).parent.parent
+src_path = Path(__file__).parent / "src"
 sys.path.insert(0, str(src_path))
 
 try:
+    # Import from Vietnamese-RVC structure
     from advanced_rvc_inference.config import get_config, get_device
     from advanced_rvc_inference.core.memory_manager import monitor_memory, cleanup_memory
-    from advanced_rvc_inference.core.app_launcher import AdvancedRVCApp
+    from advanced_rvc_inference.app.core.app_launcher import AdvancedRVCApp
+    from advanced_rvc_inference.app.app import create_app
     KADVC_AVAILABLE = True
 except ImportError as e:
     print(f"Warning: Could not import advanced_rvc_inference modules: {e}")
@@ -259,9 +261,8 @@ Examples:
         
         # Create and launch application
         if KADVC_AVAILABLE:
-            logger.info("🚀 Starting Advanced RVC Application with KADVC support...")
-            app_launcher = AdvancedRVCApp(config)
-            app = app_launcher.create_app()
+            logger.info("🚀 Starting Advanced RVC Application with Vietnamese-RVC & Applio support...")
+            app = create_app(config)
         else:
             logger.warning("⚠️ Running in basic mode without advanced features")
             app = create_basic_app()
