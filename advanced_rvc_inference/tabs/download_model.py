@@ -5,7 +5,7 @@ import regex as re
 import subprocess
 import requests
 from core import download_model
-from programs.applio_code.rvc.lib.utils import format_title
+from advanced_rvc_inference.applio_code.rvc.lib.utils import format_title
 from assets.i18n.i18n import I18nAuto
 
 now_dir = os.getcwd()

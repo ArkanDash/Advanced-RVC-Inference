@@ -1,8 +1,8 @@
 import torch
 from torch.nn.utils.parametrizations import spectral_norm, weight_norm
 
-from programs.applio_code.rvc.lib.algorithm.commons import get_padding
-from programs.applio_code.rvc.lib.algorithm.residuals import LRELU_SLOPE
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.commons import get_padding
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.residuals import LRELU_SLOPE
 
 
 class MultiPeriodDiscriminator(torch.nn.Module):

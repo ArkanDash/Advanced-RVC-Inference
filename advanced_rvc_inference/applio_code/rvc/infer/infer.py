@@ -13,11 +13,28 @@ from scipy.io import wavfile
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from programs.applio_code.rvc.infer.pipeline import Pipeline as VC
-from programs.applio_code.rvc.lib.utils import load_audio_infer, load_embedding
-from programs.applio_code.rvc.lib.tools.split_audio import process_audio, merge_audio
-from programs.applio_code.rvc.lib.algorithm.synthesizers import Synthesizer
-from programs.applio_code.rvc.configs.config import Config
+from advanced_rvc_inference.applio_code.rvc.infer.pipeline import Pipeline as VC
+from advanced_rvc_inference.applio_code.rvc.lib.utils import load_audio_infer, load_embedding
+from advanced_rvc_inference.applio_code.rvc.lib.tools.split_audio import process_audio, merge_audio
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.synthesizers import Synthesizer
+from advanced_rvc_inference.applio_code.rvc.configs.config import Config
+
+# Import KRVC kernel for enhanced performance
+try:
+    from advanced_rvc_inference.krvc_kernel import (
+        KRVCFeatureExtractor,
+        krvc_speed_optimize,
+        krvc_inference_mode,
+        krvc_training_mode,
+        KRVCAdvancedOptimizer,
+        KRVCInferenceOptimizer,
+        KRVCPerformanceMonitor
+    )
+    KRVC_AVAILABLE = True
+    print("KRVC Kernel loaded successfully in infer module - Enhanced performance mode active")
+except ImportError:
+    KRVC_AVAILABLE = False
+    print("KRVC Kernel not available in infer module - Using standard processing")
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)

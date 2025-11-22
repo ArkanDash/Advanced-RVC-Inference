@@ -1,5 +1,5 @@
 import torch
-from programs.applio_code.rvc.lib.algorithm.commons import (
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.commons import (
     fused_add_tanh_sigmoid_multiply_no_jit,
     fused_add_tanh_sigmoid_multiply,
 )

@@ -4,13 +4,13 @@ from torch.nn.utils import remove_weight_norm
 from torch.nn.utils.parametrizations import weight_norm
 from typing import Optional
 
-from programs.applio_code.rvc.lib.algorithm.generators import SineGen
-from programs.applio_code.rvc.lib.algorithm.residuals import (
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.generators import SineGen
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.residuals import (
     LRELU_SLOPE,
     ResBlock1,
     ResBlock2,
 )
-from programs.applio_code.rvc.lib.algorithm.commons import init_weights
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.commons import init_weights
 
 
 class SourceModuleHnNSF(torch.nn.Module):

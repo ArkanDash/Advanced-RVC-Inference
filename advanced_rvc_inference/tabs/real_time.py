@@ -169,17 +169,30 @@ def real_time_inference_tab():
                 )
         
         def start_real_time_conversion(model_path, index_path, embedder, p, filter_rad, idx_rate, rms_rate, prot, pitch_extractor):
-            result = real_time_voice_conversion(
-                model_path, index_path, embedder, p, filter_rad, idx_rate, rms_rate, prot, pitch_extractor
-            )
-            return result
-        
+            try:
+                result = real_time_voice_conversion(
+                    model_path, index_path, embedder, p, filter_rad, idx_rate, rms_rate, prot, pitch_extractor
+                )
+                return result
+            except Exception as e:
+                return f"Error during real-time conversion: {str(e)}"
+
         start_button.click(
             start_real_time_conversion,
             inputs=[
-                model_file, index_file, embedder_model, 
-                pitch, filter_radius, index_rate, 
+                model_file, index_file, embedder_model,
+                pitch, filter_radius, index_rate,
                 rms_mix_rate, protect, pitch_extract
             ],
+            outputs=[]
+        )
+
+        def stop_real_time_conversion():
+            # Placeholder for stopping the real-time conversion
+            return "Real-time conversion stopped"
+
+        stop_button.click(
+            stop_real_time_conversion,
+            inputs=[],
             outputs=[]
         )

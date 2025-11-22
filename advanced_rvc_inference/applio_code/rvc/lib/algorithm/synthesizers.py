@@ -1,14 +1,14 @@
 import torch
 from typing import Optional
 
-from programs.applio_code.rvc.lib.algorithm.nsf import GeneratorNSF
-from programs.applio_code.rvc.lib.algorithm.generators import Generator
-from programs.applio_code.rvc.lib.algorithm.commons import (
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.nsf import GeneratorNSF
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.generators import Generator
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.commons import (
     slice_segments,
     rand_slice_segments,
 )
-from programs.applio_code.rvc.lib.algorithm.residuals import ResidualCouplingBlock
-from programs.applio_code.rvc.lib.algorithm.encoders import (
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.residuals import ResidualCouplingBlock
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.encoders import (
     TextEncoder,
     PosteriorEncoder,
 )
