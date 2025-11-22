@@ -70,12 +70,11 @@ rvc_theme = loadThemes.load_json() or gr.themes.Default()
 
 with gr.Blocks(
     theme=rvc_theme,
-    title="Advanced RVC Inference - KRVC Kernel",
+    title="Advanced RVC Inference ",
     css="footer{display:none !important}",
-    head="<style>.footer { visibility: hidden; }</style>",
     fill_width=True
-) as RVCAICoverMaker:
-    gr.Markdown("# 🎤 Advanced RVC Inference - KRVC Kernel v3.5.2\n> *Kernel Advanced RVC - 2x Faster Training & Inference*")
+) as app:
+    gr.Markdown("# 🎤 Advanced RVC Inference v3.5.2\n> *Kernel Advanced RVC - 2x Faster Training & Inference*")
 
     with gr.Tab("🎵 Full Inference"):
         full_inference_tab()
@@ -131,7 +130,7 @@ with gr.Blocks(
 
 
 def launch(port):
-    RVCAICoverMaker.launch(
+    app.launch(
         favicon_path=os.path.join(now_dir, "assets", "logo.ico"),
         share="--share" in sys.argv,
         inbrowser="--open" in sys.argv,
