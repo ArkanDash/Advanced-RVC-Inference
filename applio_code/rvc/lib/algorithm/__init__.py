@@ -1,3 +1,0 @@
-"""
-RVC lib algorithm package.
-"""

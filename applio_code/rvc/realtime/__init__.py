@@ -1,3 +1,0 @@
-"""
-RVC realtime package initialization.
-"""
