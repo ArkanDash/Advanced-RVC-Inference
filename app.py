@@ -40,7 +40,7 @@ def setup_logging(debug: bool = False, log_level: str = "INFO") -> logging.Logge
     console_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     
     # File handler
-    log_file = src_path / "logs" / "app_launcher.log"
+    log_file = Path("logs") / "app_launcher.log"
     log_file.parent.mkdir(exist_ok=True)
     file_handler = logging.FileHandler(log_file)
     file_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
