@@ -1,0 +1,77 @@
+# Advanced RVC Inference Local Development Manifest
+# Version 3.4.0 - Local Development Distribution
+
+# Core package files
+include README.md
+include LICENSE
+include ENHANCEMENT_SUMMARY.md
+include *.py
+include *.ini
+include *.json
+include *.toml
+include *.txt
+include requirements.txt
+
+# Documentation files
+include *.md
+recursive-include docs *.md
+include CHANGELOG.md
+include DEVELOPMENT.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+
+# Configuration files
+include config.py
+include config.ini
+include config_enhanced.json
+include docker-compose.yml
+include Dockerfile.*
+include *.sh
+include *.bat
+
+# Assets and resources
+recursive-include assets *
+recursive-include src/advanced_rvc_inference/assets *
+recursive-include tabs *
+recursive-include app.py
+recursive-include enhanced_app.py
+
+# Main package structure (all modules now consolidated)
+recursive-include src/advanced_rvc_inference *.py
+recursive-include src/advanced_rvc_inference *.json
+recursive-include src/advanced_rvc_inference *.md
+
+# Include Colab notebooks
+include *.ipynb
+include *.ipynb.backup
+
+# Exclude build artifacts and cache
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *~
+global-exclude .git*
+global-exclude .coverage
+global-exclude .pytest_cache*
+global-exclude __pycache__
+global-exclude .tox
+global-exclude .eggs
+global-exclude *.egg-info
+global-exclude build
+global-exclude dist
+
+# Exclude development files
+global-exclude .vscode
+global-exclude .idea
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+
+# Exclude temporary files
+global-exclude .DS_Store
+global-exclude Thumbs.db
+global-exclude *.tmp
+global-exclude *.temp
+
+# Exclude old structure references
+global-exclude programs/*
+global-exclude programs/

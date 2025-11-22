@@ -892,6 +892,13 @@
 # Add your project-specific ignores here
 # workspace/
 # data/
+
+# Allow specific applio_code files
+!programs/
+!programs/applio_code/
+!programs/applio_code/rvc/
+!programs/applio_code/rvc/lib/
+!programs/applio_code/rvc/lib/utils.py
 # uploads/
 # downloads/
 

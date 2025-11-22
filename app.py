@@ -1,114 +1,33 @@
 """
-Enhanced Advanced RVC Inference Application V3.2
-Improved with Vietnamese-RVC architecture and performance optimizations.
-Based on improvements from https://github.com/PhamHuynhAnh16/Vietnamese-RVC
+Simplified Application Launcher
+Professional Entry Point for Advanced RVC Inference
 """
 
 import os
 import sys
-import json
 import logging
-import traceback
-import warnings
-import ssl
-from pathlib import Path
-from typing import Optional, Dict, Any
 import argparse
+import traceback
+from pathlib import Path
 
-import gradio as gr
-from tabs.inference.full_inference import full_inference_tab
-from tabs.utilities.download_model import download_model_tab
-from tabs.inference.tts import tts_tab
-from tabs.training.training_tab import training_tab
-from tabs.settings.settings import (
-    lang_tab, audio_tab, performance_tab, notifications_tab, 
-    file_management_tab, debug_tab, backup_restore_tab, 
-    misc_tab, restart_tab
-)
-from tabs.credits.credits_tab import credits_tab
-
-from tabs.extra.extra_tab import extra_tools_tab
-from tabs.datasets.datasets_tab import datasets_tab
-from assets.i18n.i18n import I18nAuto
-
-# Enhanced SSL handling (from Vietnamese RVC)
-ssl._create_default_https_context = ssl._create_unverified_context
-
-# Suppress warnings (from Vietnamese RVC)
-warnings.filterwarnings("ignore")
-for logger_name in ["httpx", "gradio", "uvicorn", "httpcore", "urllib3", "faiss"]:
-    logging.getLogger(logger_name).setLevel(logging.ERROR)
-
-# Enhanced configuration system (from Vietnamese RVC)
-def load_configuration():
-    """Load application configuration from JSON file."""
-    config_path = Path("config_enhanced.json")
-    default_config = {
-        "application": {
-            "title": "Advanced RVC Inference V3.2 Enhanced + KADVC",
-            "version": "3.3.0",
-            "description": "Enhanced Voice Conversion with KADVC (2x Faster Training & Inference)"
-        },
-        "server": {
-            "host": "0.0.0.0",
-            "port": 7860,
-            "share_mode": False,
-            "debug_mode": False,
-            "log_level": "INFO"
-        },
-        "language": {
-            "default": "en-US",
-            "supported": ["en-US", "de-DE", "es-ES", "fr-FR"]
-        },
-        "theme": {
-            "default": "gradio/default",
-            "dark_mode": True
-        }
-    }
-    
-    if config_path.exists():
-        try:
-            with open(config_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            logging.warning(f"Failed to load config: {e}. Using defaults.")
-            return default_config
-    else:
-        logging.info("Config file not found. Using default configuration.")
-        return default_config
-
-# Load configuration
-CONFIG = load_configuration()
-
-# Initialize KADVC (Kernel Advanced Voice Conversion) optimizations
-KADVC_INITIALIZED = False
-KADVC_OPTIMIZER = None
+# Add src to Python path for imports
+src_path = Path(__file__).parent.parent
+sys.path.insert(0, str(src_path))
 
 try:
-    from programs.kernels import setup_kadvc_for_rvc
-    print("🚀 Initializing KADVC (Kernel Advanced Voice Conversion)...")
-    KADVC_OPTIMIZER = setup_kadvc_for_rvc()
-    KADVC_INITIALIZED = True
-    print("✅ KADVC optimization system initialized successfully!")
-    
-    # Log KADVC performance info
-    stats = KADVC_OPTIMIZER.get_performance_report()
-    gpu_type = stats.get('gpu_info', {}).get('gpu_name', 'Unknown')
-    speedup = KADVC_OPTIMIZER._calculate_speedup()
-    print(f"📊 KADVC Status: GPU={gpu_type}, Estimated Speedup={speedup}x")
-    
+    from advanced_rvc_inference.config import get_config, get_device
+    from advanced_rvc_inference.core.memory_manager import monitor_memory, cleanup_memory
+    from advanced_rvc_inference.core.app_launcher import AdvancedRVCApp
+    KADVC_AVAILABLE = True
 except ImportError as e:
-    print(f"⚠️ KADVC not available: {e}")
-    KADVC_INITIALIZED = False
-except Exception as e:
-    print(f"❌ KADVC initialization failed: {e}")
-    KADVC_INITIALIZED = False
+    print(f"Warning: Could not import advanced_rvc_inference modules: {e}")
+    print("Falling back to basic launcher mode...")
+    KADVC_AVAILABLE = False
 
-# Enhanced logging system (improved from Vietnamese RVC)
-def setup_logging(log_level: str = None) -> logging.Logger:
-    """Setup comprehensive logging for the application."""
-    if log_level is None:
-        log_level = CONFIG.get("server", {}).get("log_level", "INFO")
+
+def setup_logging(debug: bool = False, log_level: str = "INFO") -> logging.Logger:
+    """Setup application logging."""
+    log_level = "DEBUG" if debug else log_level
     
     logger = logging.getLogger(__name__)
     logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
@@ -120,318 +39,140 @@ def setup_logging(log_level: str = None) -> logging.Logger:
     console_handler = logging.StreamHandler()
     console_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     
-    # File handler (if enabled)
-    if CONFIG.get("logging", {}).get("file_logging", True):
-        file_handler = logging.FileHandler("rvc_inference.log")
-        file_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
-        logger.addHandler(file_handler)
+    # File handler
+    log_file = Path("logs") / "app_launcher.log"
+    log_file.parent.mkdir(exist_ok=True)
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(getattr(logging, log_level.upper(), logging.INFO))
     
     # Formatter
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     console_handler.setFormatter(formatter)
+    file_handler.setFormatter(formatter)
+    
     logger.addHandler(console_handler)
+    logger.addHandler(file_handler)
     
     return logger
 
-# Setup logging
-logger = setup_logging()
 
-# Get current directory
-now_dir = os.getcwd()
-sys.path.append(now_dir)
-
-# Initialize i18n
-i18n = I18nAuto()
-
-# Load theme (with error handling)
-def load_theme_safely():
-    """Safely load theme with fallback to default."""
+def validate_environment() -> bool:
+    """Validate environment and dependencies."""
+    errors = []
+    
+    # Check Python version
+    if sys.version_info < (3, 8):
+        errors.append("Python 3.8+ is required")
+    
+    # Check PyTorch
     try:
-        # Uncomment when theme system is ready
-        # import assets.themes.loadThemes as loadThemes
-        # return loadThemes.load_theme() or "default"
-        return "default"
-    except Exception as e:
-        logger.warning(f"Could not load custom theme: {e}. Using default.")
-        return "default"
+        import torch
+        logger.info(f"PyTorch version: {torch.__version__}")
+        logger.info(f"CUDA available: {torch.cuda.is_available()}")
+        if torch.cuda.is_available():
+            logger.info(f"CUDA version: {torch.version.cuda}")
+            logger.info(f"GPU devices: {torch.cuda.device_count()}")
+            for i in range(torch.cuda.device_count()):
+                gpu_name = torch.cuda.get_device_name(i)
+                logger.info(f"GPU {i}: {gpu_name}")
+    except ImportError:
+        errors.append("PyTorch is not installed")
+    
+    # Check Gradio
+    try:
+        import gradio as gr
+        logger.info(f"Gradio version: {gr.__version__}")
+    except ImportError:
+        errors.append("Gradio is not installed")
+    
+    # Check FFmpeg
+    try:
+        import subprocess
+        result = subprocess.run(['ffmpeg', '-version'], 
+                              capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            logger.info("FFmpeg is available")
+        else:
+            errors.append("FFmpeg is not working properly")
+    except (ImportError, subprocess.TimeoutExpired, FileNotFoundError):
+        errors.append("FFmpeg is not installed or not in PATH")
+    
+    if errors:
+        logger.error("Environment validation failed:")
+        for error in errors:
+            logger.error(f"  - {error}")
+        return False
+    
+    logger.info("Environment validation passed")
+    return True
 
-my_theme = load_theme_safely()
 
-# Configuration validation
-def validate_configuration():
-    """Validate essential directories and configurations."""
-    essential_dirs = [
-        "tabs",
-        "assets",
-        "programs",
-        "logs",
-        "audio_files"
+def create_directories() -> None:
+    """Create required directories."""
+    directories = [
+        "weights",
+        "indexes",
+        "logs", 
+        "cache",
+        "temp",
+        "audio_files",
+        "outputs"
     ]
     
-    missing_dirs = []
-    for dir_name in essential_dirs:
-        dir_path = Path(now_dir) / dir_name
-        if not dir_path.exists():
-            missing_dirs.append(dir_name)
-            logger.info(f"Creating missing directory: {dir_path}")
-            dir_path.mkdir(parents=True, exist_ok=True)
+    for dir_name in directories:
+        dir_path = Path(dir_name)
+        dir_path.mkdir(exist_ok=True)
     
-    if missing_dirs:
-        logger.info(f"Created missing directories: {missing_dirs}")
+    logger.info("Required directories created/verified")
 
-def create_enhanced_app():
-    """Create the enhanced Gradio application with Vietnamese RVC-inspired improvements."""
-    try:
-        # Validate configuration before launching
-        validate_configuration()
-        
-        # Get configuration values
-        app_title = CONFIG.get("application", {}).get("title", "Advanced RVC Inference")
-        app_version = CONFIG.get("application", {}).get("version", "3.2")
-        dark_mode = CONFIG.get("theme", {}).get("dark_mode", True)
-        font_url = "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-        enhanced_css = f"""
-        @import url('{font_url}');
-        * {{font-family: 'Roboto', sans-serif !important;}}
-        body, html {{font-family: 'Roboto', sans-serif !important;}}
-        .enhanced-tab {{ 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin: 8px;
-            border: 1px solid #e0e0e0;
-        }}
-        .enhanced-header {{
-            text-align: center; 
-            padding: 25px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; 
-            border-radius: 15px; 
-            margin-bottom: 25px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }}
-        .status-indicator {{
-            padding: 12px; 
-            margin: 15px 0; 
-            border-radius: 8px; 
-            text-align: center;
-            font-weight: bold;
-        }}
-        .status-success {{ background-color: #d4edda; color: #155724; }}
-        .status-error {{ background-color: #f8d7da; color: #721c24; }}
-        .status-info {{ background-color: #cce7ff; color: #004085; }}
-        .config-panel {{
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 10px 0;
-        }}
-        """
-        
-        with gr.Blocks(
-            theme=my_theme, 
-            title=app_title,
-            css=enhanced_css
-        ) as app:
-            
-            # Enhanced header with configuration-based styling
-            
-            gr.Markdown(f"# {app_title}")
-            
-            # Enhanced status indicator with system information
-            status_html = f"""
-            <div class="config-panel">
-                <h3>🔧 System Status</h3>
-                <div class="status-indicator status-success">
-                    ✅ System Ready - All components loaded successfully
-                </div>
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                    <div><strong>🖥️ Platform:</strong> {os.name}</div>
-                    <div><strong>🐍 Python:</strong> {sys.version.split()[0]}</div>
-                    <div><strong>📁 Working Dir:</strong> {now_dir}</div>
-                    <div><strong>⚙️ Config:</strong> Loaded</div>
-                </div>
-            </div>
-            """
-            
-            status_display = gr.HTML(status_html)
-            
-            with gr.Tab("🎤 Full Inference"):
-                try:
-                    full_inference_tab()
-                except Exception as e:
-                    logger.error(f"Error loading Full Inference tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Full Inference: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("📥 Download Model"):
-                try:
-                    download_model_tab()
-                except Exception as e:
-                    logger.error(f"Error loading Download Model tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Download Model: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("🎵 Datasets Maker"):
-                try:
-                    datasets_tab()
-                except Exception as e:
-                    logger.error(f"Error loading Datasets Maker tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Datasets Maker: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("🗣️ TTS"):
-                try:
-                    tts_tab()
-                except Exception as e:
-                    logger.error(f"Error loading TTS tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading TTS: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("🛠️ Extra Tools"):
-                try:
-                    extra_tools_tab()
-                except Exception as e:
-                    logger.error(f"Error loading Extra Tools tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Extra Tools: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("🎓 Training"):
-                try:
-                    training_tab.create_training_interface()
-                except Exception as e:
-                    logger.error(f"Error loading Training tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Training: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("📜 Credits"):
-                try:
-                    credits_tab()
-                except Exception as e:
-                    logger.error(f"Error loading Credits tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Credits: {str(e)}
-                    </div>
-                    """)
-                    
-            with gr.Tab("⚙️ Settings"):
-                try:
-                    with gr.Tab("🌍 Language"):
-                        lang_tab()
-                    
-                    with gr.Tab("🎵 Audio"):
-                        audio_tab()
-                        
-                    with gr.Tab("⚡ Performance"):
-                        performance_tab()
-                        
-                    with gr.Tab("🔔 Notifications"):
-                        notifications_tab()
-                        
-                    with gr.Tab("💾 File Management"):
-                        file_management_tab()
-                        
-                    with gr.Tab("🐛 Debug"):
-                        debug_tab()
-                        
-                    with gr.Tab("🔄 Backup & Restore"):
-                        backup_restore_tab()
-                        
-                    with gr.Tab("🛠️ Miscellaneous"):
-                        misc_tab()
-                        
-                    restart_tab()
-                    
-                except Exception as e:
-                    logger.error(f"Error loading Settings tab: {e}")
-                    gr.HTML(f"""
-                    <div style="color: red; padding: 20px; text-align: center;">
-                        ❌ Error loading Settings: {str(e)}
-                    </div>
-                    """)
-        
-        return app
-        
-    except Exception as e:
-        logger.error(f"Critical error creating application: {e}")
-        logger.error(traceback.format_exc())
-        raise
 
 def main():
-    """Enhanced main function with Vietnamese RVC-inspired configuration."""
-    # Get default values from configuration
-    config_server = CONFIG.get("server", {})
-    default_host = config_server.get("host", "0.0.0.0")
-    default_port = config_server.get("port", 7860)
-    default_share = config_server.get("share_mode", False)
-    default_debug = config_server.get("debug_mode", False)
-    default_log_level = config_server.get("log_level", "INFO")
+    """Main application entry point."""
+    global logger
     
+    # Setup logging
+    logger = setup_logging()
+    logger.info("🚀 Advanced RVC Inference Launcher Starting...")
+    
+    # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description=f"🚀 {CONFIG.get('application', {}).get('title', 'Advanced RVC Inference')} V{CONFIG.get('application', {}).get('version', '3.2')}",
-        add_help=True,
+        description="Advanced RVC Inference - Professional Voice Conversion",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=f"""
-Enhanced Configuration System (from Vietnamese RVC):
-  • Configuration file: config_enhanced.json
-  • Default language: {CONFIG.get('language', {}).get('default', 'en-US')}
-  • Theme: {CONFIG.get('theme', {}).get('default', 'gradio/default')}
-
+        epilog="""
 Examples:
-  python app.py                                    # Run with config defaults
-  python app.py --share --port 8080               # Public sharing on custom port
-  python app.py --debug --log-level DEBUG         # Enhanced debug mode
-  python app.py --host 127.0.0.1                  # Localhost only
+  python app.py                                    # Run with default settings
+  python app.py --share --port 8080               # Public sharing on port 8080
+  python app.py --debug --log-level DEBUG         # Debug mode
+  python app.py --cpu                              # Force CPU mode
+  python app.py --config custom_config.json       # Use custom config
         """
     )
     
     parser.add_argument(
         "--share", 
         action="store_true", 
-        dest="share_enabled", 
-        default=default_share, 
-        help=f"Enable public sharing of the application (default: {default_share})"
+        help="Enable public sharing of the application"
     )
     
     parser.add_argument(
         "--port",
         type=int,
-        default=default_port,
-        help=f"Port to run the application on (default: {default_port})"
+        default=7860,
+        help="Port to run the application on (default: 7860)"
     )
     
     parser.add_argument(
         "--host",
         type=str,
-        default=default_host,
-        help=f"Host to bind to (default: {default_host})"
+        default="0.0.0.0",
+        help="Host to bind to (default: 0.0.0.0)"
     )
     
     parser.add_argument(
         "--debug",
         action="store_true",
-        dest="debug_enabled",
-        default=False,
         help="Enable debug logging"
     )
     
@@ -439,47 +180,107 @@ Examples:
         "--log-level",
         type=str,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default=default_log_level,
-        help=f"Set logging level (default: {default_log_level})"
+        default="INFO",
+        help="Set logging level (default: INFO)"
+    )
+    
+    parser.add_argument(
+        "--cpu",
+        action="store_true",
+        help="Force CPU mode (disable GPU)"
+    )
+    
+    parser.add_argument(
+        "--config",
+        type=str,
+        help="Path to custom configuration file"
+    )
+    
+    parser.add_argument(
+        "--no-monitor",
+        action="store_true",
+        help="Disable automatic memory monitoring"
     )
     
     try:
         args = parser.parse_args()
         
-        # Update logging level if debug enabled
-        if args.debug_enabled:
-            args.log_level = "DEBUG"
-            global logger
-            logger = setup_logging("DEBUG")
-            logger.debug("Debug mode enabled")
+        # Update logging if debug specified
+        if args.debug:
+            logger = setup_logging(debug=True)
         
-        # Validate port
-        if not 1 <= args.port <= 65535:
-            logger.error(f"Invalid port number: {args.port}. Must be between 1 and 65535.")
+        logger.info(f"Command line arguments: {args}")
+        
+        # Validate environment
+        if not validate_environment():
+            print("\n❌ Environment validation failed. Please install required dependencies.")
+            print("\nTo install dependencies, run:")
+            print("pip install -r requirements.txt")
             sys.exit(1)
         
-        logger.info("🚀 Starting Advanced RVC Inference V3.2 Enhanced Edition...")
-        logger.info(f"📋 Configuration: Share={args.share_enabled}, Port={args.port}, Host={args.host}, Debug={args.debug_enabled}")
+        # Create directories
+        create_directories()
         
-        # Create and configure the application
-        app = create_enhanced_app()
+        # Load configuration
+        if args.config:
+            config = get_config()
+            config._config_file = Path(args.config)
+            config._load_config()
+            config._validate_config()
+            logger.info(f"Loaded custom configuration: {args.config}")
         
-        # Launch with enhanced configuration
-        logger.info("🌐 Launching application...")
+        config = get_config()
+        
+        # Override configuration with command line arguments
+        if args.cpu:
+            config.performance_config.enable_mixed_precision = False
+            logger.info("CPU mode enabled")
+        
+        config.server_config.update({
+            'share': args.share,
+            'port': args.port,
+            'host': args.host,
+            'debug': args.debug
+        })
+        
+        # Start memory monitoring if enabled
+        if not args.no_monitor:
+            try:
+                monitor_memory(interval=30)
+                logger.info("Memory monitoring started")
+            except Exception as e:
+                logger.warning(f"Could not start memory monitoring: {e}")
+        
+        # Report system status
+        device = get_device()
+        perf_report = config.get_performance_report()
+        logger.info(f"System Status: Device={device}, Batch Size={config.training_config.batch_size}")
+        logger.info(f"Configuration: {config}")
+        
+        # Create and launch application
+        if KADVC_AVAILABLE:
+            logger.info("🚀 Starting Advanced RVC Application with KADVC support...")
+            app_launcher = AdvancedRVCApp(config)
+            app = app_launcher.create_app()
+        else:
+            logger.warning("⚠️ Running in basic mode without advanced features")
+            app = create_basic_app()
+        
+        # Launch application
+        logger.info(f"🌐 Launching on {config.server_config['host']}:{config.server_config['port']}")
         app.launch(
-            share=args.share_enabled,
-            server_port=args.port,
-            server_name=args.host,
-            show_error=True,  # Show errors in browser for better debugging
-            quiet=False,
-            inbrowser=True,  # Automatically open browser
-            debug=args.debug_enabled
+            share=config.server_config['share'],
+            server_port=config.server_config['port'],
+            server_name=config.server_config['host'],
+            show_error=config.server_config['show_error'],
+            inbrowser=config.server_config['inbrowser'],
+            debug=args.debug
         )
         
     except KeyboardInterrupt:
         logger.info("👋 Application interrupted by user")
     except Exception as e:
-        logger.error(f"💥 Critical error in main: {e}")
+        logger.error(f"💥 Critical error: {e}")
         logger.error(traceback.format_exc())
         print(f"""
 ❌ Critical Error: {e}
@@ -492,7 +293,53 @@ Please check:
 
 For help, please check the documentation or create an issue on GitHub.
         """)
+        
+        # Emergency cleanup
+        try:
+            cleanup_memory(aggressive=True)
+        except:
+            pass
+        
         sys.exit(1)
+    
+    finally:
+        # Cleanup
+        try:
+            cleanup_memory()
+        except:
+            pass
+
+
+def create_basic_app():
+    """Create a basic Gradio app as fallback."""
+    try:
+        import gradio as gr
+        
+        with gr.Blocks(title="Advanced RVC Inference - Basic Mode") as app:
+            gr.Markdown("# Advanced RVC Inference - Basic Mode")
+            gr.Markdown("⚠️ Running in basic mode without advanced features")
+            gr.Markdown("Please install all dependencies for full functionality")
+            
+            with gr.Tab("Information"):
+                gr.Markdown("""
+                ## System Information
+                
+                To get full functionality, please ensure:
+                
+                1. **PyTorch** is installed with CUDA support
+                2. **Gradio** is updated to the latest version
+                3. **FFmpeg** is available in your system PATH
+                4. **All Python dependencies** are installed
+                
+                Run: `pip install -r requirements.txt`
+                """)
+        
+        return app
+        
+    except Exception as e:
+        logger.error(f"Could not create basic app: {e}")
+        raise
+
 
 if __name__ == "__main__":
     main()
