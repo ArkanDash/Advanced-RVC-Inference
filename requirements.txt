@@ -62,8 +62,8 @@ ftfy==6.2.3
 future==1.0.0
 gitdb==4.0.11
 GitPython==3.1.43
-gradio
-gradio_client
+gradio==4.36.0
+gradio_client==1.0.1
 grpcio==1.66.1
 h11==0.14.0
 httpcore==1.0.5
