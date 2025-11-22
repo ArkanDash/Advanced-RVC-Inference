@@ -8,6 +8,7 @@ import torchcrepe
 import faiss
 import librosa
 import numpy as np
+import pyworld as pw
 from scipy import signal
 from torch import Tensor
 
@@ -334,6 +335,8 @@ class Pipeline:
             inp_f0: Optional input F0 contour to use instead of estimating.
         """
         global input_audio_path2wav
+        
+        # Enhanced F0 method support from Vietnamese-RVC
         if f0_method == "crepe":
             f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
         elif f0_method == "crepe-tiny":
@@ -364,6 +367,58 @@ class Pipeline:
             f0 = self.model_fcpe.compute_f0(x, p_len=p_len)
             del self.model_fcpe
             gc.collect()
+        elif f0_method == "harvest":
+            # Traditional F0 extraction method from Vietnamese-RVC
+            f0, t = pw.dio(x.astype(np.float64), self.sample_rate, f0_floor=self.f0_min, f0_ceil=self.f0_max)
+            f0 = pw.stonemask(x.astype(np.float64), f0, t, self.sample_rate)
+            # Resample to match target length
+            if len(f0) != p_len:
+                f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+        elif f0_method == "dio":
+            # DIO method with additional processing
+            f0, t = pw.dio(x.astype(np.float64), self.sample_rate, f0_floor=self.f0_min, f0_ceil=self.f0_max)
+            f0 = pw.stonemask(x.astype(np.float64), f0, t, self.sample_rate)
+            if len(f0) != p_len:
+                f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+        elif f0_method == "pyin":
+            # PYIN method from librosa
+            f0 = librosa.pyin(x, fmin=self.f0_min, fmax=self.f0_max, sr=self.sample_rate, hop_length=hop_length)[0]
+            # Fill NaN values and interpolate
+            f0 = np.nan_to_num(f0)
+            if len(f0) != p_len:
+                f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+        elif f0_method == "swipe":
+            # SWIPE method (if available)
+            try:
+                import swipepy
+                f0 = swipepy.swipe(x, self.sample_rate, fmin=self.f0_min, fmax=self.f0_max, hop=hop_length)
+                if len(f0) != p_len:
+                    f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+            except ImportError:
+                print("SWIPE method not available, using CREPE as fallback")
+                f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
+        elif f0_method == "parselmouth":
+            # Parselmouth (Praat) method
+            try:
+                import parselmouth
+                sound = parselmouth.Sound(x, self.sample_rate)
+                pitch = sound.to_pitch(time_step=hop_length/self.sample_rate, f0_floor=self.f0_min, f0_ceil=self.f0_max)
+                f0 = pitch.values.flatten()
+                if len(f0) != p_len:
+                    f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+            except ImportError:
+                print("Parselmouth not available, using CREPE as fallback")
+                f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
+        elif f0_method == "yaapt":
+            # YAAPT method
+            try:
+                import pyyawpip
+                f0 = pyyawpip.yaapt(x, frame_rate=self.sample_rate/hop_length, f0_min=self.f0_min, f0_max=self.f0_max)
+                if len(f0) != p_len:
+                    f0 = np.interp(np.linspace(0, len(f0)-1, p_len), np.arange(len(f0)), f0)
+            except ImportError:
+                print("YAAPT method not available, using CREPE as fallback")
+                f0 = self.get_f0_crepe(x, self.f0_min, self.f0_max, p_len, int(hop_length))
         elif "hybrid" in f0_method:
             input_audio_path2wav[input_audio_path] = x.astype(np.double)
             f0 = self.get_f0_hybrid(
