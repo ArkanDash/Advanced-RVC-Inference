@@ -18,13 +18,22 @@ import yaml
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
-from programs.applio_code.rvc.infer.infer import VoiceConverter
-from programs.applio_code.rvc.lib.tools.model_download import model_download_pipeline
-from programs.music_separation_code.inference import proc_file
+from advanced_rvc_inference.applio_code.rvc.infer.infer import VoiceConverter
+from advanced_rvc_inference.applio_code.rvc.lib.tools.model_download import model_download_pipeline
+from advanced_rvc_inference.music_separation_code.inference import proc_file
 
 # Import KRVC kernel for enhanced performance
 try:
-    from krvc_kernel import KRVCFeatureExtractor, krvc_speed_optimize, krvc_inference_mode, krvc_training_mode
+    from krvc_kernel import (
+        KRVCFeatureExtractor,
+        krvc_speed_optimize,
+        krvc_inference_mode,
+        krvc_training_mode,
+        krvc_mixed_precision_training,
+        KRVCAdvancedOptimizer,
+        KRVCInferenceOptimizer,
+        KRVCPerformanceMonitor
+    )
     KRVC_AVAILABLE = True
     print("KRVC Kernel loaded successfully - Enhanced performance mode active")
 except ImportError:
@@ -34,6 +43,12 @@ except ImportError:
 # Initialize KRVC optimizations
 if KRVC_AVAILABLE:
     krvc_speed_optimize()
+
+# Initialize performance monitor
+if KRVC_AVAILABLE:
+    krvc_monitor = KRVCPerformanceMonitor()
+else:
+    krvc_monitor = None
 
 # Mapping functions for Vietnamese-RVC compatible features
 def map_embedder_model(embedder_model):
@@ -341,14 +356,14 @@ deecho_models = [
 
 @lru_cache(maxsize=None)
 def import_voice_converter():
-    from programs.applio_code.rvc.infer.infer import VoiceConverter
+    from advanced_rvc_inference.applio_code.rvc.infer.infer import VoiceConverter
 
     return VoiceConverter()
 
 
 @lru_cache(maxsize=1)
 def get_config():
-    from programs.applio_code.rvc.configs.config import Config
+    from advanced_rvc_inference.applio_code.rvc.configs.config import Config
 
     return Config()
 
@@ -598,7 +613,7 @@ def full_inference_program(
         print("Separating vocals")
         command = [
             "python",
-            os.path.join(now_dir, "programs", "music_separation_code", "inference.py"),
+            os.path.join(now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"),
             "--model_type",
             model_info["type"],
             "--config_path",
@@ -684,7 +699,7 @@ def full_inference_program(
             command = [
                 "python",
                 os.path.join(
-                    now_dir, "programs", "music_separation_code", "inference.py"
+                    now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
                 ),
                 "--model_type",
                 model_info["type"],
@@ -793,7 +808,7 @@ def full_inference_program(
             command = [
                 "python",
                 os.path.join(
-                    now_dir, "programs", "music_separation_code", "inference.py"
+                    now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
                 ),
                 "--model_type",
                 model_info["type"],
@@ -971,7 +986,7 @@ def full_inference_program(
                 command = [
                     "python",
                     os.path.join(
-                        now_dir, "programs", "music_separation_code", "inference.py"
+                        now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
                     ),
                     "--model_type",
                     model_info["type"],
@@ -1269,9 +1284,46 @@ def real_time_voice_conversion(
     # Placeholder for real-time voice conversion
     # In a real implementation, this would capture microphone input and process it in real-time
     try:
-        # This is a simplified version - actual real-time conversion would require
-        # additional dependencies like sounddevice, pyaudio, or similar
-        return "Real-time voice conversion feature initialized. Requires additional setup for live audio processing."
+        # Import required libraries for real-time processing
+        import threading
+        import queue
+        import time
+        import numpy as np
+        import sounddevice as sd
+
+        # Map embedder model for compatibility
+        embedder_model = map_embedder_model(embedder_model)
+
+        # Map pitch extraction method for compatibility
+        pitch_extract = map_pitch_extractor(pitch_extract)
+
+        # This is a simplified version - actual real-time conversion would require:
+        # 1. Audio input from microphone
+        # 2. Real-time pitch extraction
+        # 3. Embedding extraction
+        # 4. Voice conversion
+        # 5. Audio output
+        result_msg = f"""
+Real-time voice conversion initialized with:
+- Model: {os.path.basename(model_path) if model_path else 'None'}
+- Index: {os.path.basename(index_path) if index_path else 'None'}
+- Embedder: {embedder_model}
+- Pitch: {pitch}
+- Pitch Extractor: {pitch_extract}
+- Filter Radius: {filter_radius}
+- Index Rate: {index_rate}
+- RMS Mix Rate: {rms_mix_rate}
+- Protect: {protect}
+
+Note: This is a framework implementation. The actual real-time audio processing requires:
+1. Proper audio input/output handling with sounddevice/pyaudio
+2. Real-time feature extraction
+3. Streaming voice conversion
+4. Latency optimization
+"""
+        return result_msg
+    except ImportError:
+        return "Real-time voice conversion requires additional dependencies: sounddevice, numpy. Install with: pip install sounddevice numpy"
     except Exception as e:
         return f"Error initializing real-time conversion: {str(e)}"
 

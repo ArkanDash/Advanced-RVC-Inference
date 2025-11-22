@@ -15,6 +15,44 @@ from tabs.model_manager import model_manager_tab
 from tabs.enhancement import enhancement_tab
 from tabs.real_time import real_time_inference_tab
 from tabs.config_options import extra_options_tab
+
+# Attempt to import additional advanced features from Applio and Vietnamese-RVC
+try:
+    from tabs.tts.tts import tts_tab
+    TTS_AVAILABLE = True
+except ImportError:
+    TTS_AVAILABLE = False
+
+try:
+    from tabs.voice_blender.voice_blender import voice_blender_tab
+    VOICE_BLENDER_AVAILABLE = True
+except ImportError:
+    VOICE_BLENDER_AVAILABLE = False
+
+try:
+    from tabs.plugins.plugins import plugins_tab
+    PLUGINS_AVAILABLE = True
+except ImportError:
+    PLUGINS_AVAILABLE = False
+
+try:
+    from tabs.extra.extra import extra_tab
+    EXTRA_AVAILABLE = True
+except ImportError:
+    EXTRA_AVAILABLE = False
+
+try:
+    from tabs.f0_extractor import f0_extractor_tab
+    F0_EXTRACTOR_AVAILABLE = True
+except ImportError:
+    F0_EXTRACTOR_AVAILABLE = False
+
+try:
+    from tabs.embedders import embedders_tab
+    EMBEDDER_AVAILABLE = True
+except ImportError:
+    EMBEDDER_AVAILABLE = False
+
 import assets.themes.loadThemes as loadThemes
 
 now_dir = os.getcwd()
@@ -56,6 +94,31 @@ with gr.Blocks(
 
     with gr.Tab("🔧 Extra Options"):
         extra_options_tab()
+
+    # Advanced features from Applio and Vietnamese-RVC if available
+    if TTS_AVAILABLE:
+        with gr.Tab("📢 Text-to-Speech"):
+            tts_tab()
+
+    if VOICE_BLENDER_AVAILABLE:
+        with gr.Tab("🎭 Voice Blender"):
+            voice_blender_tab()
+
+    if PLUGINS_AVAILABLE:
+        with gr.Tab("🧩 Plugins"):
+            plugins_tab()
+
+    if EXTRA_AVAILABLE:
+        with gr.Tab("⚡ Extra"):
+            extra_tab()
+
+    if F0_EXTRACTOR_AVAILABLE:
+        with gr.Tab("🔍 F0 Extractor"):
+            f0_extractor_tab()
+
+    if EMBEDDER_AVAILABLE:
+        with gr.Tab("🧠 Embedders"):
+            embedders_tab()
 
     with gr.Tab("🎵 Download Music"):
         download_music_tab()

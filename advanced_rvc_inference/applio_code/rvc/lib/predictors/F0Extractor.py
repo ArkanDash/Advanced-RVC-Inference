@@ -10,8 +10,8 @@ import torchfcpe
 import os
 
 # from tools.anyf0.rmvpe import RMVPE
-from programs.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
-from programs.applio_code.rvc.configs.config import Config
+from advanced_rvc_inference.applio_code.rvc.lib.predictors.RMVPE import RMVPE0Predictor
+from advanced_rvc_inference.applio_code.rvc.configs.config import Config
 
 config = Config()
 

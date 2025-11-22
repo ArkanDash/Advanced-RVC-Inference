@@ -10,6 +10,40 @@
 
 Advanced RVC Inference is a state-of-the-art voice conversion system featuring Vietnamese-RVC integration, enhanced F0 extraction methods, comprehensive audio processing capabilities, and the custom KRVC kernel providing 2x faster training and inference.
 
+## Repository Structure
+
+```
+Advanced-RVC-Inference/
+├── advanced_rvc_inference/              # Main package
+│   ├── assets/                          # Configuration, themes, i18n
+│   ├── tabs/                            # GUI modules
+│   │   ├── inference/                   # Voice conversion tabs
+│   │   ├── training/                    # Training interface
+│   │   ├── settings/                    # Configuration tabs
+│   │   ├── utilities/                   # Utility functions
+│   │   ├── datasets/                    # Dataset management
+│   │   ├── downloads/                   # Download tools
+│   │   ├── extra/                       # Additional features
+│   │   └── credits/                     # Credits and information
+│   ├── core/                            # Core processing modules
+│   ├── audio/                           # Audio processing
+│   ├── models/                          # Model management
+│   ├── training/                        # Training pipeline
+│   ├── applio_code/                     # Applio compatibility
+│   ├── krvc_kernel.py                   # KRVC optimization kernel
+│   ├── music_separation_code/           # Audio separation
+│   └── utils/                           # Utility functions
+├── notebooks/                           # Google Colab notebooks
+│   └── Advanced_RVC_Inference.ipynb     # Master Colab notebook
+├── weights/                             # Model weights directory
+├── indexes/                             # Index files directory
+├── logs/                                # Training logs directory
+├── docs/                                # Documentation
+│   ├── directory_structure.md           # Detailed structure guide
+│   ├── api_usage.md                     # Python API documentation
+│   └── troubleshooting.md               # Common issues guide
+└── run.py                               # Simplified launcher
+```
 
 ## Features Comparison
 

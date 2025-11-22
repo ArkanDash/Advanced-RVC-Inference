@@ -2,10 +2,10 @@ import math
 import torch
 from typing import Optional
 
-from programs.applio_code.rvc.lib.algorithm.commons import sequence_mask
-from programs.applio_code.rvc.lib.algorithm.modules import WaveNet
-from programs.applio_code.rvc.lib.algorithm.normalization import LayerNorm
-from programs.applio_code.rvc.lib.algorithm.attentions import FFN, MultiHeadAttention
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.commons import sequence_mask
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.modules import WaveNet
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.normalization import LayerNorm
+from advanced_rvc_inference.applio_code.rvc.lib.algorithm.attentions import FFN, MultiHeadAttention
 
 
 class Encoder(torch.nn.Module):
