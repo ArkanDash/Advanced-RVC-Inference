@@ -1,3 +1,0 @@
-"""
-RVC lib tools package.
-"""

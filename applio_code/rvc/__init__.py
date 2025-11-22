@@ -1,3 +1,0 @@
-"""
-RVC package initialization.
-"""
