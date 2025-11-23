@@ -1,4 +1,4 @@
-# Advanced RVC Inference V3.5.2 - KRVC Kernel
+# Advanced RVC Inference V3.5.3 - Enhanced GPU & OpenCL
 
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
@@ -14,7 +14,7 @@ Advanced RVC Inference is a state-of-the-art voice conversion system featuring V
 
 ## Features Comparison
 
-| Feature | Standard RVC | Advanced RVC Inference V3.5.2 | Improvement |
+| Feature | Standard RVC | Advanced RVC Inference V3.5.3 | Improvement |
 |---------|--------------|-------------------------------|-------------|
 | **F0 Methods** | ~10 | **60+ Methods** | **+500%** |
 | **Embedder Models** | ~10 | **60+ Models** | **+500%** |
@@ -26,10 +26,14 @@ Advanced RVC Inference is a state-of-the-art voice conversion system featuring V
 | **Memory Management** | Standard | **Automatic Cleanup** | **Optimized** |
 | **Configuration** | Hardcoded | **Singleton Config Class** | **Professional** |
 | **KRVC Kernel** | None | **2x Faster Performance** | **New** |
+| **GPU Optimization** | Basic | **T4/A100 Specialized** | **New** |
+| **OpenCL Support** | None | **Full Acceleration** | **New** |
+| **Mixed Precision** | Manual | **Automatic Optimization** | **Enhanced** |
+| **Memory Efficiency** | Standard | **Advanced Management** | **Optimized** |
 
 ## Quick Start
 
-### Local Installation
+### Enhanced Installation (Recommended)
 
 ```bash
 # Clone repository
@@ -40,14 +44,31 @@ cd Advanced-RVC-Inference
 python -m venv rvc_env
 source rvc_env/bin/activate  # Windows: rvc_env\Scripts\activate
 
-# Install dependencies
+# Enhanced automatic setup (includes GPU optimization)
+python enhanced_setup.py
+
+# Or manual installation
 pip install --upgrade pip
 pip install -r requirements.txt
 
 # Install in development mode
 pip install -e .
 
-# Launch application
+# Launch with GPU optimization
+python -m advanced_rvc_inference.main
+
+# Or use enhanced launcher scripts
+./run_enhanced.sh  # Linux/Mac
+run_enhanced.bat   # Windows
+```
+
+### GPU Requirements
+
+- **NVIDIA GPUs**: CUDA 11.8+ required for full GPU acceleration
+- **T4 GPUs**: Optimized memory management for inference workloads
+- **A100 GPUs**: Full tensor core support for training and inference
+- **AMD GPUs**: OpenCL support for cross-vendor compatibility
+- **Intel GPUs**: OpenCL acceleration support
 python -m advanced_rvc_inference.main
 ```
 
@@ -97,6 +118,15 @@ docker run -p 7860:7860 -v $(pwd)/models:/app/models advanced-rvc-inference:late
 - **Advanced Convolution**: Group normalization and efficient residual blocks
 - **Tensor Core Utilization**: Optimized for supported hardware
 - **Memory Efficiency**: Reduced memory usage with better performance
+
+### GPU Optimization & OpenCL Support (V3.5.3+)
+- **T4 GPU Optimization**: Specialized memory management and batch size optimization
+- **A100 GPU Support**: Tensor core acceleration with mixed precision training
+- **Automatic GPU Detection**: Smart configuration based on detected hardware
+- **OpenCL Acceleration**: Cross-vendor GPU acceleration for AMD/Intel GPUs
+- **Memory Optimization**: Automatic memory management and cleanup
+- **Mixed Precision**: Automatic FP16/BF16 optimization for supported hardware
+- **Performance Monitoring**: Real-time GPU utilization and memory tracking
 
 ### Professional Audio Processing
 - **Multi-format Support**: WAV, MP3, FLAC, OGG, M4A, AAC, ALAC, WebM
@@ -154,6 +184,39 @@ krvc_speed_optimize()
 krvc_inference_mode()  # For inference
 # or
 krvc_training_mode()   # For training
+```
+
+### GPU Optimization & OpenCL
+
+```python
+from advanced_rvc_inference.gpu_optimization import get_gpu_optimizer, get_opencl_processor
+
+# Get GPU optimizer with automatic hardware detection
+gpu_optimizer = get_gpu_optimizer()
+gpu_info = gpu_optimizer.gpu_info
+print(f"Detected GPU: {gpu_info['type']}")
+print(f"Memory: {gpu_info['memory_gb']:.1f}GB")
+
+# Get optimal settings for your hardware
+optimal_settings = gpu_optimizer.get_optimal_settings()
+print(f"Optimal batch size: {optimal_settings['batch_size']}")
+print(f"Mixed precision: {optimal_settings['mixed_precision']}")
+
+# Use OpenCL acceleration if available
+opencl_processor = get_opencl_processor(device_id=0)
+if opencl_processor:
+    # Process audio with OpenCL acceleration
+    processed_audio = opencl_processor.process_audio_opencl(
+        audio_data, 
+        operation="normalize"
+    )
+    print("OpenCL acceleration enabled")
+else:
+    print("OpenCL not available, using CPU fallback")
+
+# Monitor GPU performance
+memory_info = gpu_optimizer.get_memory_info()
+print(f"GPU Memory Usage: {memory_info['utilization']:.1f}%")
 ```
 
 ## Single Source of Truth - Colab Strategy

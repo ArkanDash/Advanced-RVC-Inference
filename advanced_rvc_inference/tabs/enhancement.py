@@ -1,6 +1,6 @@
 import gradio as gr
 import os, sys
-from assets.i18n.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 

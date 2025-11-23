@@ -1,6 +1,6 @@
 import gradio as gr
 import os, sys
-from assets.i18n.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 import subprocess
 import threading
 
@@ -9,7 +9,29 @@ i18n = I18nAuto()
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
+# Import the comprehensive training interface
+try:
+    from .train.comprehensive_train import training_interface
+    COMPREHENSIVE_TRAIN_AVAILABLE = True
+except ImportError:
+    COMPREHENSIVE_TRAIN_AVAILABLE = False
+
 def training_tab():
+    """Main training interface with comprehensive and simple options"""
+    
+    with gr.Column():
+        gr.Markdown("## 🎓 RVC Training Center")
+        gr.Markdown(i18n("Complete training suite for RVC models"))
+        
+        if COMPREHENSIVE_TRAIN_AVAILABLE:
+            # Use the comprehensive training interface
+            training_interface()
+        else:
+            # Fallback to simple interface
+            simple_training_tab()
+
+def simple_training_tab():
+    """Simple training interface as fallback"""
     with gr.Column():
         gr.Markdown("## 🎓 RVC Training")
 
@@ -138,44 +160,44 @@ def training_tab():
 
         def preprocess_dataset(dataset_path, model_name, sample_rate, cpu_cores):
             if not dataset_path or not model_name:
-                return "Dataset path and model name are required!"
+                return i18n("Dataset path and model name are required!")
 
             cmd = [
                 "python",
-                f"{now_dir}/programs/applio_code/rvc/train/preprocess.py",
-                dataset_path,
-                model_name,
-                sample_rate,
-                str(cpu_cores)
+                f"{now_dir}/programs/applio_code/rvc/train/preprocess/preprocess.py",
+                "--dataset_path", dataset_path,
+                "--model_name", model_name,
+                "--sample_rate", sample_rate,
+                "--cpu_cores", str(cpu_cores)
             ]
 
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"Dataset preprocessed successfully!\n{result.stdout}"
+                return f"{i18n('Dataset preprocessed successfully!')}\n{result.stdout}"
             except Exception as e:
-                return f"Preprocessing failed: {str(e)}"
+                return f"{i18n('Preprocessing failed:')} {str(e)}"
 
         def extract_f0(model_name, f0_method, cpu_cores):
             if not model_name:
-                return "Model name is required!"
+                return i18n("Model name is required!")
 
             cmd = [
                 "python",
                 f"{now_dir}/programs/applio_code/rvc/train/extract/extract_f0.py",
-                model_name,
-                f0_method,
-                str(cpu_cores)
+                "--model_name", model_name,
+                "--method", f0_method,
+                "--cpu_cores", str(cpu_cores)
             ]
 
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"F0 extracted successfully!\n{result.stdout}"
+                return f"{i18n('F0 extracted successfully!')}\n{result.stdout}"
             except Exception as e:
-                return f"F0 extraction failed: {str(e)}"
+                return f"{i18n('F0 extraction failed:')} {str(e)}"
 
         def extract_features(model_name, version, pretrain, gpu_ids):
             if not model_name:
-                return "Model name is required!"
+                return i18n("Model name is required!")
 
             cmd = [
                 "python",
@@ -188,17 +210,17 @@ def training_tab():
 
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"Features extracted successfully!\n{result.stdout}"
+                return f"{i18n('Features extracted successfully!')}\n{result.stdout}"
             except Exception as e:
-                return f"Feature extraction failed: {str(e)}"
+                return f"{i18n('Feature extraction failed:')} {str(e)}"
 
         def start_training(model_name, version, f0, sample_rate, dataset_path, batch_size, gpu_ids, save_every_epoch, total_epoch, pretrain):
             if not all([model_name, dataset_path]):
-                return "Model name and dataset path are required!"
+                return i18n("Model name and dataset path are required!")
 
             cmd = [
                 "python",
-                f"{now_dir}/programs/applio_code/rvc/train/train.py",
+                f"{now_dir}/programs/applio_code/rvc/train/training/train.py",
                 "--model_name", model_name,
                 "--version", f"v{version}",
                 "--f0", str(f0),
@@ -212,25 +234,25 @@ def training_tab():
 
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"Training completed successfully!\n{result.stdout}"
+                return f"{i18n('Training completed successfully!')}\n{result.stdout}"
             except Exception as e:
-                return f"Training failed: {str(e)}"
+                return f"{i18n('Training failed:')} {str(e)}"
 
         def train_index(model_name):
             if not model_name:
-                return "Model name is required!"
+                return i18n("Model name is required!")
 
             cmd = [
                 "python",
-                f"{now_dir}/programs/applio_code/rvc/train/train_index.py",
-                model_name
+                f"{now_dir}/programs/applio_code/rvc/train/training/train_index.py",
+                "--model_name", model_name
             ]
 
             try:
                 result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"Index trained successfully!\n{result.stdout}"
+                return f"{i18n('Index trained successfully!')}\n{result.stdout}"
             except Exception as e:
-                return f"Index training failed: {str(e)}"
+                return f"{i18n('Index training failed:')} {str(e)}"
 
         preprocess_btn.click(
             preprocess_dataset,

@@ -4,14 +4,25 @@ import os, sys
 import regex as re
 import subprocess
 import requests
-from core import download_model
-from advanced_rvc_inference.applio_code.rvc.lib.utils import format_title
-from assets.i18n.i18n import I18nAuto
+from .core import download_model
+from ..lib.rvc.tools.model_download import download_model_pipeline
+from ..lib.i18n import I18nAuto
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 i18n = I18nAuto()
+
+def format_title(name):
+    """Format model name for display"""
+    # Remove file extension and clean up the name
+    name = name.replace(".pth", "").replace(".index", "")
+    # Replace underscores and clean up
+    name = re.sub(r"_+|-", " ", name)
+    # Clean up model type indicators
+    name = re.sub(r"(_v[12])|(_nprobe_\d+)|(added_)", "", name)
+    # Capitalize words
+    return " ".join(word.capitalize() for word in name.split())
 
 
 def save_drop_model(dropbox):
