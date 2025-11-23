@@ -50,51 +50,64 @@ try:
 except ImportError:
     KRVC_AVAILABLE = False
 
-# Import submodules
-from . import tabs, rvc, msep, lib
+# Import submodules with fallback for missing modules
+from . import tabs, rvc, msep
+try:
+    from . import lib
+except ImportError:
+    # lib module may not exist in some installations
+    pass
 
 # Package metadata
 __all__ = [
     # Core functions
     'full_inference_program',
-    'import_voice_converter', 
+    'import_voice_converter',
     'get_config',
     'download_file',
     'add_audio_effects',
     'merge_audios',
     'check_fp16_support',
     'real_time_voice_conversion',
-    
+
     # Model lists
     'models_vocals',
-    'karaoke_models', 
+    'karaoke_models',
     'denoise_models',
     'dereverb_models',
     'deecho_models',
-    
+
     # Submodules
     'tabs',
     'rvc',
-    'msep', 
-    'lib',
-    
+    'msep',
+]
+
+# Add lib to __all__ only if it exists
+try:
+    from . import lib
+    __all__.append('lib')
+except ImportError:
+    pass
+
+__all__.extend([
     # KRVC features (if available)
     'KRVCFeatureExtractor',
     'krvc_speed_optimize',
     'krvc_inference_mode',
-    'krvc_training_mode', 
+    'krvc_training_mode',
     'krvc_mixed_precision_training',
     'KRVCAdvancedOptimizer',
     'KRVCInferenceOptimizer',
     'KRVCPerformanceMonitor',
     'KRVCRealTimeProcessor',
     'cleanup_krvc_memory',
-    
+
     # GPU Optimization features
     'gpu_optimizer',
     'gpu_settings',
     'GPU_OPTIMIZATION_AVAILABLE',
-    
+
     # Availability flags
     'KRVC_AVAILABLE'
-]
+])
