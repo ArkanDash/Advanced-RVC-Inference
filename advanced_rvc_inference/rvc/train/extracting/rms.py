@@ -12,9 +12,39 @@ import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from main.library.utils import load_audio
-from main.app.variables import logger, translations
-from main.inference.extracting.setup_path import setup_paths
+# Import utilities with fallback for missing main module
+try:
+    from main.library.utils import load_audio
+except ImportError:
+    # Use a direct implementation or fallback
+    def load_audio(path, sr):
+        import librosa
+        audio, _ = librosa.load(path, sr=sr)
+        return audio
+
+try:
+    from main.app.variables import logger, translations
+except ImportError:
+    # Create fallback logger and translations if main module doesn't exist
+    import logging as fallback_logging
+    logger = fallback_logging.getLogger(__name__)
+
+    # Simple fallback translations dictionary
+    translations = {
+        "rms_start_extract": "Starting RMS energy extraction for {num_processes} processes",
+        "rms_success_extract": "RMS energy extraction completed in {elapsed_time} seconds"
+    }
+
+try:
+    from main.inference.extracting.setup_path import setup_paths
+except ImportError:
+    # Create fallback setup_paths function
+    def setup_paths(exp_dir, rms_extract=True):
+        """Fallback path setup function"""
+        wav_path = os.path.join(exp_dir, "sliced_audios")
+        out_path = os.path.join(exp_dir, "rms")
+        os.makedirs(out_path, exist_ok=True)
+        return wav_path, out_path
 
 class RMSEnergyExtractor(nn.Module):
     def __init__(self, frame_length=2048, hop_length=512, center=True, pad_mode = "reflect"):

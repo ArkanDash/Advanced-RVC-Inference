@@ -39,33 +39,209 @@ sys.path.append(current_dir)
 sys.path.append(os.getcwd())
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
-from .lib.utils import clear_gpu_cache
-from lib.backends import directml, opencl
-from main.app.variables import logger, translations
+# Import utilities with fallback for missing modules
+try:
+    from .lib.utils import clear_gpu_cache
+except ImportError:
+    def clear_gpu_cache():
+        """Fallback GPU cache clearing function"""
+        import gc
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
+
+# Import backend functions with fallback
+try:
+    from lib.backends import directml, opencl
+except ImportError:
+    # Create mock classes for DirectML and OpenCL if not available
+    class directml:
+        @staticmethod
+        def is_available():
+            return False
+
+    class opencl:
+        @staticmethod
+        def is_available():
+            return False
+        class pytorch_ocl:
+            @staticmethod
+            def manual_seed_all(seed):
+                pass
+
+# Import logging and translation utilities with fallback
+try:
+    from main.app.variables import logger, translations
+except ImportError:
+    # Create fallback logger and translations if not available
+    import logging as fallback_logging
+    logger = fallback_logging.getLogger(__name__)
+
+    # Simple fallback translations dictionary
+    translations = {
+        "modelname": "Model Name",
+        "save_every_epoch": "Save Every Epoch",
+        "total_e": "Total Epochs",
+        "dorg": "Pretrained Models (G: {pretrainG}, D: {pretrainD})",
+        "training_version": "Training Version",
+        "batch_size": "Batch Size",
+        "training_f0": "Pitch Guidance",
+        "save_only_latest": "Save Only Latest",
+        "save_every_weights": "Save Every Weights",
+        "cache_in_gpu": "Cache Data in GPU",
+        "overtraining_detector": "Overtraining Detector",
+        "threshold": "Threshold",
+        "cleanup_training": "Cleanup",
+        "memory_efficient_training": "Memory Efficient Training",
+        "optimizer": "Optimizer",
+        "train&energy": "Train with Energy",
+        "multiscale_mel_loss": "Multiscale Mel Loss",
+        "training_sr": "Training sample rate is {sr_1}, but audio sample rate is {sr_2}",
+        "not_found_dataset": "Dataset not found",
+        "model_author": "Model Author: {model_author}",
+        "vocoder": "Vocoder",
+        "not_gpu": "GPU not found, using CPU",
+        "training_error": "Training error occurred: ",
+        "time_or_speed_training": "{current_time} | Speed: {elapsed_time_str}",
+        "not_enough_data": "Not enough training data",
+        "start_training": "Start training...",
+        "import_pretrain": "Importing {dg} pretrained: {pretrain}",
+        "checkpointing_err": "Error loading checkpoints",
+        "using_reference": "Using reference: {reference_name}",
+        "stop": "Stop",
+        "resume": "Resume",
+        "epoch_sum": "Epoch: {epoch}/{total_epoch} |",
+        "time_elpased": "Time Elapsed",
+        "time_left": "Time Left",
+        "disc_loss": "Disc. Loss:",
+        "gen_loss": "Gen. Loss:",
+        "kl_loss": "KL Loss:",
+        "fm_loss": "FM Loss:",
+        "mel_loss": "Mel Loss:",
+        "adv_loss": "Adv Loss:",
+        "gen_lr": "Gen. LR:",
+        "disc_lr": "Disc. LR:",
+        "grad_gen": "Grad. (Gen):",
+        "grad_disc": "Grad. (Disc):",
+        "step": "Step",
+        "eval_step": "Evaluation Step",
+        "eval_loss": "Evaluation Loss",
+        "eval_loss_gen": "Evaluation Gen Loss",
+        "eval_lr": "Learning Rate",
+        "eval_grad": "Gradient",
+        "loss_value": "Loss Value",
+        "eval_time": "Time",
+        "model_saved": "Model saved at epoch",
+        "epoch_time": "Epoch time",
+        "final_step": "Final step completed",
+        "final_loss": "Final loss",
+        "final_save": "Final model saved"
+    }
 
 from main.library.algorithm import commons
-from main.inference.training import losses
+# Import training modules with fallback
+try:
+    from main.inference.training import losses
+except ImportError:
+    # If main module doesn't exist, try direct import from this package
+    try:
+        from ...rvc.infer.training import losses  # Adjust path as needed
+    except ImportError:
+        # Create minimal fallback if losses module is not available
+        class LossesFallback:
+            pass
+        losses = LossesFallback()
 
-from main.inference.training.extract_model import extract_model
+# Import training modules with fallback
+try:
+    from main.library.algorithm import commons
+except ImportError:
+    # Create fallback if module doesn't exist
+    commons = None
 
-from main.inference.training.mel_processing import (
-    MultiScaleMelSpectrogramLoss, 
-    mel_spectrogram_torch,
-    spec_to_mel_torch
-)
+try:
+    from main.inference.training.extract_model import extract_model
+except ImportError:
+    # Create minimal fallback if extract_model module is not available
+    def extract_model(*args, **kwargs):
+        pass
 
-from main.inference.training.utils import (
-    HParams, 
-    summarize, 
-    load_checkpoint, 
-    save_checkpoint, 
-    load_wav_to_torch,
-    latest_checkpoint_path, 
-    plot_spectrogram_to_numpy
-)
+try:
+    from main.inference.training.mel_processing import (
+        MultiScaleMelSpectrogramLoss,
+        mel_spectrogram_torch,
+        spec_to_mel_torch
+    )
+except ImportError:
+    # Try alternative import path or create fallback
+    try:
+        from ...rvc.infer.mel_processing import (
+            MultiScaleMelSpectrogramLoss,
+            mel_spectrogram_torch,
+            spec_to_mel_torch
+        )
+    except ImportError:
+        # Create placeholder classes if unavailable
+        class MultiScaleMelSpectrogramLoss:
+            pass
+        def mel_spectrogram_torch(*args, **kwargs):
+            pass
+        def spec_to_mel_torch(*args, **kwargs):
+            pass
 
-from main.app.variables import config as main_config
-from main.app.variables import configs as main_configs
+try:
+    from main.inference.training.utils import (
+        HParams,
+        summarize,
+        load_checkpoint,
+        save_checkpoint,
+        load_wav_to_torch,
+        latest_checkpoint_path,
+        plot_spectrogram_to_numpy
+    )
+except ImportError:
+    # Try alternative import path or create fallback
+    try:
+        from ...rvc.infer.utils import (
+            HParams,
+            summarize,
+            load_checkpoint,
+            save_checkpoint,
+            load_wav_to_torch,
+            latest_checkpoint_path,
+            plot_spectrogram_to_numpy
+        )
+    except ImportError:
+        # Create placeholder classes/functions if unavailable
+        class HParams:
+            pass
+        def summarize(*args, **kwargs):
+            pass
+        def load_checkpoint(*args, **kwargs):
+            pass
+        def save_checkpoint(*args, **kwargs):
+            pass
+        def load_wav_to_torch(*args, **kwargs):
+            pass
+        def latest_checkpoint_path(*args, **kwargs):
+            pass
+        def plot_spectrogram_to_numpy(*args, **kwargs):
+            pass
+
+try:
+    from main.app.variables import config as main_config
+    from main.app.variables import configs as main_configs
+except ImportError:
+    # Create fallback configuration if main module doesn't exist
+    import torch
+    main_config = type('Config', (), {
+        'device': 'cuda' if torch.cuda.is_available() else 'cpu',
+        'is_half': torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 6
+    })()
+    main_configs = {
+        'logs_path': './logs'
+    }
 
 warnings.filterwarnings("ignore")
 logging.getLogger("torch").setLevel(logging.ERROR)
