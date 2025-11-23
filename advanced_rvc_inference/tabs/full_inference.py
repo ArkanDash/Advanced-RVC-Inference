@@ -1,8 +1,8 @@
-from core import full_inference_program
+from ..core import full_inference_program
 import sys, os
 import gradio as gr
 import regex as re
-from assets.i18n.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 import torch
 import shutil
 import unicodedata

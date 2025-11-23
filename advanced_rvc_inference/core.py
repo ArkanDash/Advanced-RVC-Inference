@@ -16,15 +16,18 @@ from audio_separator.separator import Separator
 import logging
 import yaml
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
 now_dir = os.getcwd()
 sys.path.append(now_dir)
-from advanced_rvc_inference.applio_code.rvc.infer.infer import VoiceConverter
-from advanced_rvc_inference.applio_code.rvc.lib.tools.model_download import model_download_pipeline
-from advanced_rvc_inference.music_separation_code.inference import proc_file
+from .rvc.infer.conversion.convert import VoiceConverter
+from .lib.rvc.tools.model_download import model_download_pipeline
+from .msep.inference import proc_file
 
 # Import KRVC kernel for enhanced performance
 try:
-    from krvc_kernel import (
+    from .krvc_kernel import (
         KRVCFeatureExtractor,
         krvc_speed_optimize,
         krvc_inference_mode,
@@ -42,9 +45,31 @@ except ImportError as e:
     KRVC_AVAILABLE = False
     print(f"KRVC Kernel not available - Using standard processing: {e}")
 
+# Import GPU optimization and OpenCL support
+try:
+    from .gpu_optimization import (
+        GPUOptimizer,
+        get_gpu_optimizer,
+        get_opencl_processor,
+        OpenCLAudioProcessor
+    )
+    GPU_OPTIMIZATION_AVAILABLE = True
+    print("GPU Optimization and OpenCL support loaded successfully")
+except ImportError as e:
+    GPU_OPTIMIZATION_AVAILABLE = False
+    print(f"GPU Optimization not available: {e}")
+
 # Initialize KRVC optimizations
 if KRVC_AVAILABLE:
     krvc_speed_optimize()
+
+# Initialize GPU optimization
+if GPU_OPTIMIZATION_AVAILABLE:
+    gpu_optimizer = get_gpu_optimizer()
+    gpu_settings = gpu_optimizer.get_optimal_settings()
+    gpu_optimizer.optimize_memory()
+    print(f"GPU Optimization initialized - {gpu_optimizer.gpu_info['type']} detected")
+    print(f"Optimal settings: {gpu_settings}")
 
 # Initialize performance monitor
 if KRVC_AVAILABLE:
@@ -358,14 +383,14 @@ deecho_models = [
 
 @lru_cache(maxsize=None)
 def import_voice_converter():
-    from advanced_rvc_inference.applio_code.rvc.infer.infer import VoiceConverter
+    from .rvc.infer.conversion.convert import VoiceConverter
 
     return VoiceConverter()
 
 
 @lru_cache(maxsize=1)
 def get_config():
-    from advanced_rvc_inference.applio_code.rvc.configs.config import Config
+    from .rvc.configs.config import Config
 
     return Config()
 
