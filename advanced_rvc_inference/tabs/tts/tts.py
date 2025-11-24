@@ -6,7 +6,7 @@ import json
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from ...lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 
