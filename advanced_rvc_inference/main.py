@@ -6,6 +6,13 @@ Version 4.0
 
 import gradio as gr
 import sys, os
+
+
+now_dir = os.getcwd()
+sys.path.append(now_dir)
+DEFAULT_PORT = 7755
+MAX_PORT_ATTEMPTS = 10
+
 from advanced_rvc_inference.tabs.full_inference import full_inference_tab
 from advanced_rvc_inference.tabs.download_model import download_model_tab
 from advanced_rvc_inference.tabs.download_music import download_music_tab
@@ -55,10 +62,7 @@ except ImportError:
 
 import assets.themes.loadThemes as loadThemes
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
-DEFAULT_PORT = 7755
-MAX_PORT_ATTEMPTS = 10
+
 
 try:
     from assets.i18n.i18n import I18nAuto
