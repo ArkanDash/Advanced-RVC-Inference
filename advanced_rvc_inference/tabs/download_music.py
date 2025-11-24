@@ -1,7 +1,7 @@
 import gradio as gr
 
-from .core import download_music
-from ..lib.i18n import I18nAuto
+from advanced_rvc_inference.core import download_music
+from advanced_rvc_inference.lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 
