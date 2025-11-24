@@ -1,8 +1,8 @@
-from ..core import full_inference_program
+from advanced_rvc_inference.core import full_inference_program
 import sys, os
 import gradio as gr
 import regex as re
-from ..lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.i18n import I18nAuto
 import torch
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
