@@ -55,6 +55,8 @@ def check_gpu_support():
     
     try:
         import torch
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
         if torch.cuda.is_available():
             gpu_count = torch.cuda.device_count()
             logger.info(f"CUDA available with {gpu_count} GPU(s)")
