@@ -89,7 +89,7 @@ with gr.Blocks(
         full_inference_tab()
 
     with gr.Tab("🎙️ Training"):
-        from .tabs.training import training_tab
+        from advanced_rvc_inference.tabs.training import training_tab
         training_tab()
 
     with gr.Tab("📚 Model Manager"):
