@@ -7,14 +7,13 @@ import gradio as gr
 import regex as re
 import unicodedata
 
-i18n = I18nAuto()
-
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 from advanced_rvc_inference.core import full_inference_program
-from advanced_rvc_inference.lib.i18n import I18nAuto
 
+from advanced_rvc_inference.lib.i18n import I18nAuto
+i18n = I18nAuto()
 
 model_root = os.path.join(now_dir, "logs")
 audio_root = os.path.join(now_dir, "audio_files", "original_files")
