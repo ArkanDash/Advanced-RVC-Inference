@@ -1,6 +1,6 @@
 import gradio as gr
 import os, sys
-from ..lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.i18n import I18nAuto
 import subprocess
 import threading
 
@@ -11,7 +11,7 @@ sys.path.append(now_dir)
 
 # Import the comprehensive training interface
 try:
-    from .train.comprehensive_train import training_interface
+    from advanced_rvc_inference.train.comprehensive_train import training_interface
     COMPREHENSIVE_TRAIN_AVAILABLE = True
 except ImportError:
     COMPREHENSIVE_TRAIN_AVAILABLE = False
