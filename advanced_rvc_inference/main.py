@@ -19,7 +19,7 @@ from advanced_rvc_inference.tabs.download_music import download_music_tab
 from advanced_rvc_inference.tabs.settings import select_themes_tab
 from advanced_rvc_inference.tabs.training import training_tab
 from advanced_rvc_inference.tabs.model_manager import model_manager_tab
-from advanced_rvc_inference tabs.enhancement import enhancement_tab
+from advanced_rvc_inference.tabs.enhancement import enhancement_tab
 from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
 from advanced_rvc_inference.tabs.config_options import extra_options_tab
 
