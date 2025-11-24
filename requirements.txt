@@ -15,6 +15,7 @@ tqdm>=4.63.1
 sortedcontainers
 torchvision>=0.18.1
 torchaudio>=2.9.1
+julius
 
 # Performance Optimization Libraries (V4.0.0+)
 torchfx>=0.2.0  # GPU-accelerated DSP processing
