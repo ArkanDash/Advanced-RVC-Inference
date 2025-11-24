@@ -1,6 +1,6 @@
 import gradio as gr
 import os, sys
-from ..lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.i18n import I18nAuto
 
 import assets.themes.loadThemes as loadThemes
 
