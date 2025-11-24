@@ -29,6 +29,7 @@ scikit-learn
 einops>=0.8.0
 ml_collections
 demucs 
+segmentation-models-pytorch==0.5.0
 
 # Pitch and sound processing
 librosa>=0.10.2
