@@ -10,11 +10,15 @@ onnxruntime-gpu; sys_platform != 'darwin'
 PyYAML>=6.0
 tiktoken
 hyperpyyaml
-torch>=2.3.1
+torch>=2.9.1
 tqdm>=4.63.1
 sortedcontainers
 torchvision>=0.18.1
-torchaudio>=2.3.1
+torchaudio>=2.9.1
+
+# Performance Optimization Libraries (V4.0.0+)
+torchfx>=0.2.0  # GPU-accelerated DSP processing
+torch-audiomentations>=0.12.0  # GPU-enabled audio augmentation
 
 faiss-cpu==1.7.3; python_version < "3.12"
 faiss-cpu>=1.7.3; python_version >= "3.12"

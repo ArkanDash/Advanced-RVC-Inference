@@ -1,0 +1,11 @@
+{
+    "audio_quality": "high",
+    "processing_threads": 4,
+    "cache_size": 2048,
+    "auto_save": true,
+    "output_format": "FLAC",
+    "temp_folder": "temp",
+    "model_preload": true,
+    "gpu_optimization": true,
+    "memory_cleanup": true
+}
