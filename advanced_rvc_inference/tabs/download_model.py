@@ -4,10 +4,10 @@ import os, sys
 import regex as re
 import subprocess
 import requests
-from .core import download_model
+from advanced_rvc_inference.core import download_model
 # Import model download functionality with fallback
 try:
-    from ..lib.rvc.tools.model_download import download_model_pipeline
+    from advanced_rvc_inference.lib.rvc.tools.model_download import download_model_pipeline
 except ImportError:
     # Fallback implementation if the module doesn't exist
     def download_model_pipeline(repo_url):
