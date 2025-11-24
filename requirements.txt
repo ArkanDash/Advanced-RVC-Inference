@@ -27,6 +27,8 @@ faiss-cpu>=1.7.3; python_version >= "3.12"
 transformers>=4.49.0
 scikit-learn
 einops>=0.8.0
+ml_collections
+demucs 
 
 # Pitch and sound processing
 librosa>=0.10.2
@@ -79,3 +81,4 @@ spectralcluster<=0.2.22
 rich>=13.0.0  # For better console output
 click>=8.0.0  # For CLI tools
 colorama>=0.4.6  # Cross-platform colored terminal text
+
