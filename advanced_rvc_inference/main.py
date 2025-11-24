@@ -20,7 +20,7 @@ from advanced_rvc_inference.tabs.settings import select_themes_tab
 from advanced_rvc_inference.tabs.training import training_tab
 from advanced_rvc_inference.tabs.model_manager import model_manager_tab
 from tabs.enhancement import enhancement_tab
-from advanced_rvc_inference.advanced_rvc_inference.tabs.real_time import real_time_inference_tab
+from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
 from tadvanced_rvc_inference.abs.config_options import extra_options_tab
 
 # Attempt to import additional advanced features from Applio and Vietnamese-RVC
