@@ -668,4 +668,125 @@ def embedders_tab():
                 supported_modes = model_info.get('supported_modes', [])
                 info_text += f"{i18n('Supported Modes')}: {', '.join(supported_modes)}\n"
                 
-                if '
+                if 'version' in model_info:
+                    info_text += f"{i18n('Version')}: {model_info['version']}\n"
+                if 'size' in model_info:
+                    info_text += f"{i18n('Size')}: {model_info['size']}\n"
+                
+                info_text += f"\n{model_info.get('description', 'No description available')}\n"
+            else:
+                info_text += f"{i18n('Model info not available for')}: {mapped_embedder}\n"
+                
+        except Exception as e:
+            info_text += f"{i18n('Error loading model info')}: {str(e)}\n"
+        
+        info_text += f"\n{i18n('Settings')}:\n"
+        info_text += f"{i18n('Pitch Change')}: {pitch} {i18n('semitones')}\n"
+        info_text += f"{i18n('Hop Length')}: {hop}\n"
+        info_text += f"{i18n('Extraction Layer')}: {layer}\n"
+        
+        # Test embedding extraction if audio provided
+        embeddings_text = ""
+        status_msg = ""
+        
+        if test_audio:
+            try:
+                import librosa
+                
+                # Load and prepare test audio
+                y, sr = librosa.load(test_audio, sr=None)
+                
+                # Normalize audio
+                y = librosa.util.normalize(y)
+                
+                # Extract embeddings
+                start_time = time.time()
+                embeddings = embedder_manager.extract_embeddings(
+                    audio=y,
+                    sr=sr,
+                    model_name=mapped_embedder,
+                    layer=int(layer)
+                )
+                extraction_time = time.time() - start_time
+                
+                # Format embeddings info as text
+                embeddings_text = f"Embeddings Shape: {embeddings.shape}\n"
+                embeddings_text += f"Data Type: {embeddings.dtype}\n"
+                embeddings_text += f"Min Value: {np.min(embeddings):.6f}\n"
+                embeddings_text += f"Max Value: {np.max(embeddings):.6f}\n"
+                embeddings_text += f"Mean Value: {np.mean(embeddings):.6f}\n"
+                embeddings_text += f"Extraction Time: {extraction_time:.2f}s\n"
+                embeddings_text += f"Device: {embedder_manager.device}\n"
+                
+                # Add sample values (first 5 elements)
+                if embeddings.size > 0:
+                    sample_values = embeddings.flatten()[:5]
+                    embeddings_text += f"Sample Values: {sample_values}\n"
+                
+                status_msg = f"{i18n('Successfully extracted embeddings')}: {embeddings.shape}\n"
+                status_msg += f"{i18n('Processing time')}: {extraction_time:.2f}s"
+                
+            except Exception as e:
+                status_msg = f"{i18n('Error extracting embeddings')}: {str(e)}"
+                embeddings_text = f"Error: {str(e)}"
+        else:
+            status_msg = f"{i18n('Model loaded successfully')}: {mapped_embedder}\n"
+            status_msg += f"{i18n('Provide test audio to extract embeddings')}"
+            
+        return info_text, status_msg, embeddings_text
+    
+    def extract_test_embeddings(test_audio, embedder, custom_path, layer):
+        """Function to extract embeddings from test audio"""
+        if not test_audio:
+            return "", f"{i18n('Please provide test audio')}"
+            
+        try:
+            mapped_embedder = map_embedder_model(embedder)
+            
+            # Load audio
+            y, sr = librosa.load(test_audio, sr=None)
+            y = librosa.util.normalize(y)
+            
+            # Extract embeddings
+            embeddings = embedder_manager.extract_embeddings(
+                audio=y,
+                sr=sr,
+                model_name=mapped_embedder,
+                layer=int(layer)
+            )
+            
+            # Format result as text
+            result_text = f"Shape: {embeddings.shape}\n"
+            result_text += f"Statistics:\n"
+            result_text += f"  Min: {np.min(embeddings):.6f}\n"
+            result_text += f"  Max: {np.max(embeddings):.6f}\n"
+            result_text += f"  Mean: {np.mean(embeddings):.6f}\n"
+            result_text += f"  Std: {np.std(embeddings):.6f}\n"
+            
+            # Add sample values
+            if embeddings.size > 0:
+                sample_values = embeddings[0][:10] if len(embeddings) > 0 else []
+                result_text += f"Sample Values (first 10): {sample_values}\n"
+            
+            status = f"{i18n('Embeddings extracted successfully')}"
+            return result_text, status
+            
+        except Exception as e:
+            return f"Error: {str(e)}", f"{i18n('Error')}: {str(e)}"
+    
+    # Add time import
+    import time
+    
+    apply_embedder_btn.click(
+        update_embedder_info,
+        inputs=[embedder_model, custom_embedder, pitch_change, hop_length, extraction_layer, test_audio],
+        outputs=[embedder_info, extraction_status, embeddings_output]
+    )
+    
+    # Optional: Add a separate button for just testing embeddings
+    test_btn = gr.Button(i18n("Test Embedding Only"), variant="secondary")
+    test_btn.click(
+        extract_test_embeddings,
+        inputs=[test_audio, embedder_model, custom_embedder, extraction_layer],
+        outputs=[embeddings_output, status_output]
+    )
