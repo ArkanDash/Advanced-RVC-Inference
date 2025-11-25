@@ -52,11 +52,6 @@ except ImportError:
 
 # Import submodules with fallback for missing modules
 from . import tabs, rvc, uvr
-try:
-    from . import lib
-except ImportError:
-    # lib module may not exist in some installations
-    pass
 
 # Package metadata
 __all__ = [
@@ -83,12 +78,7 @@ __all__ = [
     'uvr',
 ]
 
-# Add lib to __all__ only if it exists
-try:
-    from . import lib
-    __all__.append('lib')
-except ImportError:
-    pass
+
 
 __all__.extend([
     # KRVC features (if available)
