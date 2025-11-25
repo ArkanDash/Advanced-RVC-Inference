@@ -46,8 +46,8 @@ scipy>=1.15.0
 matplotlib==3.7.2
 
 # Implementation and web framework
-gradio==4.36.0
-gradio_client==1.0.1
+gradio>=5.23.3,<6.0.0
+gradio_client==1.0.1,<1.14.0
 requests>=2.32.3
 aiohttp==3.10.5
 pysrt
