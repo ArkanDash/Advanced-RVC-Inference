@@ -621,10 +621,9 @@ def embedders_tab():
             
             apply_embedder_btn = gr.Button(i18n("Load Model & Test Embedding"), variant="primary")
             
-            # Add output for extracted embeddings
+            # Add output for extracted embeddings - FIXED: removed interactive parameter
             embeddings_output = gr.JSON(
-                label=i18n("Extracted Embeddings Shape"),
-                interactive=False
+                label=i18n("Extracted Embeddings Shape")
             )
         
         with gr.Column():
