@@ -18,37 +18,47 @@ onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu==1.19.0; sys_platform != 'darwin'
 
 
-
 # Performance Optimization Libraries (V4.0.0+)
 torchfx>=0.2.0
 torch-audiomentations>=0.12.0
 faiss-cpu==1.7.3
+
+
+# Additional audio processing
+git+https://github.com/BF667/UVRC.git
+audio-separator==0.18.0
+audiomentations==0.31.0
+auraloss==0.4.0
+noisereduce==3.0.2
+pystoi==0.4.1
+pyworld==0.3.4
+torchcrepe==0.0.23
+torchfcpe==0.0.4
+torchlibrosa==0.1.0
+torchmetrics==0.11.4
+torchseg==0.0.1a1
+
 
 # Machine learning, NLP and deep learning
 transformers>=4.49.0
 scikit-learn==1.5.1
 einops==0.8.0
 ml_collections==0.1.1
-demucs==4.0.0
 segmentation-models-pytorch==0.5.0
 huggingface-hub>=0.34.0,<1.0
 
 # Pitch and sound processing
 librosa>=0.10.2
-pydub==0.25.1
 praat-parselmouth==0.4.4
 soundfile>=0.13.0
 pedalboard==0.8.9
 
 # Data processing and calculation
-numpy>=1.25.2,<2.0.0
 numba==0.57.0
 scipy>=1.11.0
 matplotlib==3.7.2
 
 # Implementation and web framework
-gradio>=5.23.3,<6.0.0
-gradio_client==1.0.1,<1.14.0
 requests>=2.32.3
 aiohttp==3.10.5
 pysrt
@@ -84,23 +94,9 @@ audioread==3.0.1
 resampy==0.4.3
 spectralcluster<=0.2.22
 
-# Additional audio processing
-audio-separator==0.18.0
-audiomentations==0.31.0
-auraloss==0.4.0
-noisereduce==3.0.2
-pystoi==0.4.1
-pyworld==0.3.4
-torchcrepe==0.0.23
-torchfcpe==0.0.4
-torchlibrosa==0.1.0
-torchmetrics==0.11.4
-torchseg==0.0.1a1
 
 # Development and debugging (Optional)
 rich>=13.0.0
 click>=8.1.7
 colorama==0.4.6
 
-# Additional utilities
-git+https://github.com/BF667/UVRC.git
