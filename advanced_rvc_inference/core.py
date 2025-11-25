@@ -43,7 +43,7 @@ except ImportError:
         # In a real implementation, this would download the model
         # For now we simulate the functionality
         return f"Model download not implemented: {link}"
-from .msep.inference import proc_file
+from .uvr.core import proc_file
 
 # Import KRVC kernel for enhanced performance
 try:
