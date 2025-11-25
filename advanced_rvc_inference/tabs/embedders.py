@@ -621,9 +621,11 @@ def embedders_tab():
             
             apply_embedder_btn = gr.Button(i18n("Load Model & Test Embedding"), variant="primary")
             
-            # Add output for extracted embeddings - FIXED: removed interactive parameter
-            embeddings_output = gr.JSON(
-                label=i18n("Extracted Embeddings Shape")
+            # Changed from gr.JSON to gr.Textbox
+            embeddings_output = gr.Textbox(
+                label=i18n("Extracted Embeddings Shape"),
+                interactive=False,
+                lines=5
             )
         
         with gr.Column():
@@ -651,7 +653,7 @@ def embedders_tab():
             info_text += f"{i18n('Custom Path')}: {custom_path}\n"
         elif embedder == "custom" and not custom_path:
             error_msg = f"{i18n('Error')}: {i18n('Please specify a custom embedder path')}"
-            return info_text + error_msg, error_msg, {}
+            return info_text + error_msg, error_msg, ""
         
         # Get comprehensive model information
         try:
@@ -666,120 +668,4 @@ def embedders_tab():
                 supported_modes = model_info.get('supported_modes', [])
                 info_text += f"{i18n('Supported Modes')}: {', '.join(supported_modes)}\n"
                 
-                if 'version' in model_info:
-                    info_text += f"{i18n('Version')}: {model_info['version']}\n"
-                if 'size' in model_info:
-                    info_text += f"{i18n('Size')}: {model_info['size']}\n"
-                
-                info_text += f"\n{model_info.get('description', 'No description available')}\n"
-            else:
-                info_text += f"{i18n('Model info not available for')}: {mapped_embedder}\n"
-                
-        except Exception as e:
-            info_text += f"{i18n('Error loading model info')}: {str(e)}\n"
-        
-        info_text += f"\n{i18n('Settings')}:\n"
-        info_text += f"{i18n('Pitch Change')}: {pitch} {i18n('semitones')}\n"
-        info_text += f"{i18n('Hop Length')}: {hop}\n"
-        info_text += f"{i18n('Extraction Layer')}: {layer}\n"
-        
-        # Test embedding extraction if audio provided
-        embeddings_shape = {}
-        status_msg = ""
-        
-        if test_audio:
-            try:
-                import librosa
-                
-                # Load and prepare test audio
-                y, sr = librosa.load(test_audio, sr=None)
-                
-                # Normalize audio
-                y = librosa.util.normalize(y)
-                
-                # Extract embeddings
-                start_time = time.time()
-                embeddings = embedder_manager.extract_embeddings(
-                    audio=y,
-                    sr=sr,
-                    model_name=mapped_embedder,
-                    layer=int(layer)
-                )
-                extraction_time = time.time() - start_time
-                
-                # Get shape and basic stats
-                embeddings_shape = {
-                    "shape": list(embeddings.shape),
-                    "dtype": str(embeddings.dtype),
-                    "min_value": float(np.min(embeddings)),
-                    "max_value": float(np.max(embeddings)),
-                    "mean_value": float(np.mean(embeddings)),
-                    "extraction_time": f"{extraction_time:.2f}s",
-                    "device": embedder_manager.device
-                }
-                
-                status_msg = f"{i18n('Successfully extracted embeddings')}: {embeddings.shape}\n"
-                status_msg += f"{i18n('Processing time')}: {extraction_time:.2f}s"
-                
-            except Exception as e:
-                status_msg = f"{i18n('Error extracting embeddings')}: {str(e)}"
-                embeddings_shape = {"error": str(e)}
-        else:
-            status_msg = f"{i18n('Model loaded successfully')}: {mapped_embedder}\n"
-            status_msg += f"{i18n('Provide test audio to extract embeddings')}"
-            
-        return info_text, status_msg, embeddings_shape
-    
-    def extract_test_embeddings(test_audio, embedder, custom_path, layer):
-        """Function to extract embeddings from test audio"""
-        if not test_audio:
-            return {}, f"{i18n('Please provide test audio')}"
-            
-        try:
-            mapped_embedder = map_embedder_model(embedder)
-            
-            # Load audio
-            y, sr = librosa.load(test_audio, sr=None)
-            y = librosa.util.normalize(y)
-            
-            # Extract embeddings
-            embeddings = embedder_manager.extract_embeddings(
-                audio=y,
-                sr=sr,
-                model_name=mapped_embedder,
-                layer=int(layer)
-            )
-            
-            result = {
-                "shape": list(embeddings.shape),
-                "sample_values": embeddings[0][:10].tolist() if len(embeddings) > 0 else [],
-                "statistics": {
-                    "min": float(np.min(embeddings)),
-                    "max": float(np.max(embeddings)),
-                    "mean": float(np.mean(embeddings)),
-                    "std": float(np.std(embeddings))
-                }
-            }
-            
-            status = f"{i18n('Embeddings extracted successfully')}"
-            return result, status
-            
-        except Exception as e:
-            return {"error": str(e)}, f"{i18n('Error')}: {str(e)}"
-    
-    # Add time import
-    import time
-    
-    apply_embedder_btn.click(
-        update_embedder_info,
-        inputs=[embedder_model, custom_embedder, pitch_change, hop_length, extraction_layer, test_audio],
-        outputs=[embedder_info, extraction_status, embeddings_output]
-    )
-    
-    # Optional: Add a separate button for just testing embeddings
-    test_btn = gr.Button(i18n("Test Embedding Only"), variant="secondary")
-    test_btn.click(
-        extract_test_embeddings,
-        inputs=[test_audio, embedder_model, custom_embedder, extraction_layer],
-        outputs=[embeddings_output, status_output]
-    )
+                if '
