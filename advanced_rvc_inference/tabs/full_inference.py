@@ -13,13 +13,19 @@ sys.path.append(now_dir)
 from advanced_rvc_inference.core import full_inference_program
 
 from advanced_rvc_inference.lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.path_manager import get_path_manager
+
 i18n = I18nAuto()
 
-model_root = os.path.join(now_dir, "logs")
-audio_root = os.path.join(now_dir, "audio_files", "original_files")
+# Initialize path manager
+pm = get_path_manager(now_dir)
 
-model_root_relative = os.path.relpath(model_root, now_dir)
-audio_root_relative = os.path.relpath(audio_root, now_dir)
+# Use path manager for consistent path handling
+model_root = pm.get_model_root()
+audio_root = pm.get_audio_root()
+
+model_root_relative = pm.get_relative_path(model_root)
+audio_root_relative = pm.get_relative_path(audio_root)
 
 sup_audioext = {
     "wav",
@@ -118,13 +124,144 @@ def match_index(model_file_value):
     return ""
 
 
-def output_path_fn(input_audio_path):
-    original_name_without_extension = os.path.basename(input_audio_path).rsplit(".", 1)[
-        0
-    ]
-    new_name = original_name_without_extension + "_output.wav"
-    output_path = os.path.join(os.path.dirname(input_audio_path), new_name)
-    return output_path
+def output_path_fn(input_audio_path, custom_output_path=None):
+    """
+    Resolve output path using the path manager
+    
+    Args:
+        input_audio_path: Path to input audio file
+        custom_output_path: Optional custom output path
+        
+    Returns:
+        Resolved output path
+    """
+    return pm.resolve_output_path(input_audio_path, custom_output_path)
+
+
+def enhanced_full_inference_wrapper(
+    model_file,
+    index_file,
+    audio,
+    output_path,
+    export_format_rvc,
+    split_audio,
+    autotune,
+    vocal_model,
+    karaoke_model,
+    dereverb_model,
+    deecho,
+    deeecho_model,
+    denoise,
+    denoise_model,
+    reverb,
+    vocals_volume,
+    instrumentals_volume,
+    backing_vocals_volume,
+    export_format_final,
+    devices,
+    pitch,
+    filter_radius,
+    index_rate,
+    rms_mix_rate,
+    protect,
+    pitch_extract,
+    hop_length,
+    reverb_room_size,
+    reverb_damping,
+    reverb_wet_gain,
+    reverb_dry_gain,
+    reverb_width,
+    embedder_model,
+    delete_audios,
+    use_tta,
+    batch_size,
+    infer_backing_vocals,
+    infer_backing_vocals_model,
+    infer_backing_vocals_index,
+    change_inst_pitch,
+    pitch_back,
+    filter_radius_back,
+    index_rate_back,
+    rms_mix_rate_back,
+    protect_back,
+    pitch_extract_back,
+    hop_length_back,
+    export_format_rvc_back,
+    split_audio_back,
+    autotune_back,
+    embedder_model_back,
+):
+    """
+    Enhanced wrapper for full_inference_program with improved path handling
+    """
+    # Use path manager to resolve output path
+    resolved_output_path = output_path_fn(audio, output_path)
+    
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(resolved_output_path)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
+    
+    try:
+        # Call the original function with the resolved path
+        return full_inference_program(
+            model_path=model_file,
+            index_path=index_file,
+            input_audio_path=audio,
+            output_path=resolved_output_path,
+            export_format_rvc=export_format_rvc,
+            split_audio=split_audio,
+            autotune=autotune,
+            vocal_model=vocal_model,
+            karaoke_model=karaoke_model,
+            dereverb_model=dereverb_model,
+            deecho=deecho,
+            deecho_model=deeecho_model,
+            denoise=denoise,
+            denoise_model=denoise_model,
+            reverb=reverb,
+            vocals_volume=vocals_volume,
+            instrumentals_volume=instrumentals_volume,
+            backing_vocals_volume=backing_vocals_volume,
+            export_format_final=export_format_final,
+            devices=devices,
+            pitch=pitch,
+            filter_radius=filter_radius,
+            index_rate=index_rate,
+            rms_mix_rate=rms_mix_rate,
+            protect=protect,
+            pitch_extract=pitch_extract,
+            hop_lenght=hop_length,
+            reverb_room_size=reverb_room_size,
+            reverb_damping=reverb_damping,
+            reverb_wet_gain=reverb_wet_gain,
+            reverb_dry_gain=reverb_dry_gain,
+            reverb_width=reverb_width,
+            embedder_model=embedder_model,
+            delete_audios=delete_audios,
+            use_tta=use_tta,
+            batch_size=batch_size,
+            infer_backing_vocals=infer_backing_vocals,
+            infer_backing_vocals_model=infer_backing_vocals_model,
+            infer_backing_vocals_index=infer_backing_vocals_index,
+            change_inst_pitch=change_inst_pitch,
+            pitch_back=pitch_back,
+            filter_radius_back=filter_radius_back,
+            index_rate_back=index_rate_back,
+            rms_mix_rate_back=rms_mix_rate_back,
+            protect_back=protect_back,
+            pitch_extract_back=pitch_extract_back,
+            hop_length_back=hop_length_back,
+            export_format_rvc_back=export_format_rvc_back,
+            split_audio_back=split_audio_back,
+            autotune_back=autotune_back,
+            embedder_model_back=embedder_model_back,
+        )
+    except Exception as e:
+        # Log error and return error message
+        error_msg = f"Error during inference: {str(e)}"
+        print(f"[ERROR] {error_msg}")
+        return error_msg, None
 
 
 def get_number_of_gpus():
@@ -272,9 +409,9 @@ def full_inference_tab():
                     info=i18n(
                         "The path where the output audio will be saved, by default in audio_files/rvc/output.wav"
                     ),
-                    value=os.path.join(now_dir, "audio_files", "rvc"),
-                    interactive=False,
-                    visible=False,
+                    value=pm.get_output_root(),
+                    interactive=True,
+                    visible=True,
                 )
                 infer_backing_vocals = gr.Checkbox(
                     label=i18n("Infer Backing Vocals"),
@@ -1120,7 +1257,7 @@ def full_inference_tab():
         outputs=[],
     )
     convert_button.click(
-        full_inference_program,
+        enhanced_full_inference_wrapper,
         inputs=[
             model_file,
             index_file,
