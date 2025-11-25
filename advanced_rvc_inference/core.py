@@ -1033,7 +1033,7 @@ def full_inference_program(
                 command = [
                     "python",
                     os.path.join(
-                        now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
+                        now_dir, "advanced_rvc_inference", "uvr", "core.py"
                     ),
                     "--model_type",
                     model_info["type"],
