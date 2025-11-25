@@ -20,7 +20,7 @@ configs = {
     "audios_path": os.path.join(now_dir, "audios"),
     "weights_path": os.path.join(now_dir, "logs"),
     "logs_path": os.path.join(now_dir, "logs"),
-    "pretrained_custom_path": os.path.join(now_dir, "pretraineds")
+    "pretrained_custom_path": os.path.join(now_dir, "assets", "models", "pretrained_custom")
 }
 
 # Model options dictionary
