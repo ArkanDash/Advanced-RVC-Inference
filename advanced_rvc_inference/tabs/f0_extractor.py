@@ -279,7 +279,7 @@ class AdvancedF0Extractor:
         return hybrid_f0
     
     def extract_f0(self, audio: np.ndarray, sr: int, method: str, 
-                   hop_length: int = 128, f0_min: float = 50, f0_max: float = 1100) -> Tuple[np.ndarray, str]:
+                   hop_length: int = 128, f0_min: float = 50, f0_max: float = 1100) -> tuple[np.ndarray, str]:
         """Main F0 extraction method"""
         start_time = time.time()
         
