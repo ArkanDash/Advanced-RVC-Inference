@@ -11,6 +11,9 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 from functools import lru_cache
 import shutil
+
+# Import path manager
+from advanced_rvc_inference.lib.path_manager import get_path_manager
 from pedalboard import Pedalboard, Reverb
 from pedalboard.io import AudioFile
 from pydub import AudioSegment

@@ -6,5 +6,24 @@
   "lang": {
     "override": false,
     "selected_lang": "en_US"
+  },
+  "paths": {
+    "audio_files": "audio_files",
+    "models": "logs", 
+    "outputs": "audio_files/rvc",
+    "temp": "temp",
+    "datasets": "datasets"
+  },
+  "audio": {
+    "default_format": "wav",
+    "supported_formats": ["wav", "mp3", "flac", "ogg", "opus", "m4a", "mp4", "aac", "alac", "wma", "aiff", "webm", "ac3"],
+    "quality": "high",
+    "sample_rate": 44100
+  },
+  "performance": {
+    "auto_cleanup": true,
+    "max_temp_size_mb": 1000,
+    "enable_cache": true,
+    "cache_size_mb": 500
   }
 }
