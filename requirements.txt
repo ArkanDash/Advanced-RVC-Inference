@@ -21,7 +21,9 @@ onnxruntime-gpu==1.19.0; sys_platform != 'darwin'
 # Performance Optimization Libraries (V4.0.0+)
 torchfx>=0.2.0
 torch-audiomentations>=0.12.0
-faiss-cpu==1.7.3
+faiss-cpu==1.7.3; python_version < "3.12"
+faiss-cpu>=1.7.3; python_version >= "3.12"
+
 
 
 # Additional audio processing
@@ -54,11 +56,13 @@ soundfile>=0.13.0
 pedalboard==0.8.9
 
 # Data processing and calculation
-numba==0.57.0
-scipy>=1.11.0
-matplotlib==3.7.2
+numpy>=1.25.2,<2.0.0
+numba>=0.57.0
+scipy>=1.15.0
+matplotlib>=3.7.2
 
 # Implementation and web framework
+gradio>=5.23.3,<6.0.0
 requests>=2.32.3
 aiohttp==3.10.5
 pysrt
