@@ -51,7 +51,7 @@ except ImportError:
     KRVC_AVAILABLE = False
 
 # Import submodules with fallback for missing modules
-from . import tabs, rvc, msep
+from . import tabs, rvc, uvr
 try:
     from . import lib
 except ImportError:
@@ -80,7 +80,7 @@ __all__ = [
     # Submodules
     'tabs',
     'rvc',
-    'msep',
+    'uvr',
 ]
 
 # Add lib to __all__ only if it exists
