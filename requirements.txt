@@ -16,7 +16,7 @@ omegaconf>=2.2.3
 httpx==0.27.2
 onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu==1.19.0; sys_platform != 'darwin'
-
+contextlib2==21.6.0
 
 # Performance Optimization Libraries (V4.0.0+)
 torchfx>=0.2.0
