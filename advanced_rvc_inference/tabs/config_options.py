@@ -198,7 +198,7 @@ def extra_options_tab():
                         info="Activate 2x performance optimizations"
                     )
 
-                    krvc_performance = gr.Slider(
+                    krvc_performance = gr.Radio(
                         label="Performance Mode",
                         choices=["Standard", "Optimized", "Maximum"],
                         value="Optimized",
