@@ -401,7 +401,7 @@ pytest --cov=advanced_rvc_inference/
 - **Local Installation**: `pip install -e .` then `python -m advanced_rvc_inference.main`
 - **Colab Demo**: Click the Colab badge above
 - **GitHub Issues**: [Bug reports and feature requests](https://github.com/ArkanDash/Advanced-RVC-Inference/issues)
-- **Discord Community**: [Join our Discord](https://discord.gg/arkandash)
+- **Discord Community**: [Join our Discord](https://discord.gg/hvmsukmBHE)
 
 ## Citation & Credits
 
@@ -423,7 +423,7 @@ MIT License - See [LICENSE](LICENSE) file for details.
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues)
-- **Discord**: [Community Support](https://discord.gg/arkandash)
+- **Discord**: [Community Support](https://discord.gg/hvmsukmBHE)
 - **Documentation**: [Complete Guide](docs/)
 - **Email**: Contact maintainers through GitHub
 
