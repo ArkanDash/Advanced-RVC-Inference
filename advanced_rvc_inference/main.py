@@ -1,16 +1,3 @@
-"""
-Advanced RVC Inference - KRVC Kernel
-Kernel Advanced RVC - 2x Faster Training & Inference
-Version 4.0.0 Ultimate Performance Edition
-
-Authors: ArkanDash & BF667
-Last Updated: November 26, 2025
-
-This is the main entry point for the Advanced RVC Inference application,
-featuring revolutionary performance optimizations and cutting-edge AI models.
-"""
-
-import gradio as gr
 import sys, os
 
 
@@ -91,12 +78,31 @@ with gr.Blocks(
 ) as app:
     gr.Markdown("# 🎤 Advanced RVC Inference v4.0\n> *Kernel Advanced RVC - 2x Faster Training & Inference*")
 
-    with gr.Tab("🎵 Full Inference"):
-        full_inference_tab()
+    with gr.Tab(" Inference"):
+        with gr.Tab("🎵 Full Inference"):
+            full_inference_tab()
+        with gr.Tab("🎤 Real-Time"):
+            real_time_inference_tab()
+        if TTS_AVAILABLE:
+            with gr.Tab("📢 Text-to-Speech"):
+                tts_tab() 
+    with gr.Tab("Downloader"):
+        with gr.Tab("🎵 Download Music"):
+            download_music_tab()
+        
+        with gr.Tab("📦 Download Model"):
+            download_model_tab()
 
-    with gr.Tab("🎙️ Training"):
-        from advanced_rvc_inference.tabs.training import training_tab
-        training_tab()
+    with gr.Tab("Train"):
+        with gr.Tab("🎙️ Training"):
+            from advanced_rvc_inference.tabs.training import training_tab
+            training_tab()
+        if F0_EXTRACTOR_AVAILABLE:
+            with gr.Tab("🔍 F0 Extractor"):
+                f0_extractor_tab()
+        if EMBEDDER_AVAILABLE:
+            with gr.Tab("🧠 Embedders"):
+                embedders_tab() 
 
     with gr.Tab("📚 Model Manager"):
         model_manager_tab()
@@ -104,16 +110,11 @@ with gr.Blocks(
     with gr.Tab("🎧 Enhancement"):
         enhancement_tab()
 
-    with gr.Tab("🎤 Real-Time"):
-        real_time_inference_tab()
 
     with gr.Tab("🔧 Extra Options"):
         extra_options_tab()
 
-    # Advanced features from Applio and Vietnamese-RVC if available
-    if TTS_AVAILABLE:
-        with gr.Tab("📢 Text-to-Speech"):
-            tts_tab()
+
 
     if VOICE_BLENDER_AVAILABLE:
         with gr.Tab("🎭 Voice Blender"):
@@ -125,21 +126,8 @@ with gr.Blocks(
 
     if EXTRA_AVAILABLE:
         with gr.Tab("⚡ Extra"):
-            extra_tab()
-
-    if F0_EXTRACTOR_AVAILABLE:
-        with gr.Tab("🔍 F0 Extractor"):
-            f0_extractor_tab()
-
-    if EMBEDDER_AVAILABLE:
-        with gr.Tab("🧠 Embedders"):
-            embedders_tab()
-
-    with gr.Tab("🎵 Download Music"):
-        download_music_tab()
-
-    with gr.Tab("📦 Download Model"):
-        download_model_tab()
+            extra_tab()    
+            
 
     with gr.Tab("⚙️ Settings"):
         select_themes_tab()
