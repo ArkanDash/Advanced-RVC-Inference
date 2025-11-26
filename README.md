@@ -414,7 +414,7 @@ pytest --cov=advanced_rvc_inference/
 ### Maintainers
 
 - **ArkanDash**: Original project owner and lead developer
-- **BF667**: Enhanced edition maintainer and consolidated architecture
+- **ArkanDash & BF667**: Enhanced edition maintainers and consolidated architecture
 
 ### License
 

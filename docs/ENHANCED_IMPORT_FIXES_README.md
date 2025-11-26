@@ -238,4 +238,4 @@ If you encounter issues:
 **Version**: Enhanced Import Fixes v2.0.0
 **Compatible with**: Advanced RVC Inference V4.0.0+
 **Last Updated**: 2025-11-24
-**Author**: BF667
+**Authors**: ArkanDash & BF667

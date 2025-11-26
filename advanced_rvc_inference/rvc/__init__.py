@@ -7,7 +7,7 @@ This module contains the core RVC functionality including:
 - Audio processing utilities
 - Configuration management
 
-Author: BF667
+Authors: ArkanDash & BF667
 """
 
 # Core RVC imports
