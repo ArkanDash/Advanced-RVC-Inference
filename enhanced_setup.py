@@ -2,7 +2,10 @@
 """
 Enhanced RVC Inference Setup Script
 Automatically installs dependencies, optimizes for GPU, and configures OpenCL
-Version 3.5.3
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
 """
 
 import os

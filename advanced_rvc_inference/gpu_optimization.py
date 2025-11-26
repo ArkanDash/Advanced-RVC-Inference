@@ -1,7 +1,10 @@
 """
 OpenCL Support and GPU Optimization Utilities for Advanced RVC Inference
 Enhanced GPU support for T4 and A100 GPUs with OpenCL acceleration
-Version 3.5.3
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
 """
 
 import os

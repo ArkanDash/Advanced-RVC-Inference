@@ -1,7 +1,10 @@
 """
 KRVC Kernel - Advanced RVC Kernel
 Kernel Advanced RVC - Enhanced Speed & Performance
-Version 3.5.2
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
 
 Provides cutting-edge optimizations for RVC models using advanced convolutional kernels,
 attention mechanisms, memory optimizations, and performance enhancements for both
