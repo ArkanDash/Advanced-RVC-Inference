@@ -1,3 +1,4 @@
+
 import torch
 import warnings
 import sys, os
@@ -17,8 +18,8 @@ from advanced_rvc_inference.lib.i18n import I18nAuto
 i18n = I18nAuto()
 
 # Define path variables using Path objects for better cross-platform compatibility
-# Use relative path for model_root as requested
-model_root = Path("./assets/weights")
+# Use absolute path for model_root to ensure it works correctly
+model_root = Path(now_dir) / "assets" / "weights"
 audio_root = Path(now_dir) / "assets" / "audios"
 audio_root_opt = Path(now_dir) / "assets" / "audios" / "output"
 
@@ -48,6 +49,11 @@ def get_file_list(root_dir, extensions, exclude_patterns=None):
     root_dir = Path(root_dir)
     file_list = []
     
+    # Ensure the directory exists
+    if not root_dir.exists():
+        print(f"[WARNING] Directory {root_dir} does not exist")
+        return file_list
+    
     for root, _, files in os.walk(root_dir, topdown=False):
         for file in files:
             if file.endswith(extensions):
@@ -57,7 +63,7 @@ def get_file_list(root_dir, extensions, exclude_patterns=None):
     
     return file_list
 
-# Get model files using the relative path
+# Get model files
 names = get_file_list(
     model_root_str, 
     (".pth", ".onnx"), 
@@ -364,10 +370,15 @@ def change_choices():
         exclude_patterns=["_output"]
     )
     
+    # Sort the lists for consistent ordering
+    new_names = sorted(new_names, key=lambda path: os.path.getsize(path))
+    new_indexes = sorted(new_indexes)
+    new_audio_paths = sorted(new_audio_paths)
+    
     return (
-        {"choices": sorted(new_names), "__type__": "update"},
-        {"choices": sorted(new_indexes), "__type__": "update"},
-        {"choices": sorted(new_audio_paths), "__type__": "update"},
+        gr.Dropdown(choices=new_names, value=new_names[0] if new_names else None),
+        gr.Dropdown(choices=new_indexes, value=match_index(new_names[0]) if new_names else None),
+        gr.Dropdown(choices=new_audio_paths, value=new_audio_paths[0] if new_audio_paths else None),
     )
 
 def full_inference_tab():
@@ -400,8 +411,8 @@ def full_inference_tab():
 
             unload_button.click(
                 fn=lambda: (
-                    {"value": "", "__type__": "update"},
-                    {"value": "", "__type__": "update"},
+                    gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
+                    gr.Dropdown(value=None, choices=get_indexes()),
                 ),
                 inputs=[],
                 outputs=[model_file, index_file],
@@ -492,8 +503,8 @@ def full_inference_tab():
 
                         unload_button_infer_backing_vocals.click(
                             fn=lambda: (
-                                {"value": "", "__type__": "update"},
-                                {"value": "", "__type__": "update"},
+                                gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
+                                gr.Dropdown(value=None, choices=get_indexes()),
                             ),
                             inputs=[],
                             outputs=[
@@ -1306,11 +1317,11 @@ def full_inference_tab():
     def update_visibility_infer_backing(infer_backing_vocals):
         visible = infer_backing_vocals
         return (
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
-            {"visible": visible, "__type__": "update"},
+            gr.update(visible=visible),
+            gr.update(visible=visible),
+            gr.update(visible=visible),
+            gr.update(visible=visible),
+            gr.update(visible=visible),
         )
 
     def update_hop_length_visibility(pitch_extract_value):
@@ -1326,7 +1337,7 @@ def full_inference_tab():
     refresh_button_infer_backing_vocals.click(
         fn=change_choices,
         inputs=[],
-        outputs=[infer_backing_vocals_model, infer_backing_vocals_index],
+        outputs=[infer_backing_vocals_model, infer_backing_vocals_index, audio],
     )
     
     upload_audio.upload(
