@@ -19,9 +19,12 @@ i18n = I18nAuto()
 
 model_root = os.path.join(now_dir, "assets", "weights")
 audio_root = os.path.join(now_dir, "assets", "audios")
+audio_root_opt = os.path.join(now_dir, "assets", "audios", "output")
 
 model_root_relative = os.path.relpath(model_root, now_dir)
 audio_root_relative = os.path.relpath(audio_root, now_dir)
+audio_root_opt_relative = os.path.relpath(audio_root_opt, now_dir)
+
 sup_audioext = {
     "wav",
     "mp3",
@@ -404,7 +407,7 @@ def full_inference_tab():
                     info=i18n(
                         "The path where the output audio will be saved, by default in audio_files/rvc/output.wav"
                     ),
-                    value=pm.get_output_root(),
+                    value=audio_root_opt_relative(),
                     interactive=True,
                     visible=True,
                 )
