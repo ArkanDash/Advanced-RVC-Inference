@@ -67,14 +67,19 @@ except ImportError:
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.lib.utils import pydub_load
-# from main.app.core.ui import replace_export_format
 from assets.config.variables import translations, logger
+from advanced_rvc_inference.lib.path_manager import path
+
+def replace_export_format(output_path, export_format):
+    """Replace the extension of the output path with the specified format."""
+    base_path = os.path.splitext(output_path)[0]
+    return f"{base_path}.{export_format}"
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--audio_effects", action='store_true')
     parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--output_path", type=str, default="./audios/apply_effects.wav")
+    parser.add_argument("--output_path", type=str, default=None)
     parser.add_argument("--export_format", type=str, default="wav")
     parser.add_argument("--resample", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--resample_sr", type=int, default=0)
@@ -145,7 +150,7 @@ def process_audio(input_path, output_path, resample, resample_sr, chorus_depth, 
 
         filtered = filtfilt(b, a, audio, padlen=0)
         return filtered[-original_len:]
-    
+
     def bass_boost(audio, gain_db, frequency, sample_rate):
         if gain_db >= 1:
             b, a = butter(4, frequency / (0.5 * sample_rate), btype='low')
@@ -163,7 +168,7 @@ def process_audio(input_path, output_path, resample, resample_sr, chorus_depth, 
     def fade_out_effect(audio, sr, duration=3.0):
         length = int(duration * sr)
         end = audio.shape[0]
-        if length > end: length = end  
+        if length > end: length = end
         start = end - length
         audio[start:end] = audio[start:end] * np.linspace(1.0, 0.0, length)
         return audio
@@ -171,21 +176,29 @@ def process_audio(input_path, output_path, resample, resample_sr, chorus_depth, 
     def fade_in_effect(audio, sr, duration=3.0):
         length = int(duration * sr)
         start = 0
-        if length > audio.shape[0]: length = audio.shape[0]  
+        if length > audio.shape[0]: length = audio.shape[0]
         end = length
         audio[start:end] = audio[start:end] * np.linspace(0.0, 1.0, length)
         return audio
 
-    if not input_path or not os.path.exists(input_path): 
+    # Use assets/audios/output as default output path if none provided
+    if output_path is None:
+        input_filename = os.path.splitext(os.path.basename(input_path))[0] if input_path else "apply_effects"
+        output_path = os.path.join(str(path('outputs_dir')), f"{input_filename}_effects.{export_format}")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+    if not input_path or not os.path.exists(input_path):
         logger.warning(translations["input_not_valid"])
         sys.exit(1)
 
-    if not output_path: 
+    if not output_path:
         logger.warning(translations["output_not_valid"])
         sys.exit(1)
-    
+
     if os.path.exists(output_path): os.remove(output_path)
-    
+
     try:
         input_path = input_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
         try:
@@ -208,7 +221,7 @@ def process_audio(input_path, output_path, resample, resample_sr, chorus_depth, 
         if limiter: board.append(Limiter(threshold_db=limiter_threshold, release_ms=limiter_release))
         if gain: board.append(Gain(gain_db=gain_db))
         if bitcrush: board.append(Bitcrush(bit_depth=bitcrush_bit_depth))
-        if clipping: board.append(Clipping(threshold_db=clipping_threshold)) 
+        if clipping: board.append(Clipping(threshold_db=clipping_threshold))
         if phaser: board.append(Phaser(rate_hz=phaser_rate_hz, depth=phaser_depth, centre_frequency_hz=phaser_centre_frequency_hz, feedback=phaser_feedback, mix=phaser_mix))
 
         processed_audio = board(audio, sample_rate)
@@ -220,7 +233,7 @@ def process_audio(input_path, output_path, resample, resample_sr, chorus_depth, 
         if fade_in_out:
             processed_audio = fade_in_effect(processed_audio, sample_rate, fade_in_duration)
             processed_audio = fade_out_effect(processed_audio, sample_rate, fade_out_duration)
-            
+
         if resample and resample_sr != sample_rate and resample_sr > 0:
             processed_audio = librosa.resample(processed_audio, orig_sr=sample_rate, target_sr=resample_sr, res_type="soxr_vhq")
             sample_rate = resample_sr

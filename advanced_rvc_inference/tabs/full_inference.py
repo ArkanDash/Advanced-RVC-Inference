@@ -21,8 +21,8 @@ i18n = I18nAuto()
 # Define path variables using Path objects for better cross-platform compatibility
 # Use absolute path for model_root to ensure it works correctly
 model_root = path('weights_dir')
-audio_root = path('audios_dir')
-audio_root_opt = path('audios_dir') / "output"
+audio_root = path('inputs_dir')  # Changed to use inputs directory for input audio files
+audio_root_opt = path('outputs_dir')  # Changed to use outputs directory for output audio files
 
 # Convert to strings for compatibility with existing functions
 model_root_str = str(model_root)
@@ -64,26 +64,47 @@ def get_file_list(root_dir, extensions, exclude_patterns=None):
     
     return file_list
 
-# Get model files
-names = get_file_list(
-    model_root_str, 
-    (".pth", ".onnx"), 
-    exclude_patterns=["G_", "D_"]
-)
+# Dynamic model file list getter - moved to function to ensure refresh capability
+def get_model_names_list():
+    """Get the list of available model files dynamically"""
+    try:
+        return get_file_list(
+            model_root_str,
+            (".pth", ".onnx"),
+            exclude_patterns=["G_", "D_"]
+        )
+    except Exception as e:
+        print(f"[ERROR] Error getting model names list: {e}")
+        return []
 
-# Get index files
-indexes_list = get_file_list(
-    model_root_str, 
-    (".index",), 
-    exclude_patterns=["trained"]
-)
+def get_indexes_list():
+    """Get the list of available index files dynamically"""
+    try:
+        return get_file_list(
+            model_root_str,
+            (".index",),
+            exclude_patterns=["trained"]
+        )
+    except Exception as e:
+        print(f"[ERROR] Error getting indexes list: {e}")
+        return []
 
-# Get audio files
-audio_paths = get_file_list(
-    audio_root_str, 
-    tuple(sup_audioext), 
-    exclude_patterns=["_output"]
-)
+def get_audio_paths_list():
+    """Get the list of available audio files dynamically"""
+    try:
+        return get_file_list(
+            audio_root_str,
+            tuple(sup_audioext),
+            exclude_patterns=["_output"]
+        )
+    except Exception as e:
+        print(f"[ERROR] Error getting audio paths list: {e}")
+        return []
+
+# Get initial lists
+names = get_model_names_list()
+indexes_list = get_indexes_list()
+audio_paths = get_audio_paths_list()
 
 # Model name lists
 vocals_model_names = [
@@ -352,30 +373,16 @@ def delete_outputs():
 
 def change_choices():
     """Refresh dropdown choices"""
-    # Get updated file lists
-    new_names = get_file_list(
-        model_root_str, 
-        (".pth", ".onnx"), 
-        exclude_patterns=["G_", "D_"]
-    )
-    
-    new_indexes = get_file_list(
-        model_root_str, 
-        (".index",), 
-        exclude_patterns=["trained"]
-    )
-    
-    new_audio_paths = get_file_list(
-        audio_root_str, 
-        tuple(sup_audioext), 
-        exclude_patterns=["_output"]
-    )
-    
+    # Get updated file lists using dynamic functions
+    new_names = get_model_names_list()
+    new_indexes = get_indexes_list()
+    new_audio_paths = get_audio_paths_list()
+
     # Sort the lists for consistent ordering
-    new_names = sorted(new_names, key=lambda path: os.path.getsize(path))
+    new_names = sorted(new_names, key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)
     new_indexes = sorted(new_indexes)
     new_audio_paths = sorted(new_audio_paths)
-    
+
     return (
         gr.Dropdown(choices=new_names, value=new_names[0] if new_names else None),
         gr.Dropdown(choices=new_indexes, value=match_index(new_names[0]) if new_names else None),
@@ -384,7 +391,7 @@ def change_choices():
 
 def full_inference_tab():
     """Create the full inference tab UI"""
-    default_weight = names[0] if names else None
+    default_weight = get_model_names_list()[0] if get_model_names_list() else None
 
     with gr.Row():
         with gr.Column(scale=3):
@@ -392,7 +399,7 @@ def full_inference_tab():
                 model_file = gr.Dropdown(
                     label=i18n("🎤 Voice Model"),
                     info=i18n("Select the voice model to use for the conversion."),
-                    choices=sorted(names, key=lambda path: os.path.getsize(path)),
+                    choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
                     interactive=True,
                     value=default_weight,
                     allow_custom_value=True,
@@ -415,8 +422,8 @@ def full_inference_tab():
 
                 unload_button.click(
                     fn=lambda: (
-                        gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
-                        gr.Dropdown(value=None, choices=get_indexes()),
+                        gr.Dropdown(value=None, choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
+                        gr.Dropdown(value=None, choices=get_indexes_list()),
                     ),
                     inputs=[],
                     outputs=[model_file, index_file],
@@ -495,7 +502,7 @@ def full_inference_tab():
                         info=i18n(
                             "Select the backing vocals model to use for the conversion."
                         ),
-                        choices=sorted(names, key=lambda path: os.path.getsize(path)),
+                        choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
                         interactive=True,
                         value=default_weight,
                         visible=False,
@@ -527,8 +534,8 @@ def full_inference_tab():
 
                         unload_button_infer_backing_vocals.click(
                             fn=lambda: (
-                                gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
-                                gr.Dropdown(value=None, choices=get_indexes()),
+                                gr.Dropdown(value=None, choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
+                                gr.Dropdown(value=None, choices=get_indexes_list()),
                             ),
                             inputs=[],
                             outputs=[

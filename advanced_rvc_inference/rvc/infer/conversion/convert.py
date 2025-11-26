@@ -32,11 +32,17 @@ sys.path.append(os.getcwd())
 # from main.app.core.ui import replace_export_format
 from advanced_rvc_inference.rvc.infer.conversion.pipeline import Pipeline
 from assets.config.variables import config, logger, translations
+from advanced_rvc_inference.lib.path_manager import path
 from advanced_rvc_inference.rvc.infer.conversion.audio_processing import preprocess, postprocess
 from advanced_rvc_inference.lib.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
 
 for l in ["torch", "faiss", "omegaconf", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "transformers", "matplotlib"]:
     logging.getLogger(l).setLevel(logging.ERROR)
+
+def replace_export_format(output_path, export_format):
+    """Replace the extension of the output path with the specified format."""
+    base_path = os.path.splitext(output_path)[0]
+    return f"{base_path}.{export_format}"
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -50,7 +56,7 @@ def parse_arguments():
     parser.add_argument("--f0_method", type=str, default="rmvpe")
     parser.add_argument("--embedder_model", type=str, default="hubert_base")
     parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--output_path", type=str, default="./audios/output.wav")
+    parser.add_argument("--output_path", type=str, default=None)
     parser.add_argument("--export_format", type=str, default="wav")
     parser.add_argument("--pth_path",  type=str,  required=True)
     parser.add_argument("--index_path", type=str, default="")
@@ -81,59 +87,67 @@ def main():
     run_convert_script(pitch=pitch, filter_radius=filter_radius, index_rate=index_rate, rms_mix_rate=rms_mix_rate, protect=protect, hop_length=hop_length, f0_method=f0_method, input_path=input_path, output_path=output_path, pth_path=pth_path, index_path=index_path, f0_autotune=f0_autotune, f0_autotune_strength=f0_autotune_strength, clean_audio=clean_audio, clean_strength=clean_strength, export_format=export_format, embedder_model=embedder_model, resample_sr=resample_sr, split_audio=split_audio, checkpointing=checkpointing, f0_file=f0_file, f0_onnx=f0_onnx, embedders_mode=embedders_mode, formant_shifting=formant_shifting, formant_qfrency=formant_qfrency, formant_timbre=formant_timbre, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold, audio_processing=audio_processing, alpha=alpha)
 
 def run_convert_script(
-    pitch=0, 
-    filter_radius=3, 
-    index_rate=0.5, 
-    rms_mix_rate=1, 
-    protect=0.5, 
-    hop_length=64, 
-    f0_method="rmvpe", 
-    input_path=None, 
-    output_path="./output.wav", 
-    pth_path=None, 
-    index_path=None, 
-    f0_autotune=False, 
-    f0_autotune_strength=1, 
-    clean_audio=False, 
-    clean_strength=0.7, 
-    export_format="wav", 
-    embedder_model="hubert_base", 
-    resample_sr=0, 
-    split_audio=False, 
-    checkpointing=False, 
-    f0_file=None, 
-    f0_onnx=False, 
-    embedders_mode="fairseq", 
-    formant_shifting=False, 
-    formant_qfrency=0.8, 
-    formant_timbre=0.8, 
-    proposal_pitch=False, 
-    proposal_pitch_threshold=255.0, 
+    pitch=0,
+    filter_radius=3,
+    index_rate=0.5,
+    rms_mix_rate=1,
+    protect=0.5,
+    hop_length=64,
+    f0_method="rmvpe",
+    input_path=None,
+    output_path=None,
+    pth_path=None,
+    index_path=None,
+    f0_autotune=False,
+    f0_autotune_strength=1,
+    clean_audio=False,
+    clean_strength=0.7,
+    export_format="wav",
+    embedder_model="hubert_base",
+    resample_sr=0,
+    split_audio=False,
+    checkpointing=False,
+    f0_file=None,
+    f0_onnx=False,
+    embedders_mode="fairseq",
+    formant_shifting=False,
+    formant_qfrency=0.8,
+    formant_timbre=0.8,
+    proposal_pitch=False,
+    proposal_pitch_threshold=255.0,
     audio_processing=False,
     alpha=0.5
 ):
+    # Use assets/audios/output as default output path if none provided
+    if output_path is None:
+        input_filename = os.path.splitext(os.path.basename(input_path))[0] if input_path else "output"
+        output_path = os.path.join(str(path('outputs_dir')), f"{input_filename}_converted.{export_format}")
+
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
     check_assets(f0_method, embedder_model, f0_onnx=f0_onnx, embedders_mode=embedders_mode)
     log_data = {
-        translations['pitch']: pitch, 
-        translations['filter_radius']: filter_radius, 
-        translations['index_strength']: index_rate, 
-        translations['rms_mix_rate']: rms_mix_rate, 
-        translations['protect']: protect, 
-        translations['hop_length']: hop_length, 
-        translations['f0_method']: f0_method, 
-        translations['audio_path']: input_path, 
-        translations['output_path']: replace_export_format(output_path, export_format), 
-        translations['model_path']: pth_path, 
-        translations['indexpath']: index_path, 
-        translations['autotune']: f0_autotune, 
-        translations['clear_audio']: clean_audio, 
-        translations['export_format']: export_format, 
-        translations['hubert_model']: embedder_model, 
-        translations['split_audio']: split_audio, 
-        translations['memory_efficient_training']: checkpointing, 
-        translations["f0_onnx_mode"]: f0_onnx, 
-        translations["embed_mode"]: embedders_mode, 
-        translations["proposal_pitch"]: proposal_pitch, 
+        translations['pitch']: pitch,
+        translations['filter_radius']: filter_radius,
+        translations['index_strength']: index_rate,
+        translations['rms_mix_rate']: rms_mix_rate,
+        translations['protect']: protect,
+        translations['hop_length']: hop_length,
+        translations['f0_method']: f0_method,
+        translations['audio_path']: input_path,
+        translations['output_path']: replace_export_format(output_path, export_format),
+        translations['model_path']: pth_path,
+        translations['indexpath']: index_path,
+        translations['autotune']: f0_autotune,
+        translations['clear_audio']: clean_audio,
+        translations['export_format']: export_format,
+        translations['hubert_model']: embedder_model,
+        translations['split_audio']: split_audio,
+        translations['memory_efficient_training']: checkpointing,
+        translations["f0_onnx_mode"]: f0_onnx,
+        translations["embed_mode"]: embedders_mode,
+        translations["proposal_pitch"]: proposal_pitch,
         translations["audio_processing"]: audio_processing,
         translations["alpha_label"]: alpha
     }

@@ -20,6 +20,9 @@ def setup_directories():
     """Create necessary directories for training"""
     # Use the centralized path manager for logs and other key directories
     base_logs_dir = path('logs_dir')
+    # Create the dataset directory which is now properly managed by path manager
+    dataset_dir = path('datasets_dir')
+
     dirs = [
         str(base_logs_dir),
         str(base_logs_dir / "44k"),
@@ -29,15 +32,15 @@ def setup_directories():
         str(base_logs_dir / "models"),
         str(base_logs_dir / "pretraineds"),
         str(base_logs_dir / "tensorboard"),
-        "audio_files",
-        "audio_files/records",
-        "audio_files/voices",
-        "audio_files/preprocess",
-        "audio_files/preprocess/separate",
-        "audio_files/preprocess/deecho",
-        "audio_files/preprocess/denoise"
+        str(dataset_dir),
+        str(dataset_dir / "records"),
+        str(dataset_dir / "voices"),
+        str(dataset_dir / "preprocess"),
+        str(dataset_dir / "preprocess/separate"),
+        str(dataset_dir / "preprocess/deecho"),
+        str(dataset_dir / "preprocess/denoise")
     ]
-    
+
     for dir_path in dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 

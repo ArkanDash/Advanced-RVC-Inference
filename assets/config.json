@@ -8,11 +8,13 @@
     "selected_lang": "en_US"
   },
   "paths": {
-    "audio_files": "audio_files",
-    "models": "assets/weights", 
+    "audio_files": "assets/audios",
+    "models": "assets/weights",
     "outputs": "assets/audios/output",
+    "inputs": "assets/audios/input",
     "temp": "temp",
-    "datasets": "datasets"
+    "datasets": "assets/datasets",
+    "logs": "assets/logs"
   },
   "audio": {
     "default_format": "wav",
