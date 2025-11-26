@@ -6,11 +6,11 @@ Version 3.5.2
 This package provides advanced voice conversion capabilities using the RVC (Retrieval-based Voice Conversion)
 technology with KRVC kernel optimizations for enhanced performance.
 
-Author: BF667
+Authors: ArkanDash & BF667
 """
 
 __version__ = "3.5.2"
-__author__ = "BF667"
+__author__ = "ArkanDash & BF667"
 
 # Core imports for easy access (with conditional fallbacks)
 try:

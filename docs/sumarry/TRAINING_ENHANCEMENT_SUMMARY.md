@@ -193,6 +193,6 @@ Potential improvements for future versions:
 
 ---
 
-**Author**: BF667
+**Authors**: ArkanDash & BF667
 **Date**: 2025-11-23
 **Version**: 3.5.2
