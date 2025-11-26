@@ -1,5 +1,9 @@
 # Advanced RVC Inference V4.0.0 - Ultimate Performance Edition
 
+**Developed by:** ArkanDash & BF667  
+**Version:** 4.0.0 Ultimate Performance Edition  
+**Last Updated:** November 26, 2025
+
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org)
@@ -411,10 +415,14 @@ pytest --cov=advanced_rvc_inference/
 - **[RVC Project](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)**: Core voice conversion technology
 - **[Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC)**: F0 extraction methods integration
 
-### Maintainers
+### Maintainers & Authors
 
-- **ArkanDash**: Original project owner and lead developer
-- **ArkanDash & BF667**: Enhanced edition maintainers and consolidated architecture
+- **ArkanDash & BF667**: Project founders, lead developers, and maintainers
+  - Core architecture and performance optimization
+  - KRVC kernel development
+  - V4.0 Ultimate Performance Edition
+- **ArkanDash**: Original project owner and founder
+- **BF667**: Co-developer and performance optimization specialist
 
 ### License
 

@@ -9,7 +9,7 @@ technology with KRVC kernel optimizations for enhanced performance.
 Authors: ArkanDash & BF667
 """
 
-__version__ = "3.5.2"
+__version__ = "4.0.0"
 __author__ = "ArkanDash & BF667"
 
 # Core imports for easy access (with conditional fallbacks)
