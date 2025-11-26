@@ -18,7 +18,7 @@ from advanced_rvc_inference.lib.path_manager import get_path_manager
 i18n = I18nAuto()
 
 # Initialize path manager
-pm = get_path_manager()
+pm = PathManager()
 
 # Use path manager for consistent path handling
 model_root = pm.get_model_root()
