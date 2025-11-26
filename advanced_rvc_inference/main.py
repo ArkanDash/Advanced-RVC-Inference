@@ -1,5 +1,5 @@
 import sys, os
-
+import gradio as gr
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
