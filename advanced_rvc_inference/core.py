@@ -1,8 +1,6 @@
 """
-Advanced RVC Inference - KRVC Kernel Core
-Kernel Advanced RVC - 2x Faster Training & Inference
+Advanced RVC Inference 
 Version 4.0.0
-
 Authors: ArkanDash & BF667
 Last Updated: November 26, 2025
 """
