@@ -21,10 +21,6 @@ model_root = os.path.join(now_dir, "assets", "weights")
 audio_root = os.path.join(now_dir, "assets", "audios")
 audio_root_opt = os.path.join(now_dir, "assets", "audios", "output")
 
-model_root_relative = os.path.relpath(model_root, now_dir)
-audio_root_relative = os.path.relpath(audio_root, now_dir)
-audio_root_opt_relative = os.path.relpath(audio_root_opt, now_dir)
-
 sup_audioext = {
     "wav",
     "mp3",
@@ -43,7 +39,7 @@ sup_audioext = {
 
 names = [
     os.path.join(root, file)
-    for root, _, files in os.walk(model_root_relative, topdown=False)
+    for root, _, files in os.walk(model_root, topdown=False)
     for file in files
     if (
         file.endswith((".pth", ".onnx"))
@@ -53,14 +49,14 @@ names = [
 
 indexes_list = [
     os.path.join(root, name)
-    for root, _, files in os.walk(model_root_relative, topdown=False)
+    for root, _, files in os.walk(model_root, topdown=False)
     for name in files
     if name.endswith(".index") and "trained" not in name
 ]
 
 audio_paths = [
     os.path.join(root, name)
-    for root, _, files in os.walk(audio_root_relative, topdown=False)
+    for root, _, files in os.walk(audio_root, topdown=False)
     for name in files
     if name.endswith(tuple(sup_audioext))
     and root == audio_root_relative
@@ -97,7 +93,7 @@ deeecho_models_names = ["UVR-Deecho-Normal", "UVR-Deecho-Aggressive"]
 def get_indexes():
     indexes_list = [
         os.path.join(dirpath, filename)
-        for dirpath, _, filenames in os.walk(model_root_relative)
+        for dirpath, _, filenames in os.walk(model_root)
         for filename in filenames
         if filename.endswith(".index") and "trained" not in filename
     ]
