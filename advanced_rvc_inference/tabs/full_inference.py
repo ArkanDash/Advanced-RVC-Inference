@@ -407,7 +407,7 @@ def full_inference_tab():
                     info=i18n(
                         "The path where the output audio will be saved, by default in audio_files/rvc/output.wav"
                     ),
-                    value=audio_root_opt_relative(),
+                    value=audio_root_opt_relative,
                     interactive=True,
                     visible=True,
                 )
