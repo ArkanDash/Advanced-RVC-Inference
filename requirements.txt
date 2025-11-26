@@ -27,7 +27,7 @@ faiss-cpu>=1.7.3; python_version >= "3.12"
 
 
 # Additional audio processing
-git+https://github.com/BF667/UVRC.git
+git+https://github.com/BF667/UVRC.git # important
 audio-separator==0.18.0
 audiomentations==0.31.0
 auraloss==0.4.0
