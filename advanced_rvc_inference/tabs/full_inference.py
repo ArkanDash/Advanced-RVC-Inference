@@ -17,7 +17,8 @@ from advanced_rvc_inference.lib.i18n import I18nAuto
 i18n = I18nAuto()
 
 # Define path variables using Path objects for better cross-platform compatibility
-model_root = Path(now_dir) / "assets" / "weights"
+# Use relative path for model_root as requested
+model_root = Path("./assets/weights")
 audio_root = Path(now_dir) / "assets" / "audios"
 audio_root_opt = Path(now_dir) / "assets" / "audios" / "output"
 
@@ -56,7 +57,7 @@ def get_file_list(root_dir, extensions, exclude_patterns=None):
     
     return file_list
 
-# Get model files
+# Get model files using the relative path
 names = get_file_list(
     model_root_str, 
     (".pth", ".onnx"), 
