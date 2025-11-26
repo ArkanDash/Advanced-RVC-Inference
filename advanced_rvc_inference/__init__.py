@@ -32,6 +32,13 @@ try:
         gpu_settings,
         GPU_OPTIMIZATION_AVAILABLE
     )
+    
+    # Import path manager for easy access
+    from .lib.path_manager import get_path_manager, PathManager
+    
+    # Make path_manager easily accessible as a module-level function
+    path_manager = get_path_manager()
+    
 except ImportError as e:
     # Fallback implementations when core functions are not available
     def full_inference_program(*args, **kwargs):
@@ -147,6 +154,24 @@ except ImportError:
         """Fallback uvr module"""
         pass
 
+# Path manager fallback
+try:
+    from .lib.path_manager import get_path_manager, PathManager
+    path_manager = get_path_manager()
+except ImportError:
+    # Fallback for path_manager when lib.path_manager is not available
+    class PathManager:
+        """Fallback PathManager class"""
+        def __init__(self, now_dir=None):
+            self.now_dir = now_dir or os.getcwd() if 'os' in globals() else '/tmp'
+            self.config = {}
+    
+    def get_path_manager(now_dir=None):
+        """Fallback get_path_manager function"""
+        return PathManager(now_dir)
+    
+    path_manager = PathManager()
+
 # Package metadata
 __all__ = [
     # Core functions
@@ -165,6 +190,11 @@ __all__ = [
     'denoise_models',
     'dereverb_models',
     'deecho_models',
+
+    # Path management
+    'path_manager',
+    'get_path_manager',
+    'PathManager',
 
     # Submodules
     'tabs',
