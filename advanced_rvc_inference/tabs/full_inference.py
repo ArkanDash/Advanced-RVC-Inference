@@ -1,12 +1,3 @@
-"""
-Full Inference Tab - Complete RVC Inference Interface
-Advanced RVC Inference - Ultimate Performance Edition
-Version 4.0.0
-
-Authors: ArkanDash & BF667
-Last Updated: November 26, 2025
-"""
-
 import torch
 import warnings
 import sys, os
@@ -27,7 +18,7 @@ from advanced_rvc_inference.lib.path_manager import get_path_manager
 i18n = I18nAuto()
 
 # Initialize path manager
-pm = get_path_manager(now_dir)
+pm = get_path_manager()
 
 # Use path manager for consistent path handling
 model_root = pm.get_model_root()
