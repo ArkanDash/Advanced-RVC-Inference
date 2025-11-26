@@ -6,17 +6,13 @@ Version 3.5.2
 
 import sys, os
 import subprocess
-import torch
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 from functools import lru_cache
 import shutil
 
-# Import path manager - using direct import to avoid circular dependencies
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from lib.path_manager import get_path_manager
+# Import path manager - using relative import to avoid circular dependencies
+from .lib.path_manager import get_path_manager
 from pedalboard import Pedalboard, Reverb
 from pedalboard.io import AudioFile
 from pydub import AudioSegment
@@ -430,6 +426,7 @@ def download_file(url, path, filename):
         return
 
     try:
+        import torch
         response = torch.hub.download_url_to_file(url, file_path)
         print(f"File '{filename}' downloaded successfully")
     except Exception as e:
@@ -548,6 +545,7 @@ def merge_audios(
 
 
 def check_fp16_support(device):
+    import torch
     i_device = int(str(device).split(":")[-1])
     gpu_name = torch.cuda.get_device_name(i_device)
     low_end_gpus = ["16", "P40", "P10", "1060", "1070", "1080"]
@@ -617,6 +615,7 @@ def full_inference_program(
     # Map Vietnamese-RVC compatible pitch extractors to existing ones
     pitch_extract = map_pitch_extractor(pitch_extract)
     pitch_extract_back = map_pitch_extractor(pitch_extract_back)
+    import torch
     if torch.cuda.is_available():
         n_gpu = torch.cuda.device_count()
         devices = devices.replace("-", " ")
@@ -1433,6 +1432,7 @@ def real_time_voice_conversion(
                               idx_rate, rms_rate, protect_param, chunk_size):
             """Process a single audio chunk"""
             try:
+                import torch
                 # Apply KRVC real-time processing if available
                 if krvc_processor:
                     processed_chunk = krvc_processor.process_realtime(
