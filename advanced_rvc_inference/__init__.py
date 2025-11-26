@@ -12,25 +12,96 @@ Author: BF667
 __version__ = "3.5.2"
 __author__ = "BF667"
 
-# Core imports for easy access
-from .core import (
-    full_inference_program,
-    import_voice_converter,
-    get_config,
-    download_file,
-    add_audio_effects,
-    merge_audios,
-    check_fp16_support,
-    real_time_voice_conversion,
-    models_vocals,
-    karaoke_models,
-    denoise_models,
-    dereverb_models,
-    deecho_models,
-    gpu_optimizer,
-    gpu_settings,
-    GPU_OPTIMIZATION_AVAILABLE
-)
+# Core imports for easy access (with conditional fallbacks)
+try:
+    from .core import (
+        full_inference_program,
+        import_voice_converter,
+        get_config,
+        download_file,
+        add_audio_effects,
+        merge_audios,
+        check_fp16_support,
+        real_time_voice_conversion,
+        models_vocals,
+        karaoke_models,
+        denoise_models,
+        dereverb_models,
+        deecho_models,
+        gpu_optimizer,
+        gpu_settings,
+        GPU_OPTIMIZATION_AVAILABLE
+    )
+except ImportError as e:
+    # Fallback implementations when core functions are not available
+    def full_inference_program(*args, **kwargs):
+        """Fallback for full_inference_program"""
+        print("full_inference_program not available due to missing dependencies")
+        return None
+    
+    def import_voice_converter(*args, **kwargs):
+        """Fallback for import_voice_converter"""
+        print("import_voice_converter not available due to missing dependencies")
+        return None
+    
+    def get_config(*args, **kwargs):
+        """Fallback for get_config"""
+        return {}
+    
+    def download_file(*args, **kwargs):
+        """Fallback for download_file"""
+        print("download_file not available due to missing dependencies")
+        return None
+    
+    def add_audio_effects(*args, **kwargs):
+        """Fallback for add_audio_effects"""
+        print("add_audio_effects not available due to missing dependencies")
+        return None
+    
+    def merge_audios(*args, **kwargs):
+        """Fallback for merge_audios"""
+        print("merge_audios not available due to missing dependencies")
+        return None
+    
+    def check_fp16_support(*args, **kwargs):
+        """Fallback for check_fp16_support"""
+        return False
+    
+    def real_time_voice_conversion(*args, **kwargs):
+        """Fallback for real_time_voice_conversion"""
+        print("real_time_voice_conversion not available due to missing dependencies")
+        return None
+    
+    def models_vocals(*args, **kwargs):
+        """Fallback for models_vocals"""
+        return {}
+    
+    def karaoke_models(*args, **kwargs):
+        """Fallback for karaoke_models"""
+        return {}
+    
+    def denoise_models(*args, **kwargs):
+        """Fallback for denoise_models"""
+        return {}
+    
+    def dereverb_models(*args, **kwargs):
+        """Fallback for dereverb_models"""
+        return {}
+    
+    def deecho_models(*args, **kwargs):
+        """Fallback for deecho_models"""
+        return {}
+    
+    def gpu_optimizer(*args, **kwargs):
+        """Fallback for gpu_optimizer"""
+        print("gpu_optimizer not available due to missing dependencies")
+        return None
+    
+    def gpu_settings(*args, **kwargs):
+        """Fallback for gpu_settings"""
+        return {}
+    
+    GPU_OPTIMIZATION_AVAILABLE = False
 
 # KRVC kernel imports
 try:
@@ -51,7 +122,30 @@ except ImportError:
     KRVC_AVAILABLE = False
 
 # Import submodules with fallback for missing modules
-from . import tabs, rvc, uvr
+# Import sub-modules with fallbacks
+try:
+    from . import tabs
+except ImportError:
+    # Fallback for tabs module
+    class tabs:
+        """Fallback tabs module"""
+        pass
+
+try:
+    from . import rvc
+except ImportError:
+    # Fallback for rvc module
+    class rvc:
+        """Fallback rvc module"""
+        pass
+
+try:
+    from . import uvr
+except ImportError:
+    # Fallback for uvr module
+    class uvr:
+        """Fallback uvr module"""
+        pass
 
 # Package metadata
 __all__ = [

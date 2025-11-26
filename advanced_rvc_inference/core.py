@@ -13,9 +13,31 @@ import shutil
 
 # Import path manager - using relative import to avoid circular dependencies
 from .lib.path_manager import get_path_manager
-from pedalboard import Pedalboard, Reverb
-from pedalboard.io import AudioFile
-from pydub import AudioSegment
+
+# Conditional imports for optional dependencies
+try:
+    from pedalboard import Pedalboard, Reverb
+    from pedalboard.io import AudioFile
+except ImportError:
+    # Fallback implementation
+    class Pedalboard:
+        def __init__(self):
+            pass
+    class Reverb:
+        def __init__(self):
+            pass
+    class AudioFile:
+        def __init__(self):
+            pass
+
+try:
+    from pydub import AudioSegment
+except ImportError:
+    # Fallback implementation
+    class AudioSegment:
+        def __init__(self):
+            pass
+
 try:
     from audio_separator.separator import Separator
 except ImportError:
@@ -33,7 +55,11 @@ sys.path.append(current_dir)
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
-from .rvc.infer.conversion.convert import VoiceConverter
+# Conditional import to avoid torch dependency at import time
+try:
+    from .rvc.infer.conversion.convert import VoiceConverter
+except ImportError:
+    VoiceConverter = None
 # Import model download functionality with fallback
 try:
     from .lib.rvc.tools.model_download import model_download_pipeline
@@ -45,7 +71,11 @@ except ImportError:
         # In a real implementation, this would download the model
         # For now we simulate the functionality
         return f"Model download not implemented: {link}"
-from .uvr.core import proc_file
+# Conditional import to avoid torch dependency at import time
+try:
+    from .uvr.core import proc_file
+except ImportError:
+    proc_file = None
 
 # Import KRVC kernel for enhanced performance
 try:

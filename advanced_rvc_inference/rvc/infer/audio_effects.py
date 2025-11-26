@@ -6,9 +6,63 @@ import argparse
 import numpy as np
 import soundfile as sf
 
-from distutils.util import strtobool
+try:
+    from distutils.util import strtobool
+except ImportError:
+    # Fallback for distutils.util.strtobool
+    def strtobool(val):
+        """Convert a string representation of truth to True or False."""
+        val = val.lower()
+        if val in ('y', 'yes', 't', 'true', 'on', '1'):
+            return True
+        elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+            return False
+        else:
+            raise ValueError(f"invalid truth value {val!r}")
 from scipy.signal import butter, filtfilt
-from pedalboard import Pedalboard, Chorus, Distortion, Reverb, PitchShift, Delay, Limiter, Gain, Bitcrush, Clipping, Compressor, Phaser, HighpassFilter
+try:
+    from pedalboard import Pedalboard, Chorus, Distortion, Reverb, PitchShift, Delay, Limiter, Gain, Bitcrush, Clipping, Compressor, Phaser, HighpassFilter
+except ImportError:
+    # Fallback implementation
+    class Pedalboard:
+        def __init__(self):
+            pass
+    class Chorus:
+        def __init__(self):
+            pass
+    class Distortion:
+        def __init__(self):
+            pass
+    class Reverb:
+        def __init__(self):
+            pass
+    class PitchShift:
+        def __init__(self):
+            pass
+    class Delay:
+        def __init__(self):
+            pass
+    class Limiter:
+        def __init__(self):
+            pass
+    class Gain:
+        def __init__(self):
+            pass
+    class Bitcrush:
+        def __init__(self):
+            pass
+    class Clipping:
+        def __init__(self):
+            pass
+    class Compressor:
+        def __init__(self):
+            pass
+    class Phaser:
+        def __init__(self):
+            pass
+    class HighpassFilter:
+        def __init__(self):
+            pass
 
 sys.path.append(os.getcwd())
 
