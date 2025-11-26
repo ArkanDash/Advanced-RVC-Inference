@@ -17,6 +17,7 @@ import librosa
 from pathlib import Path
 import logging
 from concurrent.futures import ThreadPoolExecutor
+from advanced_rvc_inference.lib.path_manager import path
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -235,7 +236,7 @@ def main():
     parser = argparse.ArgumentParser(description="RVC Model Evaluation")
     parser.add_argument("--model_name", required=True, help="Name of the model to evaluate")
     parser.add_argument("--test_audio", required=True, help="Path to test audio directory")
-    parser.add_argument("--output_path", default="logs/evaluation", help="Output directory for results")
+    parser.add_argument("--output_path", default=str(path('logs_dir') / "evaluation"), help="Output directory for results")
     
     args = parser.parse_args()
     

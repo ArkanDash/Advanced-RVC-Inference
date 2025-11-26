@@ -4,19 +4,16 @@ import glob
 import json
 import torch
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import logging
 import argparse
 import datetime
-import warnings
 from typing import Dict, Any
 
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning).distributed as dist
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning).multiprocessing as mp
+warnings.filterwarnings("ignore", category=UserWarning)
+from torch import distributed as dist
+from torch import multiprocessing as mp
+
+from advanced_rvc_inference.lib.path_manager import path
 
 from tqdm import tqdm
 from collections import deque
@@ -63,8 +60,8 @@ except ImportError:
         """Fallback GPU cache clearing function"""
         import gc
         import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+        import warnings
+        warnings.filterwarnings("ignore", category=UserWarning)
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
@@ -253,14 +250,14 @@ try:
 except ImportError:
     # Create fallback configuration if main module doesn't exist
     import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
+    import warnings
+    warnings.filterwarnings("ignore", category=UserWarning)
     main_config = type('Config', (), {
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
         'is_half': torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 6
     })()
     main_configs = {
-        'logs_path': './logs'
+        'logs_path': str(path('logs_dir'))
     }
 
 warnings.filterwarnings("ignore")

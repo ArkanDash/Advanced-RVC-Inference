@@ -14,14 +14,15 @@ sys.path.append(now_dir)
 
 from advanced_rvc_inference.core import full_inference_program
 from advanced_rvc_inference.lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.path_manager import path
 
 i18n = I18nAuto()
 
 # Define path variables using Path objects for better cross-platform compatibility
 # Use absolute path for model_root to ensure it works correctly
-model_root = Path(now_dir) / "assets" / "weights"
-audio_root = Path(now_dir) / "assets" / "audios"
-audio_root_opt = Path(now_dir) / "assets" / "audios" / "output"
+model_root = path('weights_dir')
+audio_root = path('audios_dir')
+audio_root_opt = path('audios_dir') / "output"
 
 # Convert to strings for compatibility with existing functions
 model_root_str = str(model_root)
@@ -384,84 +385,107 @@ def change_choices():
 def full_inference_tab():
     """Create the full inference tab UI"""
     default_weight = names[0] if names else None
-    
+
     with gr.Row():
-        with gr.Row():
-            model_file = gr.Dropdown(
-                label=i18n("Voice Model"),
-                info=i18n("Select the voice model to use for the conversion."),
-                choices=sorted(names, key=lambda path: os.path.getsize(path)),
-                interactive=True,
-                value=default_weight,
-                allow_custom_value=True,
-            )
-
-            index_file = gr.Dropdown(
-                label=i18n("Index File"),
-                info=i18n("Select the index file to use for the conversion."),
-                choices=get_indexes(),
-                value=match_index(default_weight) if default_weight else "",
-                interactive=True,
-                allow_custom_value=True,
-            )
-            
-        with gr.Column():
-            refresh_button = gr.Button(i18n("Refresh"))
-            unload_button = gr.Button(i18n("Unload Voice"))
-
-            unload_button.click(
-                fn=lambda: (
-                    gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
-                    gr.Dropdown(value=None, choices=get_indexes()),
-                ),
-                inputs=[],
-                outputs=[model_file, index_file],
-            )
-            
-            model_file.select(
-                fn=lambda model_file_value: match_index(model_file_value),
-                inputs=[model_file],
-                outputs=[index_file],
-            )
-    
-    with gr.Tab(i18n("Single")):
-        with gr.Column():
-            upload_audio = gr.Audio(
-                label=i18n("Upload Audio"),
-                type="filepath",
-                editable=False,
-                sources="upload",
-            )
-            
+        with gr.Column(scale=3):
             with gr.Row():
-                audio = gr.Dropdown(
-                    label=i18n("Select Audio"),
-                    info=i18n("Select the audio to convert."),
-                    choices=sorted(audio_paths),
-                    value=audio_paths[0] if audio_paths else "",
+                model_file = gr.Dropdown(
+                    label=i18n("🎤 Voice Model"),
+                    info=i18n("Select the voice model to use for the conversion."),
+                    choices=sorted(names, key=lambda path: os.path.getsize(path)),
+                    interactive=True,
+                    value=default_weight,
+                    allow_custom_value=True,
+                    elem_classes="model-dropdown"
+                )
+
+                index_file = gr.Dropdown(
+                    label=i18n("📋 Index File"),
+                    info=i18n("Select the index file to use for the conversion."),
+                    choices=get_indexes(),
+                    value=match_index(default_weight) if default_weight else "",
                     interactive=True,
                     allow_custom_value=True,
+                    elem_classes="index-dropdown"
                 )
-        
-        with gr.Accordion(i18n("Advanced Settings"), open=False):
-            with gr.Accordion(i18n("RVC Settings"), open=False):
-                output_path = gr.Textbox(
-                    label=i18n("Output Path"),
-                    placeholder=i18n("Enter output path"),
-                    info=i18n(
-                        "The path where the output audio will be saved, by default in audio_files/rvc/output.wav"
+
+            with gr.Row():
+                refresh_button = gr.Button(i18n("🔄 Refresh"), variant="secondary", elem_classes="refresh-btn")
+                unload_button = gr.Button(i18n("🗑️ Unload Voice"), variant="stop", elem_classes="unload-btn")
+
+                unload_button.click(
+                    fn=lambda: (
+                        gr.Dropdown(value=None, choices=sorted(names, key=lambda path: os.path.getsize(path))),
+                        gr.Dropdown(value=None, choices=get_indexes()),
                     ),
-                    value=audio_root_opt_str,
-                    interactive=True,
-                    visible=True,
+                    inputs=[],
+                    outputs=[model_file, index_file],
                 )
-                
+
+                model_file.select(
+                    fn=lambda model_file_value: match_index(model_file_value),
+                    inputs=[model_file],
+                    outputs=[index_file],
+                )
+
+        with gr.Column(scale=2, visible=True if default_weight else False):
+            # Model info display
+            with gr.Group(visible=True if default_weight else False, elem_classes="model-info-card"):
+                gr.Markdown(f"### 📋 Model Information")
+                model_size = round(os.path.getsize(default_weight)/1024/1024, 2) if default_weight and os.path.exists(default_weight) else 0
+                gr.Markdown(f"**Size:** {model_size} MB" if default_weight else "**No model selected**")
+
+    with gr.Tab(i18n("🎵 Single Audio")):
+        with gr.Column():
+            # Audio input section with improved layout
+            with gr.Group(elem_classes="audio-input-group"):
+                gr.Markdown(f"### 🎵 Audio Input")
+
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        upload_audio = gr.Audio(
+                            label=i18n("Upload Audio"),
+                            type="filepath",
+                            editable=False,
+                            sources=["upload"],
+                            elem_classes="audio-upload"
+                        )
+
+                    with gr.Column(scale=1):
+                        audio = gr.Dropdown(
+                            label=i18n("Select Audio"),
+                            info=i18n("Select the audio to convert."),
+                            choices=sorted(audio_paths),
+                            value=audio_paths[0] if audio_paths else "",
+                            interactive=True,
+                            allow_custom_value=True,
+                            elem_classes="audio-dropdown"
+                        )
+        
+        with gr.Accordion(i18n("⚙️ Advanced Settings"), open=False, elem_classes="advanced-settings-accordion"):
+            with gr.Group(elem_classes="rvc-settings-group"):
+                gr.Markdown(f"### 🎛️ RVC Core Settings")
+
+                with gr.Row():
+                    with gr.Column():
+                        output_path = gr.Textbox(
+                            label=i18n("📁 Output Path"),
+                            placeholder=i18n("Enter output path"),
+                            info=i18n(
+                                "The path where the output audio will be saved, by default in audio_files/rvc/output.wav"
+                            ),
+                            value=audio_root_opt_str,
+                            interactive=True,
+                            elem_classes="output-path-input"
+                        )
+
                 infer_backing_vocals = gr.Checkbox(
-                    label=i18n("Infer Backing Vocals"),
+                    label=i18n("🎤 Infer Backing Vocals"),
                     info=i18n("Infer the backing vocals too."),
                     visible=True,
                     value=False,
                     interactive=True,
+                    elem_classes="backing-vocals-checkbox"
                 )
                 
                 # Backing vocals controls

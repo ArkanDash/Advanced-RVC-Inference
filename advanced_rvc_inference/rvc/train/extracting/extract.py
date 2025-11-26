@@ -3,16 +3,17 @@ import sys
 import logging
 import argparse
 import warnings
-
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning).multiprocessing as mp
+import multiprocessing as mp
 
 from distutils.util import strtobool
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.lib.utils import check_assets
+from advanced_rvc_inference.lib.path_manager import path
 from advanced_rvc_inference.rvc.infer.extracting.rms import run_rms_extraction
 from advanced_rvc_inference.rvc.infer.extracting.feature import run_pitch_extraction
 from assets.config.variables import config, logger, translations, configs
@@ -49,7 +50,7 @@ def main():
 
     f0_method, hop_length, num_processes, gpus, version, pitch_guidance, sample_rate, embedder_model, f0_onnx, embedders_mode, f0_autotune, f0_autotune_strength, rms_extract, alpha = args.f0_method, args.hop_length, args.cpu_cores, args.gpu, args.rvc_version, args.pitch_guidance, args.sample_rate, args.embedder_model, args.f0_onnx, args.embedders_mode, args.f0_autotune, args.f0_autotune_strength, args.rms_extract, args.alpha
     check_assets(f0_method, embedder_model, f0_onnx=f0_onnx, embedders_mode=embedders_mode)
-    exp_dir = os.path.join(configs["logs_path"], args.model_name)
+    exp_dir = os.path.join(str(path('logs_dir')), args.model_name)
 
     num_processes = max(1, num_processes)
     devices = ["cpu"] if gpus == "-" else [(f"cuda:{idx}" if config.device.startswith("cuda") else f"{'ocl' if config.device.startswith('ocl') else 'privateuseone'}:{idx}") for idx in gpus.split("-")]

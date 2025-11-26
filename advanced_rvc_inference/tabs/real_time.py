@@ -11,6 +11,7 @@ import gradio as gr
 import os, sys
 from advanced_rvc_inference.core import real_time_voice_conversion
 from advanced_rvc_inference.lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.path_manager import path
 
 i18n = I18nAuto()
 
@@ -18,7 +19,7 @@ now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 # Get available models
-model_root = os.path.join(now_dir, "logs")
+model_root = str(path('logs_dir'))
 names = [
     os.path.join(root, file)
     for root, _, files in os.walk(model_root, topdown=False)
