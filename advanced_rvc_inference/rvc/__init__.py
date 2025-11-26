@@ -1,16 +1,4 @@
-"""
-RVC (Retrieval-based Voice Conversion) Module
 
-This module contains the core RVC functionality including:
-- Voice conversion algorithms
-- Model inference and training
-- Audio processing utilities
-- Configuration management
-
-Authors: ArkanDash & BF667
-"""
-
-# Core RVC imports
 from .infer.conversion.convert import VoiceConverter
 from .configs.config import Config
 
