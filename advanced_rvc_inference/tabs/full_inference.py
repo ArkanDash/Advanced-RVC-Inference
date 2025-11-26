@@ -13,19 +13,15 @@ sys.path.append(now_dir)
 from advanced_rvc_inference.core import full_inference_program
 
 from advanced_rvc_inference.lib.i18n import I18nAuto
-from advanced_rvc_inference.lib.path_manager import PathManager
 
 i18n = I18nAuto()
 
-# Initialize path manager
-pm = PathManager()
 
-# Use path manager for consistent path handling
-model_root = pm.get_model_root()
-audio_root = pm.get_audio_root()
+model_root = os.path.join(now_dir, "assets", "weights")
+audio_root = os.path.join(now_dir, "assets", "audios")
 
-model_root_relative = model_root
-audio_root_relative = audio_root
+model_root_relative = os.path.relpath(model_root, now_dir)
+audio_root_relative = os.path.relpath(audio_root, now_dir)
 sup_audioext = {
     "wav",
     "mp3",
