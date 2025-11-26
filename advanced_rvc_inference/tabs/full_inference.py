@@ -13,7 +13,7 @@ sys.path.append(now_dir)
 from advanced_rvc_inference.core import full_inference_program
 
 from advanced_rvc_inference.lib.i18n import I18nAuto
-from advanced_rvc_inference.lib.path_manager import get_path_manager
+from advanced_rvc_inference.lib.path_manager import PathManager
 
 i18n = I18nAuto()
 
