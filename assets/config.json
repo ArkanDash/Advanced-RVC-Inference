@@ -1,7 +1,7 @@
 {
   "theme": {
     "file": null,
-    "class": "nuttea/Softblue"
+    "class": "terastudio/yellow"
   },
   "lang": {
     "override": false,
@@ -9,8 +9,8 @@
   },
   "paths": {
     "audio_files": "audio_files",
-    "models": "logs", 
-    "outputs": "audio_files/rvc",
+    "models": "assets/weights", 
+    "outputs": "assets/audios/output",
     "temp": "temp",
     "datasets": "datasets"
   },
