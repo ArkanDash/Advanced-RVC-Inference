@@ -1,7 +1,9 @@
-# Advanced RVC Inference V4.0.0 - Ultimate Performance Edition
 
-**Developed by:** ArkanDash & BF667  
-**Version:** 4.0.0 Ultimate Performance Edition  
+
+<h1 align="center"><b> Advanced RVC Inference V4.0.0 </b></h1>
+<div align="center"> 
+
+
 **Last Updated:** November 26, 2025
 
 
@@ -10,6 +12,9 @@
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb)
 [![Performance](https://img.shields.io/badge/Performance-5x%20Faster-orange.svg)]()
+
+</div>
+
 
 **Ultimate Voice Conversion Platform with Advanced Performance Optimization**
 
@@ -417,10 +422,7 @@ pytest --cov=advanced_rvc_inference/
 
 ### Maintainers & Authors
 
-- **ArkanDash & BF667**: Project founders, lead developers, and maintainers
-  - Core architecture and performance optimization
-  - KRVC kernel development
-  - V4.0 Ultimate Performance Edition
+
 - **ArkanDash**: Original project owner and founder
 - **BF667**: Co-developer and performance optimization specialist
 
@@ -434,7 +436,3 @@ MIT License - See [LICENSE](LICENSE) file for details.
 - **Discord**: [Community Support](https://discord.gg/hvmsukmBHE)
 - **Documentation**: [Complete Guide](docs/)
 - **Email**: Contact maintainers through GitHub
-
----
-
-**Professional Voice Conversion Technology - Ready for Production Use**
