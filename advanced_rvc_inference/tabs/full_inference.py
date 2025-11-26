@@ -19,8 +19,8 @@ from advanced_rvc_inference.lib.path_manager import path
 i18n = I18nAuto()
 
 # Define path variables using Path objects for better cross-platform compatibility
-# Use absolute path for model_root to ensure it works correctly
-model_root = path('weights_dir')
+# Use absolute path for model_root to ensure it works correctly - RVC models are in logs with subdirectories
+model_root = path('logs_dir')
 audio_root = path('inputs_dir')  # Changed to use inputs directory for input audio files
 audio_root_opt = path('outputs_dir')  # Changed to use outputs directory for output audio files
 
@@ -66,25 +66,37 @@ def get_file_list(root_dir, extensions, exclude_patterns=None):
 
 # Dynamic model file list getter - moved to function to ensure refresh capability
 def get_model_names_list():
-    """Get the list of available model files dynamically"""
+    """Get the list of available model files dynamically - RVC models are in subdirectories"""
     try:
-        return get_file_list(
-            model_root_str,
-            (".pth", ".onnx"),
-            exclude_patterns=["G_", "D_"]
-        )
+        model_files = []
+        # RVC stores models in subdirectories under logs directory
+        if model_root.exists():
+            for model_dir_name in os.listdir(model_root):
+                model_dir_path = model_root / model_dir_name
+                if model_dir_path.is_dir():
+                    # Look for .pth or .onnx files in the model subdirectory
+                    for file in os.listdir(model_dir_path):
+                        if file.endswith(('.pth', '.onnx')) and "G_" not in file and "D_" not in file:
+                            model_files.append(str(model_dir_path / file))
+        return model_files
     except Exception as e:
         print(f"[ERROR] Error getting model names list: {e}")
         return []
 
 def get_indexes_list():
-    """Get the list of available index files dynamically"""
+    """Get the list of available index files dynamically - RVC indexes are in subdirectories"""
     try:
-        return get_file_list(
-            model_root_str,
-            (".index",),
-            exclude_patterns=["trained"]
-        )
+        index_files = []
+        # RVC stores indexes in subdirectories under logs directory
+        if model_root.exists():
+            for model_dir_name in os.listdir(model_root):
+                model_dir_path = model_root / model_dir_name
+                if model_dir_path.is_dir():
+                    # Look for .index files in the model subdirectory
+                    for file in os.listdir(model_dir_path):
+                        if file.endswith('.index') and "trained" not in file:
+                            index_files.append(str(model_dir_path / file))
+        return index_files
     except Exception as e:
         print(f"[ERROR] Error getting indexes list: {e}")
         return []
@@ -134,12 +146,18 @@ dereverb_models_names = [
 deeecho_models_names = ["UVR-Deecho-Normal", "UVR-Deecho-Aggressive"]
 
 def get_indexes():
-    """Get all index files"""
-    return get_file_list(
-        model_root_str, 
-        (".index",), 
-        exclude_patterns=["trained"]
-    )
+    """Get all index files - RVC indexes are in subdirectories"""
+    index_files = []
+    # RVC stores indexes in subdirectories under logs directory
+    if model_root.exists():
+        for model_dir_name in os.listdir(model_root):
+            model_dir_path = model_root / model_dir_name
+            if model_dir_path.is_dir():
+                # Look for .index files in the model subdirectory
+                for file in os.listdir(model_dir_path):
+                    if file.endswith('.index') and "trained" not in file:
+                        index_files.append(str(model_dir_path / file))
+    return index_files
 
 def match_index(model_file_value):
     """Find matching index file for a model"""

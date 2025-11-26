@@ -8,24 +8,29 @@ i18n = I18nAuto()
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-# Model root directory - should be weights directory where models are stored
-model_root = str(path('weights_dir'))
+# Model root directory - RVC models are stored in logs directory with subdirectories per model
+model_root = str(path('logs_dir'))
 
 def get_models_list():
     """Get list of available models"""
     models = []
     if os.path.exists(model_root):
-        for file in os.listdir(model_root):
-            if file.endswith(('.pth', '.onnx')):
-                # Extract model name from the file
-                model_name = os.path.splitext(file)[0]  # Remove extension
-                # Check if there's a corresponding index file
-                index_file = None
-                for idx_file in os.listdir(model_root):
-                    if idx_file.endswith('.index') and model_name in idx_file:
-                        index_file = idx_file
-                        break
-                models.append([model_name, file, index_file or "No index", "Available"])
+        # RVC stores models in subdirectories under logs directory
+        for model_dir_name in os.listdir(model_root):
+            model_dir_path = os.path.join(model_root, model_dir_name)
+            if os.path.isdir(model_dir_path):
+                # Look for .pth or .onnx files in the model subdirectory
+                for file in os.listdir(model_dir_path):
+                    if file.endswith(('.pth', '.onnx')):
+                        # Extract model name from the file
+                        model_name = os.path.splitext(file)[0]  # Remove extension
+                        # Check if there's a corresponding index file in the same directory
+                        index_file = None
+                        for idx_file in os.listdir(model_dir_path):
+                            if idx_file.endswith('.index') and model_name in idx_file:
+                                index_file = idx_file
+                                break
+                        models.append([model_name, os.path.join(model_dir_name, file), index_file or "No index", "Available"])
     return models or [["No models found", "", "", ""]]
 
 def model_manager_tab():

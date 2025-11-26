@@ -19,7 +19,7 @@ now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 # Get available models
-model_root = str(path('weights_dir'))
+model_root = str(path('logs_dir'))
 names = [
     os.path.join(root, file)
     for root, _, files in os.walk(model_root, topdown=False)
