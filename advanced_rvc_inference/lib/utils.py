@@ -1,5 +1,4 @@
 # Fallback utilities module
-import torch
 import numpy as np
 import os
 import warnings
@@ -29,6 +28,7 @@ def pydub_load(file_path):
 
 def extract_features(model, audio, version, device):
     """Fallback feature extraction"""
+    import torch
     try:
         # If the model exists and has the method, use it
         if hasattr(model, 'extract_features'):
@@ -63,6 +63,7 @@ def change_rms(audio, src_sr, tgt_audio, tgt_sr, mix_rate):
 
 def clear_gpu_cache():
     """Fallback GPU cache clearing"""
+    import torch
     try:
         if torch.cuda.is_available():
             torch.cuda.empty_cache()

@@ -4,11 +4,31 @@ RVC Inference Module
 This module contains all inference-related functionality for the RVC system.
 """
 
-from .conversion.convert import VoiceConverter
-from .audio_effects import add_audio_effects
-from .create_dataset import create_dataset
-from .create_index import create_index
-from .create_reference import create_reference
+# Conditional imports to avoid dependency failures
+try:
+    from .conversion.convert import VoiceConverter
+except ImportError:
+    VoiceConverter = None
+
+try:
+    from .audio_effects import add_audio_effects
+except ImportError:
+    add_audio_effects = None
+
+try:
+    from .create_dataset import create_dataset
+except ImportError:
+    create_dataset = None
+
+try:
+    from .create_index import create_index
+except ImportError:
+    create_index = None
+
+try:
+    from .create_reference import create_reference
+except ImportError:
+    create_reference = None
 
 # Inference utilities (for backward compatibility)
 class inference_utils:

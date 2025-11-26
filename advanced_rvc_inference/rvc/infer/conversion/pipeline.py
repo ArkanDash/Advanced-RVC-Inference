@@ -1,12 +1,12 @@
 import os
 import sys
-import torch
+# torch import moved to function level
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import torch.nn.functional as F
+# torch import moved to function level
+# torch import moved to function level.nn.functional as F
 
 from scipy import signal
 

@@ -1,6 +1,5 @@
 import os
 import sys
-import torch
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 import librosa
@@ -163,6 +162,7 @@ def best_multiband_eq(audio, sr, original_audio=None, sr_ref=16000, n_bands=6, t
     return out
 
 def spectral_subtract_denoise(audio, sr, noise_seconds=0.4, alpha=1.0, n_fft=1024, hop_length=160, device="cpu"):
+    import torch
     global stft
 
     if stft is None and device.startswith(("ocl", "privateuseone")):

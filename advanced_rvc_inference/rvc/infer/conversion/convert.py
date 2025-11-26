@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import torch
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 import librosa
@@ -13,7 +12,19 @@ import numpy as np
 import soundfile as sf
 
 from tqdm import tqdm
-from distutils.util import strtobool
+try:
+    from distutils.util import strtobool
+except ImportError:
+    # Fallback for distutils.util.strtobool
+    def strtobool(val):
+        """Convert a string representation of truth to True or False."""
+        val = val.lower()
+        if val in ('y', 'yes', 't', 'true', 'on', '1'):
+            return True
+        elif val in ('n', 'no', 'f', 'false', 'off', '0'):
+            return False
+        else:
+            raise ValueError(f"invalid truth value {val!r}")
 
 warnings.filterwarnings("ignore")
 sys.path.append(os.getcwd())
@@ -252,7 +263,9 @@ class VoiceConverter:
 
                 if not self.hubert_model:
                     models = load_embedders_model(embedder_model, embedders_mode)
-                    if isinstance(models, torch.nn.Module): models = models.to(torch.float16 if self.config.is_half else torch.float32).eval().to(self.device)
+                    if isinstance(models, torch.nn.Module): 
+                        import torch
+                        models = models.to(torch.float16 if self.config.is_half else torch.float32).eval().to(self.device)
                     self.hubert_model = models
 
                 pbar.update(1)
@@ -309,6 +322,7 @@ class VoiceConverter:
                 if clean_audio:
                     from main.tools.noisereduce import TorchGate
                     if not hasattr(self, "tg"): self.tg = TorchGate(self.tgt_sr, prop_decrease=clean_strength).to(self.device)
+                    import torch
                     audio_output = self.tg(torch.from_numpy(audio_output).unsqueeze(0).to(self.device).float()).squeeze(0).cpu().detach().numpy()
 
                 if len(audio) / self.sample_rate > len(audio_output) / self.tgt_sr:
@@ -365,6 +379,7 @@ class VoiceConverter:
 
                 self.net_g.load_state_dict(self.cpt["weight"], strict=False)
                 self.net_g.eval().to(self.device)
+                import torch
                 self.net_g = self.net_g.to(torch.float16 if self.config.is_half else torch.float32)
                 self.n_spk = self.cpt["config"][-3]
             else:
