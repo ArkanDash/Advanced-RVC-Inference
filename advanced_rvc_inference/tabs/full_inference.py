@@ -1,3 +1,12 @@
+"""
+Full Inference Tab - Complete RVC Inference Interface
+Advanced RVC Inference - Ultimate Performance Edition
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
+"""
+
 import torch
 import warnings
 import sys, os

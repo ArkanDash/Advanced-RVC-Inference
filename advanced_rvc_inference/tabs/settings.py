@@ -1,3 +1,12 @@
+"""
+Settings Tab - Theme and Configuration Management
+Advanced RVC Inference - Ultimate Performance Edition
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
+"""
+
 import gradio as gr
 import os, sys
 from advanced_rvc_inference.lib.i18n import I18nAuto

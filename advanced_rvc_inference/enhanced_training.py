@@ -2,7 +2,10 @@
 """
 Enhanced RVC Training System - GPU Optimization
 T4/A100 GPU optimized training with automatic configuration
-Version 3.5.3
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
 """
 
 import os

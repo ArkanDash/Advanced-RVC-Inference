@@ -1,3 +1,12 @@
+"""
+Real-time Inference Tab - Live Voice Conversion
+Advanced RVC Inference - Ultimate Performance Edition
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
+"""
+
 import gradio as gr
 import os, sys
 from advanced_rvc_inference.core import real_time_voice_conversion

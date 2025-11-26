@@ -1,3 +1,12 @@
+"""
+Utility Functions for Advanced RVC Inference
+Fallback implementations and helper functions
+Version 4.0.0
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
+"""
+
 # Fallback utilities module
 import numpy as np
 import os
