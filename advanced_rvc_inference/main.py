@@ -1,7 +1,13 @@
 """
 Advanced RVC Inference - KRVC Kernel
 Kernel Advanced RVC - 2x Faster Training & Inference
-Version 4.0
+Version 4.0.0 Ultimate Performance Edition
+
+Authors: ArkanDash & BF667
+Last Updated: November 26, 2025
+
+This is the main entry point for the Advanced RVC Inference application,
+featuring revolutionary performance optimizations and cutting-edge AI models.
 """
 
 import gradio as gr
