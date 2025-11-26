@@ -60,7 +60,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio>=5.23.3,<6.0.0
+gradio>=6.0.0
 requests>=2.32.3
 aiohttp==3.10.5
 pysrt

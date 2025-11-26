@@ -14,18 +14,21 @@ from pathlib import Path
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
+from advanced_rvc_inference.lib.path_manager import path
 
 def setup_directories():
     """Create necessary directories for training"""
+    # Use the centralized path manager for logs and other key directories
+    base_logs_dir = path('logs_dir')
     dirs = [
-        "logs",
-        "logs/44k",
-        "logs/48k", 
-        "logs/40k",
-        "logs/32k",
-        "logs/models",
-        "logs/pretraineds",
-        "logs/tensorboard",
+        str(base_logs_dir),
+        str(base_logs_dir / "44k"),
+        str(base_logs_dir / "48k"),
+        str(base_logs_dir / "40k"),
+        str(base_logs_dir / "32k"),
+        str(base_logs_dir / "models"),
+        str(base_logs_dir / "pretraineds"),
+        str(base_logs_dir / "tensorboard"),
         "audio_files",
         "audio_files/records",
         "audio_files/voices",
@@ -81,7 +84,7 @@ def process_dataset(dataset_path, model_name, sample_rate, cpu_cores, process_ef
     setup_directories()
     
     # Create model directory
-    model_dir = Path("logs") / sample_rate / model_name
+    model_dir = path('logs_dir') / sample_rate / model_name
     model_dir.mkdir(parents=True, exist_ok=True)
     
     # Find all audio files

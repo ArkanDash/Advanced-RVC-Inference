@@ -10,6 +10,7 @@ now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 from advanced_rvc_inference.lib.i18n import I18nAuto
+from advanced_rvc_inference.lib.path_manager import path
 
 i18n = I18nAuto()
 
@@ -157,7 +158,7 @@ def create_training_tabs():
     
     def get_model_list():
         """Get list of available models"""
-        models_dir = Path(now_dir) / "logs" / "models"
+        models_dir = path('logs_dir') / "models"
         if not models_dir.exists():
             return []
         
@@ -437,7 +438,7 @@ def create_training_tabs():
                 
                 output_path = gr.Textbox(
                     label=i18n("Output Path"),
-                    value="logs/evaluation",
+                    value=str(path('logs_dir') / "evaluation"),
                     info=i18n("Path to save evaluation results")
                 )
                 

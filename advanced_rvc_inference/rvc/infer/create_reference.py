@@ -17,6 +17,7 @@ sys.path.append(os.getcwd())
 
 from assets.config.variables import config, logger, translations, configs
 from advanced_rvc_inference.lib.utils import load_audio, load_embedders_model, extract_features
+from advanced_rvc_inference.lib.path_manager import path
 
 warnings.filterwarnings("ignore")
 
@@ -92,7 +93,7 @@ def create_reference(
         logger.warning(translations["not_found_audio"])
         sys.exit(1)
 
-    output_reference = os.path.join(configs["reference_path"], f"{reference_name}_{version}_{embedder_model}_{pitch_guidance}_{use_energy}")
+    output_reference = os.path.join(str(path('logs_dir') / "reference"), f"{reference_name}_{version}_{embedder_model}_{pitch_guidance}_{use_energy}")
     if os.path.exists(output_reference): shutil.rmtree(reference_name, ignore_errors=True)
 
     os.makedirs(output_reference)

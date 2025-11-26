@@ -8,6 +8,7 @@ sys.path.append(os.getcwd())
 
 # from main.app.core.ui import configs, config
 from advanced_rvc_inference.rvc.infer.extracting.embedding import create_mute_file
+from advanced_rvc_inference.lib.path_manager import path
 
 def mute_file(embedders_mode, embedders_model, mute_base_path, rvc_version):
     if embedders_mode.startswith(("spin", "whisper")):
@@ -47,7 +48,7 @@ def generate_filelist(pitch_guidance, model_path, rvc_version, sample_rate, embe
     if rms_extract: names = names & set(name.split(".")[0] for name in os.listdir(energy_dir))
     
     options = []
-    mute_base_path = os.path.join(configs["logs_path"], "mute")
+    mute_base_path = os.path.join(str(path('logs_dir')), "mute")
 
     for name in names:
         option = {

@@ -10,17 +10,18 @@ import json
 import warnings
 from bs4 import BeautifulSoup
 import yt_dlp
+from advanced_rvc_inference.lib.path_manager import path
 
 # Remove the i18n import since we're removing translation
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-# Define paths that would normally come from configs
+# Define paths using the centralized path manager
 configs = {
-    "audios_path": os.path.join(now_dir, "audios"),
-    "weights_path": os.path.join(now_dir, "assets", "weights"),
-    "logs_path": os.path.join(now_dir, "assets", "weights"),
-    "pretrained_custom_path": os.path.join(now_dir, "assets", "models", "pretrained_custom")
+    "audios_path": str(path('audios_dir')),
+    "weights_path": str(path('weights_dir')),
+    "logs_path": str(path('logs_dir')),
+    "pretrained_custom_path": str(path('pretrained_custom'))
 }
 
 # Model options dictionary
@@ -77,7 +78,7 @@ def save_drop_model(dropbox):
         if "__" in model_name:
             model_name = model_name.replace("__", "")
 
-        model_path = os.path.join(now_dir, "logs", model_name)
+        model_path = os.path.join(str(path('logs_dir')), model_name)
         if not os.path.exists(model_path):
             os.makedirs(model_path)
         if os.path.exists(os.path.join(model_path, file_name)):
@@ -319,7 +320,7 @@ def download_online_model(repo_url):
         model_name = format_title(filename.replace('.zip', '').replace('.pth', ''))
         
         # Create model directory
-        model_dir = os.path.join(now_dir, "logs", model_name)
+        model_dir = os.path.join(str(path('logs_dir')), model_name)
         if not os.path.exists(model_dir):
             os.makedirs(model_dir)
         

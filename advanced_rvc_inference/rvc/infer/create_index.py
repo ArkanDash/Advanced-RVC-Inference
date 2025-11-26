@@ -11,6 +11,7 @@ from sklearn.cluster import MiniBatchKMeans
 sys.path.append(os.getcwd())
 
 from assets.config.variables import logger, translations, configs
+from advanced_rvc_inference.lib.path_manager import path
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -23,7 +24,7 @@ def parse_arguments():
 
 def main():
     args = parse_arguments()
-    exp_dir = os.path.join(configs["logs_path"], args.model_name)
+    exp_dir = os.path.join(str(path('logs_dir')), args.model_name)
     version, index_algorithm = args.rvc_version, args.index_algorithm
 
     log_data = {translations['modelname']: args.model_name, translations['model_path']: exp_dir, translations['training_version']: version, translations['index_algorithm_info']: index_algorithm}
@@ -83,7 +84,7 @@ def create_index(model_name, rvc_version="v2", index_algorithm="Auto"):
         str: Path to the created index file
     """
     try:
-        exp_dir = os.path.join(configs.get("logs_path", "./logs"), model_name)
+        exp_dir = os.path.join(str(path('logs_dir')), model_name)
         version = rvc_version
         algorithm = index_algorithm
         
