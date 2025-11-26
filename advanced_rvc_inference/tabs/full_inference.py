@@ -24,9 +24,8 @@ pm = PathManager()
 model_root = pm.get_model_root()
 audio_root = pm.get_audio_root()
 
-model_root_relative = pm.get_relative_path(model_root)
-audio_root_relative = pm.get_relative_path(audio_root)
-
+model_root_relative = model_root
+audio_root_relative = audio_root
 sup_audioext = {
     "wav",
     "mp3",
