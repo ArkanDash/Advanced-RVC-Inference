@@ -8,25 +8,24 @@ i18n = I18nAuto()
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-# Model root directory
-model_root = str(path('logs_dir'))
+# Model root directory - should be weights directory where models are stored
+model_root = str(path('weights_dir'))
 
 def get_models_list():
     """Get list of available models"""
     models = []
     if os.path.exists(model_root):
-        for model_dir in os.listdir(model_root):
-            model_path = os.path.join(model_root, model_dir)
-            if os.path.isdir(model_path):
-                for file in os.listdir(model_path):
-                    if file.endswith('.pth'):
-                        # Check if there's a corresponding index file
-                        index_file = None
-                        for idx_file in os.listdir(model_path):
-                            if idx_file.endswith('.index') and model_dir in idx_file:
-                                index_file = idx_file
-                                break
-                        models.append([model_dir, file, index_file or "No index", "Available"])
+        for file in os.listdir(model_root):
+            if file.endswith(('.pth', '.onnx')):
+                # Extract model name from the file
+                model_name = os.path.splitext(file)[0]  # Remove extension
+                # Check if there's a corresponding index file
+                index_file = None
+                for idx_file in os.listdir(model_root):
+                    if idx_file.endswith('.index') and model_name in idx_file:
+                        index_file = idx_file
+                        break
+                models.append([model_name, file, index_file or "No index", "Available"])
     return models or [["No models found", "", "", ""]]
 
 def model_manager_tab():
@@ -73,12 +72,12 @@ def model_manager_tab():
             with gr.Column():
                 model_1 = gr.Dropdown(
                     label="First Model",
-                    choices=[row[0] for row in get_models_list() if row[0] != "No models found"],
+                    choices=[],  # Will be populated dynamically
                     info="Select the first model for fusion"
                 )
                 model_2 = gr.Dropdown(
                     label="Second Model",
-                    choices=[row[0] for row in get_models_list() if row[0] != "No models found"],
+                    choices=[],  # Will be populated dynamically
                     info="Select the second model for fusion"
                 )
                 fusion_ratio = gr.Slider(
@@ -113,6 +112,11 @@ def model_manager_tab():
         def refresh_model_list():
             return get_models_list()
 
+        def refresh_model_dropdowns():
+            models = get_models_list()
+            choices = [row[0] for row in models if row[0] != "No models found"]
+            return gr.Dropdown(choices=choices), gr.Dropdown(choices=choices)
+
         def search_models(query):
             all_models = get_models_list()
             if not query:
@@ -123,6 +127,11 @@ def model_manager_tab():
         refresh_models.click(
             refresh_model_list,
             outputs=[model_list]
+        )
+
+        refresh_models.click(
+            refresh_model_dropdowns,
+            outputs=[model_1, model_2]
         )
 
         model_search.change(
