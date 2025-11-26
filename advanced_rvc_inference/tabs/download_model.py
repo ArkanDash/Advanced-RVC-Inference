@@ -18,8 +18,8 @@ sys.path.append(now_dir)
 # Define paths that would normally come from configs
 configs = {
     "audios_path": os.path.join(now_dir, "audios"),
-    "weights_path": os.path.join(now_dir, "logs"),
-    "logs_path": os.path.join(now_dir, "logs"),
+    "weights_path": os.path.join(now_dir, "assets", "weights"),
+    "logs_path": os.path.join(now_dir, "assets", "weights"),
     "pretrained_custom_path": os.path.join(now_dir, "assets", "models", "pretrained_custom")
 }
 
