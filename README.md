@@ -7,7 +7,7 @@
 **Last Updated:** November 27, 2025
 
 
-[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.9+-red.svg)](https://pytorch.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/notebooks/Advanced_RVC_Inference.ipynb)
@@ -48,7 +48,24 @@ With **60+ F0 Methods**, **60+ Embedder Models**, and cutting-edge GPU accelerat
 
 ## Quick Start
 
-### Enhanced Installation (Recommended)
+### UV Installation (Fastest - Recommended)
+
+**UV provides the fastest dependency resolution and installation experience:**
+
+```bash
+# Clone repository
+git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
+cd Advanced-RVC-Inference
+
+# One-command installation with UV
+./install_uv.sh     # Linux/macOS
+install_uv.bat      # Windows
+
+# Launch application
+uv run python -m advanced_rvc_inference.main
+```
+
+### Enhanced Installation (Alternative)
 
 ```bash
 # Clone repository
@@ -65,7 +82,6 @@ python enhanced_setup.py
 # Or manual installation (includes new V4.0 performance libraries)
 pip install --upgrade pip
 pip install torch>=2.9.1 torchaudio>=2.9.1  # Ensure latest PyTorch with torch.compile
-pip install torchfx>=0.2.0  # GPU-accelerated DSP processing
 pip install torch-audiomentations>=0.12.0  # GPU-enabled audio augmentation
 pip install -r requirements.txt
 
