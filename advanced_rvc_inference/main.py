@@ -18,37 +18,37 @@ from advanced_rvc_inference.tabs.config_options import extra_options_tab
 
 # Attempt to import additional advanced features from Applio and Vietnamese-RVC
 try:
-    from .tabs.tts.tts import tts_tab
+    from advanced_rvc_inference.tabs.tts.tts import tts_tab
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
 
 try:
-    from .tabs.voice_blender.voice_blender import voice_blender_tab
+    from advanced_rvc_inference.tabs.voice_blender.voice_blender import voice_blender_tab
     VOICE_BLENDER_AVAILABLE = True
 except ImportError:
     VOICE_BLENDER_AVAILABLE = False
 
 try:
-    from .tabs.plugins.plugins import plugins_tab
+    from advanced_rvc_inference.tabs.plugins.plugins import plugins_tab
     PLUGINS_AVAILABLE = True
 except ImportError:
     PLUGINS_AVAILABLE = False
 
 try:
-    from .tabs.extra.extra import extra_tab
+    from advanced_rvc_inference.tabs.extra.extra import extra_tab
     EXTRA_AVAILABLE = True
 except ImportError:
     EXTRA_AVAILABLE = False
 
 try:
-    from .tabs.f0_extractor import f0_extractor_tab
+    from advanced_rvc_inference.tabs.f0_extractor import f0_extractor_tab
     F0_EXTRACTOR_AVAILABLE = True
 except ImportError:
     F0_EXTRACTOR_AVAILABLE = False
 
 try:
-    from .tabs.embedders import embedders_tab
+    from advanced_rvc_inference.tabs.embedders import embedders_tab
     EMBEDDER_AVAILABLE = True
 except ImportError:
     EMBEDDER_AVAILABLE = False
