@@ -19,7 +19,7 @@ from distutils.util import strtobool
 sys.path.append(os.getcwd())
 
 from assets.config.variables import config, logger, translations
-from advanced_rvc_inference.rvc.infer.separate_music import _separate, vr_models
+from ...lib.infer.separate_music import _separate, vr_models
 
 dataset_temp = "dataset_temp"
 

@@ -1,7 +1,5 @@
 import os
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 from torch import nn
 from io import BytesIO

@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 import torch
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning).nn.utils.parametrize as parametrize
+from torch.nn.utils.parametrize import register_parametrization, remove_parametrizations
 
 from torch.nn.utils import remove_weight_norm
 from torch.nn.utils.parametrizations import weight_norm

@@ -14,8 +14,8 @@ import numpy as np
 sys.path.append(os.getcwd())
 
 from assets.config.variables import logger, translations, config
-from advanced_rvc_inference.rvc.infer.extracting.setup_path import setup_paths
-from advanced_rvc_inference.lib.utils import load_audio, load_embedders_model, extract_features
+from ...lib.infer.extracting.setup_path import setup_paths
+from ...lib.utils import load_audio, load_embedders_model, extract_features
 
 def process_file_embedding(files, embedder_model, embedders_mode, device, version, is_half, threads):
     model = load_embedders_model(embedder_model, embedders_mode)

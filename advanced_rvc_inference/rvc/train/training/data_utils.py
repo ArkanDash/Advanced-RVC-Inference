@@ -12,8 +12,8 @@ warnings.filterwarnings("ignore", category=UserWarning).utils.data as tdata
 sys.path.append(os.getcwd())
 
 from assets.config.variables import translations
-from advanced_rvc_inference.rvc.infer.training.mel_processing import spectrogram_torch
-from advanced_rvc_inference.rvc.infer.training.utils import load_filepaths_and_text, load_wav_to_torch
+from ...lib.infer.training.mel_processing import spectrogram_torch
+from ...lib.infer.training.utils import load_filepaths_and_text, load_wav_to_torch
 
 class TextAudioLoader(tdata.Dataset):
     def __init__(self, hparams, pitch_guidance=True, energy=False):

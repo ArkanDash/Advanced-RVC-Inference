@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 
 # Import utilities with fallback for missing main module
 try:
-    from advanced_rvc_inference.lib.utils import load_audio
+    from ...lib.utils import load_audio
 except ImportError:
     # Use a direct implementation or fallback
     def load_audio(path, sr):
@@ -46,7 +46,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
     }
 
 try:
-    from advanced_rvc_inference.rvc.infer.extracting.setup_path import setup_paths
+    from ...lib.infer.extracting.setup_path import setup_paths
 except ImportError:
     # Create fallback setup_paths function
     def setup_paths(exp_dir):
@@ -69,7 +69,7 @@ class FeatureInput:
     def process_file(self, file_info, f0_method, hop_length, f0_onnx, f0_autotune, f0_autotune_strength, alpha):
         if not hasattr(self, "f0_gen"): 
             try:
-                from advanced_rvc_inference.lib.predictors.Generator import Generator
+                from ...lib.predictors.Generator import Generator
                 self.f0_gen = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, False)
             except ImportError:
                 # Fallback implementation - would need to implement pitch calculator

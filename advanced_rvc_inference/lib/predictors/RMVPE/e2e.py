@@ -1,19 +1,12 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.predictors.RMVPE.deepunet import DeepUnet
+from main.library.predictors.RMVPE.deepunet import DeepUnet
 
 N_MELS, N_CLASS = 128, 360
 

@@ -4,10 +4,9 @@ import sys
 import math
 import torch
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import parselmouth
-
 import numba as nb
+warnings.filterwarnings("ignore", category=UserWarning)
+
 import numpy as np
 
 from scipy.signal import medfilt
@@ -15,10 +14,34 @@ from librosa import yin, pyin, piptrack
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.predictors.CREPE.filter import mean, median
-from advanced_rvc_inference.rvc.predictors.WORLD.SWIPE import swipe, stonemask
 from assets.config.variables import config, configs, logger, translations
-from advanced_rvc_inference.lib.utils import autotune_f0, proposal_f0_up_key, circular_write
+from ..utils import autotune_f0, proposal_f0_up_key, circular_write
+from .CREPE.filter import mean, median
+from .WORLD.SWIPE import swipe, stonemask
+
+def post_process(tf0, f0, f0_up_key, manual_x_pad, f0_mel_min, f0_mel_max, manual_f0 = None):
+    f0 = np.multiply(f0, pow(2, f0_up_key / 12))
+
+    if manual_f0 is not None:
+        replace_f0 = np.interp(
+            list(
+                range(
+                    np.round(
+                        (manual_f0[:, 0].max() - manual_f0[:, 0].min()) * tf0 + 1
+                    ).astype(np.int16)
+                )
+            ), 
+            manual_f0[:, 0] * 100, 
+            manual_f0[:, 1]
+        )
+        f0[manual_x_pad * tf0 : manual_x_pad * tf0 + len(replace_f0)] = replace_f0[:f0[manual_x_pad * tf0 : manual_x_pad * tf0 + len(replace_f0)].shape[0]]
+
+    f0_mel = 1127 * np.log(1 + f0 / 700)
+    f0_mel[f0_mel > 0] = (f0_mel[f0_mel > 0] - f0_mel_min) * 254 / (f0_mel_max - f0_mel_min) + 1
+    f0_mel[f0_mel <= 1] = 1
+    f0_mel[f0_mel > 255] = 255
+
+    return np.rint(f0_mel).astype(np.int32), f0
 
 @nb.jit(nopython=True)
 def post_process(tf0, f0, f0_up_key, manual_x_pad, f0_mel_min, f0_mel_max, manual_f0 = None):
@@ -48,7 +71,7 @@ def post_process(tf0, f0, f0_up_key, manual_x_pad, f0_mel_min, f0_mel_max, manua
 def realtime_post_process(f0, pitch, pitchf, f0_up_key = 0, f0_mel_min = 50.0, f0_mel_max = 1100.0):
     f0 *= 2 ** (f0_up_key / 12)
 
-    f0_mel = 1127.0 * (1.0 + f0 / 700.0).log()
+    f0_mel = 1127.0 * torch.log(1.0 + f0 / 700.0)
     f0_mel = torch.clip((f0_mel - f0_mel_min) * 254 / (f0_mel_max - f0_mel_min) + 1, 1, 255, out=f0_mel)
     f0_coarse = torch.round(f0_mel, out=f0_mel).long()
 
@@ -62,20 +85,54 @@ def realtime_post_process(f0, pitch, pitchf, f0_up_key = 0, f0_mel_min = 50.0, f
     return pitch.unsqueeze(0), pitchf.unsqueeze(0)
 
 class Generator:
-    def __init__(self, sample_rate = 16000, hop_length = 160, f0_min = 50, f0_max = 1100, alpha = 0.5, is_half = False, device = "cpu", f0_onnx_mode = False, del_onnx_model = True):
+    def __init__(self, sample_rate = 16000, hop_length = 160, f0_min = 50, f0_max = 1100, alpha = 0.5, is_half = False, device = "cpu", f0_onnx_mode = False, del_onnx_model = True, auto_download_models = True):
         self.sample_rate = sample_rate
         self.hop_length = hop_length
         self.f0_min = f0_min
         self.f0_max = f0_max
         self.is_half = is_half
         self.device = device
-        self.providers = config.providers
+        self.providers = getattr(config, 'providers', ['CPUExecutionProvider'])
         self.f0_onnx_mode = f0_onnx_mode
         self.del_onnx_model = del_onnx_model
+        self.auto_download_models = auto_download_models
         self.window = 160
         self.batch_size = 512
         self.alpha = alpha
         self.ref_freqs = [49.00, 51.91, 55.00, 58.27, 61.74, 65.41, 69.30, 73.42, 77.78, 82.41, 87.31, 92.50, 98.00, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59, 146.83, 155.56, 164.81, 174.61, 185.00, 196.00,  207.65, 220.00, 233.08, 246.94, 261.63, 277.18, 293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37, 587.33, 622.25, 659.25, 698.46, 739.99, 783.99, 830.61, 880.00, 932.33, 987.77, 1046.50]
+        
+        # Import the downloader functions
+        from ..utils import ensure_f0_model_available, get_f0_model_path
+        
+    def _ensure_model_available(self, method, model_suffix=""):
+        """Ensure F0 model is available, download if necessary"""
+        if not self.auto_download_models:
+            return True
+            
+        # Map method names to internal names
+        method_mapping = {
+            'crepe': 'crepe',
+            'fcpe': 'fcpe', 
+            'rmvpe': 'rmvpe',
+            'djcm': 'djcm'
+        }
+        
+        internal_method = method_mapping.get(method, method)
+        
+        # Try to get model path
+        model_path = get_f0_model_path(internal_method, self.f0_onnx_mode)
+        
+        if model_path:
+            return True
+            
+        # If auto-download is enabled, download the model
+        if self.auto_download_models:
+            print(f"Auto-downloading {internal_method} model...")
+            from ..utils import ensure_f0_model_available
+            downloaded_path = ensure_f0_model_available(internal_method, auto_download=True)
+            return downloaded_path is not None
+            
+        return False
 
     def calculator(self, x_pad, f0_method, x, f0_up_key = 0, p_len = None, filter_radius = 3, f0_autotune = False, f0_autotune_strength = 1, manual_f0 = None, proposal_pitch = False, proposal_pitch_threshold = 255.0):
         if p_len is None: p_len = x.shape[0] // self.window
@@ -104,7 +161,11 @@ class Generator:
         )
     
     def realtime_calculator(self, audio, f0_method, pitch, pitchf, f0_up_key = 0, filter_radius = 3, f0_autotune = False, f0_autotune_strength = 1, proposal_pitch = False, proposal_pitch_threshold = 255.0):
-        if torch.is_tensor(audio): audio = audio.cpu().numpy()
+        if isinstance(audio, np.ndarray) and audio.ndim > 1:
+            audio = audio.mean(axis=0)
+        elif hasattr(audio, 'cpu'):  # torch tensor
+            audio = audio.cpu().numpy()
+        
         p_len = audio.shape[0] // self.window
 
         f0 = self.compute_f0(
@@ -120,8 +181,11 @@ class Generator:
             up_key = proposal_f0_up_key(f0, proposal_pitch_threshold, configs["limit_f0"])
             f0_up_key += up_key
 
+        # Convert to torch tensor for realtime_post_process
+        f0_tensor = torch.from_numpy(f0.astype(np.float32))
+        
         return realtime_post_process(
-            torch.from_numpy(f0).float().to(self.device), 
+            f0_tensor, 
             pitch, 
             pitchf,
             f0_up_key, 
@@ -202,73 +266,41 @@ class Generator:
 
         return f0_mix
 
-    def get_f0_pm(self, x, p_len, filter_radius=3, mode="ac"):
-        model = parselmouth.Sound(
-            x, 
-            self.sample_rate
-        )
+    def get_f0_librosa(self, x, p_len, mode="yin"):
+        if mode != "piptrack":
+            self.if_yin = mode == "yin"
+            self.yin = yin if self.if_yin else pyin
 
-        time_step = self.window / self.sample_rate * 1000 / 1000
-        model_mode = {"ac": model.to_pitch_ac, "cc": model.to_pitch_cc, "shs": model.to_pitch_shs}.get(mode, model.to_pitch_ac)
-
-        if mode != "shs":
-            f0 = (
-                model_mode(
-                    time_step=time_step, 
-                    voicing_threshold=filter_radius / 10 * 2, 
-                    pitch_floor=self.f0_min, 
-                    pitch_ceiling=self.f0_max
-                ).selected_array["frequency"]
+            f0 = self.yin(
+                x.astype(np.float32), 
+                sr=self.sample_rate, 
+                fmin=self.f0_min, 
+                fmax=self.f0_max, 
+                hop_length=self.hop_length
             )
+
+            if not self.if_yin: f0 = f0[0]
         else:
-            f0 = (
-                model_mode(
-                    time_step=time_step,
-                    minimum_pitch=self.f0_min,
-                    maximum_frequency_component=self.f0_max
-                ).selected_array["frequency"]
+            pitches, magnitudes = piptrack(
+                y=x.astype(np.float32),
+                sr=self.sample_rate,
+                fmin=self.f0_min,
+                fmax=self.f0_max,
+                hop_length=self.hop_length,
             )
 
-        pad_size = (p_len - len(f0) + 1) // 2
+            max_indexes = np.argmax(magnitudes, axis=0)
+            f0 = pitches[max_indexes, range(magnitudes.shape[1])]
 
-        if pad_size > 0 or p_len - len(f0) - pad_size > 0: f0 = np.pad(f0, [[pad_size, p_len - len(f0) - pad_size]], mode="constant")
-        return f0
-    
-    def get_f0_mangio_crepe(self, x, p_len, model="full"):
-        if not hasattr(self, "mangio_crepe"):
-            from advanced_rvc_inference.rvc.predictors.CREPE.CREPE import CREPE
-
-            self.mangio_crepe = CREPE(
-                os.path.join(
-                    configs["predictors_path"], 
-                    f"crepe_{model}.{'onnx' if self.f0_onnx_mode else 'pth'}"
-                ), 
-                model_size=model, 
-                hop_length=self.hop_length, 
-                batch_size=self.hop_length * 2, 
-                f0_min=self.f0_min, 
-                f0_max=self.f0_max, 
-                device=self.device, 
-                sample_rate=self.sample_rate, 
-                providers=self.providers, 
-                onnx=self.f0_onnx_mode, 
-                return_periodicity=False
-            )
-
-        x = x.astype(np.float32)
-        x /= np.quantile(np.abs(x), 0.999)
-
-        audio = torch.from_numpy(x).to(self.device, copy=True).unsqueeze(dim=0)
-        if audio.ndim == 2 and audio.shape[0] > 1: audio = audio.mean(dim=0, keepdim=True).detach()
-
-        f0 = self.mangio_crepe.compute_f0(audio.detach(), pad=True)
-        if self.f0_onnx_mode and self.del_onnx_model: del self.mangio_crepe.model, self.mangio_crepe
-
-        return self._resize_f0(f0.squeeze(0).cpu().float().numpy(), p_len)
+        return self._resize_f0(f0, p_len)
     
     def get_f0_crepe(self, x, p_len, model="full", filter_radius=3):
         if not hasattr(self, "crepe"):
-            from advanced_rvc_inference.rvc.predictors.CREPE.CREPE import CREPE
+            # Ensure model is available before loading
+            if not self._ensure_model_available("crepe"):
+                raise FileNotFoundError("CREPE model not available. Please enable auto-download or manually download the model.")
+                
+            from .CREPE.CREPE import CREPE
 
             self.crepe = CREPE(
                 os.path.join(
@@ -297,7 +329,11 @@ class Generator:
     
     def get_f0_fcpe(self, x, p_len, legacy=False, previous=False, filter_radius=3):
         if not hasattr(self, "fcpe"): 
-            from advanced_rvc_inference.rvc.predictors.FCPE.FCPE import FCPE
+            # Ensure model is available before loading
+            if not self._ensure_model_available("fcpe"):
+                raise FileNotFoundError("FCPE model not available. Please enable auto-download or manually download the model.")
+                
+            from .FCPE.FCPE import FCPE
 
             self.fcpe = FCPE(
                 configs, 
@@ -324,7 +360,11 @@ class Generator:
     
     def get_f0_rmvpe(self, x, p_len, clipping=False, filter_radius=3):
         if not hasattr(self, "rmvpe"): 
-            from advanced_rvc_inference.rvc.predictors.RMVPE.RMVPE import RMVPE
+            # Ensure model is available before loading
+            if not self._ensure_model_available("rmvpe"):
+                raise FileNotFoundError("RMVPE model not available. Please enable auto-download or manually download the model.")
+                
+            from .RMVPE.RMVPE import RMVPE
 
             self.rmvpe = RMVPE(
                 os.path.join(
@@ -345,7 +385,7 @@ class Generator:
     
     def get_f0_pyworld(self, x, p_len, filter_radius, model="harvest"):
         if not hasattr(self, "pw"): 
-            from advanced_rvc_inference.rvc.predictors.WORLD.WORLD import PYWORLD
+            from .WORLD.WORLD import PYWORLD
 
             self.pw = PYWORLD(os.path.join(configs["predictors_path"], "world"), os.path.join(configs["binary_path"], "world.bin"))
 
@@ -394,95 +434,13 @@ class Generator:
             p_len
         )
     
-    def get_f0_librosa(self, x, p_len, mode="yin"):
-        if mode != "piptrack":
-            self.if_yin = mode == "yin"
-            self.yin = yin if self.if_yin else pyin
-
-            f0 = self.yin(
-                x.astype(np.float32), 
-                sr=self.sample_rate, 
-                fmin=self.f0_min, 
-                fmax=self.f0_max, 
-                hop_length=self.hop_length
-            )
-
-            if not self.if_yin: f0 = f0[0]
-        else:
-            pitches, magnitudes = piptrack(
-                y=x.astype(np.float32),
-                sr=self.sample_rate,
-                fmin=self.f0_min,
-                fmax=self.f0_max,
-                hop_length=self.hop_length,
-            )
-
-            max_indexes = np.argmax(magnitudes, axis=0)
-            f0 = pitches[max_indexes, range(magnitudes.shape[1])]
-
-        return self._resize_f0(f0, p_len)
-
-    def get_f0_penn(self, x, p_len, filter_radius=3):
-        if not hasattr(self, "penn"):
-            from advanced_rvc_inference.rvc.predictors.PENN.PENN import PENN
-
-            self.penn = PENN(
-                os.path.join(
-                    configs["predictors_path"], 
-                    f"fcn.{'onnx' if self.f0_onnx_mode else 'pt'}"
-                ), 
-                hop_length=self.window // 2, 
-                batch_size=self.batch_size // 2, 
-                f0_min=self.f0_min, 
-                f0_max=self.f0_max, 
-                sample_rate=self.sample_rate, 
-                device=self.device, 
-                providers=self.providers, 
-                onnx=self.f0_onnx_mode, 
-            )
-
-        f0, pd = self.penn.compute_f0(torch.tensor(np.copy((x)))[None].float())
-        if self.f0_onnx_mode and self.del_onnx_model: del self.penn.model, self.penn.decoder, self.penn.resample_audio, self.penn
-
-        f0, pd = mean(f0, filter_radius), median(pd, filter_radius)
-        f0[pd < 0.1] = 0
-
-        return self._resize_f0(f0[0].cpu().numpy(), p_len)
-
-    def get_f0_mangio_penn(self, x, p_len):
-        if not hasattr(self, "mangio_penn"):
-            from advanced_rvc_inference.rvc.predictors.PENN.PENN import PENN
-
-            self.mangio_penn = PENN(
-                os.path.join(
-                    configs["predictors_path"], 
-                    f"fcn.{'onnx' if self.f0_onnx_mode else 'pt'}"
-                ), 
-                hop_length=self.hop_length // 2, 
-                batch_size=self.hop_length, 
-                f0_min=self.f0_min, 
-                f0_max=self.f0_max, 
-                sample_rate=self.sample_rate, 
-                device=self.device, 
-                providers=self.providers, 
-                onnx=self.f0_onnx_mode, 
-                interp_unvoiced_at=0.1
-            )
-
-        x = x.astype(np.float32)
-        x /= np.quantile(np.abs(x), 0.999)
-
-        audio = torch.from_numpy(x).to(self.device, copy=True).unsqueeze(dim=0)
-        if audio.ndim == 2 and audio.shape[0] > 1: audio = audio.mean(dim=0, keepdim=True).detach()
-
-        f0 = self.mangio_penn.compute_f0(audio.detach())
-        if self.f0_onnx_mode and self.del_onnx_model: del self.mangio_penn.model, self.mangio_penn.decoder, self.mangio_penn.resample_audio, self.mangio_penn
-
-        return self._resize_f0(f0.squeeze(0).cpu().float().numpy(), p_len)
-
     def get_f0_djcm(self, x, p_len, clipping=False, filter_radius=3):
         if not hasattr(self, "djcm"): 
-            from advanced_rvc_inference.rvc.predictors.DJCM.DJCM import DJCM
+            # Ensure model is available before loading
+            if not self._ensure_model_available("djcm"):
+                raise FileNotFoundError("DJCM model not available. Please enable auto-download or manually download the model.")
+                
+            from .DJCM.DJCM import DJCM
             
             self.djcm = DJCM(
                 os.path.join(
@@ -500,49 +458,3 @@ class Generator:
         
         if self.f0_onnx_mode and self.del_onnx_model: del self.djcm.model, self.djcm
         return self._resize_f0(f0, p_len)
-    
-    def get_f0_swift(self, x, p_len, filter_radius=3):
-        if not hasattr(self, "swift"): 
-            from advanced_rvc_inference.rvc.predictors.SWIFT.SWIFT import SWIFT
-
-            self.swift = SWIFT(
-                os.path.join(
-                    configs["predictors_path"], 
-                    "swift.onnx"
-                ), 
-                fmin=self.f0_min, 
-                fmax=self.f0_max, 
-                confidence_threshold=filter_radius / 4 + 0.137
-            )
-
-        pitch_hz, _, _ = self.swift.detect_from_array(x, self.sample_rate)
-        return self._resize_f0(pitch_hz, p_len)
-
-    def get_f0_pesto(self, x, p_len):
-        if not hasattr(self, "pesto"):
-            from advanced_rvc_inference.rvc.predictors.PESTO.PESTO import PESTO
-
-            self.pesto = PESTO(
-                os.path.join(
-                    configs["predictors_path"], 
-                    f"pesto.{'onnx' if self.f0_onnx_mode else 'pt'}"
-                ), 
-                step_size=1000 * self.window / self.sample_rate, 
-                reduction = "alwa", 
-                num_chunks=1, 
-                sample_rate=self.sample_rate, 
-                device=self.device, 
-                providers=self.providers, 
-                onnx=self.f0_onnx_mode
-            )
-
-        x = x.astype(np.float32)
-        x /= np.quantile(np.abs(x), 0.999)
-
-        audio = torch.from_numpy(x).to(self.device, copy=True).unsqueeze(dim=0)
-        if audio.ndim == 2 and audio.shape[0] > 1: audio = audio.mean(dim=0, keepdim=True).detach()
-
-        f0 = self.pesto.compute_f0(audio.detach())[0]
-        if self.f0_onnx_mode and self.del_onnx_model: del self.pesto.model, self.pesto
-
-        return self._resize_f0(f0.squeeze(0).cpu().float().numpy(), p_len)

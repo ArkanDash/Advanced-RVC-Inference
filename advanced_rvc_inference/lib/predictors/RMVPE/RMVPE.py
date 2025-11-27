@@ -1,20 +1,13 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.predictors.RMVPE.mel import MelSpectrogram
+from main.library.predictors.RMVPE.mel import MelSpectrogram
 
 N_MELS, N_CLASS = 128, 360
 
@@ -29,7 +22,7 @@ class RMVPE:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
-            from advanced_rvc_inference.lib.predictors.RMVPE.e2e import E2E
+            from main.library.predictors.RMVPE.e2e import E2E
 
             model = E2E(4, 1, (2, 2))
             ckpt = torch.load(model_path, map_location="cpu", weights_only=True)

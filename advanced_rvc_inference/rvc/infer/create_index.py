@@ -11,7 +11,7 @@ from sklearn.cluster import MiniBatchKMeans
 sys.path.append(os.getcwd())
 
 from assets.config.variables import logger, translations, configs
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
 
 def parse_arguments():
     parser = argparse.ArgumentParser()

@@ -18,14 +18,14 @@ warnings.filterwarnings("ignore", category=UserWarning)audio.transforms as tat
 sys.path.append(os.getcwd())
 
 from assets.config.variables import config
-from advanced_rvc_inference.lib.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
+from ...lib.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
 
 class Inference:
     def get_synthesizer(self, model_path):
         model = load_model(model_path)
 
         if model_path.endswith(".pth"):
-            from advanced_rvc_inference.lib.algorithm.synthesizers import Synthesizer
+            from ...lib.algorithm.synthesizers import Synthesizer
 
             self.tgt_sr = model["config"][-1]
             model["config"][-3] = model["weight"]["emb_g.weight"].shape[0]
@@ -160,12 +160,12 @@ def create_pipeline(model_path=None, index_path=None, f0_method="rmvpe", f0_onnx
     inference = inference.get_synthesizer(model_path)
 
     if inference.use_f0:
-        from advanced_rvc_inference.lib.predictors.Generator import Generator
+        from ...lib.predictors.Generator import Generator
         predictor = Generator(sample_rate=sample_rate, hop_length=hop_length, f0_min=50.0, f0_max=1100.0, alpha=0.5, is_half=config.is_half, device=config.device, f0_onnx_mode=f0_onnx, del_onnx_model=False) 
     else: predictor = None
 
     if inference.energy:
-        from advanced_rvc_inference.rvc.infer.extracting.rms import RMSEnergyExtractor
+        from ...lib.infer.extracting.rms import RMSEnergyExtractor
         rms = RMSEnergyExtractor(frame_length=2048, hop_length=160, center=True, pad_mode="reflect").to(config.device).eval()
     else: rms = None
 

@@ -1,6 +1,4 @@
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 from torch import nn
 from einops.layers.torch import Rearrange

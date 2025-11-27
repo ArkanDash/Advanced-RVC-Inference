@@ -1,6 +1,4 @@
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 def mean(signals, win_length=9):
     assert signals.dim() == 2

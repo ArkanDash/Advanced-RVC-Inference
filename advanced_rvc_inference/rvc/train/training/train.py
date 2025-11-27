@@ -13,7 +13,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 from torch import distributed as dist
 from torch import multiprocessing as mp
 
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
 
 from tqdm import tqdm
 from collections import deque
@@ -154,14 +154,14 @@ except ImportError:
         "final_save": "Final model saved"
     }
 
-from advanced_rvc_inference.lib.algorithm import commons
+from ...lib.algorithm import commons
 # Import training modules with fallback
 try:
-    from advanced_rvc_inference.rvc.infer.training import losses
+    from ...lib.infer.training import losses
 except ImportError:
     # If main module doesn't exist, try direct import from this package
     try:
-        from ...rvc.infer.training import losses  # Adjust path as needed
+        from ....infer.training import losses  # Adjust path as needed
     except ImportError:
         # Create minimal fallback if losses module is not available
         class LossesFallback:
@@ -170,20 +170,20 @@ except ImportError:
 
 # Import training modules with fallback
 try:
-    from advanced_rvc_inference.lib.algorithm import commons
+    from ...lib.algorithm import commons
 except ImportError:
     # Create fallback if module doesn't exist
     commons = None
 
 try:
-    from advanced_rvc_inference.rvc.infer.training.extract_model import extract_model
+    from ...lib.infer.training.extract_model import extract_model
 except ImportError:
     # Create minimal fallback if extract_model module is not available
     def extract_model(*args, **kwargs):
         pass
 
 try:
-    from advanced_rvc_inference.rvc.infer.training.mel_processing import (
+    from ...lib.infer.training.mel_processing import (
         MultiScaleMelSpectrogramLoss,
         mel_spectrogram_torch,
         spec_to_mel_torch
@@ -191,7 +191,7 @@ try:
 except ImportError:
     # Try alternative import path or create fallback
     try:
-        from ...rvc.infer.mel_processing import (
+        from ....infer.mel_processing import (
             MultiScaleMelSpectrogramLoss,
             mel_spectrogram_torch,
             spec_to_mel_torch
@@ -206,7 +206,7 @@ except ImportError:
             pass
 
 try:
-    from advanced_rvc_inference.rvc.infer.training.utils import (
+    from ...lib.infer.training.utils import (
         HParams,
         summarize,
         load_checkpoint,
@@ -218,7 +218,7 @@ try:
 except ImportError:
     # Try alternative import path or create fallback
     try:
-        from ...rvc.infer.utils import (
+        from ....infer.utils import (
             HParams,
             summarize,
             load_checkpoint,
@@ -339,6 +339,8 @@ config.data.training_files = os.path.join(experiment_dir, "filelist.txt")
 
 def initialize_gpu_optimization():
     """Initialize GPU optimization settings"""
+    global batch_size, gradient_accumulation_steps, max_audio_length, mixed_precision_mode
+    
     if not GPU_OPTIMIZATION_AVAILABLE or not enable_gpu_optimization:
         return {}
     
@@ -347,8 +349,6 @@ def initialize_gpu_optimization():
         optimal_settings = gpu_optimizer.get_optimal_settings()
         
         # Apply optimization settings
-        nonlocal batch_size, gradient_accumulation_steps, max_audio_length
-        
         if auto_batch_size and batch_size is None:
             batch_size = optimal_settings.get('batch_size', batch_size)
             
@@ -359,7 +359,6 @@ def initialize_gpu_optimization():
             max_audio_length = optimal_settings.get('max_audio_length', 60)
         
         # Set precision mode
-        nonlocal mixed_precision_mode
         if mixed_precision_mode == "auto":
             mixed_precision_mode = optimal_settings.get('precision', 'fp32')
             
@@ -544,7 +543,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 
     writer_eval = SummaryWriter(log_dir=os.path.join(experiment_dir, "eval")) if rank == 0 else None
 
-    from advanced_rvc_inference.rvc.infer.training.data_utils import (
+    from ...lib.infer.training.data_utils import (
         DistributedBucketSampler,
         TextAudioCollate,
         TextAudioLoader
@@ -557,8 +556,8 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         logger.warning(translations["not_enough_data"])
         sys.exit(1)
 
-    from advanced_rvc_inference.lib.algorithm.synthesizers import Synthesizer
-    from advanced_rvc_inference.lib.algorithm.discriminators import MultiPeriodDiscriminator
+    from ...lib.algorithm.synthesizers import Synthesizer
+    from ...lib.algorithm.discriminators import MultiPeriodDiscriminator
 
     net_g, net_d = (
         Synthesizer(
@@ -581,7 +580,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     net_g, net_d = (net_g.cuda(device_id), net_d.cuda(device_id)) if torch.cuda.is_available() else (net_g.to(device), net_d.to(device))
 
     if optimizer_choice == "AnyPrecisionAdamW" and main_config.brain:
-        from advanced_rvc_inference.rvc.infer.training.anyprecision_optimizer import AnyPrecisionAdamW
+        from ...lib.infer.training.anyprecision_optimizer import AnyPrecisionAdamW
         optimizer_optim = AnyPrecisionAdamW
     elif optimizer_choice == "RAdam":
         optimizer_optim = torch.optim.RAdam

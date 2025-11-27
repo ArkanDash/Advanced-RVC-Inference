@@ -10,7 +10,13 @@ import json
 import warnings
 from bs4 import BeautifulSoup
 import yt_dlp
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
+from ...lib.utils import (
+    download_f0_models, 
+    check_f0_models_status,
+    download_embedder_models,
+    check_embedders_status
+)
 
 # Remove the i18n import since we're removing translation
 now_dir = os.getcwd()
@@ -450,4 +456,56 @@ def download_model_tab():
             download_url,
             inputs=[audio_url],
             outputs=[audio_output, audio_output, output],
+        )
+
+        with gr.Tab("Voice Models"):
+            gr.Markdown("## 🎤 Voice Model Download")
+            
+            with gr.Row():
+                gr.Markdown("### Upload Custom Models")
+                dropbox = gr.File(
+                    label="Drag your .pth file and .index file into this space.",
+                    type="filepath",
+                )
+
+            with gr.Row():
+                gr.Markdown("### Available Pre-trained Models")
+                search_button = gr.Button("Search Pre-trained Models", variant="secondary")
+
+            with gr.Row():
+                model_results = gr.Dataframe(
+                    headers=["Model Name", "Version", "Sample Rate", "URL"],
+                    datatype=["str", "str", "str", "str"],
+                    interactive=False,
+                    value=[],
+                    elem_id="pretrained_model_results"
+                )
+
+            with gr.Row():
+                selected_model_url = gr.Textbox(
+                    label="Selected Model URL",
+                    interactive=False
+                )
+
+                download_selected = gr.Button("Download Selected Model", variant="primary")
+
+
+
+        # Voice model search and download handlers
+        search_button.click(
+            search_models,
+            inputs=[model_search],
+            outputs=[model_results]
+        )
+
+        model_results.select(
+            lambda evt: evt[3] if evt else "",
+            inputs=None,
+            outputs=[selected_model_url]
+        )
+
+        download_selected.click(
+            download_online_model,
+            inputs=[selected_model_url],
+            outputs=[output]
         )

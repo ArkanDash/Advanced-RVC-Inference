@@ -17,7 +17,7 @@ from torch.nn.utils.rnn import pad_sequence
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.speaker_diarization.speechbrain import EncoderClassifier
+from ...lib.speaker_diarization.speechbrain import EncoderClassifier
 
 class SpeechBrainPretrainedSpeakerEmbedding:
     def __init__(self, embedding, device = None):

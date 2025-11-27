@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.speaker_diarization.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
+from ...lib.speaker_diarization.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
 
 class WhisperModel(torch.nn.Module):
     def __init__(self, model_path, device):

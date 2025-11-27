@@ -14,7 +14,7 @@ from pathlib import Path
 import multiprocessing as mp
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
 
 def setup_directories():
     """Create necessary directories for training"""

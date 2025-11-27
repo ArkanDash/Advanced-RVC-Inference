@@ -21,7 +21,7 @@ sys.path.append(os.getcwd())
 
 # Import utilities with fallback for missing main module
 try:
-    from advanced_rvc_inference.lib.utils import load_audio
+    from ...lib.utils import load_audio
 except ImportError:
     # Use a direct implementation or fallback
     def load_audio(path, sr):
@@ -43,7 +43,7 @@ except ImportError:
     }
 
 try:
-    from advanced_rvc_inference.rvc.infer.extracting.setup_path import setup_paths
+    from ...lib.infer.extracting.setup_path import setup_paths
 except ImportError:
     # Create fallback setup_paths function
     def setup_paths(exp_dir, rms_extract=True):

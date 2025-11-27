@@ -20,7 +20,7 @@ import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.algorithm.commons import convert_pad_shape
+from ...lib.algorithm.commons import convert_pad_shape
 
 class MultiHeadAttention(nn.Module):
     def __init__(self, channels, out_channels, n_heads, p_dropout=0.0, window_size=None, heads_share=True, block_length=None, proximal_bias=False, proximal_init=False, onnx=False):
