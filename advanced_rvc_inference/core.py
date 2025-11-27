@@ -511,6 +511,130 @@ class VoiceConverter:
                 self.vc = Pipeline(self.tgt_sr, self.config)
 
 # Enhanced conversion functions
+def full_inference_program(
+    model_path: str,
+    input_audio_path: str,
+    output_path: str,
+    index_path: str = "",
+    pitch: int = 0,
+    f0_method: str = "rmvpe",
+    index_rate: float = 0.5,
+    rms_mix_rate: float = 1.0,
+    protect: float = 0.33,
+    hop_length: int = 64,
+    f0_autotune: bool = False,
+    f0_autotune_strength: float = 1.0,
+    filter_radius: int = 3,
+    clean_audio: bool = False,
+    clean_strength: float = 0.7,
+    export_format: str = "wav",
+    resample_sr: int = 0,
+    embedder_model: str = "contentvec",
+    split_audio: bool = False,
+    **kwargs
+) -> str:
+    """
+    Full inference program for RVC voice conversion - API compatible function
+    
+    This is the main API function that users can call directly for voice conversion.
+    It provides a simple interface with sensible defaults while supporting advanced options.
+    
+    Args:
+        model_path: Path to the RVC model file (.pth)
+        input_audio_path: Path to input audio file
+        output_path: Path for output audio file
+        index_path: Path to index file (optional, auto-detected if empty)
+        pitch: Pitch shift in semitones (-12 to +12)
+        f0_method: F0 extraction method ('rmvpe', 'harvest', 'crepe', etc.)
+        index_rate: Index rate (0.0 to 1.0)
+        rms_mix_rate: RMS mix rate (0.0 to 1.0)
+        protect: Voice protection (0.0 to 0.5)
+        hop_length: Hop length for F0 extraction
+        f0_autotune: Enable F0 autotune
+        f0_autotune_strength: F0 autotune strength
+        filter_radius: Filter radius for F0
+        clean_audio: Enable noise reduction
+        clean_strength: Noise reduction strength
+        export_format: Output format ('wav', 'mp3', 'flac', etc.)
+        resample_sr: Resample rate (0 = no resampling)
+        embedder_model: Embedder model ('contentvec', 'hubert', etc.)
+        split_audio: Split long audio files
+        **kwargs: Additional parameters
+        
+    Returns:
+        str: Path to output file
+        
+    Example:
+        >>> result = full_inference_program(
+        ...     model_path="models/my_voice_model.pth",
+        ...     input_audio_path="input.wav",
+        ...     output_path="output.wav",
+        ...     pitch=2,
+        ...     f0_method="rmvpe"
+        ... )
+        >>> print(f"Conversion completed: {result}")
+    """
+    try:
+        # Validate inputs
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model file not found: {model_path}")
+        if not os.path.exists(input_audio_path):
+            raise FileNotFoundError(f"Input audio file not found: {input_audio_path}")
+        
+        # Create output directory if it doesn't exist
+        output_dir = os.path.dirname(output_path)
+        if output_dir:
+            os.makedirs(output_dir, exist_ok=True)
+        
+        # Auto-detect index file if not provided
+        if not index_path and os.path.exists(model_path):
+            model_dir = os.path.dirname(model_path)
+            model_name = os.path.splitext(os.path.basename(model_path))[0]
+            
+            # Look for index files in the same directory
+            for file in os.listdir(model_dir):
+                if file.endswith('.index') and (model_name in file or 'added' in file):
+                    index_path = os.path.join(model_dir, file)
+                    break
+        
+        # Prepare conversion parameters
+        conversion_params = {
+            'pitch': pitch,
+            'f0_method': f0_method,
+            'index_rate': index_rate,
+            'rms_mix_rate': rms_mix_rate,
+            'protect': protect,
+            'hop_length': hop_length,
+            'f0_autotune': f0_autotune,
+            'f0_autotune_strength': f0_autotune_strength,
+            'filter_radius': filter_radius,
+            'clean_audio': clean_audio,
+            'clean_strength': clean_strength,
+            'export_format': export_format,
+            'resample_sr': resample_sr,
+            'embedder_model': embedder_model,
+            'split_audio': split_audio,
+            **kwargs
+        }
+        
+        # Call the convert_audio function
+        return convert_audio(
+            input_path=input_audio_path,
+            output_path=output_path,
+            model_path=model_path,
+            index_path=index_path,
+            **conversion_params
+        )
+        
+    except Exception as e:
+        error_msg = f"Full inference failed: {str(e)}"
+        if RICH_AVAILABLE:
+            rich_logger.error(error_msg)
+        else:
+            print(f"ERROR: {error_msg}")
+        raise
+
+
 def convert_audio(input_path: str, 
                  output_path: str,
                  model_path: str,
@@ -635,13 +759,205 @@ def batch_convert(input_dir: str,
     
     return converted_files
 
+
+# Additional API functions for compatibility
+def import_voice_converter(model_path: str, **kwargs):
+    """Import and create a voice converter instance"""
+    return VoiceConverter(model_path, **kwargs)
+
+
+def get_config():
+    """Get default configuration"""
+    try:
+        import torch
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        is_half = torch.cuda.is_available()
+    except ImportError:
+        device = 'cpu'
+        is_half = False
+    
+    return {
+        'device': device,
+        'is_half': is_half,
+        'sample_rate': 16000,
+        'hop_length': 64,
+        'f0_method': 'rmvpe',
+        'embedder_model': 'contentvec'
+    }
+
+
+def download_file(url: str, output_path: str):
+    """Download a file from URL"""
+    try:
+        import requests
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        
+        with open(output_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        return output_path
+    except Exception as e:
+        print(f"Download failed: {e}")
+        return None
+
+
+def add_audio_effects(audio_path: str, output_path: str, effects: dict = None):
+    """Add audio effects using pedalboard"""
+    if not PEDALBOARD_AVAILABLE:
+        print("Pedalboard not available for audio effects")
+        return None
+    
+    try:
+        with AudioFile(audio_path) as f:
+            audio = f.read(f.frames)
+            sample_rate = f.samplerate
+        
+        board = Pedalboard()
+        if effects:
+            if 'reverb' in effects:
+                board.append(Reverb(**effects['reverb']))
+        
+        effected = board(audio, sample_rate)
+        
+        with AudioFile(output_path, 'w', sample_rate, effected.shape[0]) as f:
+            f.write(effected)
+        
+        return output_path
+    except Exception as e:
+        print(f"Audio effects failed: {e}")
+        return None
+
+
+def merge_audios(audio_paths: list, output_path: str):
+    """Merge multiple audio files"""
+    if not PYTHONWAV_AVAILABLE:
+        print("Pydub not available for audio merging")
+        return None
+    
+    try:
+        combined = AudioSegment.empty()
+        for path in audio_paths:
+            audio = AudioSegment.from_file(path)
+            combined += audio
+        
+        combined.export(output_path, format="wav")
+        return output_path
+    except Exception as e:
+        print(f"Audio merge failed: {e}")
+        return None
+
+
+def check_fp16_support():
+    """Check if FP16 is supported"""
+    if torch.cuda.is_available():
+        try:
+            # Test FP16 operations
+            x = torch.randn(1, device='cuda', dtype=torch.float16)
+            y = x * 2
+            return True
+        except:
+            return False
+    return False
+
+
+def real_time_voice_conversion(*args, **kwargs):
+    """Real-time voice conversion (placeholder)"""
+    print("Real-time voice conversion not implemented in this version")
+    return None
+
+
+# Model lists
+def models_vocals():
+    """Get available vocal separation models"""
+    return {
+        "Mel-Roformer by KimberleyJSN": "mel_roformer_vocals",
+        "BS-Roformer by ViperX": "bs_roformer_vocals",
+        "MDX23C": "mdx23c_vocals"
+    }
+
+
+def karaoke_models():
+    """Get available karaoke models"""
+    return {
+        "Mel-Roformer Karaoke by aufr33 and viperx": "mel_roformer_karaoke",
+        "UVR-BVE": "uvr_bve"
+    }
+
+
+def denoise_models():
+    """Get available denoise models"""
+    return {
+        "Mel-Roformer Denoise Normal by aufr33": "mel_roformer_denoise_normal",
+        "Mel-Roformer Denoise Aggressive by aufr33": "mel_roformer_denoise_aggressive",
+        "UVR Denoise": "uvr_denoise"
+    }
+
+
+def dereverb_models():
+    """Get available dereverb models"""
+    return {
+        "MDX23C DeReverb by aufr33 and jarredou": "mdx23c_dereverb",
+        "UVR-Deecho-Dereverb": "uvr_deecho_dereverb",
+        "MDX Reverb HQ by FoxJoy": "mdx_reverb_hq",
+        "BS-Roformer Dereverb by anvuew": "bs_roformer_dereverb"
+    }
+
+
+def deecho_models():
+    """Get available deecho models"""
+    return {
+        "UVR-Deecho-Normal": "uvr_deecho_normal",
+        "UVR-Deecho-Aggressive": "uvr_deecho_aggressive"
+    }
+
+
+def gpu_optimizer():
+    """Get GPU optimizer if available"""
+    if GPU_OPTIMIZATION_AVAILABLE:
+        try:
+            return get_gpu_optimizer()
+        except:
+            pass
+    return None
+
+
+def gpu_settings():
+    """Get GPU settings"""
+    if torch.cuda.is_available():
+        return {
+            'device_count': torch.cuda.device_count(),
+            'current_device': torch.cuda.current_device(),
+            'device_name': torch.cuda.get_device_name(),
+            'memory_allocated': torch.cuda.memory_allocated(),
+            'memory_reserved': torch.cuda.memory_reserved()
+        }
+    return {}
+
+
 # Export functions
 __all__ = [
-    'VoiceConverter', 
+    'VoiceConverter',
+    'full_inference_program',
+    'import_voice_converter',
+    'get_config',
+    'download_file',
+    'add_audio_effects',
+    'merge_audios',
+    'check_fp16_support',
+    'real_time_voice_conversion',
+    'models_vocals',
+    'karaoke_models',
+    'denoise_models',
+    'dereverb_models',
+    'deecho_models',
+    'gpu_optimizer',
+    'gpu_settings',
     'convert_audio', 
     'batch_convert',
     'rich_logger',
-    'RICH_AVAILABLE'
+    'RICH_AVAILABLE',
+    'GPU_OPTIMIZATION_AVAILABLE'
 ]
 
 # Initialize optimizations after all imports are complete
