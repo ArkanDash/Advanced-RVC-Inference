@@ -759,7 +759,6 @@ def batch_convert(input_dir: str,
     
     return converted_files
 
-
 # Additional API functions for compatibility
 def import_voice_converter(model_path: str, **kwargs):
     """Import and create a voice converter instance"""
