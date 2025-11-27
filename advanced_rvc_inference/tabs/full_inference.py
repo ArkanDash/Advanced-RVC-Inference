@@ -12,7 +12,7 @@ from pathlib import Path
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from .core import full_inference_program
+from advanced_rvc_inference.core import full_inference_program
 from ...lib.i18n import I18nAuto
 from ...lib.path_manager import path
 
