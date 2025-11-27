@@ -66,9 +66,9 @@ except ImportError:
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.utils import pydub_load
+from ...lib.utils import pydub_load
 from assets.config.variables import translations, logger
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
 
 def replace_export_format(output_path, export_format):
     """Replace the extension of the output path with the specified format."""

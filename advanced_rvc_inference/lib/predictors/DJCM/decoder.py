@@ -1,26 +1,14 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.predictors.DJCM.encoder import ResEncoderBlock
-from advanced_rvc_inference.lib.predictors.DJCM.utils import ResConvBlock, BiGRU, init_bn, init_layer, N_CLASS, WINDOW_LENGTH
+from main.library.predictors.DJCM.encoder import ResEncoderBlock
+from main.library.predictors.DJCM.utils import ResConvBlock, BiGRU, init_bn, init_layer, N_CLASS, WINDOW_LENGTH
 
 class ResDecoderBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_blocks, stride):

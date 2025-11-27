@@ -12,7 +12,7 @@ import warnings
 sys.path.append(os.getcwd())
 
 from assets.config.variables import logger
-from advanced_rvc_inference.lib.algorithm.synthesizers import SynthesizerONNX
+from ...lib.algorithm.synthesizers import SynthesizerONNX
 
 warnings.filterwarnings("ignore")
 

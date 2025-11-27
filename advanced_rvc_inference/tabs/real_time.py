@@ -9,9 +9,9 @@ Last Updated: November 26, 2025
 
 import gradio as gr
 import os, sys
-from advanced_rvc_inference.core import real_time_voice_conversion
-from advanced_rvc_inference.lib.i18n import I18nAuto
-from advanced_rvc_inference.lib.path_manager import path
+from .core import real_time_voice_conversion
+from ...lib.i18n import I18nAuto
+from ...lib.path_manager import path
 
 i18n = I18nAuto()
 

@@ -9,7 +9,7 @@ Last Updated: November 26, 2025
 
 import gradio as gr
 import os, sys
-from advanced_rvc_inference.lib.i18n import I18nAuto
+from ...lib.i18n import I18nAuto
 
 import assets.themes.loadThemes as loadThemes
 

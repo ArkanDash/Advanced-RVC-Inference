@@ -8,7 +8,7 @@ import onnxruntime
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.backends import directml, opencl, zluda
+from ...lib.backends import directml, opencl, zluda
 
 version_config_paths = [os.path.join(version, size) for version in ["v1", "v2"] for size in ["32000.json", "40000.json", "48000.json"]]
 

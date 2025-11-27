@@ -12,13 +12,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.utils import check_assets
-from advanced_rvc_inference.lib.path_manager import path
-from advanced_rvc_inference.rvc.infer.extracting.rms import run_rms_extraction
-from advanced_rvc_inference.rvc.infer.extracting.feature import run_pitch_extraction
+from ...lib.utils import check_assets
+from ...lib.path_manager import path
+from ...lib.infer.extracting.rms import run_rms_extraction
+from ...lib.infer.extracting.feature import run_pitch_extraction
 from assets.config.variables import config, logger, translations, configs
-from advanced_rvc_inference.rvc.infer.extracting.embedding import run_embedding_extraction
-from advanced_rvc_inference.rvc.infer.extracting.preparing_files import generate_config, generate_filelist
+from ...lib.infer.extracting.embedding import run_embedding_extraction
+from ...lib.infer.extracting.preparing_files import generate_config, generate_filelist
 
 warnings.filterwarnings("ignore")
 for l in ["torch", "faiss", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "matplotlib"]:

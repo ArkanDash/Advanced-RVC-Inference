@@ -6,9 +6,9 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.infer.realtime.audio import Audio
+from ...lib.infer.realtime.audio import Audio
 from assets.config.variables import logger, translations
-from advanced_rvc_inference.rvc.infer.realtime.realtime import VoiceChanger, RVC_Realtime
+from ...lib.infer.realtime.realtime import VoiceChanger, RVC_Realtime
 
 class AudioCallbacks:
     def emit_to(self, performance):

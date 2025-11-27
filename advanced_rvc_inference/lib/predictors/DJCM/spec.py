@@ -1,15 +1,8 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
 
 sys.path.append(os.getcwd())
@@ -29,7 +22,7 @@ class Spectrogram(nn.Module):
 
         if str(audio.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from advanced_rvc_inference.lib.backends.utils import STFT
+                from main.library.backends.utils import STFT
                 self.stft = STFT(filter_length=self.n_fft, hop_length=self.hop_length, win_length=self.win_length).to(audio.device)
             magnitude = self.stft.transform(audio, 1e-9)
         else:

@@ -1,8 +1,6 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import librosa
 import scipy.stats
 
@@ -10,7 +8,7 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.predictors.CREPE.model import MODEL
+from main.library.predictors.CREPE.model import MODEL
 
 CENTS_PER_BIN, PITCH_BINS, SAMPLE_RATE, WINDOW_SIZE = 20, 360, 16000, 1024
 

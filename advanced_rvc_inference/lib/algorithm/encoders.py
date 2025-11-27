@@ -7,10 +7,10 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.algorithm.modules import WaveNet
-from advanced_rvc_inference.lib.algorithm.commons import sequence_mask
-from advanced_rvc_inference.lib.algorithm.normalization import LayerNorm
-from advanced_rvc_inference.lib.algorithm.attentions import MultiHeadAttention, FFN
+from ...lib.algorithm.modules import WaveNet
+from ...lib.algorithm.commons import sequence_mask
+from ...lib.algorithm.normalization import LayerNorm
+from ...lib.algorithm.attentions import MultiHeadAttention, FFN
 
 class Encoder(torch.nn.Module):
     def __init__(self, hidden_channels, filter_channels, n_heads, n_layers, kernel_size=1, p_dropout=0.0, window_size=10, onnx=False, **kwargs):

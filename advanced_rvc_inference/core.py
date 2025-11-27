@@ -1,1613 +1,671 @@
-"""
-Advanced RVC Inference 
-Version 4.0.0
-Authors: ArkanDash & BF667
-Last Updated: November 26, 2025
-"""
 
-import sys, os
-import subprocess
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-from functools import lru_cache
-import shutil
 
-# Import path manager - using relative import to avoid circular dependencies
-from .lib.path_manager import get_path_manager, path
-
-# Conditional imports for optional dependencies
-try:
-    from pedalboard import Pedalboard, Reverb
-    from pedalboard.io import AudioFile
-except ImportError:
-    # Fallback implementation
-    class Pedalboard:
-        def __init__(self):
-            pass
-    class Reverb:
-        def __init__(self):
-            pass
-    class AudioFile:
-        def __init__(self):
-            pass
-
-try:
-    from pydub import AudioSegment
-except ImportError:
-    # Fallback implementation
-    class AudioSegment:
-        def __init__(self):
-            pass
-
-try:
-    from audio_separator.separator import Separator
-except ImportError:
-    # Fallback implementation
-    class Separator:
-        def __init__(self):
-            pass
-        def separate(self, *args, **kwargs):
-            pass
+import os
+import sys
+import torch
 import logging
-import yaml
+import warnings
+import time
+import numpy as np
+from pathlib import Path
+from functools import lru_cache
+from contextlib import nullcontext
 
+# Add current directory to Python path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
-# Conditional import to avoid torch dependency at import time
-try:
-    from .rvc.infer.conversion.convert import VoiceConverter
-except ImportError:
-    VoiceConverter = None
-# Import model download functionality with fallback
-try:
-    from .lib.rvc.tools.model_download import model_download_pipeline
-except ImportError:
-    # Fallback implementation if the module doesn't exist
-    def model_download_pipeline(link):
-        """Fallback model download implementation"""
-        print(f"Model download functionality not available. Would download from: {link}")
-        # In a real implementation, this would download the model
-        # For now we simulate the functionality
-        return f"Model download not implemented: {link}"
-# Conditional import to avoid torch dependency at import time
-try:
-    from .uvr.core import proc_file
-except ImportError:
-    proc_file = None
+# Suppress warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 
-# Import KRVC kernel for enhanced performance
+# Import Rich logging system
+from .lib.rich_logging import logger as rich_logger, RICH_AVAILABLE
+
+# Import path manager
+from .lib.path_manager import path
+
+# Import Vietnamese-RVC utilities with fallbacks
+from .lib.utils import (
+    load_audio, 
+    check_assets, 
+    clear_gpu_cache, 
+    extract_median_f0,
+    proposal_f0_up_key,
+    autotune_f0,
+    circular_write
+)
+
+# Import Vietnamese-RVC inference components
+try:
+    from .rvc.infer.conversion.pipeline import Pipeline
+    PIPELINE_AVAILABLE = True
+except ImportError:
+    PIPELINE_AVAILABLE = False
+
+try:
+    from .rvc.infer.conversion.audio_processing import preprocess, postprocess
+    AUDIO_PROCESSING_AVAILABLE = True
+except ImportError:
+    AUDIO_PROCESSING_AVAILABLE = False
+
+# Import KRVC kernel for performance optimization
 try:
     from .krvc_kernel import (
         KRVCFeatureExtractor,
         krvc_speed_optimize,
-        krvc_inference_mode,
-        krvc_training_mode,
-        krvc_mixed_precision_training,
-        KRVCAdvancedOptimizer,
         KRVCInferenceOptimizer,
-        KRVCPerformanceMonitor,
-        KRVCRealTimeProcessor,
-        cleanup_krvc_memory
+        KRVCPerformanceMonitor
     )
     KRVC_AVAILABLE = True
-    print("KRVC Kernel loaded successfully - Enhanced performance mode active")
-except ImportError as e:
+except ImportError:
     KRVC_AVAILABLE = False
-    print(f"KRVC Kernel not available - Using standard processing: {e}")
 
-# Import GPU optimization and OpenCL support
+# Import GPU optimization
 try:
-    from .gpu_optimization import (
-        GPUOptimizer,
-        get_gpu_optimizer,
-        get_opencl_processor,
-        OpenCLAudioProcessor
-    )
+    from .gpu_optimization import get_gpu_optimizer
     GPU_OPTIMIZATION_AVAILABLE = True
-    print("GPU Optimization and OpenCL support loaded successfully")
-except ImportError as e:
+except ImportError:
     GPU_OPTIMIZATION_AVAILABLE = False
-    print(f"GPU Optimization not available: {e}")
 
-# Initialize KRVC optimizations
-if KRVC_AVAILABLE:
-    krvc_speed_optimize()
-
-# Initialize GPU optimization
-if GPU_OPTIMIZATION_AVAILABLE:
-    gpu_optimizer = get_gpu_optimizer()
-    gpu_settings = gpu_optimizer.get_optimal_settings()
-    gpu_optimizer.optimize_memory()
-    print(f"GPU Optimization initialized - {gpu_optimizer.gpu_info['type']} detected")
-    print(f"Optimal settings: {gpu_settings}")
-
-# Initialize performance monitor
-if KRVC_AVAILABLE:
-    krvc_monitor = KRVCPerformanceMonitor()
-else:
-    krvc_monitor = None
-
-# Mapping functions for Vietnamese-RVC compatible features
-def map_embedder_model(embedder_model):
-    """Map Vietnamese-RVC embedder models to compatible models"""
-    embedder_mapping = {
-        # Vietnamese-RVC specific models
-        "vietnamese-hubert-base": "contentvec",
-        "spanish-hubert-base": "contentvec",
-        "french-hubert-base": "contentvec",
-        "german-hubert-base": "contentvec",
-        "english-hubert-base": "contentvec",
-        "portuguese-hubert-base": "contentvec",
-        "arabic-hubert-base": "contentvec",
-        "russian-hubert-base": "contentvec",
-        "italian-hubert-base": "contentvec",
-        "dutch-hubert-base": "contentvec",
-        "mandarin-hubert-base": "contentvec",
-        "cantonese-hubert-base": "contentvec",
-        "thai-hubert-base": "contentvec",
-        "korean-kss": "korean-hubert-base",
-        "korean-ksponspeech": "korean-hubert-base",
-        "japanese-jvs": "japanese-hubert-base",
-        "japanese-m_ailabs": "japanese-hubert-base",
-        "whisper-english": "contentvec",
-        "whisper-large-v2": "contentvec",
-        "whisper-large-v3": "contentvec",
-        "whisper-medium": "contentvec",
-        "whisper-small": "contentvec",
-        "whisper-tiny": "contentvec",
-        "whisper-large-v1": "contentvec",
-        "whisper-large-v3-turbo": "contentvec",
-        "hubert-base-lt": "contentvec",
-        "contentvec-mel": "contentvec",
-        "contentvec-ctc": "contentvec",
-        "dono-ctc": "contentvec",
-        "japanese-hubert-audio": "japanese-hubert-base",
-        "ksin-melo-tts": "contentvec",
-        "mless-melo-tts": "contentvec",
-        "polish-hubert-base": "contentvec",
-        "spanish-wav2vec2": "contentvec",
-        "vocos-encodec": "contentvec",
-        "chinese-wav2vec2": "chinese-hubert-base",
-        "nicht-ai-voice": "contentvec",
-        "multilingual-v2": "contentvec",
-        "multilingual-v1": "contentvec",
-        "speecht5": "contentvec",
-        "encodec_24khz": "contentvec",
-        "encodec_48khz": "contentvec",
-        "vits-universal": "contentvec",
-        "vits-japanese": "japanese-hubert-base",
-        "vits-korean": "korean-hubert-base",
-        "vits-chinese": "chinese-hubert-base",
-        "vits-thai": "contentvec",
-        "vits-vietnamese": "contentvec",
-        "vits-arabic": "contentvec",
-        "vits-russian": "contentvec",
-        "vits-french": "contentvec",
-        "vits-spanish": "contentvec",
-        "vits-german": "contentvec",
-        "vits-italian": "contentvec",
-        "vits-portuguese": "contentvec",
-        "vits-mandarin": "chinese-hubert-base",
-        "vits-cantonese": "chinese-hubert-base",
-        "vits-dutch": "contentvec",
-        "vits-polish": "contentvec",
-        "fairseq-v1": "contentvec",
-        "fairseq-v2": "contentvec",
-        "fairseq-w2v2": "contentvec",
-        "fairseq-hubert": "contentvec",
-        "onnx-contentvec": "contentvec",
-        "onnx-japanese-hubert": "japanese-hubert-base",
-        "onnx-chinese-hubert": "chinese-hubert-base",
-        "onnx-korean-hubert": "korean-hubert-base",
-        "onnx-multilingual-hubert": "contentvec",
-        # Keep existing models as is
-        "contentvec": "contentvec",
-        "chinese-hubert-base": "chinese-hubert-base",
-        "japanese-hubert-base": "japanese-hubert-base",
-        "korean-hubert-base": "korean-hubert-base",
-    }
-    return embedder_mapping.get(embedder_model, "contentvec")
-
-def map_pitch_extractor(pitch_extract):
-    """Map Vietnamese-RVC pitch extractors to compatible extractors"""
-    pitch_mapping = {
-        # Vietnamese-RVC specific pitch extractors
-        "mangio-crepe": "crepe",
-        "mangio-crepe-tiny": "crepe-tiny",
-        "mangio-dbs": "rmvpe",
-        "mangio-dt": "rmvpe",
-        "dbs": "rmvpe",
-        "dt": "rmvpe",
-        "pm": "pm",
-        "harvest": "harvest",
-        "dio": "dio",
-        "pyin": "pyin",
-        "pyworld-harvest": "harvest",
-        "pyworld-dio": "dio",
-        "parselmouth": "harvest",
-        "swipe": "harvest",
-        "rapt": "harvest",
-        "shs": "harvest",
-        "mangio-swipe": "harvest",
-        "mangio-rapt": "harvest",
-        "mangio-shs": "harvest",
-        "crepe-full": "crepe",
-        "crepe-tiny-1024": "crepe-tiny",
-        "crepe-tiny-2048": "crepe-tiny",
-        "crepe-small": "crepe",
-        "crepe-small-1024": "crepe",
-        "crepe-small-2048": "crepe",
-        "crepe-medium": "crepe",
-        "crepe-medium-1024": "crepe",
-        "crepe-medium-2048": "crepe",
-        "crepe-large": "crepe",
-        "crepe-large-1024": "crepe",
-        "crepe-large-2048": "crepe",
-        "mangio-crepe-full": "crepe",
-        "mangio-crepe-tiny-1024": "crepe-tiny",
-        "mangio-crepe-tiny-2048": "crepe-tiny",
-        "mangio-crepe-small": "crepe",
-        "mangio-crepe-small-1024": "crepe",
-        "mangio-crepe-small-2048": "crepe",
-        "mangio-crepe-medium": "crepe",
-        "mangio-crepe-medium-1024": "crepe",
-        "mangio-crepe-medium-2048": "crepe",
-        "mangio-crepe-large": "crepe",
-        "mangio-crepe-large-1024": "crepe",
-        "mangio-crepe-large-2048": "crepe",
-        "fcpe-legacy": "fcpe",
-        "fcpe-previous": "fcpe",
-        "fcpe-nvidia": "fcpe",
-        "rmvpe-clipping": "rmvpe",
-        "rmvpe-medfilt": "rmvpe",
-        "rmvpe-clipping-medfilt": "rmvpe",
-        "harvest-clipping": "harvest",
-        "harvest-medfilt": "harvest",
-        "harvest-clipping-medfilt": "harvest",
-        "dio-clipping": "dio",
-        "dio-medfilt": "dio",
-        "dio-clipping-medfilt": "dio",
-        "pyin-clipping": "pyin",
-        "pyin-medfilt": "pyin",
-        "pyin-clipping-medfilt": "pyin",
-        "yin": "harvest",
-        "pyyin": "harvest",
-        "pyworld-yin": "harvest",
-        "pyworld-reaper": "harvest",
-        "pysptk-yin": "harvest",
-        "reaper": "harvest",
-        "pichtr": "harvest",
-        "sigproc": "harvest",
-        "snac": "harvest",
-        "world Harvest": "harvest",
-        "world Dio": "dio",
-        "pyworld-Harvest": "harvest",
-        "pyworld-Dio": "dio",
-        "torch-dio": "dio",
-        "torch-harvest": "harvest",
-        "torch-yin": "harvest",
-        "torch-pitchshift": "harvest",
-        "torch-pitchtracking": "harvest",
-        "autotuned-harvest": "harvest",
-        "autotuned-crepe": "crepe",
-        "autotuned-fcpe": "fcpe",
-        "autotuned-rmvpe": "rmvpe",
-        "mixed-harvest-crepe": "harvest",
-        "mixed-crepe-fcpe": "crepe",
-        "mixed-fcpe-rmvpe": "fcpe",
-        "hybrid[harvest+crepe]": "harvest",
-        "hybrid[rmvpe+harvest]": "rmvpe",
-        "hybrid[rmvpe+crepe]": "rmvpe",
-        "hybrid[rmvpe+fcpe]": "rmvpe",
-        "hybrid[harvest+fcpe]": "harvest",
-        "hybrid[crepe+fcpe]": "crepe",
-        "hybrid[rmvpe+harvest+crepe]": "rmvpe",
-        "hybrid[rmvpe+harvest+fcpe]": "rmvpe",
-        "hybrid[rmvpe+crepe+fcpe]": "rmvpe",
-        "hybrid[mixed-all]": "rmvpe",
-        # Keep existing models as is
-        "rmvpe": "rmvpe",
-        "crepe": "crepe",
-        "crepe-tiny": "crepe-tiny",
-        "fcpe": "fcpe",
-    }
-    return pitch_mapping.get(pitch_extract, "rmvpe")
-
-models_vocals = [
-    {
-        "name": "Mel-Roformer by KimberleyJSN",
-        "path": os.path.join(now_dir, "models", "mel-vocals"),
-        "model": os.path.join(now_dir, "models", "mel-vocals", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mel-vocals", "config.yaml"),
-        "type": "mel_band_roformer",
-        "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/KimberleyJensen/config_vocals_mel_band_roformer_kj.yaml",
-        "model_url": "https://huggingface.co/KimberleyJSN/melbandroformer/resolve/main/MelBandRoformer.ckpt",
-    },
-    {
-        "name": "BS-Roformer by ViperX",
-        "path": os.path.join(now_dir, "models", "bs-vocals"),
-        "model": os.path.join(now_dir, "models", "bs-vocals", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "bs-vocals", "config.yaml"),
-        "type": "bs_roformer",
-        "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/viperx/model_bs_roformer_ep_317_sdr_12.9755.yaml",
-        "model_url": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
-    },
-    {
-        "name": "MDX23C",
-        "path": os.path.join(now_dir, "models", "mdx23c-vocals"),
-        "model": os.path.join(now_dir, "models", "mdx23c-vocals", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mdx23c-vocals", "config.yaml"),
-        "type": "mdx23c",
-        "config_url": "https://raw.githubusercontent.com/ZFTurbo/Music-Source-Separation-Training/main/configs/config_vocals_mdx23c.yaml",
-        "model_url": "https://github.com/ZFTurbo/Music-Source-Separation-Training/releases/download/v1.0.0/model_vocals_mdx23c_sdr_10.17.ckpt",
-    },
-]
-
-karaoke_models = [
-    {
-        "name": "Mel-Roformer Karaoke by aufr33 and viperx",
-        "path": os.path.join(now_dir, "models", "mel-kara"),
-        "model": os.path.join(now_dir, "models", "mel-kara", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mel-kara", "config.yaml"),
-        "type": "mel_band_roformer",
-        "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_karaoke_aufr33_viperx/config_mel_band_roformer_karaoke.yaml",
-        "model_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel_band_roformer_karaoke_aufr33_viperx/mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
-    },
-    {
-        "name": "UVR-BVE",
-        "full_name": "UVR-BVE-4B_SN-44100-1.pth",
-        "arch": "vr",
-    },
-]
-
-denoise_models = [
-    {
-        "name": "Mel-Roformer Denoise Normal by aufr33",
-        "path": os.path.join(now_dir, "models", "mel-denoise"),
-        "model": os.path.join(now_dir, "models", "mel-denoise", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mel-denoise", "config.yaml"),
-        "type": "mel_band_roformer",
-        "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel-denoise/model_mel_band_roformer_denoise.yaml",
-        "model_url": "https://huggingface.co/jarredou/aufr33_MelBand_Denoise/resolve/main/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
-    },
-    {
-        "name": "Mel-Roformer Denoise Aggressive by aufr33",
-        "path": os.path.join(now_dir, "models", "mel-denoise-aggr"),
-        "model": os.path.join(now_dir, "models", "mel-denoise-aggr", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mel-denoise-aggr", "config.yaml"),
-        "type": "mel_band_roformer",
-        "config_url": "https://huggingface.co/shiromiya/audio-separation-models/resolve/main/mel-denoise/model_mel_band_roformer_denoise.yaml",
-        "model_url": "https://huggingface.co/jarredou/aufr33_MelBand_Denoise/resolve/main/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
-    },
-    {
-        "name": "UVR Denoise",
-        "full_name": "UVR-DeNoise.pth",
-        "arch": "vr",
-    },
-]
-
-dereverb_models = [
-    {
-        "name": "MDX23C DeReverb by aufr33 and jarredou",
-        "path": os.path.join(now_dir, "models", "mdx23c-dereveb"),
-        "model": os.path.join(now_dir, "models", "mdx23c-dereveb", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mdx23c-dereveb", "config.yaml"),
-        "type": "mdx23c",
-        "config_url": "https://huggingface.co/jarredou/aufr33_jarredou_MDXv3_DeReverb/resolve/main/config_dereverb_mdx23c.yaml",
-        "model_url": "https://huggingface.co/jarredou/aufr33_jarredou_MDXv3_DeReverb/resolve/main/dereverb_mdx23c_sdr_6.9096.ckpt",
-    },
-    {
-        "name": "BS-Roformer Dereverb by anvuew",
-        "path": os.path.join(now_dir, "models", "mdx23c-dereveb"),
-        "model": os.path.join(now_dir, "models", "mdx23c-dereveb", "model.ckpt"),
-        "config": os.path.join(now_dir, "models", "mdx23c-dereveb", "config.yaml"),
-        "type": "bs_roformer",
-        "config_url": "https://huggingface.co/anvuew/deverb_bs_roformer/resolve/main/deverb_bs_roformer_8_384dim_10depth.yaml",
-        "model_url": "https://huggingface.co/anvuew/deverb_bs_roformer/resolve/main/deverb_bs_roformer_8_384dim_10depth.ckpt",
-    },
-    {
-        "name": "UVR-Deecho-Dereverb",
-        "full_name": "UVR-DeEcho-DeReverb.pth",
-        "arch": "vr",
-    },
-    {
-        "name": "MDX Reverb HQ by FoxJoy",
-        "full_name": "Reverb_HQ_By_FoxJoy.onnx",
-        "arch": "mdx",
-    },
-]
-
-deecho_models = [
-    {
-        "name": "UVR-Deecho-Normal",
-        "full_name": "UVR-De-Echo-Normal.pth",
-        "arch": "vr",
-    },
-    {
-        "name": "UVR-Deecho-Agggressive",
-        "full_name": "UVR-De-Echo-Aggressive.pth",
-        "arch": "vr",
-    },
-]
-
-
-@lru_cache(maxsize=None)
-def import_voice_converter():
-    from .rvc.infer.conversion.convert import VoiceConverter
-
-    return VoiceConverter()
-
-
-@lru_cache(maxsize=1)
-def get_config():
-    from .rvc.configs.config import Config
-
-    return Config()
-
-
-def download_file(url, path, filename):
-    os.makedirs(path, exist_ok=True)
-    file_path = os.path.join(path, filename)
-
-    if os.path.exists(file_path):
-        print(f"File '{filename}' already exists at '{path}'.")
-        return
-
-    try:
-        import torch
-        response = torch.hub.download_url_to_file(url, file_path)
-        print(f"File '{filename}' downloaded successfully")
-    except Exception as e:
-        print(f"Error downloading file '{filename}' from '{url}': {e}")
-
-
-def get_model_info_by_name(model_name):
-    all_models = (
-        models_vocals
-        + karaoke_models
-        + dereverb_models
-        + deecho_models
-        + denoise_models
-    )
-    for model in all_models:
-        if model["name"] == model_name:
-            return model
-    return None
-
-
-def get_last_modified_file(pasta):
-    if not os.path.isdir(pasta):
-        raise NotADirectoryError(f"{pasta} is not a valid directory.")
-    arquivos = [f for f in os.listdir(pasta) if os.path.isfile(os.path.join(pasta, f))]
-    if not arquivos:
-        return None
-    return max(arquivos, key=lambda x: os.path.getmtime(os.path.join(pasta, x)))
-
-
-def search_with_word(folder, word):
-    if not os.path.isdir(folder):
-        raise NotADirectoryError(f"{folder} is not a valid directory.")
-    file_with_word = [file for file in os.listdir(folder) if word in file]
-    if not file_with_word:
-        return None
-    most_recent_file = max(
-        file_with_word, key=lambda file: os.path.getmtime(os.path.join(folder, file))
-    )
-    return most_recent_file
-
-
-def search_with_two_words(folder, word1, word2):
-    if not os.path.isdir(folder):
-        raise NotADirectoryError(f"{folder} is not a valid directory.")
-    file_with_words = [
-        file for file in os.listdir(folder) if word1 in file and word2 in file
-    ]
-    if not file_with_words:
-        return None
-    most_recent_file = max(
-        file_with_words, key=lambda file: os.path.getmtime(os.path.join(folder, file))
-    )
-    return most_recent_file
-
-
-def get_last_modified_folder(path):
-    directories = [
-        os.path.join(path, d)
-        for d in os.listdir(path)
-        if os.path.isdir(os.path.join(path, d))
-    ]
-    if not directories:
-        return None
-    last_modified_folder = max(directories, key=os.path.getmtime)
-    return last_modified_folder
-
-
-def add_audio_effects(
-    audio_path,
-    reverb_size,
-    reverb_wet,
-    reverb_dry,
-    reverb_damping,
-    reverb_width,
-    output_path,
-):
-    board = Pedalboard([])
-    board.append(
-        Reverb(
-            room_size=reverb_size,
-            dry_level=reverb_dry,
-            wet_level=reverb_wet,
-            damping=reverb_damping,
-            width=reverb_width,
-        )
-    )
-    with AudioFile(audio_path) as f:
-        with AudioFile(output_path, "w", f.samplerate, f.num_channels) as o:
-            while f.tell() < f.frames:
-                chunk = f.read(int(f.samplerate))
-                effected = board(chunk, f.samplerate, reset=False)
-                o.write(effected)
-    return output_path
-
-
-def merge_audios(
-    vocals_path,
-    inst_path,
-    backing_path,
-    output_path,
-    main_gain,
-    inst_gain,
-    backing_Vol,
-    output_format,
-):
-    main_vocal_audio = AudioSegment.from_file(vocals_path, format="flac") + main_gain
-    instrumental_audio = AudioSegment.from_file(inst_path, format="flac") + inst_gain
-    backing_vocal_audio = (
-        AudioSegment.from_file(backing_path, format="flac") + backing_Vol
-    )
-    combined_audio = main_vocal_audio.overlay(
-        instrumental_audio.overlay(backing_vocal_audio)
-    )
-    combined_audio.export(output_path, format=output_format)
-    return output_path
-
-
-def check_fp16_support(device):
-    import torch
-    i_device = int(str(device).split(":")[-1])
-    gpu_name = torch.cuda.get_device_name(i_device)
-    low_end_gpus = ["16", "P40", "P10", "1060", "1070", "1080"]
-    if any(gpu in gpu_name for gpu in low_end_gpus) and "V100" not in gpu_name.upper():
-        print(f"Your GPU {gpu_name} not support FP16 inference. Using FP32 instead.")
-        return False
-    return True
-
-
-def full_inference_program(
-    model_path,
-    index_path,
-    input_audio_path,
-    output_path,
-    export_format_rvc,
-    split_audio,
-    autotune,
-    vocal_model,
-    karaoke_model,
-    dereverb_model,
-    deecho,
-    deecho_model,
-    denoise,
-    denoise_model,
-    reverb,
-    vocals_volume,
-    instrumentals_volume,
-    backing_vocals_volume,
-    export_format_final,
-    devices,
-    pitch,
-    filter_radius,
-    index_rate,
-    rms_mix_rate,
-    protect,
-    pitch_extract,
-    hop_lenght,
-    reverb_room_size,
-    reverb_damping,
-    reverb_wet_gain,
-    reverb_dry_gain,
-    reverb_width,
-    embedder_model,
-    delete_audios,
-    use_tta,
-    batch_size,
-    infer_backing_vocals,
-    infer_backing_vocals_model,
-    infer_backing_vocals_index,
-    change_inst_pitch,
-    pitch_back,
-    filter_radius_back,
-    index_rate_back,
-    rms_mix_rate_back,
-    protect_back,
-    pitch_extract_back,
-    hop_length_back,
-    export_format_rvc_back,
-    split_audio_back,
-    autotune_back,
-    embedder_model_back,
-):
-    # Map Vietnamese-RVC compatible embedder models to existing ones
-    embedder_model = map_embedder_model(embedder_model)
-    embedder_model_back = map_embedder_model(embedder_model_back)
-
-    # Map Vietnamese-RVC compatible pitch extractors to existing ones
-    pitch_extract = map_pitch_extractor(pitch_extract)
-    pitch_extract_back = map_pitch_extractor(pitch_extract_back)
-    import torch
-    if torch.cuda.is_available():
-        n_gpu = torch.cuda.device_count()
-        devices = devices.replace("-", " ")
-        print(f"Number of GPUs available: {n_gpu}")
-        first_device = devices.split()[0]
-        fp16 = check_fp16_support(first_device)
-    else:
-        devices = "cpu"
-        print("Using CPU")
-        fp16 = False
-
-    music_folder = os.path.splitext(os.path.basename(input_audio_path))[0]
-
-    # Vocals Separation
-    model_info = get_model_info_by_name(vocal_model)
-    model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-    if not os.path.exists(model_ckpt_path):
-        download_file(
-            model_info["model_url"],
-            model_info["path"],
-            "model.ckpt",
-        )
-    config_json_path = os.path.join(model_info["path"], "config.yaml")
-    if not os.path.exists(config_json_path):
-        download_file(
-            model_info["config_url"],
-            model_info["path"],
-            "config.yaml",
-        )
-    if not fp16:
-        with open(model_info["config"], "r") as file:
-            config = yaml.safe_load(file)
-
-        config["training"]["use_amp"] = False
-
-        with open(model_info["config"], "w") as file:
-            yaml.safe_dump(config, file)
-    audio_files_root = str(path('audios_dir'))
-    store_dir = os.path.join(audio_files_root, music_folder, "vocals")
-    inst_dir = os.path.join(audio_files_root, music_folder, "instrumentals")
-    os.makedirs(store_dir, exist_ok=True)
-    os.makedirs(inst_dir, exist_ok=True)
-    input_audio_basename = os.path.splitext(os.path.basename(input_audio_path))[0]
-    search_result = search_with_word(store_dir, "vocals")
-    if search_result:
-        print("Vocals already separated"),
-    else:
-        print("Separating vocals")
-        command = [
-            "python",
-            os.path.join(now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"),
-            "--model_type",
-            model_info["type"],
-            "--config_path",
-            model_info["config"],
-            "--start_check_point",
-            model_info["model"],
-            "--input_file",
-            input_audio_path,
-            "--store_dir",
-            store_dir,
-            "--flac_file",
-            "--pcm_type",
-            "PCM_16",
-            "--extract_instrumental",
-        ]
-
-        if devices == "cpu":
-            command.append("--force_cpu")
-        else:
-            device_ids = [str(int(device)) for device in devices.split()]
-            command.extend(["--device_ids"] + device_ids)
-
-        subprocess.run(command)
-        os.rename(
-            os.path.join(
-                store_dir,
-                search_with_two_words(
-                    store_dir,
-                    os.path.basename(input_audio_path).split(".")[0],
-                    "instrumental",
-                ),
-            ),
-            os.path.join(
-                inst_dir,
-                f"{os.path.basename(input_audio_path).split('.')[0]}_instrumentals.flac",
-            ),
-        )
-    inst_file = os.path.join(
-        inst_dir,
-        search_with_two_words(
-            inst_dir, os.path.basename(input_audio_path).split(".")[0], "instrumentals"
-        ),
-    )
-
-    # karaoke separation
-    model_info = get_model_info_by_name(karaoke_model)
-    audio_files_root = str(path('audios_dir'))
-    store_dir = os.path.join(audio_files_root, music_folder, "karaoke")
-    os.makedirs(store_dir, exist_ok=True)
-    vocals_path = os.path.join(audio_files_root, music_folder, "vocals")
-    input_file = search_with_word(vocals_path, "vocals")
-    karaoke_exists = search_with_word(store_dir, "karaoke") is not None
-
-    if karaoke_exists:
-        print("Backing vocals already separated")
-    else:
-        if input_file:
-            input_file = os.path.join(vocals_path, input_file)
-        print("Separating Backing vocals")
-        if model_info["name"] == "Mel-Roformer Karaoke by aufr33 and viperx":
-            model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-            if not os.path.exists(model_ckpt_path):
-                download_file(
-                    model_info["model_url"],
-                    model_info["path"],
-                    "model.ckpt",
-                )
-            config_json_path = os.path.join(model_info["path"], "config.yaml")
-            if not os.path.exists(config_json_path):
-                download_file(
-                    model_info["config_url"],
-                    model_info["path"],
-                    "config.yaml",
-                )
-            if not fp16:
-                with open(model_info["config"], "r") as file:
-                    config = yaml.safe_load(file)
-
-                config["training"]["use_amp"] = False
-
-                with open(model_info["config"], "w") as file:
-                    yaml.safe_dump(config, file)
-
-            command = [
-                "python",
-                os.path.join(
-                    now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
-                ),
-                "--model_type",
-                model_info["type"],
-                "--config_path",
-                model_info["config"],
-                "--start_check_point",
-                model_info["model"],
-                "--input_file",
-                input_file,
-                "--store_dir",
-                store_dir,
-                "--flac_file",
-                "--pcm_type",
-                "PCM_16",
-                "--extract_instrumental",
-            ]
-
-            if devices == "cpu":
-                command.append("--force_cpu")
-            else:
-                device_ids = [str(int(device)) for device in devices.split()]
-                command.extend(["--device_ids"] + device_ids)
-
-            subprocess.run(command)
-        else:
-            separator = Separator(
-                model_file_dir=os.path.join(now_dir, "models", "karaoke"),
-                log_level=logging.WARNING,
-                normalization_threshold=1.0,
-                output_format="flac",
-                output_dir=store_dir,
-                vr_params={
-                    "batch_size": batch_size,
-                    "enable_tta": use_tta,
-                },
-            )
-            separator.load_model(model_filename=model_info["full_name"])
-            separator.separate(input_file)
-            audio_files_root = str(path('audios_dir'))
-            karaoke_path = os.path.join(audio_files_root, music_folder, "karaoke")
-            vocals_result = search_with_two_words(
-                karaoke_path,
-                os.path.basename(input_audio_path).split(".")[0],
-                "Vocals",
-            )
-            instrumental_result = search_with_two_words(
-                karaoke_path,
-                os.path.basename(input_audio_path).split(".")[0],
-                "Instrumental",
-            )
-            if "UVR-BVE-4B_SN-44100-1" in os.path.basename(vocals_result):
-                os.rename(
-                    os.path.join(karaoke_path, vocals_result),
-                    os.path.join(
-                        karaoke_path,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_karaoke.flac",
-                    ),
-                )
-            if "UVR-BVE-4B_SN-44100-1" in os.path.basename(instrumental_result):
-                os.rename(
-                    os.path.join(karaoke_path, instrumental_result),
-                    os.path.join(
-                        karaoke_path,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_instrumental.flac",
-                    ),
-                )
-
-    # dereverb
-    model_info = get_model_info_by_name(dereverb_model)
-    audio_files_root = str(path('audios_dir'))
-    store_dir = os.path.join(audio_files_root, music_folder, "dereverb")
-    os.makedirs(store_dir, exist_ok=True)
-    karaoke_path = os.path.join(audio_files_root, music_folder, "karaoke")
-    input_file = search_with_word(karaoke_path, "karaoke")
-    noreverb_exists = search_with_word(store_dir, "noreverb") is not None
-    if noreverb_exists:
-        print("Reverb already removed")
-    else:
-        if input_file:
-            input_file = os.path.join(karaoke_path, input_file)
-        print("Removing reverb")
-        if (
-            model_info["name"] == "BS-Roformer Dereverb by anvuew"
-            or model_info["name"] == "MDX23C DeReverb by aufr33 and jarredou"
-        ):
-            model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-            if not os.path.exists(model_ckpt_path):
-                download_file(
-                    model_info["model_url"],
-                    model_info["path"],
-                    "model.ckpt",
-                )
-            config_json_path = os.path.join(model_info["path"], "config.yaml")
-            if not os.path.exists(config_json_path):
-                download_file(
-                    model_info["config_url"],
-                    model_info["path"],
-                    "config.yaml",
-                )
-            if not fp16:
-                with open(model_info["config"], "r") as file:
-                    config = yaml.safe_load(file)
-
-                config["training"]["use_amp"] = False
-
-                with open(model_info["config"], "w") as file:
-                    yaml.safe_dump(config, file)
-            command = [
-                "python",
-                os.path.join(
-                    now_dir, "advanced_rvc_inference", "music_separation_code", "inference.py"
-                ),
-                "--model_type",
-                model_info["type"],
-                "--config_path",
-                model_info["config"],
-                "--start_check_point",
-                model_info["model"],
-                "--input_file",
-                input_file,
-                "--store_dir",
-                store_dir,
-                "--flac_file",
-                "--pcm_type",
-                "PCM_16",
-            ]
-
-            if devices == "cpu":
-                command.append("--force_cpu")
-            else:
-                device_ids = [str(int(device)) for device in devices.split()]
-                command.extend(["--device_ids"] + device_ids)
-
-            subprocess.run(command)
-        else:
-            if model_info["arch"] == "vr":
-                separator = Separator(
-                    model_file_dir=os.path.join(now_dir, "models", "dereverb"),
-                    log_level=logging.WARNING,
-                    normalization_threshold=1.0,
-                    output_format="flac",
-                    output_dir=store_dir,
-                    output_single_stem="No Reverb",
-                    vr_params={
-                        "batch_size": batch_size,
-                        "enable_tta": use_tta,
-                    },
-                )
-            else:
-                separator = Separator(
-                    model_file_dir=os.path.join(now_dir, "models", "dereverb"),
-                    log_level=logging.WARNING,
-                    normalization_threshold=1.0,
-                    output_format="flac",
-                    output_dir=store_dir,
-                    output_single_stem="No Reverb",
-                )
-            separator.load_model(model_filename=model_info["full_name"])
-            separator.separate(input_file)
-            audio_files_root = str(path('audios_dir'))
-            dereverb_path = os.path.join(
-                audio_files_root, music_folder, "dereverb"
-            )
-            search_result = search_with_two_words(
-                dereverb_path,
-                os.path.basename(input_audio_path).split(".")[0],
-                "No Reverb",
-            )
-            if "UVR-DeEcho-DeReverb" in os.path.basename(
-                search_result
-            ) or "MDX Reverb HQ by FoxJoy" in os.path.basename(search_result):
-                os.rename(
-                    os.path.join(dereverb_path, search_result),
-                    os.path.join(
-                        dereverb_path,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_noreverb.flac",
-                    ),
-                )
-
-    # deecho
-    audio_files_root = str(path('audios_dir'))
-    store_dir = os.path.join(audio_files_root, music_folder, "deecho")
-    os.makedirs(store_dir, exist_ok=True)
-    if deecho:
-        no_echo_exists = search_with_word(store_dir, "noecho") is not None
-        if no_echo_exists:
-            print("Echo already removed")
-        else:
-            print("Removing echo")
-            model_info = get_model_info_by_name(deecho_model)
-
-            audio_files_root = str(path('audios_dir'))
-            dereverb_path = os.path.join(
-                audio_files_root, music_folder, "dereverb"
-            )
-            noreverb_file = search_with_word(dereverb_path, "noreverb")
-
-            input_file = os.path.join(dereverb_path, noreverb_file)
-
-            separator = Separator(
-                model_file_dir=os.path.join(now_dir, "models", "deecho"),
-                log_level=logging.WARNING,
-                normalization_threshold=1.0,
-                output_format="flac",
-                output_dir=store_dir,
-                output_single_stem="No Echo",
-                vr_params={
-                    "batch_size": batch_size,
-                    "enable_tta": use_tta,
-                },
-            )
-            separator.load_model(model_filename=model_info["full_name"])
-            separator.separate(input_file)
-            audio_files_root = str(path('audios_dir'))
-            deecho_path = os.path.join(audio_files_root, music_folder, "deecho")
-            search_result = search_with_two_words(
-                deecho_path,
-                os.path.basename(input_audio_path).split(".")[0],
-                "No Echo",
-            )
-            if "UVR-De-Echo-Normal" in os.path.basename(
-                search_result
-            ) or "UVR-Deecho-Agggressive" in os.path.basename(search_result):
-                os.rename(
-                    os.path.join(deecho_path, search_result),
-                    os.path.join(
-                        deecho_path,
-                        f"{os.path.basename(input_audio_path).split('.')[0]}_noecho.flac",
-                    ),
-                )
-
-    # denoise
-    audio_files_root = str(path('audios_dir'))
-    store_dir = os.path.join(audio_files_root, music_folder, "denoise")
-    os.makedirs(store_dir, exist_ok=True)
-    if denoise:
-        no_noise_exists = search_with_word(store_dir, "dry") is not None
-        if no_noise_exists:
-            print("Noise already removed")
-        else:
-            model_info = get_model_info_by_name(denoise_model)
-            print("Removing noise")
-            input_file = (
-                os.path.join(
-                    audio_files_root,
-                    music_folder,
-                    "deecho",
-                    search_with_word(
-                        os.path.join(audio_files_root, music_folder, "deecho"),
-                        "noecho",
-                    ),
-                )
-                if deecho
-                else os.path.join(
-                    audio_files_root,
-                    music_folder,
-                    "dereverb",
-                    search_with_word(
-                        os.path.join(audio_files_root, music_folder, "dereverb"),
-                        "noreverb",
-                    ),
-                )
-            )
-
-            if (
-                model_info["name"] == "Mel-Roformer Denoise Normal by aufr33"
-                or model_info["name"] == "Mel-Roformer Denoise Aggressive by aufr33"
-            ):
-                model_ckpt_path = os.path.join(model_info["path"], "model.ckpt")
-                if not os.path.exists(model_ckpt_path):
-                    download_file(
-                        model_info["model_url"],
-                        model_info["path"],
-                        "model.ckpt",
-                    )
-                config_json_path = os.path.join(model_info["path"], "config.yaml")
-                if not os.path.exists(config_json_path):
-                    download_file(
-                        model_info["config_url"], model_info["path"], "config.yaml"
-                    )
-                if not fp16:
-                    with open(model_info["config"], "r") as file:
-                        config = yaml.safe_load(file)
-
-                    config["training"]["use_amp"] = False
-
-                    with open(model_info["config"], "w") as file:
-                        yaml.safe_dump(config, file)
-                command = [
-                    "python",
-                    os.path.join(
-                        now_dir, "advanced_rvc_inference", "uvr", "core.py"
-                    ),
-                    "--model_type",
-                    model_info["type"],
-                    "--config_path",
-                    model_info["config"],
-                    "--start_check_point",
-                    model_info["model"],
-                    "--input_file",
-                    input_file,
-                    "--store_dir",
-                    store_dir,
-                    "--flac_file",
-                    "--pcm_type",
-                    "PCM_16",
-                ]
-
-                if devices == "cpu":
-                    command.append("--force_cpu")
-                else:
-                    device_ids = [str(int(device)) for device in devices.split()]
-                    command.extend(["--device_ids"] + device_ids)
-
-                subprocess.run(command)
-            else:
-                separator = Separator(
-                    model_file_dir=os.path.join(now_dir, "models", "denoise"),
-                    log_level=logging.WARNING,
-                    normalization_threshold=1.0,
-                    output_format="flac",
-                    output_dir=store_dir,
-                    output_single_stem="No Noise",
-                    vr_params={
-                        "batch_size": batch_size,
-                        "enable_tta": use_tta,
-                    },
-                )
-                separator.load_model(model_filename=model_info["full_name"])
-                separator.separate(input_file)
-                search_result = search_with_two_words(
-                    deecho_path,
-                    os.path.basename(input_audio_path).split(".")[0],
-                    "No Noise",
-                )
-                if "UVR Denoise" in os.path.basename(search_result):
-                    os.rename(
-                        os.path.join(deecho_path, search_result),
-                        os.path.join(
-                            deecho_path,
-                            f"{os.path.basename(input_audio_path).split('.')[0]}_dry.flac",
-                        ),
-                    )
-
-    # RVC
-    audio_files_root = str(path('audios_dir'))
-    denoise_path = os.path.join(audio_files_root, music_folder, "denoise")
-    deecho_path = os.path.join(audio_files_root, music_folder, "deecho")
-    dereverb_path = os.path.join(audio_files_root, music_folder, "dereverb")
-
-    denoise_audio = search_with_two_words(
-        denoise_path, os.path.basename(input_audio_path).split(".")[0], "dry"
-    )
-    deecho_audio = search_with_two_words(
-        deecho_path, os.path.basename(input_audio_path).split(".")[0], "noecho"
-    )
-    dereverb = search_with_two_words(
-        dereverb_path, os.path.basename(input_audio_path).split(".")[0], "noreverb"
-    )
-
-    audio_files_root = str(path('audios_dir'))
-    if denoise_audio:
-        final_path = os.path.join(
-            audio_files_root, music_folder, "denoise", denoise_audio
-        )
-    elif deecho_audio:
-        final_path = os.path.join(
-            audio_files_root, music_folder, "deecho", deecho_audio
-        )
-    elif dereverb:
-        final_path = os.path.join(
-            audio_files_root, music_folder, "dereverb", dereverb
-        )
-    else:
-        final_path = None
-
-    store_dir = os.path.join(audio_files_root, music_folder, "rvc")
-    os.makedirs(store_dir, exist_ok=True)
-    print("Making RVC inference")
-    output_rvc = os.path.join(
-        audio_files_root,
-        music_folder,
-        "rvc",
-        f"{os.path.basename(input_audio_path).split('.')[0]}_rvc.wav",
-    )
-    inference_vc = import_voice_converter()
-    inference_vc.convert_audio(
-        audio_input_path=final_path,
-        audio_output_path=output_rvc,
-        model_path=model_path,
-        index_path=index_path,
-        embedder_model=embedder_model,
-        pitch=pitch,
-        f0_file=None,
-        f0_method=pitch_extract,
-        filter_radius=filter_radius,
-        index_rate=index_rate,
-        volume_envelope=rms_mix_rate,
-        protect=protect,
-        split_audio=split_audio,
-        f0_autotune=autotune,
-        hop_length=hop_lenght,
-        export_format=export_format_rvc,
-        embedder_model_custom=None,
-    )
-    backing_vocals = os.path.join(
-        karaoke_path, search_with_word(karaoke_path, "instrumental")
-    )
-
-    audio_files_root = str(path('audios_dir'))
-    if infer_backing_vocals:
-        print("Infering backing vocals")
-        karaoke_path = os.path.join(audio_files_root, music_folder, "karaoke")
-        instrumental_file = search_with_word(karaoke_path, "instrumental")
-        backing_vocals = os.path.join(karaoke_path, instrumental_file)
-        output_backing_vocals = os.path.join(
-            karaoke_path, f"{input_audio_basename}_instrumental_output.wav"
-        )
-        inference_vc.convert_audio(
-            audio_input_path=backing_vocals,
-            audio_output_path=output_backing_vocals,
-            model_path=infer_backing_vocals_model,
-            index_path=infer_backing_vocals_index,
-            embedder_model=embedder_model_back,
-            pitch=pitch_back,
-            f0_file=None,
-            f0_method=pitch_extract_back,
-            filter_radius=filter_radius_back,
-            index_rate=index_rate_back,
-            volume_envelope=rms_mix_rate_back,
-            protect=protect_back,
-            split_audio=split_audio_back,
-            f0_autotune=autotune_back,
-            hop_length=hop_length_back,
-            export_format=export_format_rvc_back,
-            embedder_model_custom=None,
-        )
-        backing_vocals = output_backing_vocals
-
-    # post process
-    if reverb:
-        add_audio_effects(
-            os.path.join(
-                audio_files_root,
-                music_folder,
-                "rvc",
-                get_last_modified_file(
-                    os.path.join(audio_files_root, music_folder, "rvc")
-                ),
-            ),
-            reverb_room_size,
-            reverb_wet_gain,
-            reverb_dry_gain,
-            reverb_damping,
-            reverb_width,
-            os.path.join(
-                audio_files_root,
-                music_folder,
-                "rvc",
-                os.path.basename(input_audio_path),
-            ),
-        )
-    if change_inst_pitch != 0:
-        print("Changing instrumental pitch")
-        audio_files_root = str(path('audios_dir'))
-        inst_path = os.path.join(
-            audio_files_root,
-            music_folder,
-            "instrumentals",
-            search_with_word(
-                os.path.join(audio_files_root, music_folder, "instrumentals"),
-                "instrumentals",
-            ),
-        )
-        audio = AudioSegment.from_file(inst_path)
-
-        factor = 2 ** (change_inst_pitch / 12)
-
-        new_frame_rate = int(audio.frame_rate * factor)
-        audio = audio._spawn(audio.raw_data, overrides={"frame_rate": new_frame_rate})
-
-        audio = audio.set_frame_rate(audio.frame_rate)
-        audio_files_root = str(path('audios_dir'))
-        output_dir_pitch = os.path.join(
-            audio_files_root, music_folder, "instrumentals"
-        )
-        output_path_pitch = os.path.join(
-            output_dir_pitch, "inst_with_changed_pitch.flac"
-        )
-        audio.export(output_path_pitch, format="flac")
-
-    # merge audios
-    store_dir = os.path.join(audio_files_root, music_folder, "final")
-    os.makedirs(store_dir, exist_ok=True)
-
-    vocals_path = os.path.join(audio_files_root, music_folder, "rvc")
-    vocals_file = get_last_modified_file(
-        os.path.join(audio_files_root, music_folder, "rvc")
-    )
-    vocals_file = os.path.join(vocals_path, vocals_file)
-
-    karaoke_path = os.path.join(audio_files_root, music_folder, "karaoke")
-    karaoke_file = search_with_word(karaoke_path, "Instrumental") or search_with_word(
-        karaoke_path, "instrumental"
-    )
-    karaoke_file = os.path.join(karaoke_path, karaoke_file)
-    final_output_path = os.path.join(
-        audio_files_root,
-        music_folder,
-        "final",
-        f"{os.path.basename(input_audio_path).split('.')[0]}_final.{export_format_final.lower()}",
-    )
-    print("Merging audios")
-    result = merge_audios(
-        vocals_file,
-        inst_file,
-        backing_vocals,
-        final_output_path,
-        vocals_volume,
-        instrumentals_volume,
-        backing_vocals_volume,
-        export_format_final,
-    )
-    print("Audios merged!")
-    if delete_audios:
-        audio_files_root = str(path('audios_dir'))
-        main_directory = os.path.join(audio_files_root, music_folder)
-        folder_to_keep = "final"
-        for folder_name in os.listdir(main_directory):
-            folder_path = os.path.join(main_directory, folder_name)
-            if os.path.isdir(folder_path) and folder_name != folder_to_keep:
-                shutil.rmtree(folder_path)
-    return (
-        f"Audio file {os.path.basename(input_audio_path).split('.')[0]} converted with success",
-        result,
-    )
-
-
-def download_model(link):
-    result = model_download_pipeline(link)
-    # If the result is our fallback message, just return a success message
-    if "not implemented" in result.lower():
-        print(result)  # Print the fallback message
-        return "Model download functionality not available"
-    return "Model downloaded with success"
-
-
-def download_music(link):
-    audio_files_root = str(path('audios_dir'))
-    os.makedirs(os.path.join(audio_files_root, "original_files"), exist_ok=True)
-
-    # Check if youtube cookies file exists
-    cookies_file = os.path.join(now_dir, "assets", "youtube.txt")
-    if os.path.exists(cookies_file):
-        command = [
-            "yt-dlp",
-            "-x",
-            "--cookies",
-            cookies_file,
-            "--output",
-            os.path.join(audio_files_root, "original_files", "%(title)s.%(ext)s"),
-            link,
-        ]
-    else:
-        # Fallback to basic command if no cookies file exists
-        command = [
-            "yt-dlp",
-            "-x",
-            "--output",
-            os.path.join(audio_files_root, "original_files", "%(title)s.%(ext)s"),
-            link,
-        ]
-
-    subprocess.run(command)
-    return "Music downloaded with success"
-
-
-def real_time_voice_conversion(
-    model_path,
-    index_path,
-    embedder_model,
-    pitch,
-    filter_radius,
-    index_rate,
-    rms_mix_rate,
-    protect,
-    pitch_extract,
-    chunk_size=2048,
-    overlap=512
-):
-    """
-    Perform real-time voice conversion using microphone input with KRVC optimizations.
-    
-    This function provides actual real-time processing capabilities using:
-    - KRVC kernel optimizations
-    - Efficient audio chunking
-    - Streaming inference pipeline
-    - Memory management
-    """
-    try:
-        # Import required libraries for real-time processing
-        import threading
-        import queue
-        import time
-        import numpy as np
-        import sounddevice as sd
-        import librosa
-        
-        # Map embedder model for compatibility
-        mapped_embedder = map_embedder_model(embedder_model)
-        
-        # Map pitch extraction method for compatibility
-        mapped_pitch_extract = map_pitch_extractor(pitch_extract)
-        
-        # Initialize KRVC real-time processor if available
-        if KRVC_AVAILABLE:
-            krvc_processor = KRVCRealTimeProcessor(buffer_size=chunk_size)
-            krvc_inference_mode()  # Enable KRVC inference optimizations
-            print("KRVC real-time processing enabled")
-        else:
-            krvc_processor = None
-            print("Using standard real-time processing")
-        
-        # Import Voice Converter
-        inference_vc = import_voice_converter()
-        
-        # Audio buffer and processing queue
-        audio_buffer = queue.Queue(maxsize=10)
-        output_buffer = queue.Queue(maxsize=10)
-        
-        def audio_callback(indata, outdata, frames, time, status):
-            """Audio callback for real-time processing"""
-            if status:
-                print(f"Audio callback status: {status}")
-            
-            try:
-                # Input audio data
-                input_chunk = indata[:, 0]
-                
-                # Convert to float32 and normalize
-                if input_chunk.dtype != np.float32:
-                    input_chunk = input_chunk.astype(np.float32)
-                
-                # Normalize if needed
-                if np.max(np.abs(input_chunk)) > 1.0:
-                    input_chunk = input_chunk / np.max(np.abs(input_chunk))
-                
-                # Process audio chunk
-                processed_chunk = process_audio_chunk(
-                    input_chunk, 
-                    model_path, 
-                    index_path, 
-                    mapped_embedder,
-                    mapped_pitch_extract,
-                    pitch,
-                    filter_radius,
-                    index_rate,
-                    rms_mix_rate,
-                    protect,
-                    chunk_size
-                )
-                
-                # Output processed audio
-                if len(processed_chunk) > 0:
-                    # Ensure output size matches expected
-                    if len(processed_chunk) > frames:
-                        processed_chunk = processed_chunk[:frames]
-                    elif len(processed_chunk) < frames:
-                        # Pad with zeros if necessary
-                        padding = np.zeros(frames - len(processed_chunk), dtype=np.float32)
-                        processed_chunk = np.concatenate([processed_chunk, padding])
-                    
-                    outdata[:, 0] = processed_chunk
-                else:
-                    # Output silence if no processed audio
-                    outdata[:, 0] = np.zeros(frames, dtype=np.float32)
-                    
-            except Exception as e:
-                print(f"Error in audio processing: {e}")
-                # Output silence on error
-                outdata[:, 0] = np.zeros(frames, dtype=np.float32)
-        
-        def process_audio_chunk(chunk, model_path, index_path, embedder, 
-                              pitch_method, pitch_val, filter_r, 
-                              idx_rate, rms_rate, protect_param, chunk_size):
-            """Process a single audio chunk"""
-            try:
-                import torch
-                # Apply KRVC real-time processing if available
-                if krvc_processor:
-                    processed_chunk = krvc_processor.process_realtime(
-                        torch.from_numpy(chunk).float()
-                    ).numpy()
-                else:
-                    processed_chunk = chunk
-                
-                # Ensure minimum chunk size for processing
-                if len(processed_chunk) < 1024:
-                    # Pad with zeros
-                    padding = np.zeros(1024 - len(processed_chunk), dtype=np.float32)
-                    processed_chunk = np.concatenate([processed_chunk, padding])
-                
-                # Limit chunk size for efficiency
-                if len(processed_chunk) > 8192:
-                    processed_chunk = processed_chunk[:8192]
-                
-                # Create temporary paths for chunk processing
-                import tempfile
-                import os
-                
-                with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_input:
-                    # Save chunk as audio file
-                    import soundfile as sf
-                    sf.write(temp_input.name, processed_chunk, 16000)
-                    
-                    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as temp_output:
-                        # Process audio
-                        inference_vc.convert_audio(
-                            audio_input_path=temp_input.name,
-                            audio_output_path=temp_output.name,
-                            model_path=model_path,
-                            index_path=index_path,
-                            embedder_model=embedder,
-                            pitch=pitch_val,
-                            f0_file=None,
-                            f0_method=pitch_method,
-                            filter_radius=filter_r,
-                            index_rate=idx_rate,
-                            volume_envelope=rms_rate,
-                            protect=protect_param,
-                            split_audio=False,  # Don't split for real-time
-                            f0_autotune=False,
-                            hop_length=128,
-                            export_format='wav',
-                            embedder_model_custom=None,
-                        )
-                        
-                        # Read processed audio
-                        processed_audio, _ = sf.read(temp_output.name)
-                        
-                        # Clean up temporary files
-                        try:
-                            os.unlink(temp_input.name)
-                            os.unlink(temp_output.name)
-                        except:
-                            pass
-                
-                # Apply pitch change if specified
-                if pitch_val != 0:
-                    # Simple pitch shifting (could be enhanced)
-                    semitone_ratio = 2 ** (pitch_val / 12.0)
-                    processed_audio = librosa.effects.pitch_shift(
-                        processed_audio, 
-                        sr=16000, 
-                        n_steps=pitch_val
-                    )
-                
-                return processed_audio.astype(np.float32)
-                
-            except Exception as e:
-                print(f"Error processing audio chunk: {e}")
-                return np.array([], dtype=np.float32)
-        
-        # Initialize audio stream
+# Initialize optimizations
+def _initialize_performance():
+    """Initialize performance optimizations without circular imports"""
+    if KRVC_AVAILABLE:
         try:
-            with sd.Stream(
-                channels=1,
-                samplerate=16000,
-                blocksize=chunk_size,
-                callback=audio_callback,
-                dtype=np.float32
-            ):
-                result_msg = f"""
-Real-time voice conversion initialized successfully!
+            krvc_speed_optimize()
+            print("KRVC Kernel loaded successfully - Enhanced performance mode active")
+        except Exception as e:
+            print(f"KRVC initialization failed: {e}")
 
-Configuration:
-- Model: {os.path.basename(model_path) if model_path else 'None'}
-- Index: {os.path.basename(index_path) if index_path else 'None'}
-- Embedder: {mapped_embedder}
-- Pitch: {pitch} semitones
-- Pitch Method: {mapped_pitch_extract}
-- Filter Radius: {filter_radius}
-- Index Rate: {index_rate}
-- RMS Mix Rate: {rms_mix_rate}
-- Protect: {protect}
-- Chunk Size: {chunk_size} samples
-- KRVC Enabled: {KRVC_AVAILABLE}
+    if GPU_OPTIMIZATION_AVAILABLE:
+        try:
+            gpu_optimizer = get_gpu_optimizer()
+            gpu_settings = gpu_optimizer.get_optimal_settings()
+            gpu_optimizer.optimize_memory()
+            print(f"GPU Optimization initialized - {gpu_optimizer.gpu_info['type']} detected")
+        except Exception as e:
+            print(f"GPU optimization failed: {e}")
 
-Processing Status:
-✓ Audio stream started
-✓ Real-time processing active
-✓ Ready for voice conversion
+# Initialize performance optimizations
+_initialize_performance()
 
-Note: Speak into your microphone to hear the converted voice.
-Press Ctrl+C to stop the real-time conversion.
-                """
+# Audio processing imports with fallbacks
+try:
+    from pedalboard import Pedalboard, Reverb
+    from pedalboard.io import AudioFile
+    PEDALBOARD_AVAILABLE = True
+except ImportError:
+    PEDALBOARD_AVAILABLE = False
+
+try:
+    from pydub import AudioSegment
+    PYTHONWAV_AVAILABLE = True
+except ImportError:
+    PYTHONWAV_AVAILABLE = False
+
+try:
+    from audio_separator.separator import Separator
+    SEPARATOR_AVAILABLE = True
+except ImportError:
+    SEPARATOR_AVAILABLE = False
+
+try:
+    import librosa
+    LIBROSA_AVAILABLE = True
+except ImportError:
+    LIBROSA_AVAILABLE = False
+
+class VoiceConverter:
+    """
+    Enhanced Voice Converter based on Vietnamese-RVC implementation
+    Integrates Rich logging, KRVC optimizations, and enhanced error handling
+    """
+    
+    def __init__(self, model_path: str, sid: int = 0, config=None):
+        self.model_path = model_path
+        self.sid = sid
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.is_half = torch.cuda.is_available()
+        
+        # Vietnamese-RVC configuration
+        self.config = config or self._get_default_config()
+        
+        # Initialize model components
+        self.hubert_model = None
+        self.tgt_sr = 40000  # Default target sample rate
+        self.net_g = None
+        self.vc = None
+        self.cpt = None
+        self.version = "v2"  # Default to v2
+        self.n_spk = 1
+        self.use_f0 = 1
+        self.loaded_model = None
+        self.vocoder = "Default"
+        self.checkpointing = False
+        self.sample_rate = 16000
+        self.energy = False
+        
+        # Performance optimizations
+        self.performance_mode = KRVC_AVAILABLE or GPU_OPTIMIZATION_AVAILABLE
+        
+        # Initialize the voice converter
+        self._initialize()
+    
+    def _get_default_config(self):
+        """Get default configuration matching Vietnamese-RVC structure"""
+        class Config:
+            def __init__(self):
+                self.x_pad = 1.25
+                self.x_query = 10
+                self.x_center = 60
+                self.x_max = 65
+                self.device = self.device
+                self.is_half = self.is_half
                 
-                # Keep the stream running
-                print("Real-time voice conversion started. Press Ctrl+C to stop.")
-                while True:
-                    time.sleep(0.1)  # Keep the main thread alive
+        return Config()
+    
+    def _initialize(self):
+        """Initialize the voice converter"""
+        try:
+            # Use print instead of logger to avoid circular imports during initialization
+            with self._get_status_context("🎵 Initializing Voice Converter..."):
+                self.get_vc(self.model_path, self.sid)
+                print(f"✅ Voice Converter initialized successfully")
+                print(f"📊 Device: {self.device}, Half precision: {self.is_half}")
+                print(f"🤖 Model: {Path(self.model_path).name}")
+        except Exception as e:
+            print(f"❌ Failed to initialize Voice Converter: {e}")
+            raise
+    
+    def _get_status_context(self, message):
+        """Get status context - returns dummy context manager to avoid circular imports"""
+        class DummyStatus:
+            def __enter__(self):
+                print(message)
+                return self
+            def __exit__(self, *args):
+                pass
+        return DummyStatus()
+    
+    def convert_audio(self, 
+                     audio_input_path: str, 
+                     audio_output_path: str,
+                     index_path: str = "",
+                     embedder_model: str = "contentvec",
+                     pitch: int = 0,
+                     f0_method: str = "rmvpe",
+                     index_rate: float = 0.5,
+                     rms_mix_rate: float = 1.0,
+                     protect: float = 0.33,
+                     hop_length: int = 64,
+                     f0_autotune: bool = False,
+                     f0_autotune_strength: float = 1.0,
+                     filter_radius: int = 3,
+                     clean_audio: bool = False,
+                     clean_strength: float = 0.7,
+                     export_format: str = "wav",
+                     resample_sr: int = 0,
+                     checkpointing: bool = False,
+                     f0_file: str = "",
+                     f0_onnx: bool = False,
+                     embedders_mode: str = "fairseq",
+                     formant_shifting: bool = False,
+                     formant_qfrency: float = 0.8,
+                     formant_timbre: float = 0.8,
+                     split_audio: bool = False,
+                     proposal_pitch: bool = False,
+                     proposal_pitch_threshold: float = 255.0,
+                     audio_processing: bool = False,
+                     alpha: float = 0.5,
+                     batch_processing: bool = False):
+        """
+        Convert audio using Vietnamese-RVC pipeline with enhanced logging
+        """
+        
+        start_time = time.time()
+        self.checkpointing = checkpointing
+        
+        # Log conversion parameters
+        rich_logger.header("🎯 Audio Conversion Parameters")
+        rich_logger.info(f"Input: {Path(audio_input_path).name}")
+        rich_logger.info(f"Output: {Path(audio_output_path).name}")
+        rich_logger.info(f"Model: {Path(self.model_path).name}")
+        rich_logger.info(f"Pitch shift: {pitch} semitones")
+        rich_logger.info(f"F0 method: {f0_method}")
+        rich_logger.info(f"Index rate: {index_rate}")
+        rich_logger.info(f"Quality protection: {protect}")
+        
+        try:
+            with rich_logger.status("🎵 Loading and processing audio..."):
+                # Load audio
+                audio = load_audio(audio_input_path, self.sample_rate, 
+                                 formant_shifting=formant_shifting,
+                                 formant_qfrency=formant_qfrency,
+                                 formant_timbre=formant_timbre)
+                
+                if audio_processing and AUDIO_PROCESSING_AVAILABLE:
+                    audio = preprocess(audio, self.sample_rate, device=self.device)
+                
+                # Normalize audio
+                audio_max = np.abs(audio).max() / 0.95
+                if audio_max > 1:
+                    audio /= audio_max
+                
+                # Load embedder model if not already loaded
+                if not self.hubert_model:
+                    rich_logger.info(f"Loading embedder model: {embedder_model}")
+                    from .lib.utils import ensure_embedder_available
+                    embedder_path = ensure_embedder_available(embedder_model, auto_download=True)
                     
-        except KeyboardInterrupt:
-            print("\nStopping real-time voice conversion...")
-            result_msg = "Real-time voice conversion stopped by user"
+                    if embedder_path:
+                        rich_logger.info(f"Embedder model found at: {embedder_path}")
+                        # Load embedder model logic here
+                        from .lib.utils import load_embedders_model
+                        models = load_embedders_model(embedder_model, embedders_mode)
+                    else:
+                        rich_logger.warning(f"Embedder model '{embedder_model}' not available")
+                        models = None
+                    
+                    if isinstance(models, torch.nn.Module):
+                        models = models.to(
+                            torch.float16 if self.is_half else torch.float32
+                        ).eval().to(self.device)
+                    self.hubert_model = models
+                
+            # Handle audio splitting for long files
+            if split_audio:
+                rich_logger.info("Splitting audio for processing...")
+                from .lib.utils import cut
+                chunks = cut(audio, self.sample_rate, db_thresh=-60, min_interval=500)
+                rich_logger.info(f"Split into {len(chunks)} chunks")
+            else:
+                chunks = [(audio, 0, 0)]
+            
+            # Process audio chunks
+            converted_chunks = []
+            total_chunks = len(chunks)
+            
+            if total_chunks > 1:
+                rich_logger.info(f"Processing {total_chunks} audio chunks...")
+            
+            for i, (waveform, start, end) in enumerate(chunks):
+                if total_chunks > 1:
+                    rich_logger.info(f"Processing chunk {i+1}/{total_chunks}")
+                
+                # Convert chunk
+                converted_chunk = self._convert_chunk(
+                    waveform, start, end,
+                    pitch, f0_method, index_rate, rms_mix_rate, protect,
+                    hop_length, f0_autotune, f0_autotune_strength, filter_radius,
+                    f0_file, f0_onnx, embedders_mode,
+                    proposal_pitch, proposal_pitch_threshold,
+                    index_path, alpha
+                )
+                
+                converted_chunks.append((start, end, converted_chunk))
+            
+            # Restore audio chunks
+            with rich_logger.status("🔄 Restoring audio chunks..."):
+                if len(chunks) > 1:
+                    from .lib.utils import restore
+                    audio_output = restore(converted_chunks, len(audio), 
+                                         dtype=converted_chunks[0][2].dtype)
+                else:
+                    audio_output = converted_chunks[0][2]
+            
+            # Post-process audio
+            if audio_processing and AUDIO_PROCESSING_AVAILABLE:
+                audio_output = postprocess(audio_output, self.tgt_sr, audio, 
+                                         self.sample_rate, device=self.device)
+            
+            # Resample if needed
+            if self.tgt_sr != resample_sr and resample_sr > 0:
+                rich_logger.info(f"Resampling from {self.tgt_sr}Hz to {resample_sr}Hz")
+                audio_output = librosa.resample(audio_output, orig_sr=self.tgt_sr, 
+                                              target_sr=resample_sr, res_type="soxr_vhq")
+                self.tgt_sr = resample_sr
+            
+            # Apply noise reduction
+            if clean_audio:
+                rich_logger.info("Applying noise reduction...")
+                from .lib.tools.noisereduce import TorchGate
+                if not hasattr(self, "tg"):
+                    self.tg = TorchGate(self.tgt_sr, prop_decrease=clean_strength).to(self.device)
+                audio_output = self.tg(
+                    torch.from_numpy(audio_output).unsqueeze(0).to(self.device).float()
+                ).squeeze(0).cpu().detach().numpy()
+            
+            # Ensure output length matches input
+            if len(audio) / self.sample_rate > len(audio_output) / self.tgt_sr:
+                padding_length = int(np.round(len(audio) / self.sample_rate * self.tgt_sr) - len(audio_output))
+                padding = np.zeros(padding_length, dtype=audio_output.dtype)
+                audio_output = np.concatenate([audio_output, padding])
+            
+            # Save audio file
+            with rich_logger.status("💾 Saving audio file..."):
+                try:
+                    import soundfile as sf
+                    sf.write(audio_output_path, audio_output, self.tgt_sr, format=export_format)
+                except Exception as e:
+                    rich_logger.warning(f"Failed to save with soundfile, using librosa: {e}")
+                    audio_output = librosa.resample(audio_output, orig_sr=self.tgt_sr, 
+                                                  target_sr=48000, res_type="soxr_vhq")
+                    sf.write(audio_output_path, audio_output, 48000, format=export_format)
+            
+            elapsed_time = time.time() - start_time
+            rich_logger.success(f"Conversion completed successfully!")
+            rich_logger.info(f"Time taken: {elapsed_time:.2f} seconds")
+            rich_logger.info(f"Output: {audio_output_path}")
+            
+            return audio_output_path
             
         except Exception as e:
-            error_msg = f"Error in real-time conversion: {str(e)}"
-            print(error_msg)
-            result_msg = error_msg
+            import traceback
+            rich_logger.error(f"Conversion failed: {e}")
+            rich_logger.debug(traceback.format_exc())
+            raise
+    
+    def _convert_chunk(self, waveform, start, end, pitch, f0_method, index_rate, 
+                      rms_mix_rate, protect, hop_length, f0_autotune, 
+                      f0_autotune_strength, filter_radius, f0_file, f0_onnx,
+                      embedders_mode, proposal_pitch, proposal_pitch_threshold,
+                      index_path, alpha):
+        """Convert a single audio chunk"""
+        
+        if not PIPELINE_AVAILABLE:
+            raise RuntimeError("Vietnamese-RVC pipeline not available")
+        
+        # Get F0 extraction generator
+        from .lib.predictors.Generator import Generator
+        f0_generator = Generator(
+            sample_rate=self.sample_rate,
+            hop_length=hop_length,
+            f0_min=50,
+            f0_max=1100,
+            device=self.device,
+            f0_onnx_mode=f0_onnx,
+            auto_download_models=True
+        )
+        
+        # Extract features and F0
+        with torch.no_grad():
+            # Extract hubert features
+            from .lib.utils import extract_features
+            feats = extract_features(self.hubert_model, 
+                                   torch.from_numpy(waveform).to(self.device).float(), 
+                                   self.version, self.device)
             
-        # Cleanup
-        if KRVC_AVAILABLE:
-            cleanup_krvc_memory()
+            # Calculate F0
+            if f0_file and os.path.exists(f0_file):
+                # Load F0 from file
+                f0 = np.load(f0_file)
+            else:
+                # Extract F0 using generator
+                pitch, pitchf = f0_generator.calculator(
+                    x_pad=0, f0_method=f0_method, x=waveform,
+                    f0_up_key=pitch, p_len=len(waveform)//hop_length,
+                    filter_radius=filter_radius,
+                    f0_autotune=f0_autotune,
+                    f0_autotune_strength=f0_autotune_strength,
+                    proposal_pitch=proposal_pitch,
+                    proposal_pitch_threshold=proposal_pitch_threshold
+                )
+                f0 = pitchf
+            
+            # Apply the Vietnamese-RVC conversion pipeline
+            audio_output = self.vc.pipeline(
+                logger=rich_logger,
+                model=self.hubert_model,
+                net_g=self.net_g,
+                sid=self.sid,
+                audio=waveform,
+                f0_up_key=pitch,
+                f0_method=f0_method,
+                file_index=index_path.strip().strip('"').strip("\n").strip('"'),
+                index_rate=index_rate,
+                pitch_guidance=self.use_f0,
+                filter_radius=filter_radius,
+                rms_mix_rate=rms_mix_rate,
+                version=self.version,
+                protect=protect,
+                hop_length=hop_length,
+                f0_autotune=f0_autotune,
+                f0_autotune_strength=f0_autotune_strength,
+                f0_file=f0_file,
+                f0_onnx=f0_onnx,
+                proposal_pitch=proposal_pitch,
+                proposal_pitch_threshold=proposal_pitch_threshold,
+                energy_use=self.energy,
+                del_onnx=True,
+                alpha=alpha
+            )
         
-        return result_msg
+        return audio_output
+    
+    def get_vc(self, weight_root: str, sid: int):
+        """Load the voice conversion model"""
+        if sid == "" or sid == []:
+            self.cleanup()
+            clear_gpu_cache()
         
-    except ImportError as e:
-        return f"Real-time voice conversion requires additional dependencies: {str(e)}. Install with: pip install sounddevice numpy"
-    except Exception as e:
-        return f"Error initializing real-time conversion: {str(e)}"
+        if not self.loaded_model or self.loaded_model != weight_root:
+            self.loaded_model = weight_root
+            from .lib.utils import load_model
+            self.cpt = load_model(weight_root)
+            if self.cpt is not None:
+                self.setup()
+    
+    def cleanup(self):
+        """Clean up GPU memory and models"""
+        if self.hubert_model is not None:
+            del self.net_g, self.n_spk, self.vc, self.hubert_model, self.tgt_sr
+            self.hubert_model = self.net_g = self.n_spk = self.vc = self.tgt_sr = None
+            clear_gpu_cache()
+        
+        del self.net_g, self.cpt
+        clear_gpu_cache()
+        self.cpt = None
+    
+    def setup(self):
+        """Setup the voice conversion model"""
+        if self.cpt is not None:
+            if self.loaded_model.endswith(".pth"):
+                # Load PyTorch model
+                from .lib.algorithm.synthesizers import Synthesizer
+                
+                self.tgt_sr = self.cpt["config"][-1]
+                self.cpt["config"][-3] = self.cpt["weight"]["emb_g.weight"].shape[0]
+                
+                self.use_f0 = self.cpt.get("f0", 1)
+                self.version = self.cpt.get("version", "v2")
+                self.vocoder = self.cpt.get("vocoder", "Default")
+                self.energy = self.cpt.get("energy", False)
+                
+                if self.vocoder != "Default":
+                    self.is_half = False
+                
+                self.net_g = Synthesizer(
+                    *self.cpt["config"], 
+                    use_f0=self.use_f0, 
+                    text_enc_hidden_dim=768 if self.version == "v2" else 256,
+                    vocoder=self.vocoder,
+                    checkpointing=self.checkpointing,
+                    energy=self.energy
+                )
+                del self.net_g.enc_q
+                
+                self.net_g.load_state_dict(self.cpt["weight"], strict=False)
+                self.net_g.eval().to(self.device)
+                self.net_g = self.net_g.to(torch.float16 if self.is_half else torch.float32)
+                self.n_spk = self.cpt["config"][-3]
+            else:
+                # Load ONNX model
+                self.net_g = self.cpt.to(self.device)
+                self.tgt_sr = self.cpt.cpt.get("tgt_sr", 40000)
+                self.use_f0 = self.cpt.cpt.get("f0", 1)
+                self.version = self.cpt.cpt.get("version", "v2")
+                self.energy = self.cpt.cpt.get("energy", False)
+            
+            if PIPELINE_AVAILABLE:
+                self.vc = Pipeline(self.tgt_sr, self.config)
 
+# Enhanced conversion functions
+def convert_audio(input_path: str, 
+                 output_path: str,
+                 model_path: str,
+                 index_path: str = "",
+                 **kwargs) -> str:
+    """
+    Enhanced audio conversion function with Rich logging
+    
+    Args:
+        input_path: Path to input audio file
+        output_path: Path for output audio file
+        model_path: Path to RVC model file
+        **kwargs: Additional conversion parameters
+        
+    Returns:
+        str: Path to output file
+    """
+    rich_logger.header("🎵 Advanced RVC Voice Conversion")
+    rich_logger.info(f"Input: {Path(input_path).name}")
+    rich_logger.info(f"Model: {Path(model_path).name}")
+    
+    # Check and auto-download required assets following Vietnamese-RVC patterns
+    f0_method = kwargs.get('f0_method', 'rmvpe')
+    embedder_model = kwargs.get('embedder_model', 'contentvec')
+    f0_onnx = kwargs.get('f0_onnx', False)
+    embedders_mode = kwargs.get('embedders_mode', 'fairseq')
+    
+    # Import enhanced auto-download functions
+    try:
+        from .lib.utils import ensure_f0_model_available, ensure_embedder_available
+        f0_model_path = ensure_f0_model_available(f0_method, auto_download=True)
+        embedder_path = ensure_embedder_available(embedder_model, auto_download=True)
+        
+        if f0_model_path:
+            rich_logger.info(f"✅ F0 model ready: {Path(f0_model_path).name}")
+        else:
+            rich_logger.warning(f"⚠️ F0 model '{f0_method}' not available")
+            
+        if embedder_path:
+            rich_logger.info(f"✅ Embedder model ready: {Path(embedder_path).name}")
+        else:
+            rich_logger.warning(f"⚠️ Embedder model '{embedder_model}' not available")
+            
+    except ImportError:
+        # Fallback to basic asset checking
+        check_assets(f0_method, embedder_model, f0_onnx, embedders_mode)
+    
+    # Create voice converter
+    converter = VoiceConverter(model_path)
+    
+    # Perform conversion
+    return converter.convert_audio(
+        audio_input_path=input_path,
+        audio_output_path=output_path,
+        index_path=index_path,
+        **kwargs
+    )
 
-# Create assets directory if it doesn't exist
-assets_dir = os.path.join(now_dir, "assets")
-os.makedirs(assets_dir, exist_ok=True)
+def batch_convert(input_dir: str, 
+                 output_dir: str,
+                 model_path: str,
+                 **kwargs) -> list:
+    """
+    Batch convert multiple audio files
+    
+    Args:
+        input_dir: Directory containing input audio files
+        output_dir: Directory for output audio files
+        model_path: Path to RVC model file
+        **kwargs: Additional conversion parameters
+        
+    Returns:
+        list: List of converted file paths
+    """
+    from pathlib import Path
+    import shutil
+    
+    rich_logger.header("📁 Batch Audio Conversion")
+    
+    input_path = Path(input_dir)
+    output_path = Path(output_dir)
+    output_path.mkdir(exist_ok=True)
+    
+    # Supported audio formats
+    audio_extensions = {'.wav', '.mp3', '.flac', '.ogg', '.opus', '.m4a', '.mp4', '.aac', '.alac', '.wma', '.aiff', '.webm', '.ac3'}
+    
+    # Find audio files
+    audio_files = []
+    for ext in audio_extensions:
+        audio_files.extend(input_path.glob(f"*{ext}"))
+        audio_files.extend(input_path.glob(f"*{ext.upper()}"))
+    
+    if not audio_files:
+        rich_logger.warning("No audio files found in directory")
+        return []
+    
+    rich_logger.info(f"Found {len(audio_files)} audio files to convert")
+    
+    # Convert files
+    converted_files = []
+    for audio_file in audio_files:
+        try:
+            output_file = output_path / f"{audio_file.stem}_converted.wav"
+            
+            rich_logger.info(f"Converting: {audio_file.name}")
+            
+            result = convert_audio(
+                input_path=str(audio_file),
+                output_path=str(output_file),
+                model_path=model_path,
+                **kwargs
+            )
+            
+            converted_files.append(result)
+            rich_logger.success(f"Completed: {audio_file.name}")
+            
+        except Exception as e:
+            rich_logger.error(f"Failed to convert {audio_file.name}: {e}")
+            continue
+    
+    rich_logger.success(f"Batch conversion completed: {len(converted_files)}/{len(audio_files)} files converted")
+    
+    return converted_files
+
+# Export functions
+__all__ = [
+    'VoiceConverter', 
+    'convert_audio', 
+    'batch_convert',
+    'rich_logger',
+    'RICH_AVAILABLE'
+]
+
+# Initialize optimizations after all imports are complete
+try:
+    # Initialize performance optimizations first
+    _initialize_performance()
+    
+    # Initialize performance monitor if KRVC is available
+    if KRVC_AVAILABLE:
+        try:
+            from .krvc_kernel import KRVCPerformanceMonitor
+            global performance_monitor
+            performance_monitor = KRVCPerformanceMonitor()
+        except:
+            pass
+    
+    # Initialize application logging (after other systems are ready)
+    rich_logger.header("🎯 Advanced RVC Inference - Enhanced Vietnamese-RVC Implementation")
+    rich_logger.info("Rich logging system initialized")
+    rich_logger.info(f"Vietnamese-RVC pipeline available: {PIPELINE_AVAILABLE}")
+    rich_logger.info(f"KRVC optimizations available: {KRVC_AVAILABLE}")
+    rich_logger.info(f"GPU optimizations available: {GPU_OPTIMIZATION_AVAILABLE}")
+    
+except Exception as e:
+    # Fallback logging if Rich is not available
+    print(f"Initialization warning: {e}")
+    print("Advanced RVC Inference initialized with fallback logging")

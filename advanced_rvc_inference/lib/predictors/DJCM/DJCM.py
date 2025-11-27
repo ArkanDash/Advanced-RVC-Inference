@@ -1,8 +1,6 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
 
@@ -10,9 +8,9 @@ from scipy.signal import medfilt
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.predictors.DJCM.model import DJCMM
-from advanced_rvc_inference.rvc.predictors.DJCM.spec import Spectrogram
-from advanced_rvc_inference.rvc.predictors.DJCM.utils import WINDOW_LENGTH, SAMPLE_RATE, N_CLASS
+from main.library.predictors.DJCM.model import DJCMM
+from main.library.predictors.DJCM.spec import Spectrogram
+from main.library.predictors.DJCM.utils import WINDOW_LENGTH, SAMPLE_RATE, N_CLASS
 
 class DJCM:
     def __init__(self, model_path, device = "cpu", is_half = False, onnx = False, providers = ["CPUExecutionProvider"], batch_size = 1, segment_len = 5.12, kernel_size = 3):

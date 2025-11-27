@@ -6,49 +6,49 @@ sys.path.append(now_dir)
 DEFAULT_PORT = 7755
 MAX_PORT_ATTEMPTS = 10
 
-from advanced_rvc_inference.tabs.full_inference import full_inference_tab
-from advanced_rvc_inference.tabs.download_model import download_model_tab
-from advanced_rvc_inference.tabs.download_music import download_music_tab
-from advanced_rvc_inference.tabs.settings import select_themes_tab
-from advanced_rvc_inference.tabs.training import training_tab
-from advanced_rvc_inference.tabs.model_manager import model_manager_tab
-from advanced_rvc_inference.tabs.enhancement import enhancement_tab
-from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
-from advanced_rvc_inference.tabs.config_options import extra_options_tab
+from .tabs/full_inference import full_inference_tab
+from .tabs/download_model import download_model_tab
+from .tabs/download_music import download_music_tab
+from .tabs/settings import select_themes_tab
+from .tabs/training import training_tab
+from .tabs/model_manager import model_manager_tab
+from .tabs/enhancement import enhancement_tab
+from .tabs/real_time import real_time_inference_tab
+from .tabs/config_options import extra_options_tab
 
 # Attempt to import additional advanced features from Applio and Vietnamese-RVC
 try:
-    from advanced_rvc_inference.tabs.tts.tts import tts_tab
+    from .tabs/tts.tts import tts_tab
     TTS_AVAILABLE = True
 except ImportError:
     TTS_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.voice_blender.voice_blender import voice_blender_tab
+    from .tabs/voice_blender.voice_blender import voice_blender_tab
     VOICE_BLENDER_AVAILABLE = True
 except ImportError:
     VOICE_BLENDER_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.plugins.plugins import plugins_tab
+    from .tabs/plugins.plugins import plugins_tab
     PLUGINS_AVAILABLE = True
 except ImportError:
     PLUGINS_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.extra.extra import extra_tab
+    from .tabs/extra.extra import extra_tab
     EXTRA_AVAILABLE = True
 except ImportError:
     EXTRA_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.f0_extractor import f0_extractor_tab
+    from .tabs/f0_extractor import f0_extractor_tab
     F0_EXTRACTOR_AVAILABLE = True
 except ImportError:
     F0_EXTRACTOR_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.embedders import embedders_tab
+    from .tabs/embedders import embedders_tab
     EMBEDDER_AVAILABLE = True
 except ImportError:
     EMBEDDER_AVAILABLE = False
@@ -218,25 +218,14 @@ with gr.Blocks(
         with gr.Tab("📦 Download Model"):
             download_model_tab()
 
-    with gr.Tab("🎓 Train"):
-        with gr.Tab("🎙️ Training"):
-            from advanced_rvc_inference.tabs.training import training_tab
-            training_tab()
-        if F0_EXTRACTOR_AVAILABLE:
-            with gr.Tab("🔍 F0 Extractor"):
-                f0_extractor_tab()
-        if EMBEDDER_AVAILABLE:
-            with gr.Tab("🧠 Embedders"):
-                embedders_tab()
+    with gr.Tab("🎓 Training"):
+        from .tabs.training import training_tab
+        training_tab()
 
-    with gr.Tab("📚 Model Manager"):
-        model_manager_tab()
-
-    with gr.Tab("🎧 Enhancement"):
+    with gr.Tab("🔧 Audio Tools"):
         enhancement_tab()
-
-    with gr.Tab("🔧 Extra Options"):
-        extra_options_tab()
+        if F0_EXTRACTOR_AVAILABLE:
+            f0_extractor_tab()
 
     if VOICE_BLENDER_AVAILABLE:
         with gr.Tab("🎭 Voice Blender"):
@@ -262,7 +251,8 @@ def launch(port):
         show_error=True,
         prevent_thread_lock=False,
         theme=rvc_theme,
-        css=custom_css
+        css=custom_css,
+        footer_links=["api", "gradio", "settings"]  # Gradio 6: footer links instead of show_api
     )
 
 

@@ -1,21 +1,9 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 from librosa.filters import mel
@@ -48,7 +36,7 @@ class MelSpectrogram(nn.Module):
 
         if str(audio.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from advanced_rvc_inference.lib.backends.utils import STFT
+                from main.library.backends.utils import STFT
                 self.stft = STFT(filter_length=n_fft, hop_length=hop_length, win_length=win_length_new).to(audio.device)
             magnitude = self.stft.transform(audio, 1e-9)
         else:

@@ -1,22 +1,10 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
 import onnxruntime as ort
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 from einops import rearrange
@@ -25,9 +13,9 @@ from torch.nn.utils.parametrizations import weight_norm
 sys.path.append(os.getcwd())
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 
-from advanced_rvc_inference.rvc.predictors.FCPE.wav2mel import Wav2Mel
-from advanced_rvc_inference.rvc.predictors.FCPE.encoder import EncoderLayer, ConformerNaiveEncoder
-from advanced_rvc_inference.rvc.predictors.FCPE.utils import l2_regularization, batch_interp_with_replacement_detach, decrypt_model, DotDict
+from main.library.predictors.FCPE.wav2mel import Wav2Mel
+from main.library.predictors.FCPE.encoder import EncoderLayer, ConformerNaiveEncoder
+from main.library.predictors.FCPE.utils import l2_regularization, batch_interp_with_replacement_detach, decrypt_model, DotDict
 
 @torch.no_grad()
 def cent_to_f0(cent):

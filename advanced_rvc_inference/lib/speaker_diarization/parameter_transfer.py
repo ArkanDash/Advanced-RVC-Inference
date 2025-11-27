@@ -4,8 +4,8 @@ import inspect
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.speaker_diarization.speechbrain import fetch, run_on_main
-from advanced_rvc_inference.lib.speaker_diarization.features import DEFAULT_TRANSFER_HOOKS, DEFAULT_LOAD_HOOKS
+from ...lib.speaker_diarization.speechbrain import fetch, run_on_main
+from ...lib.speaker_diarization.features import DEFAULT_TRANSFER_HOOKS, DEFAULT_LOAD_HOOKS
 
 def get_default_hook(obj, default_hooks):
     for cls in inspect.getmro(type(obj)):

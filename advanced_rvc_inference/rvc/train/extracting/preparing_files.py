@@ -7,8 +7,8 @@ from random import shuffle
 sys.path.append(os.getcwd())
 
 # from main.app.core.ui import configs, config
-from advanced_rvc_inference.rvc.infer.extracting.embedding import create_mute_file
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.infer.extracting.embedding import create_mute_file
+from ...lib.path_manager import path
 
 def mute_file(embedders_mode, embedders_model, mute_base_path, rvc_version):
     if embedders_mode.startswith(("spin", "whisper")):

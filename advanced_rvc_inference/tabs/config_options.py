@@ -1,7 +1,7 @@
 import gradio as gr
 import os, sys
 import json
-from advanced_rvc_inference.lib.i18n import I18nAuto
+from ...lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 

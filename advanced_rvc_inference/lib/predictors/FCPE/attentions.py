@@ -1,13 +1,6 @@
 import math
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 from torch import nn, einsum

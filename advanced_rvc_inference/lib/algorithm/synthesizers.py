@@ -6,9 +6,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.algorithm.residuals import ResidualCouplingBlock
-from advanced_rvc_inference.lib.algorithm.encoders import TextEncoder, PosteriorEncoder
-from advanced_rvc_inference.lib.algorithm.commons import slice_segments, rand_slice_segments
+from ...lib.algorithm.residuals import ResidualCouplingBlock
+from ...lib.algorithm.encoders import TextEncoder, PosteriorEncoder
+from ...lib.algorithm.commons import slice_segments, rand_slice_segments
 
 class Synthesizer(torch.nn.Module):
     def __init__(self, spec_channels, segment_size, inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, spk_embed_dim, gin_channels, sr, use_f0, text_enc_hidden_dim=768, vocoder="Default", checkpointing=False, onnx=False, energy=False, **kwargs):
@@ -34,16 +34,16 @@ class Synthesizer(torch.nn.Module):
 
         if use_f0:
             if vocoder == "RefineGAN": 
-                from advanced_rvc_inference.lib.generators.refinegan import RefineGANGenerator
+                from ...lib.generators.refinegan import RefineGANGenerator
                 self.dec = RefineGANGenerator(sample_rate=sr, upsample_rates=upsample_rates, num_mels=inter_channels, checkpointing=checkpointing)
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
-                from advanced_rvc_inference.lib.generators.mrf_hifigan import HiFiGANMRFGenerator
+                from ...lib.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
             else: 
-                from advanced_rvc_inference.lib.generators.nsf_hifigan import HiFiGANNRFGenerator
+                from ...lib.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
         else: 
-            from advanced_rvc_inference.lib.generators.hifigan import HiFiGANGenerator
+            from ...lib.generators.hifigan import HiFiGANGenerator
             self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
 
         self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)

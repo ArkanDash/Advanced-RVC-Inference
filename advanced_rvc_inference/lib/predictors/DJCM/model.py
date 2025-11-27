@@ -1,18 +1,13 @@
 import os
 import sys
 
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.predictors.DJCM.decoder import PE_Decoder
-from advanced_rvc_inference.rvc.predictors.DJCM.utils import init_bn, WINDOW_LENGTH
-from advanced_rvc_inference.rvc.predictors.DJCM.encoder import ResEncoderBlock, Encoder
+from main.library.predictors.DJCM.decoder import PE_Decoder
+from main.library.predictors.DJCM.utils import init_bn, WINDOW_LENGTH
+from main.library.predictors.DJCM.encoder import ResEncoderBlock, Encoder
 
 class LatentBlocks(nn.Module):
     def __init__(self, n_blocks, latent_layers):

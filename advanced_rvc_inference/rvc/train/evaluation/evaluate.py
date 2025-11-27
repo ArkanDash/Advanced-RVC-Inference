@@ -17,7 +17,7 @@ import librosa
 from pathlib import Path
 import logging
 from concurrent.futures import ThreadPoolExecutor
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.path_manager import path
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')

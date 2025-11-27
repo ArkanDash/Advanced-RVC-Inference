@@ -15,8 +15,8 @@ from torch.nn.utils.parametrizations import spectral_norm, weight_norm
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.algorithm.commons import get_padding
-from advanced_rvc_inference.lib.algorithm.residuals import LRELU_SLOPE
+from ...lib.algorithm.commons import get_padding
+from ...lib.algorithm.residuals import LRELU_SLOPE
 
 class MultiPeriodDiscriminator(torch.nn.Module):
     def __init__(self, version, use_spectral_norm=False, checkpointing=False):

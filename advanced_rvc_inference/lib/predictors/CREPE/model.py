@@ -1,6 +1,4 @@
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import functools
 
 PITCH_BINS = 360

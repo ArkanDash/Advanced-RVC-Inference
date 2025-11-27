@@ -14,13 +14,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 import torch
 import warnings
-warnings.filterwarnings("ignore", category=UserWarning)audio.transforms as tat
+import torchaudio.transforms as tat
 
 sys.path.append(os.getcwd())
 
 from assets.config.variables import config, translations
-from advanced_rvc_inference.lib.utils import circular_write, check_assets
-from advanced_rvc_inference.rvc.infer.realtime.pipeline import create_pipeline
+from ...lib.utils import circular_write, check_assets
+from ...lib.infer.realtime.pipeline import create_pipeline
 
 class RVC_Realtime:
     def __init__(self, model_path, index_path = None, f0_method = "rmvpe", f0_onnx = False, embedder_model = "hubert_base", embedders_mode = "fairseq", sample_rate = 16000, hop_length = 160, silent_threshold = 0, input_sample_rate = 48000, output_sample_rate = 48000, vad_enabled = False, vad_sensitivity = 3, vad_frame_ms = 30, clean_audio=False, clean_strength=0.7):
@@ -58,7 +58,7 @@ class RVC_Realtime:
         check_assets(self.f0_method, self.embedder_model, f0_onnx=self.f0_onnx, embedders_mode=self.embedders_mode)
 
         if self.vad_enabled:
-            from advanced_rvc_inference.rvc.infer.realtime.vad_utils import VADProcessor
+            from ...lib.infer.realtime.vad_utils import VADProcessor
             self.vad = VADProcessor(sensitivity_mode=self.vad_sensitivity, sample_rate=self.sample_rate, frame_duration_ms=self.vad_frame_ms)
         else: self.vad = None
 

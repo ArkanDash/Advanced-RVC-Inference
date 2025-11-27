@@ -1,23 +1,13 @@
 import os
 import sys
 
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn as nn
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.lib.predictors.FCPE.attentions import SelfAttention
-from advanced_rvc_inference.lib.predictors.FCPE.utils import calc_same_padding, Transpose, GLU, Swish
+from main.library.predictors.FCPE.attentions import SelfAttention
+from main.library.predictors.FCPE.utils import calc_same_padding, Transpose, GLU, Swish
 
 class ConformerConvModule_LEGACY(nn.Module):
     def __init__(self, dim, causal=False, expansion_factor=2, kernel_size=31, dropout=0.0):

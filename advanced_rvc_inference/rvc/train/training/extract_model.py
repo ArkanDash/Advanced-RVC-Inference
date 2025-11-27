@@ -11,7 +11,7 @@ from collections import OrderedDict
 sys.path.append(os.getcwd())
 
 from assets.config.variables import logger, translations, config
-from advanced_rvc_inference.rvc.infer.training.utils import replace_keys_in_dict
+from ...lib.infer.training.utils import replace_keys_in_dict
 
 def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, version, hps, model_author, vocoder, energy_use):
     try:

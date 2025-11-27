@@ -1,15 +1,8 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 import numpy as np
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 import torch.nn.functional as F
 
 from librosa.filters import mel
@@ -53,7 +46,7 @@ class STFT:
 
         if str(y.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from advanced_rvc_inference.lib.backends.utils import STFT as _STFT
+                from main.library.backends.utils import STFT as _STFT
                 self.stft = _STFT(filter_length=n_fft, hop_length=hop_length_new, win_length=win_size_new).to(y.device)
             spec = self.stft.transform(pad, 1e-9)
         else:

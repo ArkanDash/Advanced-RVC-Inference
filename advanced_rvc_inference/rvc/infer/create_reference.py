@@ -16,8 +16,8 @@ from distutils.util import strtobool
 sys.path.append(os.getcwd())
 
 from assets.config.variables import config, logger, translations, configs
-from advanced_rvc_inference.lib.utils import load_audio, load_embedders_model, extract_features
-from advanced_rvc_inference.lib.path_manager import path
+from ...lib.utils import load_audio, load_embedders_model, extract_features
+from ...lib.path_manager import path
 
 warnings.filterwarnings("ignore")
 
@@ -129,7 +129,7 @@ def create_reference(
         pbar.update(1)
 
         if pitch_guidance:
-            from advanced_rvc_inference.lib.predictors.Generator import Generator
+            from ...lib.predictors.Generator import Generator
 
             generator = Generator(
                 sample_rate=SAMPLE_RATE, 
@@ -163,7 +163,7 @@ def create_reference(
         pbar.update(1)
 
         if use_energy:
-            from advanced_rvc_inference.rvc.infer.extracting.rms import RMSEnergyExtractor
+            from ...lib.infer.extracting.rms import RMSEnergyExtractor
             rms = RMSEnergyExtractor(frame_length=FRAME_LENGTH, hop_length=HOP_SIZE, center=True, pad_mode="reflect").to(device).eval()
 
             with torch.no_grad():

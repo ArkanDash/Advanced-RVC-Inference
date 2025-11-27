@@ -1,14 +1,12 @@
 import os
 import sys
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
 
 from torchaudio.transforms import Resample
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.predictors.FCPE.stft import STFT
+from main.library.predictors.FCPE.stft import STFT
 
 class Wav2Mel:
     def __init__(self, device=None, dtype=torch.float32):
