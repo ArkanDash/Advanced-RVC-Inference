@@ -1,29 +1,31 @@
 
 
+from .lib.rich_logging import logger as rich_logger
+from .lib.rich_logging import RICH_AVAILABLE
+from .lib.path_manager import path
+import datetime
+import glob
+import json
+import logging
 import os
 import sys
+import warnings
+from collections import deque
+from contextlib import nullcontext
+from distutils.util import strtobool
+from pathlib import Path
+from random import randint, shuffle
+from time import time as ttime
+
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
-import logging
-import json
-import glob
-import datetime
-import warnings
-from pathlib import Path
-from contextlib import nullcontext
-from collections import deque
-from random import randint, shuffle
-from distutils.util import strtobool
-from time import time as ttime
 
 # Import path manager
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 sys.path.append(os.path.join(current_dir, ".."))
 
-from .lib.rich_logging import logger as rich_logger, RICH_AVAILABLE
-from .lib.path_manager import path
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -37,38 +39,25 @@ except ImportError:
     TRAIN_MODEL_AVAILABLE = False
 
 try:
-    from .rvc.train.training.utils import (
-        HParams, 
-        summarize, 
-        load_checkpoint, 
-        save_checkpoint, 
-        load_wav_to_torch,
-        latest_checkpoint_path, 
-        plot_spectrogram_to_numpy
-    )
+    from .rvc.train.training.utils import (HParams, latest_checkpoint_path,
+                                           load_checkpoint, load_wav_to_torch,
+                                           plot_spectrogram_to_numpy,
+                                           save_checkpoint, summarize)
     TRAIN_UTILS_AVAILABLE = True
 except ImportError:
     TRAIN_UTILS_AVAILABLE = False
 
 try:
-    from .rvc.train.training.losses import (
-        GeneratorLoss, 
-        DiscriminatorLoss,
-        feature_loss,
-        generator_loss,
-        discriminator_loss,
-        kl_loss
-    )
+    from .rvc.train.training.losses import (DiscriminatorLoss, GeneratorLoss,
+                                            discriminator_loss, feature_loss,
+                                            generator_loss, kl_loss)
     LOSSES_AVAILABLE = True
 except ImportError:
     LOSSES_AVAILABLE = False
 
 try:
     from .rvc.train.training.mel_processing import (
-        MultiScaleMelSpectrogramLoss, 
-        mel_spectrogram_torch,
-        spec_to_mel_torch
-    )
+        MultiScaleMelSpectrogramLoss, mel_spectrogram_torch, spec_to_mel_torch)
     MEL_PROCESSING_AVAILABLE = True
 except ImportError:
     MEL_PROCESSING_AVAILABLE = False
@@ -87,42 +76,45 @@ except ImportError:
     GPU_OPTIMIZATION_AVAILABLE = False
 
 try:
-    from .krvc_kernel import KRVCTrainingOptimizer, KRVCPerformanceMonitor
+    from .krvc_kernel import KRVCPerformanceMonitor, KRVCTrainingOptimizer
     KRVC_AVAILABLE = True
 except ImportError:
     KRVC_AVAILABLE = False
+
 
 class EnhancedRVCTrainer:
     """
     Enhanced RVC trainer with Vietnamese-RVC integration and Rich logging
     """
-    
+
     def __init__(self):
         self.gpu_optimizer = None
         self.training_settings = {}
         self.gpu_info = {}
         self.krvc_optimizer = None
         self.performance_monitor = None
-        
+
         # Initialize optimizations
         self._initialize_optimizations()
-    
+
     def _initialize_optimizations(self):
         """Initialize training optimizations"""
-        
+
         # Initialize GPU optimization
         if GPU_OPTIMIZATION_AVAILABLE:
             try:
                 self.gpu_optimizer = get_gpu_optimizer()
                 self.gpu_info = self.gpu_optimizer.gpu_info
                 self.training_settings = self._get_optimal_training_settings()
-                rich_logger.success(f"GPU Optimizer initialized for {self.gpu_info['type']}")
+                rich_logger.success(
+                    f"GPU Optimizer initialized for {
+                        self.gpu_info['type']}")
             except Exception as e:
                 rich_logger.error(f"Failed to initialize GPU optimizer: {e}")
                 self._set_default_settings()
         else:
             self._set_default_settings()
-        
+
         # Initialize KRVC training optimizer
         if KRVC_AVAILABLE:
             try:
@@ -130,16 +122,17 @@ class EnhancedRVCTrainer:
                 self.performance_monitor = KRVCPerformanceMonitor()
                 rich_logger.success("KRVC Training Optimizer initialized")
             except Exception as e:
-                rich_logger.warning(f"Failed to initialize KRVC training optimizer: {e}")
-        
+                rich_logger.warning(
+                    f"Failed to initialize KRVC training optimizer: {e}")
+
         # Display training configuration
         self._log_training_config()
-    
+
     def _set_default_settings(self):
         """Set default training settings"""
         self.gpu_info = {
-            "type": "cpu", 
-            "memory_gb": 0, 
+            "type": "cpu",
+            "memory_gb": 0,
             "tensor_cores": False,
             "compute_capability": "N/A"
         }
@@ -154,12 +147,12 @@ class EnhancedRVCTrainer:
             "memory_efficient": True,
             "use_opencl": False
         }
-    
+
     def _get_optimal_training_settings(self):
         """Get optimal training settings based on GPU"""
         gpu_type = self.gpu_info.get('type', 'cpu').lower()
         memory_gb = self.gpu_info.get('memory_gb', 0)
-        
+
         if 't4' in gpu_type or 'tesla t4' in gpu_type:
             return {
                 "batch_size": 4,
@@ -209,11 +202,11 @@ class EnhancedRVCTrainer:
                 "memory_efficient": True,
                 "use_opencl": memory_gb < 4
             }
-    
+
     def _log_training_config(self):
         """Log training configuration with Rich formatting"""
         rich_logger.header("🎯 Enhanced RVC Training Configuration")
-        
+
         # GPU Information
         gpu_table_data = [
             ["Type", self.gpu_info['type']],
@@ -221,8 +214,10 @@ class EnhancedRVCTrainer:
             ["Tensor Cores", "Yes" if self.gpu_info.get('tensor_cores') else "No"],
             ["Compute Capability", self.gpu_info.get('compute_capability', 'N/A')]
         ]
-        rich_logger.table("GPU Information", gpu_table_data, ["Property", "Value"])
-        
+        rich_logger.table(
+            "GPU Information", gpu_table_data, [
+                "Property", "Value"])
+
         # Training Settings
         settings_table_data = [
             ["Batch Size", str(self.training_settings['batch_size'])],
@@ -235,44 +230,46 @@ class EnhancedRVCTrainer:
             ["Memory Efficient", "Yes" if self.training_settings['memory_efficient'] else "No"],
             ["OpenCL", "Yes" if self.training_settings['use_opencl'] else "No"]
         ]
-        rich_logger.table("Training Settings", settings_table_data, ["Setting", "Value"])
-    
-    def train_model(self, 
-                   model_name: str,
-                   dataset_path: str,
-                   sample_rate: int = 40000,
-                   total_epoch: int = 300,
-                   batch_size: int = None,
-                   save_every_epoch: int = 50,
-                   pitch_guidance: bool = True,
-                   g_pretrained_path: str = "",
-                   d_pretrained_path: str = "",
-                   rvc_version: str = "v2",
-                   use_custom_reference: bool = False,
-                   reference_path: str = "",
-                   vocoder: str = "Default",
-                   optimizer: str = "AdamW",
-                   energy_use: bool = False,
-                   multiscale_mel_loss: bool = False,
-                   checkpointing: bool = True,
-                   deterministic: bool = False,
-                   benchmark: bool = False,
-                   cache_data_in_gpu: bool = False,
-                   overtraining_detector: bool = False,
-                   overtraining_threshold: int = 50,
-                   cleanup: bool = False,
-                   model_author: str = "",
-                   **kwargs) -> dict:
+        rich_logger.table(
+            "Training Settings", settings_table_data, [
+                "Setting", "Value"])
+
+    def train_model(self,
+                    model_name: str,
+                    dataset_path: str,
+                    sample_rate: int = 40000,
+                    total_epoch: int = 300,
+                    batch_size: int = None,
+                    save_every_epoch: int = 50,
+                    pitch_guidance: bool = True,
+                    g_pretrained_path: str = "",
+                    d_pretrained_path: str = "",
+                    rvc_version: str = "v2",
+                    use_custom_reference: bool = False,
+                    reference_path: str = "",
+                    vocoder: str = "Default",
+                    optimizer: str = "AdamW",
+                    energy_use: bool = False,
+                    multiscale_mel_loss: bool = False,
+                    checkpointing: bool = True,
+                    deterministic: bool = False,
+                    benchmark: bool = False,
+                    cache_data_in_gpu: bool = False,
+                    overtraining_detector: bool = False,
+                    overtraining_threshold: int = 50,
+                    cleanup: bool = False,
+                    model_author: str = "",
+                    **kwargs) -> dict:
         """
         Train RVC model with Vietnamese-RVC pipeline and enhanced logging
         """
-        
+
         start_time = ttime()
-        
+
         # Use optimized batch size if not specified
         if batch_size is None:
             batch_size = self.training_settings['batch_size']
-        
+
         # Log training parameters
         rich_logger.header("🚀 Starting RVC Model Training")
         rich_logger.info(f"Model Name: {model_name}")
@@ -280,18 +277,24 @@ class EnhancedRVCTrainer:
         rich_logger.info(f"Total Epochs: {total_epoch}")
         rich_logger.info(f"Batch Size: {batch_size}")
         rich_logger.info(f"RVC Version: {rvc_version}")
-        rich_logger.info(f"Pitch Guidance: {'Yes' if pitch_guidance else 'No'}")
+        rich_logger.info(
+            f"Pitch Guidance: {
+                'Yes' if pitch_guidance else 'No'}")
         rich_logger.info(f"Vocoder: {vocoder}")
-        
+
         if g_pretrained_path:
-            rich_logger.info(f"Generator Pretrained: {Path(g_pretrained_path).name}")
+            rich_logger.info(
+                f"Generator Pretrained: {
+                    Path(g_pretrained_path).name}")
         if d_pretrained_path:
-            rich_logger.info(f"Discriminator Pretrained: {Path(d_pretrained_path).name}")
-        
+            rich_logger.info(
+                f"Discriminator Pretrained: {
+                    Path(d_pretrained_path).name}")
+
         # Create experiment directory
         experiment_dir = path('logs_dir') / model_name
         experiment_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Save training configuration
         config = {
             "model_name": model_name,
@@ -319,18 +322,18 @@ class EnhancedRVCTrainer:
             "use_custom_reference": use_custom_reference,
             "reference_path": reference_path
         }
-        
+
         config_path = experiment_dir / "config.json"
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
-        
+
         rich_logger.success(f"Training configuration saved to {config_path}")
-        
+
         try:
             # Use Vietnamese-RVC training pipeline if available
             if TRAIN_MODEL_AVAILABLE:
                 rich_logger.info("Using Vietnamese-RVC training pipeline")
-                
+
                 # Prepare arguments for Vietnamese-RVC training
                 training_args = {
                     'model_name': model_name,
@@ -357,26 +360,28 @@ class EnhancedRVCTrainer:
                     'use_custom_reference': use_custom_reference,
                     'reference_path': reference_path
                 }
-                
+
                 # Run training with enhanced logging
-                result = self._run_vietnamese_rvc_training(experiment_dir, **training_args)
-                
+                result = self._run_vietnamese_rvc_training(
+                    experiment_dir, **training_args)
+
             else:
-                rich_logger.warning("Vietnamese-RVC training pipeline not available, using fallback")
+                rich_logger.warning(
+                    "Vietnamese-RVC training pipeline not available, using fallback")
                 result = self._run_fallback_training(experiment_dir, **config)
-            
+
             elapsed_time = ttime() - start_time
-            
+
             # Log training results
             rich_logger.header("✅ Training Completed Successfully!")
-            rich_logger.info(f"Training Time: {elapsed_time/3600:.2f} hours")
+            rich_logger.info(f"Training Time: {elapsed_time / 3600:.2f} hours")
             rich_logger.info(f"Model saved to: {experiment_dir}")
-            
+
             if 'final_loss' in result:
                 rich_logger.info(f"Final Loss: {result['final_loss']:.6f}")
             if 'best_epoch' in result:
                 rich_logger.info(f"Best Epoch: {result['best_epoch']}")
-            
+
             return {
                 "success": True,
                 "experiment_dir": str(experiment_dir),
@@ -384,40 +389,45 @@ class EnhancedRVCTrainer:
                 "config": config,
                 "results": result
             }
-            
+
         except Exception as e:
             import traceback
             elapsed_time = ttime() - start_time
-            
-            rich_logger.error(f"Training failed after {elapsed_time:.2f} seconds")
+
+            rich_logger.error(
+                f"Training failed after {
+                    elapsed_time:.2f} seconds")
             rich_logger.error(f"Error: {str(e)}")
             rich_logger.debug(traceback.format_exc())
-            
+
             # Save error log
             error_log = experiment_dir / "error_log.txt"
             with open(error_log, 'w', encoding='utf-8') as f:
                 f.write(f"Training Error: {str(e)}\n")
                 f.write(f"Time: {datetime.datetime.now().isoformat()}\n")
                 f.write(f"Traceback:\n{traceback.format_exc()}\n")
-            
+
             return {
                 "success": False,
                 "error": str(e),
                 "experiment_dir": str(experiment_dir),
                 "training_time": elapsed_time
             }
-    
-    def _run_vietnamese_rvc_training(self, experiment_dir: Path, **training_args) -> dict:
+
+    def _run_vietnamese_rvc_training(
+            self,
+            experiment_dir: Path,
+            **training_args) -> dict:
         """Run training using Vietnamese-RVC pipeline"""
-        
+
         with rich_logger.status("🔧 Initializing Vietnamese-RVC Training..."):
             # This would call the actual Vietnamese-RVC training function
             # For now, we'll implement a simplified version
-            
+
             try:
                 # Set environment variables
                 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
-                
+
                 # Create training results dictionary
                 results = {
                     "final_loss": 0.001234,
@@ -425,19 +435,21 @@ class EnhancedRVCTrainer:
                     "total_epochs": training_args['total_epoch'],
                     "training_method": "vietnamese_rvc"
                 }
-                
-                rich_logger.success("Vietnamese-RVC training pipeline initialized successfully")
+
+                rich_logger.success(
+                    "Vietnamese-RVC training pipeline initialized successfully")
                 return results
-                
+
             except Exception as e:
-                rich_logger.error(f"Failed to initialize Vietnamese-RVC training: {e}")
+                rich_logger.error(
+                    f"Failed to initialize Vietnamese-RVC training: {e}")
                 raise
-    
+
     def _run_fallback_training(self, experiment_dir: Path, **config) -> dict:
         """Run fallback training if Vietnamese-RVC pipeline is not available"""
-        
+
         rich_logger.info("Running fallback training implementation")
-        
+
         # Simplified fallback training
         # In a real implementation, this would include:
         # - Data loading and preprocessing
@@ -445,45 +457,48 @@ class EnhancedRVCTrainer:
         # - Training loop with loss computation
         # - Validation and checkpointing
         # - Progress logging
-        
+
         try:
             # Simulate training progress
             for epoch in range(1, min(10, config['total_epoch']) + 1):
                 if epoch % (config['total_epoch'] // 10) == 0:
                     progress_pct = (epoch / config['total_epoch']) * 100
-                    rich_logger.info(f"Training Progress: {progress_pct:.1f}% (Epoch {epoch}/{config['total_epoch']})")
-            
+                    rich_logger.info(
+                        f"Training Progress: {progress_pct:.1f}% (Epoch {epoch}/{config['total_epoch']})")
+
             results = {
                 "final_loss": 0.002345,
                 "best_epoch": 8,
                 "total_epochs": min(10, config['total_epoch']),
                 "training_method": "fallback"
             }
-            
+
             rich_logger.success("Fallback training completed")
             return results
-            
+
         except Exception as e:
             rich_logger.error(f"Fallback training failed: {e}")
             raise
-    
+
     def get_training_progress(self, experiment_dir: Path) -> dict:
         """Get current training progress"""
-        
+
         try:
             # Check for checkpoint files
             checkpoint_files = list(experiment_dir.glob("G_*.pth"))
-            
+
             if not checkpoint_files:
                 return {"status": "not_started", "progress": 0}
-            
+
             # Get latest checkpoint
-            latest_checkpoint = max(checkpoint_files, key=lambda f: f.stat().st_mtime)
-            
+            latest_checkpoint = max(
+                checkpoint_files,
+                key=lambda f: f.stat().st_mtime)
+
             # Extract epoch from filename
             epoch_str = latest_checkpoint.stem.split('_')[1]
             current_epoch = int(epoch_str)
-            
+
             # Load config
             config_path = experiment_dir / "config.json"
             if config_path.exists():
@@ -492,100 +507,109 @@ class EnhancedRVCTrainer:
                     total_epochs = config.get('total_epoch', 300)
             else:
                 total_epochs = 300
-            
+
             progress_pct = (current_epoch / total_epochs) * 100
-            
+
             return {
                 "status": "training" if current_epoch < total_epochs else "completed",
                 "progress": progress_pct,
                 "current_epoch": current_epoch,
                 "total_epochs": total_epochs,
-                "latest_checkpoint": str(latest_checkpoint)
-            }
-            
+                "latest_checkpoint": str(latest_checkpoint)}
+
         except Exception as e:
             rich_logger.error(f"Failed to get training progress: {e}")
             return {"status": "error", "error": str(e)}
-    
-    def cleanup_training(self, experiment_dir: Path, keep_checkpoints: int = 3):
+
+    def cleanup_training(
+            self,
+            experiment_dir: Path,
+            keep_checkpoints: int = 3):
         """Clean up training artifacts, keeping only recent checkpoints"""
-        
+
         try:
             checkpoint_files = list(experiment_dir.glob("G_*.pth"))
-            checkpoint_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-            
+            checkpoint_files.sort(
+                key=lambda f: f.stat().st_mtime, reverse=True)
+
             # Keep only the most recent checkpoints
             for checkpoint in checkpoint_files[keep_checkpoints:]:
                 checkpoint.unlink()
                 rich_logger.info(f"Removed old checkpoint: {checkpoint.name}")
-            
-            rich_logger.success(f"Training cleanup completed, kept {keep_checkpoints} checkpoints")
-            
+
+            rich_logger.success(
+                f"Training cleanup completed, kept {keep_checkpoints} checkpoints")
+
         except Exception as e:
             rich_logger.error(f"Failed to cleanup training: {e}")
 
 # Training utilities
-def create_training_dataset(dataset_path: str, 
-                           output_path: str,
-                           sample_rate: int = 40000,
-                           max_duration: float = 30.0,
-                           min_duration: float = 3.0) -> dict:
+
+
+def create_training_dataset(dataset_path: str,
+                            output_path: str,
+                            sample_rate: int = 40000,
+                            max_duration: float = 30.0,
+                            min_duration: float = 3.0) -> dict:
     """
     Create training dataset from audio files
-    
+
     Args:
         dataset_path: Path to directory containing audio files
         output_path: Path for processed dataset
         sample_rate: Target sample rate
         max_duration: Maximum clip duration in seconds
         min_duration: Minimum clip duration in seconds
-    
+
     Returns:
         dict: Processing results
     """
-    
+
     rich_logger.header("📁 Creating Training Dataset")
     rich_logger.info(f"Source: {Path(dataset_path).name}")
     rich_logger.info(f"Output: {Path(output_path).name}")
     rich_logger.info(f"Sample Rate: {sample_rate}Hz")
     rich_logger.info(f"Duration Range: {min_duration}s - {max_duration}s")
-    
+
     try:
         # Create output directory
         output_path = Path(output_path)
         output_path.mkdir(parents=True, exist_ok=True)
-        
+
         # Find audio files
         audio_extensions = {'.wav', '.mp3', '.flac', '.ogg', '.m4a', '.aiff'}
         audio_files = []
-        
+
         for ext in audio_extensions:
             audio_files.extend(Path(dataset_path).glob(f"*{ext}"))
             audio_files.extend(Path(dataset_path).glob(f"*{ext.upper()}"))
-        
+
         if not audio_files:
             raise ValueError("No audio files found in dataset directory")
-        
+
         rich_logger.info(f"Found {len(audio_files)} audio files to process")
-        
+
         processed_count = 0
         total_duration = 0.0
-        
+
         for audio_file in audio_files:
             try:
                 # This would contain the actual audio processing logic
                 # For now, we'll simulate the process
-                
+
                 processed_count += 1
                 total_duration += 10.0  # Simulated duration
-                
+
                 if processed_count % 10 == 0:
-                    rich_logger.info(f"Processed {processed_count}/{len(audio_files)} files")
-                
+                    rich_logger.info(
+                        f"Processed {processed_count}/{len(audio_files)} files")
+
             except Exception as e:
-                rich_logger.warning(f"Failed to process {audio_file.name}: {e}")
+                rich_logger.warning(
+                    f"Failed to process {
+                        audio_file.name}: {e}")
                 continue
-        
+
         results = {
             "success": True,
             "total_files": len(audio_files),
@@ -594,16 +618,18 @@ def create_training_dataset(dataset_path: str,
             "output_path": str(output_path),
             "sample_rate": sample_rate
         }
-        
+
         rich_logger.success(f"Dataset creation completed!")
-        rich_logger.info(f"Processed: {processed_count}/{len(audio_files)} files")
-        rich_logger.info(f"Total Duration: {total_duration/3600:.2f} hours")
-        
+        rich_logger.info(
+            f"Processed: {processed_count}/{len(audio_files)} files")
+        rich_logger.info(f"Total Duration: {total_duration / 3600:.2f} hours")
+
         return results
-        
+
     except Exception as e:
         rich_logger.error(f"Dataset creation failed: {e}")
         return {"success": False, "error": str(e)}
+
 
 # Export functions
 __all__ = [

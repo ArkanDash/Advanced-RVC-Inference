@@ -1,12 +1,13 @@
 # This file makes the directory a Python package
 
-import warnings
 import os
+import warnings
+
 
 def config_v1():
     """
     Load RVC v1 configuration
-    
+
     Returns:
         dict: RVC v1 configuration
     """
@@ -30,10 +31,11 @@ def config_v1():
         'pitch_guidance_alpha': 0.5
     }
 
+
 def config_v2():
     """
     Load RVC v2 configuration
-    
+
     Returns:
         dict: RVC v2 configuration
     """
@@ -58,6 +60,7 @@ def config_v2():
         'use_energy_guidance': True,
         'energy_alpha': 0.5
     }
+
 
 __all__ = [
     'config_v1',

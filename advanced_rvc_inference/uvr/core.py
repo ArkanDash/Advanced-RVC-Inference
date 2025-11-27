@@ -1,23 +1,23 @@
 import argparse
-import time
-import librosa
-from tqdm import tqdm
-import sys
-import os
 import glob
-import torch
+import os
+import sys
+import time
+import warnings
+
+import librosa
 import numpy as np
 import soundfile as sf
+import torch
 import torch.nn as nn
 import UVRC
-
+from tqdm import tqdm
 from UVRC.utils import demix, get_model_from_config
-
-import warnings
 
 warnings.filterwarnings("ignore")
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
+
 
 class Args:
     def __init__(
@@ -85,8 +85,12 @@ def run_file(model, args, config, device, verbose=False):
     full_result = []
     for mix in track_proc_list:
         waveforms = demix(
-            config, model, mix, device, pbar=verbose, model_type=args.model_type
-        )
+            config,
+            model,
+            mix,
+            device,
+            pbar=verbose,
+            model_type=args.model_type)
         full_result.append(waveforms)
 
     # Average all values in single dict
@@ -107,7 +111,8 @@ def run_file(model, args, config, device, verbose=False):
     if args.extract_instrumental:
         instr = "vocals" if "vocals" in instruments else instruments[0]
         instruments.append("instrumental")
-        # Output "instrumental", which is an inverse of 'vocals' or the first stem in list if 'vocals' absent
+        # Output "instrumental", which is an inverse of 'vocals' or the first
+        # stem in list if 'vocals' absent
         waveforms["instrumental"] = mix_orig - waveforms[instr]
 
     for instr in instruments:
@@ -117,11 +122,13 @@ def run_file(model, args, config, device, verbose=False):
                 estimates = estimates * std + mean
         file_name, _ = os.path.splitext(os.path.basename(args.input_file))
         if args.flac_file:
-            output_file = os.path.join(args.store_dir, f"{file_name}_{instr}.flac")
+            output_file = os.path.join(
+                args.store_dir, f"{file_name}_{instr}.flac")
             subtype = "PCM_16" if args.pcm_type == "PCM_16" else "PCM_24"
             sf.write(output_file, estimates, sr, subtype=subtype)
         else:
-            output_file = os.path.join(args.store_dir, f"{file_name}_{instr}.wav")
+            output_file = os.path.join(
+                args.store_dir, f"{file_name}_{instr}.wav")
             sf.write(output_file, estimates, sr, subtype="FLOAT")
 
     time.sleep(1)
@@ -147,8 +154,10 @@ def proc_file(args):
         "--input_file", type=str, help="folder with mixtures to process"
     )
     parser.add_argument(
-        "--store_dir", default="", type=str, help="path to store results as wav file"
-    )
+        "--store_dir",
+        default="",
+        type=str,
+        help="path to store results as wav file")
     parser.add_argument(
         "--device_ids", nargs="+", type=int, default=0, help="list of gpu ids"
     )
@@ -168,8 +177,9 @@ def proc_file(args):
         help="Force the use of CPU even if CUDA is available",
     )
     parser.add_argument(
-        "--flac_file", action="store_true", help="Output flac file instead of wav"
-    )
+        "--flac_file",
+        action="store_true",
+        help="Output flac file instead of wav")
     parser.add_argument(
         "--pcm_type",
         type=str,
@@ -195,7 +205,7 @@ def proc_file(args):
         device = "cuda"
         device = (
             f"cuda:{args.device_ids[0]}"
-            if type(args.device_ids) == list
+            if isinstance(args.device_ids, list)
             else f"cuda:{args.device_ids}"
         )
     elif torch.backends.mps.is_available():
@@ -233,7 +243,8 @@ def proc_file(args):
 
     model = model.to(device)
 
-    print("Model load time: {:.2f} sec".format(time.time() - model_load_start_time))
+    print("Model load time: {:.2f} sec".format(
+        time.time() - model_load_start_time))
 
     run_file(model, args, config, device, verbose=True)
 

@@ -31,27 +31,30 @@ except ImportError:
     create_reference = None
 
 # Inference utilities (for backward compatibility)
+
+
 class inference_utils:
     """Inference utilities container"""
-    
+
     @staticmethod
     def load_model(model_path):
         """Load model for inference"""
         return None
-    
+
     @staticmethod
     def preprocess_audio(audio_path):
         """Preprocess audio for inference"""
         return None
-    
+
     @staticmethod
     def postprocess_output(output):
         """Postprocess inference output"""
         return output
 
+
 __all__ = [
     'VoiceConverter',
-    'add_audio_effects', 
+    'add_audio_effects',
     'create_dataset',
     'create_index',
     'create_reference',

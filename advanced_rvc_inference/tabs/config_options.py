@@ -1,6 +1,9 @@
-import gradio as gr
-import os, sys
 import json
+import os
+import sys
+
+import gradio as gr
+
 from ...lib.i18n import I18nAuto
 
 i18n = I18nAuto()
@@ -10,6 +13,7 @@ sys.path.append(now_dir)
 
 # Path for configuration file
 config_path = os.path.join(now_dir, "config.json")
+
 
 def load_config():
     """Load configuration from file"""
@@ -32,26 +36,33 @@ def load_config():
         save_config(default_config)
         return default_config
 
+
 def save_config(config):
     """Save configuration to file"""
     with open(config_path, 'w') as f:
         json.dump(config, f, indent=4)
 
+
 def config_tab():
     config = load_config()
-    
+
     with gr.Column():
         gr.Markdown("## ⚙️ Advanced Configuration")
-        
+
         with gr.Row():
             with gr.Column():
                 audio_quality = gr.Radio(
                     label=i18n("Audio Processing Quality"),
-                    choices=["Low (Fast)", "Medium", "High (Best)", "Ultra"],
-                    value=config.get("audio_quality", "high").title(),
-                    info="Quality level affects processing speed and output quality"
-                )
-                
+                    choices=[
+                        "Low (Fast)",
+                        "Medium",
+                        "High (Best)",
+                        "Ultra"],
+                    value=config.get(
+                        "audio_quality",
+                        "high").title(),
+                    info="Quality level affects processing speed and output quality")
+
                 processing_threads = gr.Slider(
                     label=i18n("Processing Threads"),
                     minimum=1,
@@ -60,7 +71,7 @@ def config_tab():
                     value=config.get("processing_threads", 4),
                     info="Number of threads for parallel processing"
                 )
-                
+
                 cache_size = gr.Slider(
                     label=i18n("Cache Size (MB)"),
                     minimum=512,
@@ -69,13 +80,13 @@ def config_tab():
                     value=config.get("cache_size", 2048),
                     info="Memory allocated for caching audio data"
                 )
-                
+
                 auto_save = gr.Checkbox(
                     label=i18n("Auto Save Results"),
                     value=config.get("auto_save", True),
                     info="Automatically save processed results"
                 )
-                
+
             with gr.Column():
                 output_format = gr.Dropdown(
                     label=i18n("Default Output Format"),
@@ -83,44 +94,54 @@ def config_tab():
                     value=config.get("output_format", "FLAC"),
                     info="Default format for output files"
                 )
-                
+
                 temp_folder = gr.Textbox(
                     label=i18n("Temp Folder"),
                     value=config.get("temp_folder", "temp"),
                     info="Folder for temporary processing files"
                 )
-                
+
                 model_preload = gr.Checkbox(
                     label=i18n("Preload Models"),
                     value=config.get("model_preload", True),
                     info="Preload models into memory for faster processing"
                 )
-                
+
                 gpu_optimization = gr.Checkbox(
                     label=i18n("GPU Optimization"),
                     value=config.get("gpu_optimization", True),
                     info="Enable GPU optimizations when available"
                 )
-                
+
                 memory_cleanup = gr.Checkbox(
                     label=i18n("Memory Cleanup"),
                     value=config.get("memory_cleanup", True),
                     info="Clean up memory after processing to prevent leaks"
                 )
-        
+
         with gr.Row():
-            save_config_btn = gr.Button(i18n("Save Configuration"), variant="primary")
+            save_config_btn = gr.Button(
+                i18n("Save Configuration"), variant="primary")
             reset_config_btn = gr.Button(i18n("Reset to Defaults"))
             refresh_config_btn = gr.Button(i18n("Refresh"))
-        
+
         with gr.Row():
             config_output = gr.Textbox(
                 label=i18n("Configuration Status"),
                 interactive=False,
                 lines=5
             )
-        
-        def save_configuration(audio_quality, processing_threads, cache_size, auto_save, output_format, temp_folder, model_preload, gpu_optimization, memory_cleanup):
+
+        def save_configuration(
+                audio_quality,
+                processing_threads,
+                cache_size,
+                auto_save,
+                output_format,
+                temp_folder,
+                model_preload,
+                gpu_optimization,
+                memory_cleanup):
             new_config = {
                 "audio_quality": audio_quality.lower(),
                 "processing_threads": int(processing_threads),
@@ -132,10 +153,12 @@ def config_tab():
                 "gpu_optimization": bool(gpu_optimization),
                 "memory_cleanup": bool(memory_cleanup)
             }
-            
+
             save_config(new_config)
-            return f"Configuration saved successfully!\n{json.dumps(new_config, indent=2)}"
-        
+            return f"Configuration saved successfully!\n{
+                json.dumps(
+                    new_config, indent=2)}"
+
         def reset_configuration():
             default_config = {
                 "audio_quality": "high",
@@ -148,29 +171,44 @@ def config_tab():
                 "gpu_optimization": True,
                 "memory_cleanup": True
             }
-            
+
             save_config(default_config)
-            return f"Configuration reset to defaults!\n{json.dumps(default_config, indent=2)}"
-        
+            return f"Configuration reset to defaults!\n{
+                json.dumps(
+                    default_config,
+                    indent=2)}"
+
         def refresh_configuration():
             current_config = load_config()
-            return f"Current configuration loaded:\n{json.dumps(current_config, indent=2)}"
-        
+            return f"Current configuration loaded:\n{
+                json.dumps(
+                    current_config,
+                    indent=2)}"
+
         save_config_btn.click(
             save_configuration,
-            inputs=[audio_quality, processing_threads, cache_size, auto_save, output_format, temp_folder, model_preload, gpu_optimization, memory_cleanup],
-            outputs=[config_output]
-        )
-        
+            inputs=[
+                audio_quality,
+                processing_threads,
+                cache_size,
+                auto_save,
+                output_format,
+                temp_folder,
+                model_preload,
+                gpu_optimization,
+                memory_cleanup],
+            outputs=[config_output])
+
         reset_config_btn.click(
             reset_configuration,
             outputs=[config_output]
         )
-        
+
         refresh_config_btn.click(
             refresh_configuration,
             outputs=[config_output]
         )
+
 
 def extra_options_tab():
     with gr.Tab("🔧 Configuration"):
@@ -230,12 +268,13 @@ def extra_options_tab():
                     krvc_hardware_info = gr.Textbox(
                         label="Hardware Optimization",
                         value="Tensor cores: Available\nCUDA: Available\nMemory: Optimized",
-                        interactive=False
-                    )
+                        interactive=False)
 
             with gr.Row():
-                krvc_apply_btn = gr.Button("Apply KRVC Optimizations", variant="primary")
-                krvc_reset_btn = gr.Button("Reset to Standard Mode", variant="secondary")
+                krvc_apply_btn = gr.Button(
+                    "Apply KRVC Optimizations", variant="primary")
+                krvc_reset_btn = gr.Button(
+                    "Reset to Standard Mode", variant="secondary")
 
             def apply_krvc_optimizations(enabled, perf_mode, memory_opt):
                 if enabled:
@@ -243,10 +282,12 @@ def extra_options_tab():
                     speed_info = "2x Faster Training & Inference Enabled"
 
                     # Hardware information
-                    import torch
                     import warnings
+
+                    import torch
                     warnings.filterwarnings("ignore", category=UserWarning)
-                    tensor_cores = "Available" if (torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 7) else "Not Available"
+                    tensor_cores = "Available" if (torch.cuda.is_available(
+                    ) and torch.cuda.get_device_capability()[0] >= 7) else "Not Available"
                     cuda_available = "Available" if torch.cuda.is_available() else "Not Available"
 
                     hardware_info = f"Tensor cores: {tensor_cores}\nCUDA: {cuda_available}\nMemory: Optimized for {perf_mode} mode"
@@ -269,15 +310,17 @@ def extra_options_tab():
                 gr.Markdown("### 🖥️ System Information")
                 cpu_info = gr.Textbox(label="CPU Info", interactive=False)
                 gpu_info = gr.Textbox(label="GPU Info", interactive=False)
-                memory_info = gr.Textbox(label="Memory Info", interactive=False)
+                memory_info = gr.Textbox(
+                    label="Memory Info", interactive=False)
                 disk_info = gr.Textbox(label="Disk Info", interactive=False)
 
         with gr.Row():
             refresh_sys_info = gr.Button("Refresh System Info")
 
         def get_system_info():
-            import psutil
             import platform
+
+            import psutil
 
             cpu_percent = psutil.cpu_percent(interval=1)
             cpu_count = psutil.cpu_count()
@@ -285,24 +328,31 @@ def extra_options_tab():
             memory = psutil.virtual_memory()
             disk_usage = psutil.disk_usage('/')
 
-            cpu_str = f"CPU: {platform.processor() or 'Unknown'} ({cpu_count} cores, {cpu_percent}% usage)"
+            cpu_str = f"CPU: {
+                platform.processor() or 'Unknown'} ({cpu_count} cores, {cpu_percent}% usage)"
 
             gpu_str = "GPU: "
             try:
-                import torch
                 import warnings
+
+                import torch
                 warnings.filterwarnings("ignore", category=UserWarning)
                 if torch.cuda.is_available():
                     gpu_name = torch.cuda.get_device_name(0)
-                    gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3
+                    gpu_memory = torch.cuda.get_device_properties(
+                        0).total_memory / 1024**3
                     gpu_str += f"{gpu_name} ({gpu_memory:.1f} GB)"
                 else:
                     gpu_str += "None (Using CPU)"
-            except:
+            except BaseException:
                 gpu_str += "Not available"
 
-            memory_str = f"Memory: {memory.total / 1024**3:.1f} GB total, {memory.available / 1024**3:.1f} GB available"
-            disk_str = f"Disk: {disk_usage.total / 1024**3:.1f} GB total, {disk_usage.free / 1024**3:.1f} GB free"
+            memory_str = f"Memory: {memory.total /
+                                    1024**3:.1f} GB total, {memory.available /
+                                                            1024**3:.1f} GB available"
+            disk_str = f"Disk: {disk_usage.total /
+                                1024**3:.1f} GB total, {disk_usage.free /
+                                                        1024**3:.1f} GB free"
 
             return cpu_str, gpu_str, memory_str, disk_str
 
@@ -317,18 +367,24 @@ def extra_options_tab():
         with gr.Row():
             with gr.Column():
                 gr.Markdown("#### Model Conversion")
-                convert_model_input = gr.Textbox(label="Model Path", placeholder="Path to model to convert")
+                convert_model_input = gr.Textbox(
+                    label="Model Path", placeholder="Path to model to convert")
                 convert_model_format = gr.Dropdown(
                     label="Target Format",
-                    choices=["PyTorch (.pth)", "ONNX (.onnx)", "Safetensors (.safetensors)"],
-                    value="ONNX (.onnx)"
-                )
-                convert_model_btn = gr.Button("Convert Model", variant="secondary")
+                    choices=[
+                        "PyTorch (.pth)",
+                        "ONNX (.onnx)",
+                        "Safetensors (.safetensors)"],
+                    value="ONNX (.onnx)")
+                convert_model_btn = gr.Button(
+                    "Convert Model", variant="secondary")
 
             with gr.Column():
                 gr.Markdown("#### Model Information")
-                model_info_path = gr.Textbox(label="Model Path", placeholder="Path to model to analyze")
-                model_info_btn = gr.Button("Get Model Info", variant="secondary")
+                model_info_path = gr.Textbox(
+                    label="Model Path", placeholder="Path to model to analyze")
+                model_info_btn = gr.Button(
+                    "Get Model Info", variant="secondary")
 
         model_output = gr.Textbox(label="Output", interactive=False)
 
@@ -371,13 +427,15 @@ def extra_options_tab():
         with gr.Row():
             batch_model = gr.Dropdown(
                 label="Model",
-                choices=["Model1", "Model2", "Model3"],  # Will be populated dynamically
+                # Will be populated dynamically
+                choices=["Model1", "Model2", "Model3"],
                 info="Select model for batch processing"
             )
 
             batch_index = gr.Dropdown(
                 label="Index File",
-                choices=["index1", "index2", "index3"],  # Will be populated dynamically
+                # Will be populated dynamically
+                choices=["index1", "index2", "index3"],
                 info="Select index file for batch processing"
             )
 
@@ -397,12 +455,19 @@ def extra_options_tab():
             )
 
         with gr.Row():
-            start_batch_btn = gr.Button("Start Batch Processing", variant="primary")
+            start_batch_btn = gr.Button(
+                "Start Batch Processing", variant="primary")
             cancel_batch_btn = gr.Button("Cancel", variant="stop")
 
         batch_status = gr.Textbox(label="Status", interactive=False)
 
-        def start_batch_process(input_folder, output_folder, model, index, pitch, format):
+        def start_batch_process(
+                input_folder,
+                output_folder,
+                model,
+                index,
+                pitch,
+                format):
             if not all([input_folder, output_folder, model]):
                 return "Input folder, output folder, and model are required!"
 
@@ -411,6 +476,11 @@ def extra_options_tab():
 
         start_batch_btn.click(
             start_batch_process,
-            inputs=[batch_input_folder, batch_output_folder, batch_model, batch_index, batch_pitch, batch_format],
-            outputs=[batch_status]
-        )
+            inputs=[
+                batch_input_folder,
+                batch_output_folder,
+                batch_model,
+                batch_index,
+                batch_pitch,
+                batch_format],
+            outputs=[batch_status])

@@ -1,3 +1,6 @@
+from main.library.predictors.DJCM.utils import WINDOW_LENGTH, init_bn
+from main.library.predictors.DJCM.encoder import Encoder, ResEncoderBlock
+from main.library.predictors.DJCM.decoder import PE_Decoder
 import os
 import sys
 
@@ -5,15 +8,12 @@ import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from main.library.predictors.DJCM.decoder import PE_Decoder
-from main.library.predictors.DJCM.utils import init_bn, WINDOW_LENGTH
-from main.library.predictors.DJCM.encoder import ResEncoderBlock, Encoder
 
 class LatentBlocks(nn.Module):
     def __init__(self, n_blocks, latent_layers):
         super(LatentBlocks, self).__init__()
         self.latent_blocks = nn.ModuleList([
-            ResEncoderBlock(384, 384, n_blocks, None) 
+            ResEncoderBlock(384, 384, n_blocks, None)
             for _ in range(latent_layers)
         ])
 
@@ -22,6 +22,7 @@ class LatentBlocks(nn.Module):
             x = layer(x)
 
         return x
+
 
 class DJCMM(nn.Module):
     def __init__(self, in_channels, n_blocks, latent_layers):

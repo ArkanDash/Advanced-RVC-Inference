@@ -1,5 +1,8 @@
+import os
+import sys
+
 import gradio as gr
-import os, sys
+
 from ...lib.i18n import I18nAuto
 from ...lib.path_manager import path
 
@@ -8,8 +11,10 @@ i18n = I18nAuto()
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-# Model root directory - RVC models are stored in logs directory with subdirectories per model
+# Model root directory - RVC models are stored in logs directory with
+# subdirectories per model
 model_root = str(path('logs_dir'))
+
 
 def get_models_list():
     """Get list of available models"""
@@ -23,15 +28,20 @@ def get_models_list():
                 for file in os.listdir(model_dir_path):
                     if file.endswith(('.pth', '.onnx')):
                         # Extract model name from the file
-                        model_name = os.path.splitext(file)[0]  # Remove extension
-                        # Check if there's a corresponding index file in the same directory
+                        model_name = os.path.splitext(
+                            file)[0]  # Remove extension
+                        # Check if there's a corresponding index file in the
+                        # same directory
                         index_file = None
                         for idx_file in os.listdir(model_dir_path):
-                            if idx_file.endswith('.index') and model_name in idx_file:
+                            if idx_file.endswith(
+                                    '.index') and model_name in idx_file:
                                 index_file = idx_file
                                 break
-                        models.append([model_name, os.path.join(model_dir_name, file), index_file or "No index", "Available"])
+                        models.append([model_name, os.path.join(
+                            model_dir_name, file), index_file or "No index", "Available"])
     return models or [["No models found", "", "", ""]]
+
 
 def model_manager_tab():
     with gr.Column():
@@ -41,19 +51,28 @@ def model_manager_tab():
             with gr.Column():
                 gr.Markdown("### Available Models")
                 model_list = gr.Dataframe(
-                    headers=["Model Name", "Model File", "Index File", "Status"],
-                    datatype=["str", "str", "str", "str"],
+                    headers=[
+                        "Model Name",
+                        "Model File",
+                        "Index File",
+                        "Status"],
+                    datatype=[
+                        "str",
+                        "str",
+                        "str",
+                        "str"],
                     value=get_models_list(),
                     interactive=False,
-                    elem_id="model_list"
-                )
+                    elem_id="model_list")
 
             with gr.Column():
                 gr.Markdown("### Model Operations")
 
                 with gr.Row():
-                    refresh_models = gr.Button(i18n("Refresh Models"), variant="secondary")
-                    delete_model = gr.Button(i18n("Delete Selected"), variant="stop")
+                    refresh_models = gr.Button(
+                        i18n("Refresh Models"), variant="secondary")
+                    delete_model = gr.Button(
+                        i18n("Delete Selected"), variant="stop")
 
                 with gr.Row():
                     model_search = gr.Textbox(
@@ -62,8 +81,10 @@ def model_manager_tab():
                     )
 
                 with gr.Row():
-                    model_fusion = gr.Button(i18n("Fuse Models"), variant="primary")
-                    model_conversion = gr.Button(i18n("Convert Format"), variant="primary")
+                    model_fusion = gr.Button(
+                        i18n("Fuse Models"), variant="primary")
+                    model_conversion = gr.Button(
+                        i18n("Convert Format"), variant="primary")
 
                 with gr.Accordion("Model Details", open=False):
                     model_info = gr.Textbox(
@@ -106,13 +127,25 @@ def model_manager_tab():
                 hub_search_btn = gr.Button("Search", variant="secondary")
 
                 hub_results = gr.Dataframe(
-                    headers=["Model Name", "Author", "Version", "Sample Rate", "Rating", "Download"],
-                    datatype=["str", "str", "str", "str", "number", "str"],
+                    headers=[
+                        "Model Name",
+                        "Author",
+                        "Version",
+                        "Sample Rate",
+                        "Rating",
+                        "Download"],
+                    datatype=[
+                        "str",
+                        "str",
+                        "str",
+                        "str",
+                        "number",
+                        "str"],
                     value=[],
-                    interactive=False
-                )
+                    interactive=False)
 
-                download_selected = gr.Button(i18n("Download Selected"), variant="primary")
+                download_selected = gr.Button(
+                    i18n("Download Selected"), variant="primary")
 
         def refresh_model_list():
             return get_models_list()
@@ -126,8 +159,10 @@ def model_manager_tab():
             all_models = get_models_list()
             if not query:
                 return all_models
-            filtered = [model for model in all_models if query.lower() in model[0].lower()]
-            return filtered if filtered else [["No matching models found", "", "", ""]]
+            filtered = [
+                model for model in all_models if query.lower() in model[0].lower()]
+            return filtered if filtered else [
+                ["No matching models found", "", "", ""]]
 
         refresh_models.click(
             refresh_model_list,

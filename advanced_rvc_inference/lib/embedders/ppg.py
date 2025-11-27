@@ -1,12 +1,16 @@
+from ...lib.speaker_diarization.whisper import (ModelDimensions, Whisper,
+                                                log_mel_spectrogram,
+                                                pad_or_trim)
 import os
 import sys
-import torch
 import warnings
+
+import torch
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
 sys.path.append(os.getcwd())
 
-from ...lib.speaker_diarization.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
 
 class WhisperModel(torch.nn.Module):
     def __init__(self, model_path, device):
@@ -30,6 +34,6 @@ class WhisperModel(torch.nn.Module):
             ppg = ppg[:, :ppgln, :]
 
         return [ppg]
-    
-    def extract_features(self, source, padding_mask = None, output_layer = None):
+
+    def extract_features(self, source, padding_mask=None, output_layer=None):
         return self.forward(source)

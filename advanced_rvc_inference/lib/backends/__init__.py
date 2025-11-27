@@ -23,6 +23,8 @@ except ImportError:
     ZLUDA_AVAILABLE = False
 
 # Backend utilities
+
+
 def get_available_backends():
     """Get list of available backends"""
     backends = []
@@ -34,6 +36,7 @@ def get_available_backends():
         backends.append('ZLUDA')
     return backends
 
+
 def get_recommended_backend():
     """Get recommended backend based on system configuration"""
     if ZLUDA_AVAILABLE:
@@ -44,6 +47,7 @@ def get_recommended_backend():
         return 'OpenCL'
     else:
         return 'CPU'
+
 
 def initialize_backend(backend_name: str):
     """Initialize specified backend"""
@@ -65,9 +69,10 @@ def initialize_backend(backend_name: str):
         print(f"Failed to initialize {backend_name}: {e}")
         return None
 
+
 __all__ = [
     'DIRECTML_AVAILABLE',
-    'OPENCL_AVAILABLE', 
+    'OPENCL_AVAILABLE',
     'ZLUDA_AVAILABLE',
     'get_available_backends',
     'get_recommended_backend',

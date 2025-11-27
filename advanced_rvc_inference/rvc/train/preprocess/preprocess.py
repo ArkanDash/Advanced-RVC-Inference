@@ -4,23 +4,27 @@ RVC Dataset Preprocessing Script
 Handles dataset preparation for RVC training
 """
 
-import os
-import sys
 import argparse
 import json
-import librosa
-import soundfile as sf
-from pathlib import Path
 import multiprocessing as mp
+import os
+import sys
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+
+import librosa
 import numpy as np
+import soundfile as sf
+
 from ...lib.path_manager import path
+
 
 def setup_directories():
     """Create necessary directories for training"""
     # Use the centralized path manager for logs and other key directories
     base_logs_dir = path('logs_dir')
-    # Create the dataset directory which is now properly managed by path manager
+    # Create the dataset directory which is now properly managed by path
+    # manager
     dataset_dir = path('datasets_dir')
 
     dirs = [
@@ -44,25 +48,26 @@ def setup_directories():
     for dir_path in dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
 
+
 def preprocess_audio_file(audio_path, target_sr, output_path):
     """Preprocess a single audio file"""
     try:
         # Load audio
         audio, sr = librosa.load(audio_path, sr=None)
-        
+
         # Resample if needed
         if sr != target_sr:
             audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
-        
+
         # Normalize audio
         audio = audio / np.max(np.abs(audio))
-        
+
         # Trim silence
         audio, _ = librosa.effects.trim(audio, top_db=20)
-        
+
         # Save preprocessed audio
         sf.write(output_path, audio, target_sr)
-        
+
         return {
             "original": str(audio_path),
             "preprocessed": str(output_path),
@@ -77,48 +82,55 @@ def preprocess_audio_file(audio_path, target_sr, output_path):
             "status": "error"
         }
 
-def process_dataset(dataset_path, model_name, sample_rate, cpu_cores, process_effects=False):
+
+def process_dataset(
+        dataset_path,
+        model_name,
+        sample_rate,
+        cpu_cores,
+        process_effects=False):
     """Process entire dataset"""
     dataset_path = Path(dataset_path)
     if not dataset_path.exists():
         raise FileNotFoundError(f"Dataset path not found: {dataset_path}")
-    
+
     # Setup directories
     setup_directories()
-    
+
     # Create model directory
     model_dir = path('logs_dir') / sample_rate / model_name
     model_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Find all audio files
     audio_extensions = ['.wav', '.mp3', '.flac', '.m4a', '.ogg']
     audio_files = []
-    
+
     for ext in audio_extensions:
         audio_files.extend(dataset_path.rglob(f"*{ext}"))
         audio_files.extend(dataset_path.rglob(f"*{ext.upper()}"))
-    
+
     if not audio_files:
         raise ValueError(f"No audio files found in {dataset_path}")
-    
+
     print(f"Found {len(audio_files)} audio files")
-    
+
     # Create preprocessing results
     results = []
     sr = int(sample_rate)
-    
+
     with ThreadPoolExecutor(max_workers=cpu_cores) as executor:
         futures = []
-        
+
         for audio_file in audio_files:
             # Create relative path structure
             rel_path = audio_file.relative_to(dataset_path)
             output_path = model_dir / "preprocess" / rel_path
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            future = executor.submit(preprocess_audio_file, audio_file, sr, output_path)
+
+            future = executor.submit(
+                preprocess_audio_file, audio_file, sr, output_path)
             futures.append((future, audio_file, output_path))
-        
+
         for future, original_file, output_path in futures:
             try:
                 result = future.result()
@@ -131,16 +143,16 @@ def process_dataset(dataset_path, model_name, sample_rate, cpu_cores, process_ef
                     "error": str(e),
                     "status": "error"
                 })
-    
+
     # Save preprocessing log
     log_path = model_dir / "preprocess_log.json"
     with open(log_path, 'w', encoding='utf-8') as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
-    
+
     # Generate summary
     successful = sum(1 for r in results if r["status"] == "success")
     failed = len(results) - successful
-    
+
     summary = {
         "total_files": len(results),
         "successful": successful,
@@ -150,29 +162,46 @@ def process_dataset(dataset_path, model_name, sample_rate, cpu_cores, process_ef
         "cpu_cores": cpu_cores,
         "process_effects": process_effects
     }
-    
+
     summary_path = model_dir / "preprocess_summary.json"
     with open(summary_path, 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
-    
+
     print(f"\nPreprocessing completed!")
     print(f"Total files: {summary['total_files']}")
     print(f"Successful: {summary['successful']}")
     print(f"Failed: {summary['failed']}")
     print(f"Results saved to: {log_path}")
-    
+
     return summary
+
 
 def main():
     parser = argparse.ArgumentParser(description="RVC Dataset Preprocessing")
-    parser.add_argument("--dataset_path", required=True, help="Path to dataset directory")
-    parser.add_argument("--model_name", required=True, help="Name for the model")
-    parser.add_argument("--sample_rate", default="40000", help="Target sample rate")
-    parser.add_argument("--cpu_cores", type=int, default=4, help="Number of CPU cores")
-    parser.add_argument("--process_effects", action="store_true", help="Apply audio effects")
-    
+    parser.add_argument(
+        "--dataset_path",
+        required=True,
+        help="Path to dataset directory")
+    parser.add_argument(
+        "--model_name",
+        required=True,
+        help="Name for the model")
+    parser.add_argument(
+        "--sample_rate",
+        default="40000",
+        help="Target sample rate")
+    parser.add_argument(
+        "--cpu_cores",
+        type=int,
+        default=4,
+        help="Number of CPU cores")
+    parser.add_argument(
+        "--process_effects",
+        action="store_true",
+        help="Apply audio effects")
+
     args = parser.parse_args()
-    
+
     try:
         summary = process_dataset(
             args.dataset_path,
@@ -182,10 +211,11 @@ def main():
             args.process_effects
         )
         print("Preprocessing completed successfully!")
-        
+
     except Exception as e:
         print(f"Preprocessing failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

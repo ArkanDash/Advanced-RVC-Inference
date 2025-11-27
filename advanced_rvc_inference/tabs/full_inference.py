@@ -1,28 +1,35 @@
 
-import torch
-import warnings
-import sys, os
-warnings.filterwarnings("ignore", category=UserWarning)
-import shutil
-import gradio as gr
+from ...lib.path_manager import path
+from ...lib.i18n import I18nAuto
+from advanced_rvc_inference.core import full_inference_program
 import regex as re
-import unicodedata
+import gradio as gr
 from pathlib import Path
+import unicodedata
+import shutil
+import os
+import sys
+import warnings
+
+import torch
+
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from advanced_rvc_inference.core import full_inference_program
-from ...lib.i18n import I18nAuto
-from ...lib.path_manager import path
 
 i18n = I18nAuto()
 
 # Define path variables using Path objects for better cross-platform compatibility
-# Use absolute path for model_root to ensure it works correctly - RVC models are in logs with subdirectories
+# Use absolute path for model_root to ensure it works correctly - RVC
+# models are in logs with subdirectories
 model_root = path('logs_dir')
-audio_root = path('inputs_dir')  # Changed to use inputs directory for input audio files
-audio_root_opt = path('outputs_dir')  # Changed to use outputs directory for output audio files
+# Changed to use inputs directory for input audio files
+audio_root = path('inputs_dir')
+# Changed to use outputs directory for output audio files
+audio_root_opt = path('outputs_dir')
 
 # Convert to strings for compatibility with existing functions
 model_root_str = str(model_root)
@@ -30,41 +37,47 @@ audio_root_str = str(audio_root)
 audio_root_opt_str = str(audio_root_opt)
 
 sup_audioext = {
-    "wav", "mp3", "flac", "ogg", "opus", "m4a", "mp4", "aac", 
+    "wav", "mp3", "flac", "ogg", "opus", "m4a", "mp4", "aac",
     "alac", "wma", "aiff", "webm", "ac3",
 }
 
 # Helper function to safely get file lists
+
+
 def get_file_list(root_dir, extensions, exclude_patterns=None):
     """
     Get a list of files in a directory with specified extensions.
-    
+
     Args:
         root_dir: Root directory to search
         extensions: Tuple/list of file extensions to include
         exclude_patterns: Optional list of patterns to exclude
-        
+
     Returns:
         List of file paths
     """
     root_dir = Path(root_dir)
     file_list = []
-    
+
     # Ensure the directory exists
     if not root_dir.exists():
         print(f"[WARNING] Directory {root_dir} does not exist")
         return file_list
-    
+
     for root, _, files in os.walk(root_dir, topdown=False):
         for file in files:
             if file.endswith(extensions):
-                if exclude_patterns and any(pattern in file for pattern in exclude_patterns):
+                if exclude_patterns and any(
+                        pattern in file for pattern in exclude_patterns):
                     continue
                 file_list.append(str(Path(root) / file))
-    
+
     return file_list
 
-# Dynamic model file list getter - moved to function to ensure refresh capability
+# Dynamic model file list getter - moved to function to ensure refresh
+# capability
+
+
 def get_model_names_list():
     """Get the list of available model files dynamically - RVC models are in subdirectories"""
     try:
@@ -76,12 +89,14 @@ def get_model_names_list():
                 if model_dir_path.is_dir():
                     # Look for .pth or .onnx files in the model subdirectory
                     for file in os.listdir(model_dir_path):
-                        if file.endswith(('.pth', '.onnx')) and "G_" not in file and "D_" not in file:
+                        if file.endswith(
+                                ('.pth', '.onnx')) and "G_" not in file and "D_" not in file:
                             model_files.append(str(model_dir_path / file))
         return model_files
     except Exception as e:
         print(f"[ERROR] Error getting model names list: {e}")
         return []
+
 
 def get_indexes_list():
     """Get the list of available index files dynamically - RVC indexes are in subdirectories"""
@@ -101,6 +116,7 @@ def get_indexes_list():
         print(f"[ERROR] Error getting indexes list: {e}")
         return []
 
+
 def get_audio_paths_list():
     """Get the list of available audio files dynamically"""
     try:
@@ -112,6 +128,7 @@ def get_audio_paths_list():
     except Exception as e:
         print(f"[ERROR] Error getting audio paths list: {e}")
         return []
+
 
 # Get initial lists
 names = get_model_names_list()
@@ -145,6 +162,7 @@ dereverb_models_names = [
 
 deeecho_models_names = ["UVR-Deecho-Normal", "UVR-Deecho-Aggressive"]
 
+
 def get_indexes():
     """Get all index files - RVC indexes are in subdirectories"""
     index_files = []
@@ -159,24 +177,25 @@ def get_indexes():
                         index_files.append(str(model_dir_path / file))
     return index_files
 
+
 def match_index(model_file_value):
     """Find matching index file for a model"""
     if not model_file_value:
         return ""
-        
+
     model_folder = os.path.dirname(model_file_value)
     model_name = os.path.basename(model_file_value)
     index_files = get_indexes()
-    
+
     # Try to extract base model name
     pattern = r"^(.*?)_"
     match = re.match(pattern, model_name)
-    
+
     # Look for matching index files
     for index_file in index_files:
         index_dir = os.path.dirname(index_file)
         index_name = os.path.basename(index_file)
-        
+
         # Same directory
         if index_dir == model_folder:
             return index_file
@@ -186,27 +205,29 @@ def match_index(model_file_value):
         # Exact model name in index
         elif model_name in index_name:
             return index_file
-    
+
     return ""
+
 
 def output_path_fn(input_audio_path, custom_output_path=None):
     """
     Resolve output path
-    
+
     Args:
         input_audio_path: Path to input audio file
         custom_output_path: Optional custom output path
-        
+
     Returns:
         Resolved output path
     """
     if custom_output_path:
         return custom_output_path
-    
+
     # Generate default output path
     input_path = Path(input_audio_path)
     output_name = f"{input_path.stem}_output.wav"
     return str(audio_root_opt / output_name)
+
 
 def enhanced_full_inference_wrapper(
     model_file,
@@ -266,11 +287,11 @@ def enhanced_full_inference_wrapper(
     """
     # Use path manager to resolve output path
     resolved_output_path = output_path_fn(audio, output_path)
-    
+
     # Ensure the output directory exists
     output_dir = os.path.dirname(resolved_output_path)
     os.makedirs(output_dir, exist_ok=True)
-    
+
     try:
         # Call the original function with the resolved path
         return full_inference_program(
@@ -332,6 +353,7 @@ def enhanced_full_inference_wrapper(
         print(f"[ERROR] {error_msg}")
         return error_msg, None
 
+
 def get_number_of_gpus():
     """Get the number of available GPUs"""
     if torch.cuda.is_available():
@@ -340,30 +362,37 @@ def get_number_of_gpus():
     else:
         return "-"
 
+
 def max_vram_gpu(gpu):
     """Get the maximum VRAM for a GPU"""
     if torch.cuda.is_available():
         gpu_properties = torch.cuda.get_device_properties(gpu)
-        total_memory_gb = round(gpu_properties.total_memory / 1024 / 1024 / 1024)
+        total_memory_gb = round(
+            gpu_properties.total_memory / 1024 / 1024 / 1024)
         return total_memory_gb / 2
     else:
         return "0"
 
+
 def format_title(title):
     """Format a title to be filename-safe"""
     formatted_title = (
-        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("utf-8")
-    )
+        unicodedata.normalize(
+            "NFKD",
+            title).encode(
+            "ascii",
+            "ignore").decode("utf-8"))
     formatted_title = re.sub(r"[\u2500-\u257F]+", "", formatted_title)
     formatted_title = re.sub(r"[^\w\s.-]", "", formatted_title)
     formatted_title = re.sub(r"\s+", "_", formatted_title)
     return formatted_title
 
+
 def save_to_wav(upload_audio):
     """Save uploaded audio to the audio directory"""
     if not upload_audio:
         return "", ""
-        
+
     file_path = upload_audio
     formated_name = format_title(os.path.basename(file_path))
     target_path = audio_root / formated_name
@@ -374,12 +403,13 @@ def save_to_wav(upload_audio):
 
     # Ensure directory exists
     os.makedirs(target_path.parent, exist_ok=True)
-    
+
     # Copy file
     shutil.copy(file_path, target_path)
-    
+
     # Return path and default output path
     return str(target_path), output_path_fn(str(target_path))
+
 
 def delete_outputs():
     """Delete all output audio files"""
@@ -389,6 +419,7 @@ def delete_outputs():
             if name.endswith(tuple(sup_audioext)) and "_output" in name:
                 os.remove(os.path.join(root, name))
 
+
 def change_choices():
     """Refresh dropdown choices"""
     # Get updated file lists using dynamic functions
@@ -397,7 +428,8 @@ def change_choices():
     new_audio_paths = get_audio_paths_list()
 
     # Sort the lists for consistent ordering
-    new_names = sorted(new_names, key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)
+    new_names = sorted(new_names, key=lambda path: os.path.getsize(
+        path) if os.path.exists(path) else 0)
     new_indexes = sorted(new_indexes)
     new_audio_paths = sorted(new_audio_paths)
 
@@ -407,9 +439,11 @@ def change_choices():
         gr.Dropdown(choices=new_audio_paths, value=new_audio_paths[0] if new_audio_paths else None),
     )
 
+
 def full_inference_tab():
     """Create the full inference tab UI"""
-    default_weight = get_model_names_list()[0] if get_model_names_list() else None
+    default_weight = get_model_names_list(
+    )[0] if get_model_names_list() else None
 
     with gr.Row():
         with gr.Column(scale=3):
@@ -417,12 +451,13 @@ def full_inference_tab():
                 model_file = gr.Dropdown(
                     label=i18n("🎤 Voice Model"),
                     info=i18n("Select the voice model to use for the conversion."),
-                    choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
+                    choices=sorted(
+                        get_model_names_list(),
+                        key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
                     interactive=True,
                     value=default_weight,
                     allow_custom_value=True,
-                    elem_classes="model-dropdown"
-                )
+                    elem_classes="model-dropdown")
 
                 index_file = gr.Dropdown(
                     label=i18n("📋 Index File"),
@@ -431,20 +466,33 @@ def full_inference_tab():
                     value=match_index(default_weight) if default_weight else "",
                     interactive=True,
                     allow_custom_value=True,
-                    elem_classes="index-dropdown"
-                )
+                    elem_classes="index-dropdown")
 
             with gr.Row():
-                refresh_button = gr.Button(i18n("🔄 Refresh"), variant="secondary", elem_classes="refresh-btn")
-                unload_button = gr.Button(i18n("🗑️ Unload Voice"), variant="stop", elem_classes="unload-btn")
+                refresh_button = gr.Button(
+                    i18n("🔄 Refresh"),
+                    variant="secondary",
+                    elem_classes="refresh-btn")
+                unload_button = gr.Button(
+                    i18n("🗑️ Unload Voice"),
+                    variant="stop",
+                    elem_classes="unload-btn")
 
                 unload_button.click(
                     fn=lambda: (
-                        gr.Dropdown(value=None, choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
-                        gr.Dropdown(value=None, choices=get_indexes_list()),
+                        gr.Dropdown(
+                            value=None,
+                            choices=sorted(
+                                get_model_names_list(),
+                                key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
+                        gr.Dropdown(
+                            value=None,
+                            choices=get_indexes_list()),
                     ),
                     inputs=[],
-                    outputs=[model_file, index_file],
+                    outputs=[
+                        model_file,
+                        index_file],
                 )
 
                 model_file.select(
@@ -457,8 +505,11 @@ def full_inference_tab():
             # Model info display
             with gr.Group(visible=True if default_weight else False, elem_classes="model-info-card"):
                 gr.Markdown(f"### 📋 Model Information")
-                model_size = round(os.path.getsize(default_weight)/1024/1024, 2) if default_weight and os.path.exists(default_weight) else 0
-                gr.Markdown(f"**Size:** {model_size} MB" if default_weight else "**No model selected**")
+                model_size = round(
+                    os.path.getsize(default_weight) / 1024 / 1024,
+                    2) if default_weight and os.path.exists(default_weight) else 0
+                gr.Markdown(
+                    f"**Size:** {model_size} MB" if default_weight else "**No model selected**")
 
     with gr.Tab(i18n("🎵 Single Audio")):
         with gr.Column():
@@ -486,7 +537,7 @@ def full_inference_tab():
                             allow_custom_value=True,
                             elem_classes="audio-dropdown"
                         )
-        
+
         with gr.Accordion(i18n("⚙️ Advanced Settings"), open=False, elem_classes="advanced-settings-accordion"):
             with gr.Group(elem_classes="rvc-settings-group"):
                 gr.Markdown(f"### 🎛️ RVC Core Settings")
@@ -512,21 +563,21 @@ def full_inference_tab():
                     interactive=True,
                     elem_classes="backing-vocals-checkbox"
                 )
-                
+
                 # Backing vocals controls
                 with gr.Row():
                     infer_backing_vocals_model = gr.Dropdown(
                         label=i18n("Backing Vocals Model"),
-                        info=i18n(
-                            "Select the backing vocals model to use for the conversion."
-                        ),
-                        choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
+                        info=i18n("Select the backing vocals model to use for the conversion."),
+                        choices=sorted(
+                            get_model_names_list(),
+                            key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0),
                         interactive=True,
                         value=default_weight,
                         visible=False,
                         allow_custom_value=False,
                     )
-                    
+
                     infer_backing_vocals_index = gr.Dropdown(
                         label=i18n("Backing Vocals Index File"),
                         info=i18n(
@@ -538,13 +589,13 @@ def full_inference_tab():
                         visible=False,
                         allow_custom_value=True,
                     )
-                    
+
                     with gr.Column():
                         refresh_button_infer_backing_vocals = gr.Button(
                             i18n("Refresh"),
                             visible=False,
                         )
-                        
+
                         unload_button_infer_backing_vocals = gr.Button(
                             i18n("Unload Voice"),
                             visible=False,
@@ -552,8 +603,14 @@ def full_inference_tab():
 
                         unload_button_infer_backing_vocals.click(
                             fn=lambda: (
-                                gr.Dropdown(value=None, choices=sorted(get_model_names_list(), key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
-                                gr.Dropdown(value=None, choices=get_indexes_list()),
+                                gr.Dropdown(
+                                    value=None,
+                                    choices=sorted(
+                                        get_model_names_list(),
+                                        key=lambda path: os.path.getsize(path) if os.path.exists(path) else 0)),
+                                gr.Dropdown(
+                                    value=None,
+                                    choices=get_indexes_list()),
                             ),
                             inputs=[],
                             outputs=[
@@ -561,13 +618,13 @@ def full_inference_tab():
                                 infer_backing_vocals_index,
                             ],
                         )
-                        
+
                         infer_backing_vocals_model.select(
                             fn=lambda model_file_value: match_index(model_file_value),
                             inputs=[infer_backing_vocals_model],
                             outputs=[infer_backing_vocals_index],
                         )
-                
+
                 # Backing vocals RVC settings
                 with gr.Accordion(
                     i18n("RVC Settings for Backing vocals"), open=False, visible=False
@@ -580,7 +637,7 @@ def full_inference_tab():
                         interactive=True,
                         visible=False,
                     )
-                    
+
                     split_audio_back = gr.Checkbox(
                         label=i18n("Split Audio"),
                         info=i18n(
@@ -590,7 +647,7 @@ def full_inference_tab():
                         value=False,
                         interactive=True,
                     )
-                    
+
                     pitch_extract_back = gr.Dropdown(
                         label=i18n("Pitch Extractor"),
                         info=i18n("Advanced pitch extraction algorithm (KRVC Kernel optimized)."),
@@ -689,13 +746,11 @@ def full_inference_tab():
                             "hybrid[rmvpe+harvest+crepe]",
                             "hybrid[rmvpe+harvest+fcpe]",
                             "hybrid[rmvpe+crepe+fcpe]",
-                            "hybrid[mixed-all]"
-                        ],
+                            "hybrid[mixed-all]"],
                         value="rmvpe",
                         interactive=True,
-                        multiselect=False
-                    )
-                    
+                        multiselect=False)
+
                     hop_length_back = gr.Slider(
                         label=i18n("Hop Length"),
                         info=i18n("Hop length for pitch extraction."),
@@ -705,7 +760,7 @@ def full_inference_tab():
                         value=64,
                         visible=False,
                     )
-                    
+
                     embedder_model_back = gr.Dropdown(
                         label=i18n("Embedder Model"),
                         info=i18n("Model used for learning speaker embedding (KRVC Kernel optimized)."),
@@ -781,12 +836,11 @@ def full_inference_tab():
                             "onnx-japanese-hubert",
                             "onnx-chinese-hubert",
                             "onnx-korean-hubert",
-                            "onnx-multilingual-hubert"
-                        ],
+                            "onnx-multilingual-hubert"],
                         value="contentvec",
                         interactive=True,
                     )
-                    
+
                     autotune_back = gr.Checkbox(
                         label=i18n("Autotune"),
                         info=i18n(
@@ -796,7 +850,7 @@ def full_inference_tab():
                         value=False,
                         interactive=True,
                     )
-                    
+
                     pitch_back = gr.Slider(
                         label=i18n("Pitch"),
                         info=i18n("Adjust the pitch of the audio."),
@@ -806,7 +860,7 @@ def full_inference_tab():
                         value=0,
                         interactive=True,
                     )
-                    
+
                     filter_radius_back = gr.Slider(
                         minimum=0,
                         maximum=7,
@@ -818,7 +872,7 @@ def full_inference_tab():
                         step=1,
                         interactive=True,
                     )
-                    
+
                     index_rate_back = gr.Slider(
                         minimum=0,
                         maximum=1,
@@ -829,7 +883,7 @@ def full_inference_tab():
                         value=0.75,
                         interactive=True,
                     )
-                    
+
                     rms_mix_rate_back = gr.Slider(
                         minimum=0,
                         maximum=1,
@@ -840,7 +894,7 @@ def full_inference_tab():
                         value=0.25,
                         interactive=True,
                     )
-                    
+
                     protect_back = gr.Slider(
                         minimum=0,
                         maximum=0.5,
@@ -851,11 +905,11 @@ def full_inference_tab():
                         value=0.33,
                         interactive=True,
                     )
-                
+
                 clear_outputs_infer = gr.Button(
                     i18n("Clear Outputs (Deletes all audios in assets/audios)")
                 )
-                
+
                 export_format_rvc = gr.Radio(
                     label=i18n("Export Format"),
                     info=i18n("Select the format to export the audio."),
@@ -864,7 +918,7 @@ def full_inference_tab():
                     interactive=True,
                     visible=False,
                 )
-                
+
                 split_audio = gr.Checkbox(
                     label=i18n("Split Audio"),
                     info=i18n(
@@ -874,7 +928,7 @@ def full_inference_tab():
                     value=False,
                     interactive=True,
                 )
-                
+
                 pitch_extract = gr.Dropdown(
                     label=i18n("Pitch Extractor"),
                     info=i18n("Advanced pitch extraction algorithm (KRVC Kernel optimized)."),
@@ -973,12 +1027,11 @@ def full_inference_tab():
                         "hybrid[rmvpe+harvest+crepe]",
                         "hybrid[rmvpe+harvest+fcpe]",
                         "hybrid[rmvpe+crepe+fcpe]",
-                        "hybrid[mixed-all]"
-                    ],
+                        "hybrid[mixed-all]"],
                     value="rmvpe",
                     interactive=True,
                 )
-                
+
                 hop_length = gr.Slider(
                     label=i18n("Hop Length"),
                     info=i18n("Hop length for pitch extraction."),
@@ -988,7 +1041,7 @@ def full_inference_tab():
                     value=64,
                     visible=False,
                 )
-                
+
                 embedder_model = gr.Dropdown(
                     label=i18n("Embedder Model"),
                     info=i18n("Model used for learning speaker embedding (KRVC Kernel optimized)."),
@@ -1064,12 +1117,11 @@ def full_inference_tab():
                         "onnx-japanese-hubert",
                         "onnx-chinese-hubert",
                         "onnx-korean-hubert",
-                        "onnx-multilingual-hubert"
-                    ],
+                        "onnx-multilingual-hubert"],
                     value="contentvec",
                     interactive=True,
                 )
-                
+
                 autotune = gr.Checkbox(
                     label=i18n("Autotune"),
                     info=i18n(
@@ -1079,7 +1131,7 @@ def full_inference_tab():
                     value=False,
                     interactive=True,
                 )
-                
+
                 pitch = gr.Slider(
                     label=i18n("Pitch"),
                     info=i18n("Adjust the pitch of the audio."),
@@ -1089,7 +1141,7 @@ def full_inference_tab():
                     value=0,
                     interactive=True,
                 )
-                
+
                 filter_radius = gr.Slider(
                     minimum=0,
                     maximum=7,
@@ -1101,7 +1153,7 @@ def full_inference_tab():
                     step=1,
                     interactive=True,
                 )
-                
+
                 index_rate = gr.Slider(
                     minimum=0,
                     maximum=1,
@@ -1112,7 +1164,7 @@ def full_inference_tab():
                     value=0.75,
                     interactive=True,
                 )
-                
+
                 rms_mix_rate = gr.Slider(
                     minimum=0,
                     maximum=1,
@@ -1123,7 +1175,7 @@ def full_inference_tab():
                     value=0.25,
                     interactive=True,
                 )
-                
+
                 protect = gr.Slider(
                     minimum=0,
                     maximum=0.5,
@@ -1134,7 +1186,7 @@ def full_inference_tab():
                     value=0.33,
                     interactive=True,
                 )
-            
+
             with gr.Accordion(i18n("Audio Separation Settings"), open=False):
                 use_tta = gr.Checkbox(
                     label=i18n("Use TTA"),
@@ -1143,7 +1195,7 @@ def full_inference_tab():
                     value=False,
                     interactive=True,
                 )
-                
+
                 batch_size = gr.Slider(
                     minimum=1,
                     maximum=24,
@@ -1153,7 +1205,7 @@ def full_inference_tab():
                     value=1,
                     interactive=True,
                 )
-                
+
                 vocal_model = gr.Dropdown(
                     label=i18n("Vocals Model"),
                     info=i18n("Select the vocals model to use for the separation."),
@@ -1162,7 +1214,7 @@ def full_inference_tab():
                     value="Mel-Roformer by KimberleyJSN",
                     allow_custom_value=False,
                 )
-                
+
                 karaoke_model = gr.Dropdown(
                     label=i18n("Karaoke Model"),
                     info=i18n("Select the karaoke model to use for the separation."),
@@ -1171,7 +1223,7 @@ def full_inference_tab():
                     value="Mel-Roformer Karaoke by aufr33 and viperx",
                     allow_custom_value=False,
                 )
-                
+
                 dereverb_model = gr.Dropdown(
                     label=i18n("Dereverb Model"),
                     info=i18n("Select the dereverb model to use for the separation."),
@@ -1180,7 +1232,7 @@ def full_inference_tab():
                     value="UVR-Deecho-Dereverb",
                     allow_custom_value=False,
                 )
-                
+
                 deecho = gr.Checkbox(
                     label=i18n("Deeecho"),
                     info=i18n("Apply deeecho to the audio."),
@@ -1188,7 +1240,7 @@ def full_inference_tab():
                     value=True,
                     interactive=True,
                 )
-                
+
                 deeecho_model = gr.Dropdown(
                     label=i18n("Deeecho Model"),
                     info=i18n("Select the deeecho model to use for the separation."),
@@ -1197,7 +1249,7 @@ def full_inference_tab():
                     value="UVR-Deecho-Normal",
                     allow_custom_value=False,
                 )
-                
+
                 denoise = gr.Checkbox(
                     label=i18n("Denoise"),
                     info=i18n("Apply denoise to the audio."),
@@ -1205,7 +1257,7 @@ def full_inference_tab():
                     value=False,
                     interactive=True,
                 )
-                
+
                 denoise_model = gr.Dropdown(
                     label=i18n("Denoise Model"),
                     info=i18n("Select the denoise model to use for the separation."),
@@ -1215,7 +1267,7 @@ def full_inference_tab():
                     allow_custom_value=False,
                     visible=False,
                 )
-            
+
             with gr.Accordion(i18n("Audio post-process Settings"), open=False):
                 change_inst_pitch = gr.Slider(
                     label=i18n("Change Instrumental Pitch"),
@@ -1226,7 +1278,7 @@ def full_inference_tab():
                     value=0,
                     interactive=True,
                 )
-                
+
                 delete_audios = gr.Checkbox(
                     label=i18n("Delete Audios"),
                     info=i18n("Delete the audios after the conversion."),
@@ -1234,7 +1286,7 @@ def full_inference_tab():
                     value=True,
                     interactive=True,
                 )
-                
+
                 reverb = gr.Checkbox(
                     label=i18n("Reverb"),
                     info=i18n("Apply reverb to the audio."),
@@ -1242,7 +1294,7 @@ def full_inference_tab():
                     value=False,
                     interactive=True,
                 )
-                
+
                 reverb_room_size = gr.Slider(
                     minimum=0,
                     maximum=1,
@@ -1292,7 +1344,7 @@ def full_inference_tab():
                     interactive=True,
                     visible=False,
                 )
-                
+
                 vocals_volume = gr.Slider(
                     label=i18n("Vocals Volume"),
                     info=i18n("Adjust the volume of the vocals."),
@@ -1302,7 +1354,7 @@ def full_inference_tab():
                     value=-3,
                     interactive=True,
                 )
-                
+
                 instrumentals_volume = gr.Slider(
                     label=i18n("Instrumentals Volume"),
                     info=i18n("Adjust the volume of the Instrumentals."),
@@ -1312,7 +1364,7 @@ def full_inference_tab():
                     value=-3,
                     interactive=True,
                 )
-                
+
                 backing_vocals_volume = gr.Slider(
                     label=i18n("Backing Vocals Volume"),
                     info=i18n("Adjust the volume of the backing vocals."),
@@ -1322,7 +1374,7 @@ def full_inference_tab():
                     value=-3,
                     interactive=True,
                 )
-                
+
                 export_format_final = gr.Radio(
                     label=i18n("Export Format"),
                     info=i18n("Select the format to export the audio."),
@@ -1330,7 +1382,7 @@ def full_inference_tab():
                     value="FLAC",
                     interactive=True,
                 )
-            
+
             with gr.Accordion(i18n("Device Settings"), open=False):
                 devices = gr.Textbox(
                     label=i18n("Device"),
@@ -1374,7 +1426,9 @@ def full_inference_tab():
         )
 
     def update_hop_length_visibility(pitch_extract_value):
-        return gr.update(visible=pitch_extract_value in ["crepe", "crepe-tiny"])
+        return gr.update(
+            visible=pitch_extract_value in [
+                "crepe", "crepe-tiny"])
 
     # Event handlers
     refresh_button.click(
@@ -1382,25 +1436,23 @@ def full_inference_tab():
         inputs=[],
         outputs=[model_file, index_file, audio],
     )
-    
+
     refresh_button_infer_backing_vocals.click(
-        fn=change_choices,
-        inputs=[],
-        outputs=[infer_backing_vocals_model, infer_backing_vocals_index, audio],
-    )
-    
+        fn=change_choices, inputs=[], outputs=[
+            infer_backing_vocals_model, infer_backing_vocals_index, audio], )
+
     upload_audio.upload(
         fn=save_to_wav,
         inputs=[upload_audio],
         outputs=[audio, output_path],
     )
-    
+
     clear_outputs_infer.click(
         fn=delete_outputs,
         inputs=[],
         outputs=[],
     )
-    
+
     convert_button.click(
         enhanced_full_inference_wrapper,
         inputs=[
@@ -1482,7 +1534,7 @@ def full_inference_tab():
             reverb_width,
         ],
     )
-    
+
     pitch_extract.change(
         fn=update_hop_length_visibility,
         inputs=pitch_extract,

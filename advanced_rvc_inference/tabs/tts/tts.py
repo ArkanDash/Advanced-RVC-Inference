@@ -1,14 +1,16 @@
-import gradio as gr
+from ...lib.i18n import I18nAuto
+import json
 import os
 import sys
-import json
+
+import gradio as gr
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from ...lib.i18n import I18nAuto
 
 i18n = I18nAuto()
+
 
 def tts_tab():
     with gr.Row():
@@ -27,8 +29,8 @@ def tts_tab():
             language_selection = gr.Dropdown(
                 label=i18n("Language"),
                 choices=[
-                    "en", "zh", "de", "es", "ru", "ko", "fr", "ja", "pt", "tr", 
-                    "pl", "ca", "nl", "ar", "sv", "it", "id", "hi", "fi", "vi", 
+                    "en", "zh", "de", "es", "ru", "ko", "fr", "ja", "pt", "tr",
+                    "pl", "ca", "nl", "ar", "sv", "it", "id", "hi", "fi", "vi",
                     "he", "uk", "el", "ms", "cs", "ro", "da", "hu", "ta"
                 ],
                 value="en"
@@ -40,26 +42,31 @@ def tts_tab():
                 step=0.05,
                 label=i18n("Speed")
             )
-            submit_button = gr.Button(i18n("Generate Speech"), variant="primary")
-        
+            submit_button = gr.Button(
+                i18n("Generate Speech"), variant="primary")
+
         with gr.Column():
-            output_audio = gr.Audio(label=i18n("Generated Speech"), type="filepath")
+            output_audio = gr.Audio(
+                label=i18n("Generated Speech"),
+                type="filepath")
             status_output = gr.Textbox(label=i18n("Status"), interactive=False)
-    
+
     def generate_speech(text, voice, language, speed):
         if not text.strip():
             return None, i18n("Please enter some text to synthesize.")
-        
+
         # This is a placeholder for the actual TTS implementation
-        # In a real implementation, you would use a TTS model like OpenAI TTS, Coqui TTS, etc.
+        # In a real implementation, you would use a TTS model like OpenAI TTS,
+        # Coqui TTS, etc.
         try:
             # Placeholder for actual TTS processing
             # import openai or other TTS libraries
             # audio_path = run_tts_model(text, voice, language, speed)
-            return None, i18n("TTS feature is implemented. In a complete version, this would generate speech from text using advanced TTS models.")
+            return None, i18n(
+                "TTS feature is implemented. In a complete version, this would generate speech from text using advanced TTS models.")
         except Exception as e:
             return None, f"{i18n('Error:')} {str(e)}"
-    
+
     submit_button.click(
         generate_speech,
         inputs=[text_input, voice_selection, language_selection, speed_slider],

@@ -6,6 +6,7 @@ def feature_loss(fmap_r, fmap_g):
 
     return loss * 2
 
+
 def discriminator_loss(disc_real_outputs, disc_generated_outputs):
     loss = 0
     r_losses, g_losses = [], []
@@ -20,6 +21,7 @@ def discriminator_loss(disc_real_outputs, disc_generated_outputs):
 
     return loss, r_losses, g_losses
 
+
 def generator_loss(disc_outputs):
     loss = 0
     gen_losses = []
@@ -29,6 +31,7 @@ def generator_loss(disc_outputs):
         loss += l
 
     return loss, gen_losses
+
 
 def kl_loss(z_p, logs_q, m_p, logs_p, z_mask):
     z_p = z_p.float()

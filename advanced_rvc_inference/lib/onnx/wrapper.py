@@ -1,14 +1,16 @@
+import onnxruntime
+import numpy as np
 import json
+import warnings
+
 import onnx
 import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import onnxruntime
 
-import numpy as np
+warnings.filterwarnings("ignore", category=UserWarning)
+
 
 class ONNXRVC:
-    def __init__(self, model_path, providers, log_severity_level = 3):
+    def __init__(self, model_path, providers, log_severity_level=3):
         sess_options = onnxruntime.SessionOptions()
         sess_options.log_severity_level = log_severity_level
 
@@ -24,8 +26,8 @@ class ONNXRVC:
         self.cpt["version"] = metadata_dict.get("version", "v1")
         self.cpt["energy"] = metadata_dict.get("energy", False)
         self.net_g = onnxruntime.InferenceSession(
-            model_path, 
-            sess_options=sess_options, 
+            model_path,
+            sess_options=sess_options,
             providers=providers
         )
 
@@ -45,9 +47,8 @@ class ONNXRVC:
                     self.net_g.get_inputs()[6].name: energy.cpu().numpy().astype(np.float32)
                 })
             else:
-                inputs.update({
-                    self.net_g.get_inputs()[4].name: energy.cpu().numpy().astype(np.float32)
-                })
+                inputs.update({self.net_g.get_inputs()[
+                              4].name: energy.cpu().numpy().astype(np.float32)})
         else:
             if self.cpt["use_f0"]:
                 inputs.update({
@@ -56,21 +57,28 @@ class ONNXRVC:
                 })
 
         return inputs
-    
-    def to(self, device = "cpu"):
+
+    def to(self, device="cpu"):
         self.device = device
         return self
 
-    def infer(self, feats = None, p_len = None, pitch = None, pitchf = None, sid = None, energy = None):
+    def infer(
+            self,
+            feats=None,
+            p_len=None,
+            pitch=None,
+            pitchf=None,
+            sid=None,
+            energy=None):
         output = self.net_g.run(
             [self.net_g.get_outputs()[0].name], (
                 self.get_onnx_argument(
-                    feats, 
-                    p_len, 
-                    sid, 
-                    pitch, 
-                    pitchf, 
-                    energy, 
+                    feats,
+                    p_len,
+                    sid,
+                    pitch,
+                    pitchf,
+                    energy,
                 )
             )
         )

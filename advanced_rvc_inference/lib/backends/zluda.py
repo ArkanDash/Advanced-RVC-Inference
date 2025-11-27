@@ -1,25 +1,28 @@
 # ZLUDA backend with kernel functionality
-import warnings
+import json
 import os
 import platform
 import subprocess
-import json
-from typing import Optional, Dict, Any, List
+import warnings
+from typing import Any, Dict, List, Optional
+
 import numpy as np
+
 
 class ZLUDAError(Exception):
     """ZLUDA specific exception"""
     pass
 
+
 class ZLUDAKernel:
     """ZLUDA kernel wrapper for RVC operations"""
-    
+
     def __init__(self, kernel_name: str, source_code: str):
         self.kernel_name = kernel_name
         self.source_code = source_code
         self.compiled = False
         self.handle = None
-        
+
     def compile(self, device_options: Dict[str, Any] = None):
         """Compile kernel for ZLUDA execution"""
         try:
@@ -29,7 +32,7 @@ class ZLUDAKernel:
         except Exception as e:
             warnings.warn(f"ZLUDA kernel compilation failed: {e}")
             return False
-    
+
     def launch(self, grid_size, block_size, shared_memory=0, stream=None):
         """Launch kernel on device"""
         if not self.compiled:
@@ -37,16 +40,17 @@ class ZLUDAKernel:
         # Placeholder for actual kernel launch
         return True
 
+
 class ZLUDADevice:
     """ZLUDA device wrapper"""
-    
+
     def __init__(self, device_id: int = 0):
         self.device_id = device_id
         self.name = "ZLUDA AMD GPU"
         self.compute_capability = (5, 7)  # ROCm equivalent
         self.total_memory = 8 * 1024**3  # 8GB default
         self.multiprocessor_count = 40  # Navi 21 equivalent
-        
+
     def get_attributes(self) -> Dict[str, Any]:
         """Get device attributes"""
         return {
@@ -56,42 +60,44 @@ class ZLUDADevice:
             'multiprocessor_count': self.multiprocessor_count
         }
 
+
 class ZLUDAContext:
     """ZLUDA context for kernel execution"""
-    
+
     def __init__(self, device: ZLUDADevice):
         self.device = device
         self.active_kernels = {}
         self.memory_pools = {}
-        
+
     def allocate_memory(self, size: int, dtype=np.float32):
         """Allocate device memory"""
         return np.zeros(size, dtype=dtype)
-    
+
     def free_memory(self, memory):
         """Free device memory"""
         pass
-    
+
     def synchronize(self):
         """Synchronize all operations"""
         pass
 
+
 class ZLUDAMemoryManager:
     """Memory management for ZLUDA backend"""
-    
+
     def __init__(self):
         self.allocated_memory = {}
         self.memory_pool = {}
-    
+
     def allocate(self, size: int, dtype=np.float32) -> np.ndarray:
         """Allocate memory from pool"""
         array = np.zeros(size, dtype=dtype)
         return array
-    
+
     def deallocate(self, array: np.ndarray):
         """Return memory to pool"""
         pass
-    
+
     def get_memory_info(self) -> Dict[str, Any]:
         """Get memory usage information"""
         return {
@@ -100,54 +106,56 @@ class ZLUDAMemoryManager:
             'total': 8 * 1024**3
         }
 
+
 # Core ZLUDA kernels for RVC operations
 ZLUDA_KERNELS = {
     "audio_mel_spectrogram": """
-    __global__ void mel_spectrogram_kernel(float* input, float* output, 
+    __global__ void mel_spectrogram_kernel(float* input, float* output,
                                           int sample_rate, int n_fft, int hop_length) {
         int idx = blockIdx.x * blockDim.x + threadIdx.x;
         if (idx >= n_fft) return;
-        
+
         // Simplified mel spectrogram computation
         float freq = (float)idx * sample_rate / n_fft;
         output[idx] = input[idx] * log_mel_filter(freq);
     }
     """,
-    
+
     "pitch_extraction": """
-    __global__ void pitch_extraction_kernel(float* audio, float* pitches, 
+    __global__ void pitch_extraction_kernel(float* audio, float* pitches,
                                           int audio_length, float threshold) {
         int idx = blockIdx.x * blockDim.x + threadIdx.x;
         if (idx >= audio_length) return;
-        
+
         // Simplified pitch extraction
         float freq = estimate_pitch(audio[idx], threshold);
         pitches[idx] = freq;
     }
     """,
-    
+
     "feature_convolution": """
-    __global__ void feature_convolution_kernel(float* features, float* kernel, 
+    __global__ void feature_convolution_kernel(float* features, float* kernel,
                                              float* output, int batch_size) {
         int idx = blockIdx.x * blockDim.x + threadIdx.x;
         if (idx >= batch_size) return;
-        
+
         // Convolution operation for feature processing
         output[idx] = convolution_1d(features[idx], kernel);
     }
     """,
-    
+
     "waveform_generation": """
-    __global__ void waveform_generation_kernel(float* features, float* waveform, 
+    __global__ void waveform_generation_kernel(float* features, float* waveform,
                                              int length, float* f0) {
         int idx = blockIdx.x * blockDim.x + threadIdx.x;
         if (idx >= length) return;
-        
+
         // Waveform generation from features and pitch
         waveform[idx] = synthesize_waveform(features[idx], f0[idx]);
     }
     """
 }
+
 
 def check_zluda_installation():
     """Check if ZLUDA is properly installed"""
@@ -155,30 +163,31 @@ def check_zluda_installation():
         # Check for ZLUDA environment variables
         if 'ZLUDA_PATH' in os.environ:
             return True
-            
+
         # Check for ZLUDA binaries
         system = platform.system().lower()
         if system == 'windows':
             zluda_paths = ['C:\\Program Files\\ZLUDA', 'C:\\ZLUDA']
         else:
             zluda_paths = ['/opt/zluda', '/usr/local/zluda']
-            
+
         for path in zluda_paths:
             if os.path.exists(path):
                 return True
-                
+
         # Check for HIP/ROCm which ZLUDA can utilize
         try:
-            result = subprocess.run(['hipcc', '--version'], 
-                                  capture_output=True, text=True, timeout=5)
+            result = subprocess.run(['hipcc', '--version'],
+                                    capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return True
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
-            
+
         return False
     except Exception:
         return False
+
 
 def is_available():
     """Check if ZLUDA is available"""
@@ -187,12 +196,13 @@ def is_available():
     except Exception:
         return False
 
+
 def get_device(device_id: int = 0) -> Optional[ZLUDADevice]:
     """Get ZLUDA device"""
     if not is_available():
         warnings.warn("ZLUDA backend not available - using fallback mode")
         return None
-    
+
     try:
         device = ZLUDADevice(device_id)
         return device
@@ -200,38 +210,43 @@ def get_device(device_id: int = 0) -> Optional[ZLUDADevice]:
         warnings.warn(f"Failed to initialize ZLUDA device: {e}")
         return None
 
-def create_context(device: Optional[ZLUDADevice] = None) -> Optional[ZLUDAContext]:
+
+def create_context(device: Optional[ZLUDADevice]
+                   = None) -> Optional[ZLUDAContext]:
     """Create ZLUDA context"""
     if not is_available():
         warnings.warn("ZLUDA backend not available - using fallback mode")
         return None
-    
+
     try:
         if device is None:
             device = get_device()
         if device is None:
             return None
-            
+
         context = ZLUDAContext(device)
         return context
     except Exception as e:
         warnings.warn(f"Failed to create ZLUDA context: {e}")
         return None
 
-def compile_kernel(kernel_name: str, source_code: str = None) -> Optional[ZLUDAKernel]:
+
+def compile_kernel(
+        kernel_name: str,
+        source_code: str = None) -> Optional[ZLUDAKernel]:
     """Compile a kernel for ZLUDA execution"""
     if not is_available():
         warnings.warn("ZLUDA backend not available")
         return None
-    
+
     try:
         if source_code is None:
             source_code = ZLUDA_KERNELS.get(kernel_name, "")
-            
+
         if not source_code:
             warnings.warn(f"Kernel source code not found for: {kernel_name}")
             return None
-            
+
         kernel = ZLUDAKernel(kernel_name, source_code)
         success = kernel.compile()
         return kernel if success else None
@@ -239,19 +254,23 @@ def compile_kernel(kernel_name: str, source_code: str = None) -> Optional[ZLUDAK
         warnings.warn(f"Failed to compile ZLUDA kernel: {e}")
         return None
 
-def execute_audio_kernel(kernel_name: str, inputs: Dict[str, np.ndarray], 
-                        context: Optional[ZLUDAContext] = None) -> Dict[str, np.ndarray]:
+
+def execute_audio_kernel(kernel_name: str,
+                         inputs: Dict[str,
+                                      np.ndarray],
+                         context: Optional[ZLUDAContext] = None) -> Dict[str,
+                                                                         np.ndarray]:
     """Execute audio processing kernel"""
     if not is_available():
         warnings.warn("ZLUDA backend not available - using CPU fallback")
         return inputs
-    
+
     try:
         # Get or compile kernel
         kernel = compile_kernel(kernel_name)
         if kernel is None:
             return inputs
-            
+
         # Execute kernel (placeholder for actual execution)
         outputs = {}
         for name, array in inputs.items():
@@ -260,17 +279,19 @@ def execute_audio_kernel(kernel_name: str, inputs: Dict[str, np.ndarray],
                 outputs[output_name] = array  # Simplified processing
             else:
                 outputs[name] = array
-                
+
         return outputs
     except Exception as e:
         warnings.warn(f"Failed to execute ZLUDA kernel: {e}")
         return inputs
 
+
 def optimize_for_rvc(context: Optional[ZLUDAContext] = None) -> Dict[str, Any]:
     """Optimize ZLUDA configuration for RVC workloads"""
     if not is_available():
-        return {'status': 'fallback', 'recommendations': ['Install ZLUDA for GPU acceleration']}
-    
+        return {'status': 'fallback', 'recommendations': [
+            'Install ZLUDA for GPU acceleration']}
+
     try:
         # ZLUDA-specific optimizations for RVC
         config = {
@@ -300,7 +321,9 @@ def optimize_for_rvc(context: Optional[ZLUDAContext] = None) -> Dict[str, Any]:
         warnings.warn(f"Failed to optimize ZLUDA for RVC: {e}")
         return {'status': 'error', 'error': str(e)}
 
-def get_performance_metrics(context: Optional[ZLUDAContext] = None) -> Dict[str, Any]:
+
+def get_performance_metrics(
+        context: Optional[ZLUDAContext] = None) -> Dict[str, Any]:
     """Get ZLUDA performance metrics"""
     if not is_available():
         return {
@@ -309,7 +332,7 @@ def get_performance_metrics(context: Optional[ZLUDAContext] = None) -> Dict[str,
             'memory_usage': 0,
             'throughput': 'N/A'
         }
-    
+
     try:
         return {
             'status': 'active',
@@ -323,11 +346,20 @@ def get_performance_metrics(context: Optional[ZLUDAContext] = None) -> Dict[str,
     except Exception:
         return {'status': 'error'}
 
+
 # Export all functions and classes
 __all__ = [
-    'ZLUDAError', 'ZLUDAKernel', 'ZLUDADevice', 'ZLUDAContext', 'ZLUDAMemoryManager',
+    'ZLUDAError',
+    'ZLUDAKernel',
+    'ZLUDADevice',
+    'ZLUDAContext',
+    'ZLUDAMemoryManager',
     'ZLUDA_KERNELS',
-    'is_available', 'get_device', 'create_context', 'compile_kernel',
-    'execute_audio_kernel', 'optimize_for_rvc', 'get_performance_metrics',
-    'check_zluda_installation'
-]
+    'is_available',
+    'get_device',
+    'create_context',
+    'compile_kernel',
+    'execute_audio_kernel',
+    'optimize_for_rvc',
+    'get_performance_metrics',
+    'check_zluda_installation']

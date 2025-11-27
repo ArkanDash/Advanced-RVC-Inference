@@ -14,116 +14,97 @@ __author__ = "ArkanDash & BF667"
 
 # Core imports for easy access (with conditional fallbacks)
 try:
-    from .core import (
-        full_inference_program,
-        import_voice_converter,
-        get_config,
-        download_file,
-        add_audio_effects,
-        merge_audios,
-        check_fp16_support,
-        real_time_voice_conversion,
-        models_vocals,
-        karaoke_models,
-        denoise_models,
-        dereverb_models,
-        deecho_models,
-        gpu_optimizer,
-        gpu_settings,
-        GPU_OPTIMIZATION_AVAILABLE
-    )
-    
+    from .core import (GPU_OPTIMIZATION_AVAILABLE, add_audio_effects,
+                       check_fp16_support, deecho_models, denoise_models,
+                       dereverb_models, download_file, full_inference_program,
+                       get_config, gpu_optimizer, gpu_settings,
+                       import_voice_converter, karaoke_models, merge_audios,
+                       models_vocals, real_time_voice_conversion)
     # Import path manager for easy access
-    from .lib.path_manager import get_path_manager, PathManager
-    
+    from .lib.path_manager import PathManager, get_path_manager
+
     # Make path_manager easily accessible as a module-level function
     path_manager = get_path_manager()
-    
+
 except ImportError as e:
     # Fallback implementations when core functions are not available
     def full_inference_program(*args, **kwargs):
         """Fallback for full_inference_program"""
         print("full_inference_program not available due to missing dependencies")
         return None
-    
+
     def import_voice_converter(*args, **kwargs):
         """Fallback for import_voice_converter"""
         print("import_voice_converter not available due to missing dependencies")
         return None
-    
+
     def get_config(*args, **kwargs):
         """Fallback for get_config"""
         return {}
-    
+
     def download_file(*args, **kwargs):
         """Fallback for download_file"""
         print("download_file not available due to missing dependencies")
         return None
-    
+
     def add_audio_effects(*args, **kwargs):
         """Fallback for add_audio_effects"""
         print("add_audio_effects not available due to missing dependencies")
         return None
-    
+
     def merge_audios(*args, **kwargs):
         """Fallback for merge_audios"""
         print("merge_audios not available due to missing dependencies")
         return None
-    
+
     def check_fp16_support(*args, **kwargs):
         """Fallback for check_fp16_support"""
         return False
-    
+
     def real_time_voice_conversion(*args, **kwargs):
         """Fallback for real_time_voice_conversion"""
         print("real_time_voice_conversion not available due to missing dependencies")
         return None
-    
+
     def models_vocals(*args, **kwargs):
         """Fallback for models_vocals"""
         return {}
-    
+
     def karaoke_models(*args, **kwargs):
         """Fallback for karaoke_models"""
         return {}
-    
+
     def denoise_models(*args, **kwargs):
         """Fallback for denoise_models"""
         return {}
-    
+
     def dereverb_models(*args, **kwargs):
         """Fallback for dereverb_models"""
         return {}
-    
+
     def deecho_models(*args, **kwargs):
         """Fallback for deecho_models"""
         return {}
-    
+
     def gpu_optimizer(*args, **kwargs):
         """Fallback for gpu_optimizer"""
         print("gpu_optimizer not available due to missing dependencies")
         return None
-    
+
     def gpu_settings(*args, **kwargs):
         """Fallback for gpu_settings"""
         return {}
-    
+
     GPU_OPTIMIZATION_AVAILABLE = False
 
 # KRVC kernel imports
 try:
-    from .krvc_kernel import (
-        KRVCFeatureExtractor,
-        krvc_speed_optimize,
-        krvc_inference_mode,
-        krvc_training_mode,
-        krvc_mixed_precision_training,
-        KRVCAdvancedOptimizer,
-        KRVCInferenceOptimizer,
-        KRVCPerformanceMonitor,
-        KRVCRealTimeProcessor,
-        cleanup_krvc_memory
-    )
+    from .krvc_kernel import (KRVCAdvancedOptimizer, KRVCFeatureExtractor,
+                              KRVCInferenceOptimizer, KRVCPerformanceMonitor,
+                              KRVCRealTimeProcessor, cleanup_krvc_memory,
+                              krvc_inference_mode,
+                              krvc_mixed_precision_training,
+                              krvc_speed_optimize, krvc_training_mode)
     KRVC_AVAILABLE = True
 except ImportError:
     KRVC_AVAILABLE = False
@@ -156,20 +137,21 @@ except ImportError:
 
 # Path manager fallback
 try:
-    from .lib.path_manager import get_path_manager, PathManager
+    from .lib.path_manager import PathManager, get_path_manager
     path_manager = get_path_manager()
 except ImportError:
     # Fallback for path_manager when lib.path_manager is not available
     class PathManager:
         """Fallback PathManager class"""
+
         def __init__(self, now_dir=None):
             self.now_dir = now_dir or os.getcwd() if 'os' in globals() else '/tmp'
             self.config = {}
-    
+
     def get_path_manager(now_dir=None):
         """Fallback get_path_manager function"""
         return PathManager(now_dir)
-    
+
     path_manager = PathManager()
 
 # Package metadata
@@ -201,7 +183,6 @@ __all__ = [
     'rvc',
     'uvr',
 ]
-
 
 
 __all__.extend([

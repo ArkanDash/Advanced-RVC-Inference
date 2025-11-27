@@ -7,11 +7,14 @@ Authors: ArkanDash & BF667
 Last Updated: November 26, 2025
 """
 
+import os
+import sys
+
 import gradio as gr
-import os, sys
-from ...lib.i18n import I18nAuto
 
 import assets.themes.loadThemes as loadThemes
+
+from ...lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 

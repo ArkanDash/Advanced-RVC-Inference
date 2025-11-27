@@ -1,20 +1,41 @@
-import sys, os
+import assets.themes.loadThemes as loadThemes
+from advanced_rvc_inference.tabs.training import training_tab
+from advanced_rvc_inference.tabs.settings import select_themes_tab
+from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
+from advanced_rvc_inference.tabs.model_manager import model_manager_tab
+from advanced_rvc_inference.tabs.full_inference import full_inference_tab
+from advanced_rvc_inference.tabs.enhancement import enhancement_tab
+from advanced_rvc_inference.tabs.download_music import download_music_tab
+from advanced_rvc_inference.tabs.download_model import download_model_tab
+from advanced_rvc_inference.tabs.config_options import extra_options_tab
+import os
+import sys
+
 import gradio as gr
+
+
+# Detect if running in Google Colab
+def is_colab():
+    try:
+        import google.colab
+        return True
+    except ImportError:
+        return False
+
+# Detect if running in Kaggle
+
+
+def is_kaggle():
+    return os.environ.get('KAGGLE_KERNEL_RUN_TYPE') is not None
+
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 DEFAULT_PORT = 7755
 MAX_PORT_ATTEMPTS = 10
+COLAB_ENVIRONMENT = is_colab()
+KAGGLE_ENVIRONMENT = is_kaggle()
 
-from advanced_rvc_inference.tabs.full_inference import full_inference_tab
-from advanced_rvc_inference.tabs.download_model import download_model_tab
-from advanced_rvc_inference.tabs.download_music import download_music_tab
-from advanced_rvc_inference.tabs.settings import select_themes_tab
-from advanced_rvc_inference.tabs.training import training_tab
-from advanced_rvc_inference.tabs.model_manager import model_manager_tab
-from advanced_rvc_inference.tabs.enhancement import enhancement_tab
-from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
-from advanced_rvc_inference.tabs.config_options import extra_options_tab
 
 # Attempt to import additional advanced features from Applio and Vietnamese-RVC
 try:
@@ -24,7 +45,8 @@ except ImportError:
     TTS_AVAILABLE = False
 
 try:
-    from advanced_rvc_inference.tabs.voice_blender.voice_blender import voice_blender_tab
+    from advanced_rvc_inference.tabs.voice_blender.voice_blender import \
+        voice_blender_tab
     VOICE_BLENDER_AVAILABLE = True
 except ImportError:
     VOICE_BLENDER_AVAILABLE = False
@@ -53,7 +75,6 @@ try:
 except ImportError:
     EMBEDDER_AVAILABLE = False
 
-import assets.themes.loadThemes as loadThemes
 
 try:
     from assets.i18n.i18n import I18nAuto
@@ -61,6 +82,7 @@ except ImportError:
     class I18nAuto:
         def __init__(self):
             pass
+
         def __call__(self, key):
             return key
 
@@ -83,7 +105,7 @@ custom_css = """
 }
 
 /* Main container styling */
-.dark .dark\:bg-gray-900 {
+.dark .dark\\:bg-gray-900 {
     background-color: #0f172a !important;
 }
 
@@ -199,8 +221,7 @@ with gr.Blocks(
         with gr.Column(scale=2, min_width=300, elem_classes="header-info"):
             gr.Markdown(
                 "> *Kernel Advanced RVC - 2x Faster Training & Inference*  \n"
-                "> *Ultimate Voice Conversion Platform with Advanced Performance Optimization*"
-            )
+                "> *Ultimate Voice Conversion Platform with Advanced Performance Optimization*")
 
     # Main content area with organized tabs
     with gr.Tab("🎵 Inference"):
@@ -244,16 +265,54 @@ with gr.Blocks(
 
 
 def launch(port):
-    app.launch(
-        share="--share" in sys.argv,
-        inbrowser="--open" in sys.argv,
+    # Configure launch parameters based on environment
+    share = "--share" in sys.argv or COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT
+    inbrowser = "--open" in sys.argv and not (
+        COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT)
+
+    # Special handling for Colab/Kaggle environments
+    if COLAB_ENVIRONMENT:
+        print("🚀 Detected Google Colab environment")
+        print("📱 The interface will be available via a public URL")
+        share = True
+        server_name = "0.0.0.0"
+    elif KAGGLE_ENVIRONMENT:
+        print("🚀 Detected Kaggle environment")
+        share = True
+        server_name = "0.0.0.0"
+    else:
+        server_name = None
+
+    # Launch the app
+    demo = app.launch(
+        share=share,
+        inbrowser=inbrowser,
         server_port=port,
+        server_name=server_name,
         show_error=True,
         prevent_thread_lock=False,
         theme=rvc_theme,
         css=custom_css,
-        footer_links=["api", "gradio", "settings"]  # Gradio 6: footer links instead of show_api
+        show_api=True,  # Enable API documentation
+        quiet=False
     )
+
+    # Display URLs for Colab users
+    if COLAB_ENVIRONMENT and hasattr(demo, 'share_url') and demo.share_url:
+        print(f"\n🌐 Public URL: {demo.share_url}")
+        print("📋 Copy this URL to access the interface from anywhere!")
+
+        # Try to display clickable link in Colab
+        try:
+            from IPython.display import HTML, display
+            display(
+                HTML(
+                    f'<a href="{
+                        demo.share_url}" target="_blank" style="color: #4285f4; font-size: 16px; font-weight: bold;">🔗 Click here to open Advanced RVC Inference</a>'))
+        except ImportError:
+            pass
+
+    return demo
 
 
 def get_port_from_args():
@@ -264,19 +323,36 @@ def get_port_from_args():
     return DEFAULT_PORT
 
 
-if __name__ == "__main__":
+def main():
+    """Main function to launch Advanced RVC Inference"""
     port = get_port_from_args()
+
     for _ in range(MAX_PORT_ATTEMPTS):
         try:
-            launch(port)
+            print(f"🚀 Launching Advanced RVC Inference on port {port}...")
+            demo = launch(port)
+
+            # Keep the server running
+            if demo and not (COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT):
+                try:
+                    demo.block_thread()
+                except KeyboardInterrupt:
+                    print("\n👋 Shutting down Advanced RVC Inference...")
+                except Exception as e:
+                    print(f"❌ Error during execution: {e}")
+
             break
         except OSError:
             print(
-                f"Failed to launch on port {port}, trying again on port {port - 1}..."
-            )
+                f"Failed to launch on port {port}, trying again on port {
+                    port - 1}...")
             port -= 1
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             import traceback
             traceback.print_exc()
             break
+
+
+if __name__ == "__main__":
+    main()

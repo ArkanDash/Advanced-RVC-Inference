@@ -1,42 +1,45 @@
-import os
-import sys
-import json
-import time
-import struct
+from assets.config.variables import translations
 import codecs
+import json
+import os
+import struct
+import sys
+import time
 
 sys.path.append(os.getcwd())
 
-from assets.config.variables import translations
 
 CLIENT_ID = "1392816674159202396"
+
 
 def create_payload(opcode, payload):
     data = json.dumps(payload).encode("utf-8")
 
     return struct.pack(
-        "<I", 
+        "<I",
         opcode
     ) + struct.pack(
-        "<I", 
+        "<I",
         len(data)
     ) + data
+
 
 def connect_discord_ipc():
     try:
         return open(
-            r"\\?\pipe\discord-ipc-0", 
-            "r+b", 
+            r"\\?\pipe\discord-ipc-0",
+            "r+b",
             buffering=0
         )
     except Exception:
         return None
 
+
 def send_discord_rpc(pipe):
     pipe.write(
         create_payload(
             0, {
-                "v": 1, 
+                "v": 1,
                 "client_id": CLIENT_ID
             }
         )
@@ -45,7 +48,7 @@ def send_discord_rpc(pipe):
     pipe.read(8)
     pipe.read(
         struct.unpack(
-            "<I", 
+            "<I",
             pipe.read(4)
         )[0]
     )
@@ -58,7 +61,7 @@ def send_discord_rpc(pipe):
                     "pid": os.getpid(),
                     "activity": {
                         "buttons": [{
-                            "label": "Github", 
+                            "label": "Github",
                             "url": codecs.decode("uggcf://tvguho.pbz/CunzUhlauNau16/Ivrganzrfr-EIP", "rot13")
                         }],
                         "details": translations["details"],

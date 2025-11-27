@@ -1,7 +1,7 @@
 import gradio as gr
 
-from .core import download_music
 from ...lib.i18n import I18nAuto
+from .core import download_music
 
 i18n = I18nAuto()
 

@@ -11,34 +11,48 @@ attention mechanisms, memory optimizations, and performance enhancements for bot
 training and inference.
 """
 
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import torch.nn as nn
-import torch
-import warnings
-import torch
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning)
-import torch.nn.functional as F
-import numpy as np
-from typing import Optional, Tuple
 import logging
-from torch.cuda.amp import autocast, GradScaler
 import math
+import warnings
+from typing import Optional, Tuple
+
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.cuda.amp import GradScaler, autocast
+
+# Suppress warnings for cleaner output
+warnings.filterwarnings("ignore", category=UserWarning)
 
 logger = logging.getLogger(__name__)
+
+# Performance optimizations
+# Optimize CUDNN for consistent input sizes
+torch.backends.cudnn.benchmark = True
+# Allow non-deterministic algorithms for speed
+torch.backends.cudnn.deterministic = False
+
+# Memory optimization settings
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()  # Clear GPU cache
+    # Enable memory-efficient attention if available
+    try:
+        torch.backends.cuda.enable_flash_sdp(True)
+    except AttributeError:
+        pass
+
 
 class KRVCFlashAttention(nn.Module):
     """
     Ultra-fast attention using Flash Attention for maximum performance
     """
-    def __init__(self, embed_dim: int, num_heads: int = 8, dropout: float = 0.0):
+
+    def __init__(
+            self,
+            embed_dim: int,
+            num_heads: int = 8,
+            dropout: float = 0.0):
         super(KRVCFlashAttention, self).__init__()
         self.embed_dim = embed_dim
         self.num_heads = num_heads
@@ -84,7 +98,12 @@ class KRVCConvNeXtBlock(nn.Module):
     """
     ConvNeXt-style block with deep optimizations for audio processing
     """
-    def __init__(self, dim: int, expansion_ratio: float = 4.0, drop_path: float = 0.0):
+
+    def __init__(
+            self,
+            dim: int,
+            expansion_ratio: float = 4.0,
+            drop_path: float = 0.0):
         super(KRVCConvNeXtBlock, self).__init__()
         self.dim = dim
         self.expansion_ratio = expansion_ratio
@@ -108,7 +127,8 @@ class KRVCConvNeXtBlock(nn.Module):
         self.pwcontraction = nn.Linear(int(dim * expansion_ratio), dim)
 
         # Stochastic depth for regularization
-        self.drop_path_layer = nn.Dropout(drop_path) if drop_path > 0.0 else nn.Identity()
+        self.drop_path_layer = nn.Dropout(
+            drop_path) if drop_path > 0.0 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Input shape: (batch, seq_len, features)
@@ -146,7 +166,12 @@ class KRVCResidualBlock(nn.Module):
     """
     Advanced residual block with multiple optimization techniques
     """
-    def __init__(self, channels: int, reduction: int = 4, use_convnext: bool = True):
+
+    def __init__(
+            self,
+            channels: int,
+            reduction: int = 4,
+            use_convnext: bool = True):
         super(KRVCResidualBlock, self).__init__()
         self.channels = channels
         self.reduction = reduction
@@ -158,7 +183,8 @@ class KRVCResidualBlock(nn.Module):
         else:
             # Traditional processing path
             bottleneck_channels = channels // reduction
-            self.bottleneck = nn.Conv1d(channels, bottleneck_channels, kernel_size=1, bias=False)
+            self.bottleneck = nn.Conv1d(
+                channels, bottleneck_channels, kernel_size=1, bias=False)
 
             # Optimized conv path with depthwise separable convolutions
             self.conv_path = nn.Sequential(
@@ -177,10 +203,15 @@ class KRVCResidualBlock(nn.Module):
             )
 
             # Final projection
-            self.projection = nn.Conv1d(bottleneck_channels, channels, kernel_size=1, bias=False)
+            self.projection = nn.Conv1d(
+                bottleneck_channels, channels, kernel_size=1, bias=False)
 
         # Layer norm for stability
-        self.norm = nn.GroupNorm(num_groups=min(32, channels), num_channels=channels)
+        self.norm = nn.GroupNorm(
+            num_groups=min(
+                32,
+                channels),
+            num_channels=channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         residual = x
@@ -205,6 +236,7 @@ class KRVCFeatureExtractor(nn.Module):
     """
     Advanced feature extractor with multiple optimization techniques
     """
+
     def __init__(
         self,
         input_dim: int = 256,
@@ -227,17 +259,24 @@ class KRVCFeatureExtractor(nn.Module):
         self.input_proj = nn.Linear(input_dim, hidden_dim)
 
         # Positional encoding for temporal information
-        self.pos_encoding = nn.Parameter(torch.randn(1, 1000, hidden_dim) * 0.02)
+        self.pos_encoding = nn.Parameter(
+            torch.randn(1, 1000, hidden_dim) * 0.02)
 
         # Feature processing layers
         self.layers = nn.ModuleList()
         for i in range(num_layers):
             # Alternate between ConvNeXt and attention blocks
             if i % 2 == 0:
-                self.layers.append(KRVCResidualBlock(hidden_dim, use_convnext=use_convnext))
+                self.layers.append(
+                    KRVCResidualBlock(
+                        hidden_dim,
+                        use_convnext=use_convnext))
             else:
                 # Add attention block
-                self.layers.append(KRVCFlashAttention(hidden_dim, num_heads=min(8, hidden_dim // 32)))
+                self.layers.append(
+                    KRVCFlashAttention(
+                        hidden_dim, num_heads=min(
+                            8, hidden_dim // 32)))
 
         # Adaptive pooling for variable-length inputs
         self.adaptive_pool = nn.AdaptiveAvgPool1d(1)
@@ -291,8 +330,10 @@ class KRVCInferenceOptimizer:
     """
     Advanced inference optimizer with multiple performance techniques
     """
+
     def __init__(self):
-        self.use_tensor_cores = torch.cuda.is_available() and torch.cuda.get_device_capability()[0] >= 7
+        self.use_tensor_cores = torch.cuda.is_available(
+        ) and torch.cuda.get_device_capability()[0] >= 7
         self.use_cudagraphs = torch.cuda.is_available()
         self.use_torch_compile = hasattr(torch, 'compile')
 
@@ -302,7 +343,10 @@ class KRVCInferenceOptimizer:
         # Memory pool for efficient allocation
         self.memory_pool = None
 
-    def optimize_model(self, model: nn.Module, compile_model: bool = True) -> nn.Module:
+    def optimize_model(
+            self,
+            model: nn.Module,
+            compile_model: bool = True) -> nn.Module:
         """
         Apply advanced optimizations to the model
         """
@@ -332,7 +376,11 @@ class KRVCInferenceOptimizer:
         Convert BatchNorm to InstanceNorm for faster inference
         """
         mod = module
-        if isinstance(module, (nn.BatchNorm1d, nn.BatchNorm2d, nn.BatchNorm3d)):
+        if isinstance(
+            module,
+            (nn.BatchNorm1d,
+             nn.BatchNorm2d,
+             nn.BatchNorm3d)):
             mod = nn.InstanceNorm1d(
                 module.num_features,
                 affine=module.affine,
@@ -369,6 +417,7 @@ class KRVCAdvancedOptimizer:
     """
     Advanced optimizer for training with memory and speed optimizations
     """
+
     def __init__(self, model_params, lr=1e-4, weight_decay=0.01):
         # Use FusedAdam if available for faster training
         try:
@@ -403,7 +452,8 @@ class KRVCAdvancedOptimizer:
         self.scaler.unscale_(self.optimizer)
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm_(self.optimizer.param_groups[0]['params'], clip_grad)
+        torch.nn.utils.clip_grad_norm_(
+            self.optimizer.param_groups[0]['params'], clip_grad)
 
         # Step with scaled optimizer
         self.scaler.step(self.optimizer)
@@ -417,6 +467,7 @@ class KRVCPerformanceMonitor:
     """
     Performance monitoring for KRVC kernel
     """
+
     def __init__(self):
         self.inference_times = []
         self.memory_usage = []
@@ -484,6 +535,59 @@ def krvc_mixed_precision_training():
     return autocast()
 
 
+class KRVCMemoryManager:
+    """
+    Advanced memory management for KRVC kernel operations
+    """
+
+    @staticmethod
+    def clear_cache():
+        """Clear GPU memory cache"""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+
+    @staticmethod
+    def get_memory_stats():
+        """Get current GPU memory statistics"""
+        if not torch.cuda.is_available():
+            return {"gpu_available": False}
+
+        return {
+            "gpu_available": True,
+            "allocated_mb": torch.cuda.memory_allocated() / 1024**2,
+            "cached_mb": torch.cuda.memory_reserved() / 1024**2,
+            "max_allocated_mb": torch.cuda.max_memory_allocated() / 1024**2,
+            "max_cached_mb": torch.cuda.max_memory_reserved() / 1024**2,
+        }
+
+    @staticmethod
+    def optimize_memory_usage():
+        """Optimize memory usage for inference"""
+        if torch.cuda.is_available():
+            # Clear cache
+            torch.cuda.empty_cache()
+
+            # Set memory fraction if needed
+            try:
+                torch.cuda.set_per_process_memory_fraction(0.8)
+            except BaseException:
+                pass
+
+    @staticmethod
+    def context_manager():
+        """Context manager for memory-efficient operations"""
+        class MemoryContext:
+            def __enter__(self):
+                KRVCMemoryManager.clear_cache()
+                return self
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                KRVCMemoryManager.clear_cache()
+
+        return MemoryContext()
+
+
 # Example usage
 if __name__ == "__main__":
     # Initialize global optimizations
@@ -491,8 +595,14 @@ if __name__ == "__main__":
 
     print("KRVC Kernel initialized with advanced performance optimizations!")
     print(f"CUDA available: {torch.cuda.is_available()}")
-    print(f"Tensor cores available: {torch.cuda.get_device_capability()[0] >= 7 if torch.cuda.is_available() else False}")
-    print(f"Flash Attention available: {hasattr(F, 'scaled_dot_product_attention')}")
+    print(
+        f"Tensor cores available: {
+            torch.cuda.get_device_capability()[0] >= 7 if torch.cuda.is_available() else False}")
+    print(
+        f"Flash Attention available: {
+            hasattr(
+                F,
+                'scaled_dot_product_attention')}")
     print(f"Torch compile available: {hasattr(torch, 'compile')}")
 
     # Test the advanced feature extractor

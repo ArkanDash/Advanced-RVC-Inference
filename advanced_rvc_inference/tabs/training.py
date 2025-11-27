@@ -1,8 +1,11 @@
-import gradio as gr
-import os, sys
-from ...lib.i18n import I18nAuto
+import os
 import subprocess
+import sys
 import threading
+
+import gradio as gr
+
+from ...lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 
@@ -16,19 +19,21 @@ try:
 except ImportError:
     COMPREHENSIVE_TRAIN_AVAILABLE = False
 
+
 def training_tab():
     """Main training interface with comprehensive and simple options"""
-    
+
     with gr.Column():
         gr.Markdown("## 🎓 RVC Training Center")
         gr.Markdown(i18n("Complete training suite for RVC models"))
-        
+
         if COMPREHENSIVE_TRAIN_AVAILABLE:
             # Use the comprehensive training interface
             training_interface()
         else:
             # Fallback to simple interface
             simple_training_tab()
+
 
 def simple_training_tab():
     """Simple training interface as fallback"""
@@ -130,13 +135,20 @@ def simple_training_tab():
 
         with gr.Row():
             with gr.Column():
-                preprocess_btn = gr.Button(i18n("Step 1: Preprocess Dataset"), variant="secondary")
-                extract_f0_btn = gr.Button(i18n("Step 2: Extract F0"), variant="secondary")
-                extract_feature_btn = gr.Button(i18n("Step 3: Extract Features"), variant="secondary")
+                preprocess_btn = gr.Button(
+                    i18n("Step 1: Preprocess Dataset"),
+                    variant="secondary")
+                extract_f0_btn = gr.Button(
+                    i18n("Step 2: Extract F0"), variant="secondary")
+                extract_feature_btn = gr.Button(
+                    i18n("Step 3: Extract Features"), variant="secondary")
 
             with gr.Column():
-                train_btn = gr.Button(i18n("Step 4: Start Training"), variant="primary")
-                train_index_btn = gr.Button(i18n("Step 5: Train Index"), variant="secondary")
+                train_btn = gr.Button(
+                    i18n("Step 4: Start Training"),
+                    variant="primary")
+                train_index_btn = gr.Button(
+                    i18n("Step 5: Train Index"), variant="secondary")
 
         with gr.Row():
             progress_output = gr.Textbox(
@@ -158,22 +170,32 @@ def simple_training_tab():
             thread.start()
             thread.join()
 
-        def preprocess_dataset(dataset_path, model_name, sample_rate, cpu_cores):
+        def preprocess_dataset(
+                dataset_path,
+                model_name,
+                sample_rate,
+                cpu_cores):
             if not dataset_path or not model_name:
                 return i18n("Dataset path and model name are required!")
 
             cmd = [
                 "python",
                 f"{now_dir}/programs/applio_code/rvc/train/preprocess/preprocess.py",
-                "--dataset_path", dataset_path,
-                "--model_name", model_name,
-                "--sample_rate", sample_rate,
-                "--cpu_cores", str(cpu_cores)
-            ]
+                "--dataset_path",
+                dataset_path,
+                "--model_name",
+                model_name,
+                "--sample_rate",
+                sample_rate,
+                "--cpu_cores",
+                str(cpu_cores)]
 
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"{i18n('Dataset preprocessed successfully!')}\n{result.stdout}"
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=True)
+                return f"{
+                    i18n('Dataset preprocessed successfully!')}\n{
+                    result.stdout}"
             except Exception as e:
                 return f"{i18n('Preprocessing failed:')} {str(e)}"
 
@@ -184,13 +206,16 @@ def simple_training_tab():
             cmd = [
                 "python",
                 f"{now_dir}/programs/applio_code/rvc/train/extract/extract_f0.py",
-                "--model_name", model_name,
-                "--method", f0_method,
-                "--cpu_cores", str(cpu_cores)
-            ]
+                "--model_name",
+                model_name,
+                "--method",
+                f0_method,
+                "--cpu_cores",
+                str(cpu_cores)]
 
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=True)
                 return f"{i18n('F0 extracted successfully!')}\n{result.stdout}"
             except Exception as e:
                 return f"{i18n('F0 extraction failed:')} {str(e)}"
@@ -202,19 +227,35 @@ def simple_training_tab():
             cmd = [
                 "python",
                 f"{now_dir}/programs/applio_code/rvc/train/extract/extract_feature.py",
-                "--model_name", model_name,
-                "--version", f"v{version}",
-                "--pretrained", pretrain,
-                "--gpus", gpu_ids
-            ]
+                "--model_name",
+                model_name,
+                "--version",
+                f"v{version}",
+                "--pretrained",
+                pretrain,
+                "--gpus",
+                gpu_ids]
 
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"{i18n('Features extracted successfully!')}\n{result.stdout}"
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=True)
+                return f"{
+                    i18n('Features extracted successfully!')}\n{
+                    result.stdout}"
             except Exception as e:
                 return f"{i18n('Feature extraction failed:')} {str(e)}"
 
-        def start_training(model_name, version, f0, sample_rate, dataset_path, batch_size, gpu_ids, save_every_epoch, total_epoch, pretrain):
+        def start_training(
+                model_name,
+                version,
+                f0,
+                sample_rate,
+                dataset_path,
+                batch_size,
+                gpu_ids,
+                save_every_epoch,
+                total_epoch,
+                pretrain):
             if not all([model_name, dataset_path]):
                 return i18n("Model name and dataset path are required!")
 
@@ -233,8 +274,11 @@ def simple_training_tab():
             ]
 
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"{i18n('Training completed successfully!')}\n{result.stdout}"
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=True)
+                return f"{
+                    i18n('Training completed successfully!')}\n{
+                    result.stdout}"
             except Exception as e:
                 return f"{i18n('Training failed:')} {str(e)}"
 
@@ -245,12 +289,15 @@ def simple_training_tab():
             cmd = [
                 "python",
                 f"{now_dir}/programs/applio_code/rvc/train/training/train_index.py",
-                "--model_name", model_name
-            ]
+                "--model_name",
+                model_name]
 
             try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                return f"{i18n('Index trained successfully!')}\n{result.stdout}"
+                result = subprocess.run(
+                    cmd, capture_output=True, text=True, check=True)
+                return f"{
+                    i18n('Index trained successfully!')}\n{
+                    result.stdout}"
             except Exception as e:
                 return f"{i18n('Index training failed:')} {str(e)}"
 
@@ -262,7 +309,13 @@ def simple_training_tab():
 
         extract_f0_btn.click(
             extract_f0,
-            inputs=[model_name, gr.Textbox(value="rmvpe", visible=False), cpu_cores],  # Using rmvpe as default
+            inputs=[
+                model_name,
+                gr.Textbox(
+                    value="rmvpe",
+                    visible=False),
+                cpu_cores],
+            # Using rmvpe as default
             outputs=[progress_output]
         )
 
@@ -274,9 +327,18 @@ def simple_training_tab():
 
         train_btn.click(
             start_training,
-            inputs=[model_name, version, f0, sample_rate, dataset_path, batch_size, gpu_ids, save_every_epoch, total_epoch, pretrain],
-            outputs=[progress_output]
-        )
+            inputs=[
+                model_name,
+                version,
+                f0,
+                sample_rate,
+                dataset_path,
+                batch_size,
+                gpu_ids,
+                save_every_epoch,
+                total_epoch,
+                pretrain],
+            outputs=[progress_output])
 
         train_index_btn.click(
             train_index,
