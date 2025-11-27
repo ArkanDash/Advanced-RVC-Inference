@@ -227,11 +227,9 @@ def launch(port):
         print("🚀 Detected Kaggle environment")
         share = True
         server_name = "0.0.0.0"
-        prevent_thread_lock = True
     else:
         server_name = "127.0.0.1" if not ("--listen" in sys.argv) else "0.0.0.0"
-        prevent_thread_lock = False
-
+        
     # Launch the app
     print(f"🌐 Starting server on {server_name}:{port}")
     demo = app.launch(
@@ -240,7 +238,6 @@ def launch(port):
         server_port=port,
         server_name=server_name,
         show_error=True,
-        prevent_thread_lock=prevent_thread_lock,
         show_api=True,
         quiet=False
     )
