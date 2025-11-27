@@ -6,15 +6,15 @@ sys.path.append(now_dir)
 DEFAULT_PORT = 7755
 MAX_PORT_ATTEMPTS = 10
 
-from .tabs.full_inference import full_inference_tab
-from .tabs.download_model import download_model_tab
-from .tabs.download_music import download_music_tab
-from .tabs.settings import select_themes_tab
-from .tabs.training import training_tab
-from .tabs.model_manager import model_manager_tab
-from .tabs.enhancement import enhancement_tab
-from .tabs.real_time import real_time_inference_tab
-from .tabs.config_options import extra_options_tab
+from advanced_rvc_inference.tabs.full_inference import full_inference_tab
+from advanced_rvc_inference.tabs.download_model import download_model_tab
+from advanced_rvc_inference.tabs.download_music import download_music_tab
+from advanced_rvc_inference.tabs.settings import select_themes_tab
+from advanced_rvc_inference.tabs.training import training_tab
+from advanced_rvc_inference.tabs.model_manager import model_manager_tab
+from advanced_rvc_inference.tabs.enhancement import enhancement_tab
+from advanced_rvc_inference.tabs.real_time import real_time_inference_tab
+from advanced_rvc_inference.tabs.config_options import extra_options_tab
 
 # Attempt to import additional advanced features from Applio and Vietnamese-RVC
 try:
