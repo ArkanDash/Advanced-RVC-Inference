@@ -13,8 +13,8 @@ import requests
 import yt_dlp
 from bs4 import BeautifulSoup
 
-from ...lib.path_manager import path
-from ...lib.utils import (check_embedders_status, check_f0_models_status,
+from ..lib.path_manager import path
+from ..lib.utils import (check_embedders_status, check_f0_models_status,
                           download_embedder_models, download_f0_models)
 
 # Remove the i18n import since we're removing translation

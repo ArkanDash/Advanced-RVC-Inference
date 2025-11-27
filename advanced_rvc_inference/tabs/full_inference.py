@@ -1,6 +1,6 @@
 
-from ...lib.path_manager import path
-from ...lib.i18n import I18nAuto
+from ..lib.path_manager import path
+from ..lib.i18n import I18nAuto
 from advanced_rvc_inference.core import full_inference_program
 import regex as re
 import gradio as gr

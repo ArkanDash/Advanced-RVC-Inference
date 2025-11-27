@@ -4,7 +4,7 @@
 <div align="center"> 
 
 
-**Last Updated:** November 26, 2025
+**Last Updated:** November 27, 2025
 
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
@@ -411,6 +411,34 @@ pytest --cov=advanced_rvc_inference/
 - **Colab Demo**: Click the Colab badge above
 - **GitHub Issues**: [Bug reports and feature requests](https://github.com/ArkanDash/Advanced-RVC-Inference/issues)
 - **Discord Community**: [Join our Discord](https://discord.gg/hvmsukmBHE)
+
+## Recent Updates & Fixes
+
+### Version 4.0.1 (November 27, 2025)
+
+#### 🔧 Critical Bug Fixes
+- **Fixed ModuleNotFoundError**: Resolved import issues with `assets.themes.loadThemes` module
+- **Corrected Relative Imports**: Fixed incorrect triple-dot imports (`...`) to proper double-dot imports (`..`) throughout the codebase
+- **Path Resolution**: Added proper parent directory path handling for asset imports
+- **Import Compatibility**: Ensured all modules can be imported correctly when running as `python -m advanced_rvc_inference.main`
+
+#### 🚀 Code Quality Improvements
+- **Refactored Import System**: Streamlined module imports for better maintainability
+- **Enhanced Error Handling**: Improved error messages for missing dependencies
+- **Code Organization**: Better separation of concerns in module structure
+- **Documentation Updates**: Updated README with latest fixes and improvements
+
+#### 🛠️ Technical Details
+- Fixed import path from `import assets.themes.loadThemes` to use proper sys.path handling
+- Corrected relative imports in tabs modules from `from ...lib.` to `from ..lib.`
+- Ensured compatibility with Python module execution (`-m` flag)
+- Maintained backward compatibility with existing functionality
+
+#### 📋 Installation Notes
+- All theme loading functionality now works correctly
+- No breaking changes to existing API
+- Enhanced error messages for missing dependencies
+- Improved startup reliability
 
 ## Citation & Credits
 

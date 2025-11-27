@@ -1,5 +1,5 @@
 from .core import map_pitch_extractor
-from ...lib.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 from scipy.signal import medfilt
 from scipy.ndimage import gaussian_filter1d
 import pyworld as pw

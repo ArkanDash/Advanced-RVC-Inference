@@ -14,7 +14,7 @@ import gradio as gr
 
 import assets.themes.loadThemes as loadThemes
 
-from ...lib.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 

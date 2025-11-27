@@ -1,5 +1,5 @@
 from .core import map_embedder_model
-from ...lib.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 from transformers.models.wav2vec2.modeling_wav2vec2 import Wav2Vec2Model
 from transformers import AutoConfig, AutoModel, AutoTokenizer
 import torch.nn as nn

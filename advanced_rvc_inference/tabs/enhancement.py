@@ -3,7 +3,7 @@ import sys
 
 import gradio as gr
 
-from ...lib.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 
 i18n = I18nAuto()
 

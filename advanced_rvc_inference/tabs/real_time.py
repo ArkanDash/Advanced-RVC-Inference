@@ -12,8 +12,8 @@ import sys
 
 import gradio as gr
 
-from ...lib.i18n import I18nAuto
-from ...lib.path_manager import path
+from ..lib.i18n import I18nAuto
+from ..lib.path_manager import path
 from .core import real_time_voice_conversion
 
 i18n = I18nAuto()

@@ -1,4 +1,4 @@
-from ...lib.i18n import I18nAuto
+from ..lib.i18n import I18nAuto
 import os
 import sys
 

@@ -1,5 +1,5 @@
-from ...lib.path_manager import path
-from ...lib.i18n import I18nAuto
+from ..lib.path_manager import path
+from ..lib.i18n import I18nAuto
 import json
 import os
 import subprocess

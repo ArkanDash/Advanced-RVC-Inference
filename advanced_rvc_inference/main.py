@@ -1,3 +1,12 @@
+import os
+import sys
+
+# Add the parent directory to Python path to access assets module
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+
 import assets.themes.loadThemes as loadThemes
 from advanced_rvc_inference.tabs.training import training_tab
 from advanced_rvc_inference.tabs.settings import select_themes_tab
@@ -8,8 +17,6 @@ from advanced_rvc_inference.tabs.enhancement import enhancement_tab
 from advanced_rvc_inference.tabs.download_music import download_music_tab
 from advanced_rvc_inference.tabs.download_model import download_model_tab
 from advanced_rvc_inference.tabs.config_options import extra_options_tab
-import os
-import sys
 
 import gradio as gr
 
