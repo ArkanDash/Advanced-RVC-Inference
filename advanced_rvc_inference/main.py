@@ -148,140 +148,6 @@ for feature_name, (module_path, tab_name) in optional_features.items():
 
 print(f"✅ Loaded {len(optional_tabs)} optional features")
 
-# Enhanced CSS for better UI
-ENHANCED_CSS = """
-/* Modern UI Variables with Dark Mode Support */
-:root {
-    --primary-color: #4f46e5;
-    --secondary-color: #7c3aed;
-    --accent-color: #06b6d4;
-    --background-color: #f8fafc;
-    --card-background: #ffffff;
-    --border-color: #e2e8f0;
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --success-color: #10b981;
-    --warning-color: #f59e0b;
-    --error-color: #ef4444;
-}
-
-/* Dark mode variables */
-.dark {
-    --background-color: #0f172a;
-    --card-background: #1e293b;
-    --border-color: #334155;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-}
-
-/* Global styles */
-.gradio-container {
-    background: var(--background-color) !important;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
-}
-
-/* Header styling */
-.header-row {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
-    border-radius: 12px !important;
-    margin: 1rem 0 !important;
-    padding: 1.5rem !important;
-    color: white !important;
-}
-
-.header-row .markdown {
-    color: white !important;
-}
-
-/* Tab improvements */
-.tab-nav {
-    background: var(--card-background) !important;
-    border-radius: 12px !important;
-    margin: 0.5rem 0 !important;
-    padding: 0.5rem !important;
-}
-
-.tabitem {
-    border-radius: 12px !important;
-    margin: 0.75rem !important;
-    padding: 1.5rem !important;
-    background: var(--card-background) !important;
-    border: 1px solid var(--border-color) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-}
-
-/* Button enhancements */
-.gradio-button.primary {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
-    color: white !important;
-    border: none !important;
-    border-radius: 8px !important;
-    padding: 0.75rem 1.5rem !important;
-    font-weight: 600 !important;
-    transition: all 0.3s ease !important;
-}
-
-.gradio-button.primary:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3) !important;
-}
-
-/* Card components */
-.card {
-    background: var(--card-background) !important;
-    border-radius: 12px !important;
-    padding: 1.5rem !important;
-    border: 1px solid var(--border-color) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
-    margin: 1rem 0 !important;
-}
-
-/* Status indicators */
-.status-success { color: var(--success-color) !important; font-weight: 600; }
-.status-warning { color: var(--warning-color) !important; font-weight: 600; }
-.status-error { color: var(--error-color) !important; font-weight: 600; }
-
-/* Hide footer and improve layout */
-footer { display: none !important; }
-.gradio-container .main { min-height: calc(100vh - 2rem) !important; }
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .gradio-container { 
-        padding: 0.5rem !important; 
-        max-width: 100% !important;
-    }
-    .tabitem { 
-        margin: 0.25rem !important; 
-        padding: 1rem !important; 
-    }
-    .card { 
-        padding: 1rem !important; 
-        margin: 0.5rem 0 !important; 
-    }
-    .header-row {
-        padding: 1rem !important;
-        margin: 0.5rem 0 !important;
-    }
-}
-
-/* Loading animations */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.loading-pulse {
-    animation: pulse 2s infinite;
-}
-
-/* Colab-specific optimizations */
-.colab-optimized .gradio-container {
-    max-width: 100% !important;
-    padding: 0.5rem !important;
-}
-"""
-
 def find_available_port(start_port: int, max_attempts: int = MAX_PORT_ATTEMPTS) -> int:
     """Find an available port starting from start_port"""
     for port in range(start_port, start_port - max_attempts, -1):
@@ -297,18 +163,10 @@ def find_available_port(start_port: int, max_attempts: int = MAX_PORT_ATTEMPTS) 
 def create_app() -> gr.Blocks:
     """Create and configure the main Gradio application with enhanced features"""
     
-    # Add colab-optimized class if in Colab
-    additional_css = ENHANCED_CSS
-    if COLAB_ENVIRONMENT:
-        additional_css += "\n.gradio-container { margin: 0 auto !important; }"
-    
+
     app = gr.Blocks(
         title="Advanced RVC Inference v4.0 - Enhanced",
-        fill_width=True,
-        analytics_enabled=False,
-        theme=rvc_theme,
-        css=additional_css
-    )
+        )
     
     with app:
         # Enhanced Header Section
@@ -452,13 +310,7 @@ def launch_app(port: int):
     # Configure launch parameters
     share = any(arg in sys.argv for arg in ['--share', '--listen']) or COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT
     inbrowser = '--open' in sys.argv and not (COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT)
-    server_name = "0.0.0.0" if any(arg in sys.argv for arg in ['--listen', '--share']) or COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT else "127.0.0.1"
-    
-    print(f"🚀 Launching Advanced RVC Inference...")
-    print(f"   📍 Port: {actual_port}")
-    print(f"   🌐 Server: {server_name}")
-    print(f"   🔗 Sharing: {share}")
-    print(f"   🖥️  Browser: {inbrowser}")
+
     
     # Create and launch app
     app = create_app()
@@ -467,11 +319,8 @@ def launch_app(port: int):
         share=share,
         inbrowser=inbrowser,           
         server_port=actual_port,
-        server_name=server_name,
         show_error=True,
-        show_api=False,
-        quiet=False,
-        prevent_thread_lock=True  # Important for Colab
+        theme=rvc_theme
     )
         
                 
