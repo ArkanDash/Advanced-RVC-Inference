@@ -1,7 +1,7 @@
 {
   "theme": {
-    "file": "Applio.py",
-    "class": "Applio"
+    "file": null,
+    "class": "terastudio/yellow"
   },
   "plugins": [],
   "discord_presence": true,
@@ -18,5 +18,26 @@
     "monitor_device": "",
     "model_file": "",
     "index_file": ""
+  },
+  "paths": {
+    "audio_files": "assets/audios",
+    "models": "assets/weights",
+    "outputs": "assets/audios/output",
+    "inputs": "assets/audios/input",
+    "temp": "temp",
+    "datasets": "assets/datasets",
+    "logs": "assets/logs"
+  },
+  "audio": {
+    "default_format": "wav",
+    "supported_formats": ["wav", "mp3", "flac", "ogg", "opus", "m4a", "mp4", "aac", "alac", "wma", "aiff", "webm", "ac3"],
+    "quality": "high",
+    "sample_rate": 44100
+  },
+  "performance": {
+    "auto_cleanup": true,
+    "max_temp_size_mb": 1000,
+    "enable_cache": true,
+    "cache_size_mb": 500
   }
 }

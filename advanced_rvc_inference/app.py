@@ -31,6 +31,8 @@ from tabs.voice_blender.voice_blender import voice_blender_tab
 from tabs.plugins.plugins import plugins_tab
 from tabs.settings.settings import settings_tab
 from tabs.realtime.realtime import realtime_tab
+from tabs.separation.separation import separation_tab
+from tabs.full_inference.full_inference import full_inference_tab
 
 # Run prerequisites
 from core import run_prerequisites_script
@@ -62,7 +64,7 @@ installation_checker.check_installation()
 # Load theme
 import assets.themes.loadThemes as loadThemes
 
-my_applio = loadThemes.load_theme() or "ParityError/Interstellar"
+my_applio = loadThemes.load_theme() or "terastudio/yellow"
 
 # Define Gradio interface
 with gr.Blocks(
@@ -93,6 +95,12 @@ with gr.Blocks(
 
     with gr.Tab(i18n("Realtime")):
         realtime_tab()
+
+    with gr.Tab(i18n("Separation")):
+        separation_tab()
+
+    with gr.Tab(i18n("Full Inference (RVC x UVR)")):
+        full_inference_tab()
 
     with gr.Tab(i18n("Plugins")):
         plugins_tab()

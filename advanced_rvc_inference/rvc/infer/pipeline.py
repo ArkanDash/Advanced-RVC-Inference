@@ -14,6 +14,15 @@ now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 from rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
+from rvc.lib.predictors.F0Extractor import F0Extractor
+from rvc.lib.predictors.RMVPE import RMVPE0
+from rvc.lib.predictors.FCPE import FCPEF0Predictor
+from rvc.lib.predictors.Generator import (
+    PM_AC, PM_CC, PM_SHS, DIO, Harvest, PYIN, SWIPE, PIPTRACK, Penn, DJCM, Swift, Pesto,
+    MangioCrepNET, MangioPerrYMoss, MangioPENN
+)
+# Import the F0Extractor for handling different methods
+from rvc.lib.predictors.F0Extractor import F0Extractor
 
 import logging
 
@@ -220,30 +229,96 @@ class Pipeline:
             proposed_pitch: whether to apply proposed pitch adjustment
             proposed_pitch_threshold: target frequency, 155.0 for male, 255.0 for female
         """
-        if f0_method == "crepe":
+        # Handle different f0 method mappings
+        f0_extractor = None
+        f0 = None
+
+        # Map the f0 method names to the correct implementation
+        if f0_method in ["pm-ac", "pm-cc", "pm-shs", "dio"]:
+            if f0_method == "pm-ac":
+                f0_extractor = PM_AC(x, self.sample_rate, self.window)
+            elif f0_method == "pm-cc":
+                f0_extractor = PM_CC(x, self.sample_rate, self.window)
+            elif f0_method == "pm-shs":
+                f0_extractor = PM_SHS(x, self.sample_rate, self.window)
+            elif f0_method == "dio":
+                f0_extractor = DIO(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method.startswith("mangio-crepe"):
+            crepe_size = f0_method.split("-")[-1]  # tiny, small, medium, large, full
+            f0_extractor = MangioCrepNET(x, self.sample_rate, self.window, crepe_size)
+            f0 = f0_extractor.get_f0()
+        elif f0_method.startswith("crepe"):
+            crepe_size = f0_method.split("-")[-1] if "-" in f0_method else "full"  # tiny, small, medium, large, full
             model = CREPE(
                 device=self.device, sample_rate=self.sample_rate, hop_size=self.window
             )
-            f0 = model.get_f0(x, self.f0_min, self.f0_max, p_len, "full")
+            f0 = model.get_f0(x, self.f0_min, self.f0_max, p_len, crepe_size)
             del model
-        elif f0_method == "crepe-tiny":
-            model = CREPE(
-                device=self.device, sample_rate=self.sample_rate, hop_size=self.window
-            )
-            f0 = model.get_f0(x, self.f0_min, self.f0_max, p_len, "tiny")
-            del model
-        elif f0_method == "rmvpe":
-            model = RMVPE(
-                device=self.device, sample_rate=self.sample_rate, hop_size=self.window
-            )
-            f0 = model.get_f0(x, filter_radius=0.03)
-            del model
-        elif f0_method == "fcpe":
-            model = FCPE(
-                device=self.device, sample_rate=self.sample_rate, hop_size=self.window
-            )
-            f0 = model.get_f0(x, p_len, filter_radius=0.006)
-            del model
+        elif f0_method.startswith("fcpe"):
+            if f0_method == "fcpe-legacy":
+                f0_extractor = FCPEF0Predictor(self.sample_rate, self.device, "legacy")
+            elif f0_method == "fcpe-previous":
+                f0_extractor = FCPEF0Predictor(self.sample_rate, self.device, "previous")
+            else:  # fcpe or fcpe-default
+                f0_extractor = FCPEF0Predictor(self.sample_rate, self.device, "default")
+            f0 = f0_extractor.get_f0(x, p_len)
+        elif f0_method.startswith("rmvpe"):
+            if f0_method == "rmvpe-clipping":
+                f0_extractor = RMVPE0(self.sample_rate, self.device, "clipping", 3)
+            elif f0_method == "rmvpe-medfilt":
+                f0_extractor = RMVPE0(self.sample_rate, self.device, "medfilt", 3)
+            elif f0_method == "rmvpe-clipping-medfilt":
+                f0_extractor = RMVPE0(self.sample_rate, self.device, "clipping-medfilt", 3)
+            else:  # rmvpe or rmvpe-default
+                f0_extractor = RMVPE0(self.sample_rate, self.device, "default", 0)
+            f0 = f0_extractor.get_f0(x, p_len)
+        elif f0_method == "harvest":
+            f0_extractor = Harvest(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "yin":
+            f0_extractor = Yin(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "pyin":
+            f0_extractor = PYIN(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "swipe":
+            f0_extractor = SWIPE(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "piptrack":
+            f0_extractor = PIPTRACK(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "penn":
+            f0_extractor = Penn(x, self.sample_rate, self.device, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method.startswith("mangio-penn"):
+            f0_extractor = MangioPENN(x, self.sample_rate, self.device, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method.startswith("djcm"):
+            if f0_method == "djcm-clipping":
+                f0_extractor = DJCM(x, self.sample_rate, self.window, "clipping")
+            elif f0_method == "djcm-medfilt":
+                f0_extractor = DJCM(x, self.sample_rate, self.window, "medfilt")
+            elif f0_method == "djcm-clipping-medfilt":
+                f0_extractor = DJCM(x, self.sample_rate, self.window, "clipping-medfilt")
+            else:  # djcm or djcm-default
+                f0_extractor = DJCM(x, self.sample_rate, self.window, "default")
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "swift":
+            f0_extractor = Swift(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "pesto":
+            f0_extractor = Pesto(x, self.sample_rate, self.window)
+            f0 = f0_extractor.get_f0()
+        elif f0_method == "hybrid":
+            # For hybrid methods, we'd need to implement the combination logic
+            # For now, default to rmvpe
+            f0_extractor = RMVPE0(self.sample_rate, self.device, "default", 0)
+            f0 = f0_extractor.get_f0(x, p_len)
+        else:
+            # Default to rmvpe if method not recognized
+            f0_extractor = RMVPE0(self.sample_rate, self.device, "default", 0)
+            f0 = f0_extractor.get_f0(x, p_len)
 
         # f0 adjustments
         if f0_autotune is True:
