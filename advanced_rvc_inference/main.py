@@ -350,34 +350,7 @@ def main():
     
     launch_app(port)
         
-        # Environment-specific handling
-        if COLAB_ENVIRONMENT:
-            print("🔄 Cloud environment detected - keeping server alive...")
-            try:
-                # Keep the server running
-                import time
-                while True:
-                    time.sleep(10)
-                    # Heartbeat indicator
-                    print("💓 Server heartbeat...", end='\r')
-            except KeyboardInterrupt:
-                print("\n👋 Shutting down server...")
-        else:
-            # Local environment - wait for interrupt
-            print("🌐 Server running. Press Ctrl+C to stop.")
-            try:
-                # Block the main thread to keep server running
-                import time
-                while True:
-                    time.sleep(1)
-            except KeyboardInterrupt:
-                print("\n👋 Shutting down server...")
-                
-    except Exception as e:
-        print(f"❌ Fatal error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+        
 
 if __name__ == "__main__":
     main()
