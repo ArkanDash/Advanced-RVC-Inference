@@ -431,23 +431,24 @@ def create_app() -> gr.Blocks:
 
     return app
 
-def create_colab_display(demo, port):
-    """Create enhanced Colab display with better information"""
-    if not COLAB_ENVIRONMENT:
-        return
-        
-    time.sleep(3)  # Allow Gradio to initialize
-    
+def get_server_urls(port: int, share: bool = False) -> Tuple[str, Optional[str]]:
+    """Get local and share URLs for the server"""
+    local_url = f"http://localhost:{port}"
     share_url = None
-    local_url = None
     
-    # Try multiple ways to get URLs
-    if hasattr(demo, 'share_url') and demo.share_url:
-        share_url = demo.share_url
-    if hasattr(demo, 'local_url') and demo.local_url:
-        local_url = demo.local_url
-    elif hasattr(demo, 'server_url') and demo.server_url:
-        local_url = demo.server_url
+    if share:
+        try:
+            # Try to get the public URL from Gradio
+            from gradio import networking
+            share_url = networking.get_share_url(port)
+        except Exception as e:
+            print(f"⚠️  Could not get share URL: {e}")
+    
+    return local_url, share_url
+
+def display_urls(port: int, share: bool = False):
+    """Display URLs in a user-friendly format"""
+    local_url, share_url = get_server_urls(port, share)
     
     print("\n" + "="*70)
     print("🎉 ADVANCED RVC INFERENCE - SUCCESSFULLY LAUNCHED!")
@@ -458,9 +459,13 @@ def create_colab_display(demo, port):
         print(f"   🔗 {share_url}")
         print()
     
-    if local_url:
-        print(f"💻 LOCAL URL (Your machine only):")
-        print(f"   🔗 {local_url}")
+    print(f"💻 LOCAL URL (Your machine only):")
+    print(f"   🔗 {local_url}")
+    print()
+    
+    if COLAB_ENVIRONMENT and share_url:
+        print(f"📱 COLAB MOBILE URL:")
+        print(f"   🔗 {share_url}")
         print()
     
     print("⚡ ENHANCED FEATURES:")
@@ -473,29 +478,29 @@ def create_colab_display(demo, port):
     print("="*70)
     
     # Create clickable links for Colab
-    try:
-        from IPython.display import HTML, display
-        html_content = """
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                    padding: 25px; border-radius: 15px; margin: 20px 0; 
-                    color: white; font-family: Arial, sans-serif;">
-            <h2 style="margin: 0 0 15px 0; text-align: center;">🎤 Advanced RVC Inference - READY!</h2>
-        """
-        
-        if share_url:
-            html_content += f"""
-            <div style="text-align: center; margin: 15px 0;">
-                <a href="{share_url}" target="_blank" 
-                   style="background: rgba(255,255,255,0.2); color: white; 
-                          padding: 12px 24px; border-radius: 8px; text-decoration: none;
-                          font-weight: bold; font-size: 16px; display: inline-block;
-                          border: 2px solid white; margin: 5px;">
-                   🌐 Public URL (Share This)
-                </a>
-            </div>
+    if COLAB_ENVIRONMENT:
+        try:
+            from IPython.display import HTML, display
+            html_content = """
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        padding: 25px; border-radius: 15px; margin: 20px 0; 
+                        color: white; font-family: Arial, sans-serif;">
+                <h2 style="margin: 0 0 15px 0; text-align: center;">🎤 Advanced RVC Inference - READY!</h2>
             """
-        
-        if local_url:
+            
+            if share_url:
+                html_content += f"""
+                <div style="text-align: center; margin: 15px 0;">
+                    <a href="{share_url}" target="_blank" 
+                       style="background: rgba(255,255,255,0.2); color: white; 
+                              padding: 12px 24px; border-radius: 8px; text-decoration: none;
+                              font-weight: bold; font-size: 16px; display: inline-block;
+                              border: 2px solid white; margin: 5px;">
+                       🌐 Public URL (Share This)
+                    </a>
+                </div>
+                """
+            
             html_content += f"""
             <div style="text-align: center; margin: 15px 0;">
                 <a href="{local_url}" target="_blank"
@@ -507,16 +512,16 @@ def create_colab_display(demo, port):
                 </a>
             </div>
             """
-            
-        html_content += """
-            <p style="text-align: center; margin: 15px 0 0 0; font-size: 14px; opacity: 0.9;">
-                ⚠️ Keep this cell running to maintain the connection!
-            </p>
-        </div>
-        """
-        display(HTML(html_content))
-    except ImportError:
-        pass  # Not in IPython environment
+                
+            html_content += """
+                <p style="text-align: center; margin: 15px 0 0 0; font-size: 14px; opacity: 0.9;">
+                    ⚠️ Keep this cell running to maintain the connection!
+                </p>
+            </div>
+            """
+            display(HTML(html_content))
+        except ImportError:
+            pass  # Not in IPython environment
 
 def launch_app(port: int):
     """Enhanced app launcher with better error handling"""
@@ -541,7 +546,8 @@ def launch_app(port: int):
     app = create_app()
     
     try:
-        demo = app.launch(
+        # Launch the app
+        app.launch(
             share=share,
             inbrowser=inbrowser,
             server_port=actual_port,
@@ -552,15 +558,10 @@ def launch_app(port: int):
             prevent_thread_lock=True  # Important for Colab
         )
         
-        # Enhanced Colab display
-        if COLAB_ENVIRONMENT:
-            create_colab_display(demo, actual_port)
-        else:
-            print(f"\n✅ Server is running! Access at: http://{server_name}:{actual_port}")
-            if share and hasattr(demo, 'share_url'):
-                print(f"🌐 Public URL: {demo.share_url}")
+        # Display URLs immediately after launch
+        display_urls(actual_port, share)
         
-        return demo, actual_port
+        return actual_port
         
     except Exception as e:
         print(f"❌ Failed to launch app: {str(e)}")
@@ -589,7 +590,7 @@ def main():
     print("="*70)
     
     try:
-        demo, actual_port = launch_app(port)
+        actual_port = launch_app(port)
         
         # Environment-specific handling
         if COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT:
@@ -603,19 +604,14 @@ def main():
                     print("💓 Server heartbeat...", end='\r')
             except KeyboardInterrupt:
                 print("\n👋 Shutting down server...")
-                if hasattr(demo, 'close'):
-                    demo.close()
         else:
             # Local environment - wait for interrupt
             print("🌐 Server running. Press Ctrl+C to stop.")
             try:
-                if hasattr(demo, 'block_thread'):
-                    demo.block_thread()
-                else:
-                    # Fallback for older Gradio versions
-                    import time
-                    while True:
-                        time.sleep(1)
+                # Block the main thread to keep server running
+                import time
+                while True:
+                    time.sleep(1)
             except KeyboardInterrupt:
                 print("\n👋 Shutting down server...")
                 
