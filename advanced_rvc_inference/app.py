@@ -68,19 +68,11 @@ my_applio = loadThemes.load_theme() or "terastudio/yellow"
 
 # Define Gradio interface
 with gr.Blocks(
-    theme=my_applio, title="Applio", css="footer{display:none !important}"
+    theme=my_applio, title="Advanced RVC Inference", css="footer{display:none !important}"
 ) as Applio:
-    gr.Markdown("# Applio")
-    gr.Markdown(
-        i18n(
-            "A simple, high-quality voice conversion tool focused on ease of use and performance."
-        )
-    )
-    gr.Markdown(
-        i18n(
-            "[Support](https://discord.gg/urxFjYmYYh) — [GitHub](https://github.com/IAHispano/Applio)"
-        )
-    )
+    gr.Markdown("# Advanced RVC inference")
+    
+    
     with gr.Tab(i18n("Inference")):
         inference_tab()
 
