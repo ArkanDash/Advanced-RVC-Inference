@@ -85,5 +85,10 @@
     "Export Audio": "Exportar Áudio",
     "Music URL": "URL da Música",
     "Download": "Baixar",
-    "Model URL": "URL do Modelo"
+    "Model URL": "URL do Modelo",
+    "option_not_valid": "A opção selecionada não é válida",
+    "hybrid_calc": "Usando método híbrido para cálculo de F0: {f0_method}",
+    "proposal_f0": "Deslocamento de pitch calculado: {up_key}",
+    "startautotune": "Aplicando autotune...",
+    "calculated pitch offset:": "deslocamento de pitch calculado:"
 }
