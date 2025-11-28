@@ -431,42 +431,6 @@ def create_app() -> gr.Blocks:
 
     return app
 
-def get_server_urls(port: int, share: bool = False) -> Tuple[str, Optional[str]]:
-    """Get local and share URLs for the server"""
-    local_url = f"http://localhost:{port}"
-    share_url = None
-    
-    if share:
-        try:
-            # Try to get the public URL from Gradio
-            from gradio import networking
-            share_url = networking.get_share_url(port)
-        except Exception as e:
-            print(f"⚠️  Could not get share URL: {e}")
-    
-    return local_url, share_url
-
-def display_urls(port: int, share: bool = False):
-    """Display URLs in a user-friendly format"""
-    local_url, share_url = get_server_urls(port, share)
-    
-    print("\n" + "="*70)
-    print("🎉 ADVANCED RVC INFERENCE - SUCCESSFULLY LAUNCHED!")
-    print("="*70)
-    
-    if share_url:
-        print(f"🌐 PUBLIC URL (Share with anyone):")
-        print(f"   🔗 {share_url}")
-        print()
-    
-    print(f"💻 LOCAL URL (Your machine only):")
-    print(f"   🔗 {local_url}")
-    print()
-    
-    if COLAB_ENVIRONMENT and share_url:
-        print(f"📱 COLAB MOBILE URL:")
-        print(f"   🔗 {share_url}")
-        print()
     
     print("⚡ ENHANCED FEATURES:")
     print("   ✅ Optimized for Colab performance")
@@ -476,6 +440,7 @@ def display_urls(port: int, share: bool = False):
     print()
     print("⚠️  IMPORTANT: Keep this cell running to maintain the connection!")
     print("="*70)
+    
 def launch_app(port: int):
     """Enhanced app launcher with better error handling"""
     
@@ -499,25 +464,19 @@ def launch_app(port: int):
     app = create_app()
     
     app.launch(
-    share=share,
-    inbrowser=inbrowser,           
-    server_port=actual_port,
-    server_name=server_name,
-    show_error=True,
-    show_api=False,
-    quiet=False,
-    prevent_thread_lock=True  # Important for Colab
+        share=share,
+        inbrowser=inbrowser,           
+        server_port=actual_port,
+        server_name=server_name,
+        show_error=True,
+        show_api=False,
+        quiet=False,
+        prevent_thread_lock=True  # Important for Colab
     )
         
                 
-    display_urls(actual_port, share)
     
-    return actual_port
-        
-    except Exception as e:
-        print(f"❌ Failed to launch app: {str(e)}")
-        raise
-
+    
 def main():
     """Enhanced main function with better error handling and recovery"""
     
@@ -540,7 +499,7 @@ def main():
     print(f"🎨 Gradio: {gr.__version__}")
     print("="*70)
     
-    actual_port = launch_app(port)
+    launch_app(port)
         
         # Environment-specific handling
         if COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT:
