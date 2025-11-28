@@ -1,9 +1,9 @@
 # Core dependencies
+wget
 PyYAML==6.0.2
 tiktoken
 hyperpyyaml
 torch>=2.9.1
-tqdm==4.66.5
 sortedcontainers
 torchvision>=0.18.1
 torchaudio>=2.9.1
@@ -91,8 +91,8 @@ resampy==0.4.3
 spectralcluster<=0.2.22
 
 
-# Development and debugging (Optional)
+# Development and debugging
 rich>=13.0.0
 click>=8.1.7
 colorama==0.4.6
-
+tqdm==4.66.5
