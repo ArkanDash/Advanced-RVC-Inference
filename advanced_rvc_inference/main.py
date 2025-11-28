@@ -476,53 +476,6 @@ def display_urls(port: int, share: bool = False):
     print()
     print("⚠️  IMPORTANT: Keep this cell running to maintain the connection!")
     print("="*70)
-    
-    # Create clickable links for Colab
-    if COLAB_ENVIRONMENT:
-        try:
-            from IPython.display import HTML, display
-            html_content = """
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        padding: 25px; border-radius: 15px; margin: 20px 0; 
-                        color: white; font-family: Arial, sans-serif;">
-                <h2 style="margin: 0 0 15px 0; text-align: center;">🎤 Advanced RVC Inference - READY!</h2>
-            """
-            
-            if share_url:
-                html_content += f"""
-                <div style="text-align: center; margin: 15px 0;">
-                    <a href="{share_url}" target="_blank" 
-                       style="background: rgba(255,255,255,0.2); color: white; 
-                              padding: 12px 24px; border-radius: 8px; text-decoration: none;
-                              font-weight: bold; font-size: 16px; display: inline-block;
-                              border: 2px solid white; margin: 5px;">
-                       🌐 Public URL (Share This)
-                    </a>
-                </div>
-                """
-            
-            html_content += f"""
-            <div style="text-align: center; margin: 15px 0;">
-                <a href="{local_url}" target="_blank"
-                   style="background: rgba(255,255,255,0.1); color: white;
-                          padding: 10px 20px; border-radius: 6px; text-decoration: none;
-                          font-weight: normal; font-size: 14px; display: inline-block;
-                          border: 1px solid rgba(255,255,255,0.3); margin: 5px;">
-                   💻 Local URL
-                </a>
-            </div>
-            """
-                
-            html_content += """
-                <p style="text-align: center; margin: 15px 0 0 0; font-size: 14px; opacity: 0.9;">
-                    ⚠️ Keep this cell running to maintain the connection!
-                </p>
-            </div>
-            """
-            display(HTML(html_content))
-        except ImportError:
-            pass  # Not in IPython environment
-
 def launch_app(port: int):
     """Enhanced app launcher with better error handling"""
     
@@ -545,23 +498,21 @@ def launch_app(port: int):
     # Create and launch app
     app = create_app()
     
-    try:
-        # Launch the app
-        app.launch(
-            share=share,
-            inbrowser=inbrowser,
-            server_port=actual_port,
-            server_name=server_name,
-            show_error=True,
-            show_api=False,
-            quiet=False,
-            prevent_thread_lock=True  # Important for Colab
-        )
+    app.launch(
+    share=share,
+    inbrowser=inbrowser,           
+    server_port=actual_port,
+    server_name=server_name,
+    show_error=True,
+    show_api=False,
+    quiet=False,
+    prevent_thread_lock=True  # Important for Colab
+    )
         
-        # Display URLs immediately after launch
-        display_urls(actual_port, share)
-        
-        return actual_port
+                
+    display_urls(actual_port, share)
+    
+    return actual_port
         
     except Exception as e:
         print(f"❌ Failed to launch app: {str(e)}")
@@ -589,8 +540,7 @@ def main():
     print(f"🎨 Gradio: {gr.__version__}")
     print("="*70)
     
-    try:
-        actual_port = launch_app(port)
+    actual_port = launch_app(port)
         
         # Environment-specific handling
         if COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT:
