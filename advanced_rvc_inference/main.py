@@ -1,12 +1,13 @@
 """
-Advanced RVC Inference V4.0.0 - Enhanced for Colab/Local Deployment
-Optimized for Gradio 6.x with Better Performance and Reliability
+Advanced RVC Inference V4.0.0 - CLI Enhanced Version
+Optimized for command line execution
 """
 
 import os
 import sys
 import time
 import socket
+import argparse
 from typing import Optional, Tuple
 
 # Enhanced path handling
@@ -20,43 +21,32 @@ import gradio as gr
 
 # Configuration Constants
 DEFAULT_PORT = 7755
-MAX_PORT_ATTEMPTS = 20  # Increased for better port finding
-COLAB_ENVIRONMENT = False
-KAGGLE_ENVIRONMENT = False
+MAX_PORT_ATTEMPTS = 20
 
-# Enhanced Environment Detection
 def detect_environment() -> Tuple[bool, bool]:
     """Comprehensive environment detection with fallbacks"""
     colab = False
     kaggle = False
     
     try:
-        # Method 1: Check for Colab
         import google.colab
         colab = True
-        print("✅ Google Colab environment detected")
     except ImportError:
         pass
     
     try:
-        # Method 2: Check environment variables
         if 'COLAB_RELEASE_TAG' in os.environ:
             colab = True
-            print("✅ Google Colab environment detected (env var)")
     except:
         pass
         
-    # Method 3: Check for Kaggle
     if os.environ.get('KAGGLE_KERNEL_RUN_TYPE') is not None:
         kaggle = True
-        print("✅ Kaggle environment detected")
     
-    # Method 4: Check runtime type (alternative Colab detection)
     try:
         from IPython import get_ipython
         if 'google.colab' in str(get_ipython()):
             colab = True
-            print("✅ Google Colab environment detected (IPython)")
     except:
         pass
     
@@ -75,31 +65,24 @@ def safe_import(module_path: str, item_name: str) -> tuple[bool, Optional[object
     try:
         module = __import__(module_path, fromlist=[item_name])
         component = getattr(module, item_name)
-        print(f"✅ Successfully imported {item_name} from {module_path}")
         return True, component
     except ImportError as e:
-        print(f"⚠️  Optional feature not available: {module_path}.{item_name} - {str(e)}")
         return False, None
     except Exception as e:
-        print(f"❌ Error importing {module_path}.{item_name}: {str(e)}")
         return False, None
 
 # Import core components with error handling
 try:
     import assets.themes.loadThemes as loadThemes
     rvc_theme = loadThemes.load_json() or gr.themes.Default()
-    print("✅ Theme system loaded successfully")
 except Exception as e:
-    print(f"⚠️  Using default theme: {str(e)}")
     rvc_theme = gr.themes.Default()
 
 # Internationalization with fallback
 try:
     from assets.i18n.i18n import I18nAuto
     i18n = I18nAuto()
-    print("✅ Internationalization loaded")
 except ImportError as e:
-    print(f"⚠️  Using fallback i18n: {str(e)}")
     class I18nAuto:
         def __call__(self, key: str) -> str:
             return key
@@ -108,9 +91,6 @@ except ImportError as e:
     i18n = I18nAuto()
 
 # Import tabs with progress indication
-print("🔄 Loading application tabs...")
-
-# Core tabs with error handling
 core_tabs = {}
 tab_modules = [
     ('training', 'training_tab'),
@@ -128,7 +108,6 @@ for module_name, tab_name in tab_modules:
     available, tab_func = safe_import(f'advanced_rvc_inference.tabs.{module_name}', tab_name)
     if available:
         core_tabs[tab_name] = tab_func
-        print(f"✅ Loaded {tab_name}")
 
 # Optional advanced features
 optional_features = {
@@ -146,35 +125,28 @@ for feature_name, (module_path, tab_name) in optional_features.items():
     if available:
         optional_tabs[feature_name] = tab_func
 
-print(f"✅ Loaded {len(optional_tabs)} optional features")
-
 def find_available_port(start_port: int, max_attempts: int = MAX_PORT_ATTEMPTS) -> int:
     """Find an available port starting from start_port"""
-    for port in range(start_port, start_port - max_attempts, -1):
+    for port in range(start_port, start_port + max_attempts):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.bind(('localhost', port))
                 return port
         except OSError:
             continue
-    # If no port found, return the original
     return start_port
 
 def create_app() -> gr.Blocks:
-    """Create and configure the main Gradio application with enhanced features"""
-    
-
-    app = gr.Blocks(
-        title="Advanced RVC Inference v4.0 - Enhanced",
-        )
+    """Create and configure the main Gradio application"""
+    app = gr.Blocks(title="Advanced RVC Inference v4.0 - CLI Enhanced")
     
     with app:
-        # Enhanced Header Section
-        with gr.Row(elem_classes=["header-row", "colab-optimized"] if COLAB_ENVIRONMENT else ["header-row"]):
-            with gr.Column(scale=1, min_width=200):
+        # Header Section
+        with gr.Row():
+            with gr.Column(scale=1):
                 gr.Markdown("# 🎤 Advanced RVC Inference v4.0")
-                gr.Markdown("### *Enhanced for Colab & Local Deployment*")
-            with gr.Column(scale=2, min_width=300):
+                gr.Markdown("### *CLI Enhanced Version*")
+            with gr.Column(scale=2):
                 env_status = "🏢 Local" 
                 if COLAB_ENVIRONMENT:
                     env_status = "☁️ Google Colab"
@@ -183,23 +155,21 @@ def create_app() -> gr.Blocks:
                     
                 gr.Markdown(f"""
                 **Environment**: {env_status}  
-                **Version**: 4.0.0 Enhanced  
-                **Gradio**: {gr.__version__}  
-                *Optimized for performance and reliability*
+                **Version**: 4.0.0 CLI Enhanced  
+                **Gradio**: {gr.__version__}
                 """)
 
-        # Enhanced status indicator
+        # Status indicator
         with gr.Row():
             with gr.Column():
                 status_text = gr.Markdown(
-                    f"✅ **System Ready** | Loaded {len(core_tabs)} core tabs + {len(optional_tabs)} optional features",
-                    elem_classes="status-success"
+                    f"✅ **System Ready** | Loaded {len(core_tabs)} core tabs + {len(optional_tabs)} optional features"
                 )
 
-        # Main Tabs with enhanced organization
-        with gr.Tabs(elem_classes="tab-nav"):
+        # Main Tabs
+        with gr.Tabs():
             # Inference Section
-            with gr.Tab("🎵 Inference", elem_classes="tabitem"):
+            with gr.Tab("🎵 Inference"):
                 with gr.Tabs():
                     with gr.Tab("🎛️ Full Inference"):
                         if 'full_inference_tab' in core_tabs:
@@ -218,7 +188,7 @@ def create_app() -> gr.Blocks:
                             optional_tabs['tts_tab']()
 
             # Download Section
-            with gr.Tab("📥 Downloader", elem_classes="tabitem"):
+            with gr.Tab("📥 Downloader"):
                 with gr.Tabs():
                     with gr.Tab("🎵 Music Downloader"):
                         if 'download_music_tab' in core_tabs:
@@ -233,14 +203,14 @@ def create_app() -> gr.Blocks:
                             gr.Markdown("⚠️ Model Downloader tab not available")
 
             # Training Section
-            with gr.Tab("🎓 Training", elem_classes="tabitem"):
+            with gr.Tab("🎓 Training"):
                 if 'training_tab' in core_tabs:
                     core_tabs['training_tab']()
                 else:
                     gr.Markdown("⚠️ Training tab not available")
 
             # Audio Tools Section
-            with gr.Tab("🔧 Audio Tools", elem_classes="tabitem"):
+            with gr.Tab("🔧 Audio Tools"):
                 with gr.Tabs():
                     with gr.Tab("✨ Enhancement"):
                         if 'enhancement_tab' in core_tabs:
@@ -254,7 +224,7 @@ def create_app() -> gr.Blocks:
 
             # Advanced Features Section
             if any(key in optional_tabs for key in ['voice_blender_tab', 'plugins_tab', 'extra_tab']):
-                with gr.Tab("🚀 Advanced", elem_classes="tabitem"):
+                with gr.Tab("🚀 Advanced"):
                     with gr.Tabs():
                         if 'voice_blender_tab' in optional_tabs:
                             with gr.Tab("🎭 Voice Blender"):
@@ -269,13 +239,13 @@ def create_app() -> gr.Blocks:
                                 optional_tabs['extra_tab']()
 
             # Settings Section
-            with gr.Tab("⚙️ Settings", elem_classes="tabitem"):
+            with gr.Tab("⚙️ Settings"):
                 if 'select_themes_tab' in core_tabs:
                     core_tabs['select_themes_tab']()
                 else:
                     gr.Markdown("⚠️ Settings tab not available")
                 
-                # System Info Card
+                # System Info
                 with gr.Accordion("📊 System Information", open=False):
                     gr.Markdown(f"""
                     **Environment Details:**
@@ -289,68 +259,66 @@ def create_app() -> gr.Blocks:
 
     return app
 
-    
-    print("⚡ ENHANCED FEATURES:")
-    print("   ✅ Optimized for Colab performance")
-    print("   ✅ Better error handling and recovery") 
-    print("   ✅ Enhanced UI with dark mode support")
-    print("   ✅ Improved port conflict resolution")
-    print()
-    print("⚠️  IMPORTANT: Keep this cell running to maintain the connection!")
-    print("="*70)
-    
-def launch_app(port: int):
-    """Enhanced app launcher with better error handling"""
-    
-    # Find available port
+def launch_app(port: int, share: bool = False, open_browser: bool = False):
+    """Launch the Gradio application"""
     actual_port = find_available_port(port)
     if actual_port != port:
         print(f"⚠️  Port {port} busy, using port {actual_port}")
     
-    # Configure launch parameters
-    share = any(arg in sys.argv for arg in ['--share', '--listen']) or COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT
-    inbrowser = '--open' in sys.argv and not (COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT)
-
-    
-    # Create and launch app
     app = create_app()
     
+    # Determine if we should share based on environment
+    should_share = share or COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT
+    
+    print("\n" + "="*60)
+    print("🚀 ADVANCED RVC INFERENCE - CLI ENHANCED")
+    print("="*60)
+    print(f"🌍 Environment: {'Google Colab' if COLAB_ENVIRONMENT else 'Kaggle' if KAGGLE_ENVIRONMENT else 'Local'}")
+    print(f"🔗 Port: {actual_port}")
+    print(f"🌐 Public URL: {'Enabled' if should_share else 'Disabled'}")
+    print(f"🖥️  Browser Auto-open: {'Enabled' if open_browser else 'Disabled'}")
+    print(f"📊 Loaded Tabs: {len(core_tabs)} core + {len(optional_tabs)} optional")
+    print("-"*60)
+    print("💡 Usage Tips:")
+    print("   • Keep this terminal running to maintain the connection")
+    print("   • Press Ctrl+C to stop the server")
+    print("   • Access the interface at http://localhost:" + str(actual_port))
+    if should_share:
+        print("   • Public URL will be displayed once started")
+    print("="*60 + "\n")
+    
     app.launch(
-        share=share,
-        inbrowser=inbrowser,           
+        share=should_share,
+        inbrowser=open_browser,
         server_port=actual_port,
         show_error=True,
         theme=rvc_theme
     )
-        
-                
-    
-    
+
 def main():
-    """Enhanced main function with better error handling and recovery"""
+    """Main CLI entry point"""
+    parser = argparse.ArgumentParser(description='Advanced RVC Inference - CLI Enhanced')
+    parser.add_argument('--port', type=int, default=DEFAULT_PORT, help=f'Port to run on (default: {DEFAULT_PORT})')
+    parser.add_argument('--share', action='store_true', help='Create a public shareable link')
+    parser.add_argument('--open', action='store_true', help='Open browser automatically')
+    parser.add_argument('--no-browser', action='store_true', help='Disable browser auto-open')
+    parser.add_argument('--colab', action='store_true', help='Force Colab environment mode')
     
-    # Parse command line arguments
-    port = DEFAULT_PORT
-    if "--port" in sys.argv:
-        try:
-            port_index = sys.argv.index("--port") + 1
-            if port_index < len(sys.argv):
-                port = int(sys.argv[port_index])
-        except (ValueError, IndexError):
-            print("⚠️  Invalid port specified, using default")
+    args = parser.parse_args()
     
-    print("="*70)
-    print("🎤 ADVANCED RVC INFERENCE v4.0 - ENHANCED DEPLOYMENT")
-    print("="*70)
-    print(f"📍 Initial port: {port}")
-    print(f"🏢 Environment: {'Google Colab' if COLAB_ENVIRONMENT else 'Kaggle' if KAGGLE_ENVIRONMENT else 'Local'}")
-    print(f"🐍 Python: {sys.version.split()[0]}")
-    print(f"🎨 Gradio: {gr.__version__}")
-    print("="*70)
+    # Override environment detection if specified
+    if args.colab:
+        global COLAB_ENVIRONMENT
+        COLAB_ENVIRONMENT = True
     
-    launch_app(port)
-        
-        
+    # Determine browser behavior
+    open_browser = args.open
+    if args.no_browser:
+        open_browser = False
+    elif (COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT):
+        open_browser = False
+    
+    launch_app(args.port, args.share, open_browser)
 
 if __name__ == "__main__":
     main()
