@@ -351,7 +351,7 @@ def main():
     launch_app(port)
         
         # Environment-specific handling
-        if COLAB_ENVIRONMENT or KAGGLE_ENVIRONMENT:
+        if COLAB_ENVIRONMENT:
             print("🔄 Cloud environment detected - keeping server alive...")
             try:
                 # Keep the server running
