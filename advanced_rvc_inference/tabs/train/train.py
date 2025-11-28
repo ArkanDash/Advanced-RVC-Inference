@@ -1,689 +1,1038 @@
-from ..lib.path_manager import path
-from ..lib.i18n import I18nAuto
-import json
 import os
-import subprocess
+import shutil
 import sys
-import threading
-from pathlib import Path
+from multiprocessing import cpu_count
 
 import gradio as gr
 
+from assets.i18n.i18n import I18nAuto
+from core import (
+    run_extract_script,
+    run_index_script,
+    run_preprocess_script,
+    run_prerequisites_script,
+    run_train_script,
+)
+from rvc.configs.config import get_gpu_info, get_number_of_gpus, max_vram_gpu
+from rvc.lib.utils import format_title
+from tabs.settings.sections.restart import stop_train
+
+i18n = I18nAuto()
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
 
-i18n = I18nAuto()
-
-
-def create_training_tabs():
-    """Create comprehensive training interface with multiple tabs"""
-
-    def preprocess_dataset(
-            dataset_path,
-            model_name,
-            sample_rate,
-            pitch_algo,
-            cpu_cores,
-            do_effects):
-        """Preprocess the dataset for training"""
-        if not dataset_path or not model_name:
-            return i18n("Dataset path and model name are required!")
-
-        if not os.path.exists(dataset_path):
-            return i18n("Dataset path does not exist!")
-
-        cmd = [
-            "python",
-            f"{now_dir}/advanced_rvc_inference/rvc/train/preprocess/preprocess.py",
-            "--dataset_path",
-            dataset_path,
-            "--model_name",
-            model_name,
-            "--sample_rate",
-            sample_rate,
-            "--pitch_algo",
-            pitch_algo,
-            "--cpu_cores",
-            str(cpu_cores),
-            "--process_effects",
-            str(do_effects)]
-
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True)
-            return f"{
-                i18n('Dataset preprocessed successfully!')}\n{
-                result.stdout}"
-        except subprocess.CalledProcessError as e:
-            return f"{i18n('Preprocessing failed:')}\n{stderr}"
-        except Exception as e:
-            return f"{i18n('Error:')} {str(e)}"
-
-    def extract_features_and_f0(
-            model_name,
-            version,
-            gpu_ids,
-            pretrain,
-            extract_f0,
-            extract_features):
-        """Extract features and F0 from preprocessed data"""
-        if not model_name:
-            return i18n("Model name is required!")
-
-        results = []
-
-        if extract_f0:
-            cmd_f0 = [
-                "python",
-                f"{now_dir}/advanced_rvc_inference/rvc/train/extract/extract_f0.py",
-                "--model_name",
-                model_name,
-                "--gpus",
-                gpu_ids]
-
-            try:
-                result = subprocess.run(
-                    cmd_f0, capture_output=True, text=True, check=True)
-                results.append(
-                    f"{i18n('F0 extraction completed:')}\n{result.stdout}")
-            except Exception as e:
-                results.append(f"{i18n('F0 extraction failed:')} {str(e)}")
-
-        if extract_features:
-            cmd_feature = [
-                "python",
-                f"{now_dir}/advanced_rvc_inference/rvc/train/extract/extract_feature.py",
-                "--model_name",
-                model_name,
-                "--version",
-                version,
-                "--pretrained",
-                pretrain,
-                "--gpus",
-                gpu_ids]
-
-            try:
-                result = subprocess.run(
-                    cmd_feature, capture_output=True, text=True, check=True)
-                results.append(
-                    f"{i18n('Feature extraction completed:')}\n{result.stdout}")
-            except Exception as e:
-                results.append(
-                    f"{i18n('Feature extraction failed:')} {str(e)}")
-
-        return "\n\n".join(results)
-
-    def start_training(
-            model_name,
-            version,
-            f0,
-            sample_rate,
-            batch_size,
-            gpu_ids,
-            save_every_epoch,
-            total_epoch,
-            pretrain,
-            learning_rate,
-            save_only_latest,
-            enable_gpu_optimization=True,
-            auto_batch_size=True,
-            mixed_precision="auto",
-            enable_tensor_cores=True,
-            memory_efficient_training=True):
-        """Start the training process with GPU optimization"""
-        if not model_name:
-            return i18n("Model name is required!")
-
-        cmd = [
-            "python",
-            f"{now_dir}/advanced_rvc_inference/rvc/train/training/train.py",
-            "--train",
-            "--model_name", model_name,
-            "--rvc_version", version,
-            "--pitch_guidance", str(f0),
-            "--batch_size", str(batch_size) if batch_size else "auto",
-            "--gpu", gpu_ids,
-            "--save_every_epoch", str(save_every_epoch),
-            "--total_epoch", str(total_epoch),
-            "--pretrained", pretrain,
-            "--learning_rate", str(learning_rate),
-            "--save_only_latest", str(save_only_latest)
-        ]
-
-        def run_training():
-            try:
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, check=True)
-                return f"{
-                    i18n('Training completed successfully!')}\n{
-                    result.stdout}"
-            except subprocess.CalledProcessError as e:
-                return f"{i18n('Training failed:')}\n{e.stderr}"
-            except Exception as e:
-                return f"{i18n('Error:')} {str(e)}"
-
-        # Run in thread to prevent blocking
-        thread = threading.Thread(target=run_training)
-        thread.start()
-        return i18n("Training started in background. Check logs for progress.")
-
-    def train_index(model_name, index_rate, max_frames):
-        """Train the feature index for the model"""
-        if not model_name:
-            return i18n("Model name is required!")
-
-        cmd = [
-            "python",
-            f"{now_dir}/advanced_rvc_inference/rvc/train/training/utils.py",
-            "--model_name", model_name,
-            "--index_rate", str(index_rate),
-            "--max_frames", str(max_frames)
-        ]
-
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True)
-            return f"{i18n('Index training completed!')}\n{result.stdout}"
-        except Exception as e:
-            return f"{i18n('Index training failed:')} {str(e)}"
-
-    def evaluate_model(model_name, test_audio_path, output_path):
-        """Evaluate a trained model"""
-        if not model_name or not test_audio_path:
-            return i18n("Model name and test audio path are required!")
-
-        cmd = [
-            "python",
-            f"{now_dir}/advanced_rvc_inference/rvc/train/evaluation/evaluate.py",
-            "--model_name",
-            model_name,
-            "--test_audio",
-            test_audio_path,
-            "--output_path",
-            output_path]
-
-        try:
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True)
-            return f"{i18n('Evaluation completed!')}\n{result.stdout}"
-        except Exception as e:
-            return f"{i18n('Evaluation failed:')} {str(e)}"
-
-    def get_model_list():
-        """Get list of available models"""
-        models_dir = path('logs_dir') / "models"
-        if not models_dir.exists():
-            return []
-
-        models = []
-        for model_dir in models_dir.iterdir():
-            if model_dir.is_dir():
-                models.append(model_dir.name)
-        return models
-
-    # Dataset Preparation Tab
-    with gr.Tab(i18n("📊 Dataset Preparation")):
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Dataset Settings')}")
-
-                dataset_path = gr.Textbox(
-                    label=i18n("Dataset Path"),
-                    placeholder=i18n("Enter path to your audio dataset folder"),
-                    info=i18n("Path to your training dataset"))
-
-                model_name = gr.Textbox(
-                    label=i18n("Model Name"),
-                    placeholder=i18n("Enter name for your new model"),
-                    info=i18n("Name for your new model")
-                )
-
-                sample_rate = gr.Dropdown(
-                    label=i18n("Sample Rate"),
-                    choices=["32000", "40000", "48000"],
-                    value="40000",
-                    info=i18n("Audio sample rate")
-                )
-
-                pitch_algo = gr.Dropdown(
-                    label=i18n("Pitch Extraction Algorithm"),
-                    choices=["harvest", "crepe", "rmvpe", "dio"],
-                    value="rmvpe",
-                    info=i18n("Algorithm for pitch extraction")
-                )
-
-                cpu_cores = gr.Slider(
-                    label=i18n("CPU Cores"),
-                    minimum=1,
-                    maximum=os.cpu_count() or 8,
-                    step=1,
-                    value=min(4, os.cpu_count() or 4),
-                    info=i18n("Number of CPU cores to use")
-                )
-
-                process_effects = gr.Checkbox(
-                    label=i18n("Process Audio Effects"),
-                    value=True,
-                    info=i18n("Apply audio effects during preprocessing")
-                )
-
-                preprocess_btn = gr.Button(
-                    i18n("Preprocess Dataset"), variant="primary")
-
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Preprocessing Progress')}")
-                preprocess_output = gr.Textbox(
-                    label=i18n("Output"),
-                    interactive=False,
-                    lines=15
-                )
-
-    # Feature Extraction Tab
-    with gr.Tab(i18n("🔧 Feature Extraction")):
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Extraction Settings')}")
-
-                version = gr.Dropdown(
-                    label=i18n("Model Version"),
-                    choices=["v1", "v2"],
-                    value="v2",
-                    info=i18n("Select model version")
-                )
-
-                gpu_ids = gr.Textbox(
-                    label=i18n("GPU IDs"),
-                    value="0",
-                    placeholder=i18n("e.g., 0,1,2"),
-                    info=i18n("Comma separated GPU IDs")
-                )
-
-                pretrain = gr.Dropdown(
-                    label=i18n("Pretrained Model"),
-                    choices=[
-                        "pretrained_v1",
-                        "pretrained_v2",
-                        "pretrained_v2_BFS48k",
-                        "pretrained_v2_BFS40k",
-                        "pretrained_v2_BFS32k"
-                    ],
-                    value="pretrained_v2",
-                    info=i18n("Choose a pretrained model to start with")
-                )
-
-                extract_f0 = gr.Checkbox(
-                    label=i18n("Extract F0"),
-                    value=True,
-                    info=i18n("Extract pitch information")
-                )
-
-                extract_features = gr.Checkbox(
-                    label=i18n("Extract Features"),
-                    value=True,
-                    info=i18n("Extract speaker features")
-                )
-
-                extract_btn = gr.Button(
-                    i18n("Start Extraction"), variant="primary")
-
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Extraction Progress')}")
-                extraction_output = gr.Textbox(
-                    label=i18n("Output"),
-                    interactive=False,
-                    lines=15
-                )
-
-    # Model Training Tab
-    with gr.Tab(i18n("🎓 Model Training")):
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Training Settings')}")
-
-                f0 = gr.Checkbox(
-                    label=i18n("Use Pitch Guidance"),
-                    value=True,
-                    info=i18n("Enable pitch guidance for voice conversion")
-                )
-
-                batch_size = gr.Slider(
-                    label=i18n("Batch Size"),
-                    minimum=1,
-                    maximum=32,
-                    step=1,
-                    value=4,
-                    info=i18n("Training batch size")
-                )
-
-                learning_rate = gr.Slider(
-                    label=i18n("Learning Rate"),
-                    minimum=0.0001,
-                    maximum=0.1,
-                    step=0.0001,
-                    value=0.001,
-                    info=i18n("Training learning rate")
-                )
-
-                save_every_epoch = gr.Slider(
-                    label=i18n("Save Every Epoch"),
-                    minimum=1,
-                    maximum=100,
-                    step=1,
-                    value=10,
-                    info=i18n("Save model every N epochs")
-                )
-
-                total_epoch = gr.Slider(
-                    label=i18n("Total Epochs"),
-                    minimum=1,
-                    maximum=1000,
-                    step=10,
-                    value=200,
-                    info=i18n("Total number of training epochs")
-                )
-
-                save_only_latest = gr.Checkbox(
-                    label=i18n("Save Only Latest Checkpoint"),
-                    value=False,
-                    info=i18n("Save only the latest checkpoint to save space")
-                )
-
-                # GPU Optimization Section
-                gr.Markdown(f"### {i18n('🚀 GPU Optimization (T4/A100)')}")
-
-                enable_gpu_optimization = gr.Checkbox(
-                    label=i18n("Enable GPU Optimization"),
-                    value=True,
-                    info=i18n("Enable automatic GPU optimization for T4/A100")
-                )
-
-                auto_batch_size = gr.Checkbox(
-                    label=i18n("Auto Batch Size"),
-                    value=True,
-                    info=i18n("Automatically optimize batch size based on GPU")
-                )
-
-                mixed_precision = gr.Dropdown(
-                    label=i18n("Mixed Precision"),
-                    choices=["auto", "fp16", "bf16", "fp32"],
-                    value="auto",
-                    info=i18n("Mixed precision training mode")
-                )
-
-                enable_tensor_cores = gr.Checkbox(
-                    label=i18n("Enable Tensor Cores"),
-                    value=True,
-                    info=i18n("Use tensor cores for A100 GPUs")
-                )
-
-                memory_efficient_training = gr.Checkbox(
-                    label=i18n("Memory Efficient Training"),
-                    value=True,
-                    info=i18n("Use gradient accumulation for memory efficiency"))
-
-                train_btn = gr.Button(
-                    i18n("Start Training"), variant="primary")
-
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Training Progress')}")
-                training_output = gr.Textbox(
-                    label=i18n("Output"),
-                    interactive=False,
-                    lines=15
-                )
-
-    # Index Training Tab
-    with gr.Tab(i18n("📈 Index Training")):
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Index Settings')}")
-
-                existing_model = gr.Dropdown(
-                    label=i18n("Select Model"),
-                    choices=get_model_list(),
-                    info=i18n("Choose a model to train index for")
-                )
-
-                index_rate = gr.Slider(
-                    label=i18n("Index Rate"),
-                    minimum=0.1,
-                    maximum=2.0,
-                    step=0.1,
-                    value=1.0,
-                    info=i18n("Index rate for feature matching")
-                )
-
-                max_frames = gr.Slider(
-                    label=i18n("Max Frames"),
-                    minimum=100,
-                    maximum=2000,
-                    step=100,
-                    value=1000,
-                    info=i18n("Maximum number of frames to use")
-                )
-
-                train_index_btn = gr.Button(
-                    i18n("Train Index"), variant="primary")
-
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Index Training Progress')}")
-                index_output = gr.Textbox(
-                    label=i18n("Output"),
-                    interactive=False,
-                    lines=15
-                )
-
-    # Model Evaluation Tab
-    with gr.Tab(i18n("✅ Model Evaluation")):
-        with gr.Row():
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Evaluation Settings')}")
-
-                eval_model = gr.Dropdown(
-                    label=i18n("Model to Evaluate"),
-                    choices=get_model_list(),
-                    info=i18n("Choose a model to evaluate")
-                )
-
-                test_audio = gr.Audio(
-                    label=i18n("Test Audio"),
-                    type="filepath",
-                    info=i18n("Upload test audio for evaluation")
-                )
-
-                output_path = gr.Textbox(
-                    label=i18n("Output Path"),
-                    value=str(path('logs_dir') / "evaluation"),
-                    info=i18n("Path to save evaluation results")
-                )
-
-                eval_btn = gr.Button(i18n("Evaluate Model"), variant="primary")
-
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Evaluation Results')}")
-                eval_output = gr.Textbox(
-                    label=i18n("Results"),
-                    interactive=False,
-                    lines=15
-                )
-
-    # Connect all button events
-    preprocess_btn.click(
-        preprocess_dataset,
-        inputs=[
-            dataset_path,
-            model_name,
-            sample_rate,
-            pitch_algo,
-            cpu_cores,
-            process_effects],
-        outputs=[preprocess_output])
-
-    extract_btn.click(
-        extract_features_and_f0,
-        inputs=[
-            model_name,
-            version,
-            gpu_ids,
-            pretrain,
-            extract_f0,
-            extract_features],
-        outputs=[extraction_output])
-
-    train_btn.click(
-        start_training,
-        inputs=[
-            model_name,
-            version,
-            f0,
-            sample_rate,
-            batch_size,
-            gpu_ids,
-            save_every_epoch,
-            total_epoch,
-            pretrain,
-            learning_rate,
-            save_only_latest,
-            enable_gpu_optimization,
-            auto_batch_size,
-            mixed_precision,
-            enable_tensor_cores,
-            memory_efficient_training],
-        outputs=[training_output])
-
-    train_index_btn.click(
-        train_index,
-        inputs=[existing_model, index_rate, max_frames],
-        outputs=[index_output]
-    )
-
-    eval_btn.click(
-        evaluate_model,
-        inputs=[eval_model, test_audio, output_path],
-        outputs=[eval_output]
+sup_audioext = {
+    "wav",
+    "mp3",
+    "flac",
+    "ogg",
+    "opus",
+    "m4a",
+    "mp4",
+    "aac",
+    "alac",
+    "wma",
+    "aiff",
+    "webm",
+    "ac3",
+}
+
+# Custom Pretraineds
+pretraineds_custom_path = os.path.join(
+    now_dir, "rvc", "models", "pretraineds", "custom"
+)
+
+pretraineds_custom_path_relative = os.path.relpath(pretraineds_custom_path, now_dir)
+
+custom_embedder_root = os.path.join(
+    now_dir, "rvc", "models", "embedders", "embedders_custom"
+)
+custom_embedder_root_relative = os.path.relpath(custom_embedder_root, now_dir)
+
+os.makedirs(custom_embedder_root, exist_ok=True)
+os.makedirs(pretraineds_custom_path_relative, exist_ok=True)
+
+
+def get_pretrained_list(suffix):
+    return [
+        os.path.join(dirpath, filename)
+        for dirpath, _, filenames in os.walk(pretraineds_custom_path_relative)
+        for filename in filenames
+        if filename.endswith(".pth") and suffix in filename
+    ]
+
+
+pretraineds_list_d = get_pretrained_list("D")
+pretraineds_list_g = get_pretrained_list("G")
+
+
+def refresh_custom_pretraineds():
+    return (
+        {"choices": sorted(get_pretrained_list("G")), "__type__": "update"},
+        {"choices": sorted(get_pretrained_list("D")), "__type__": "update"},
     )
 
 
-def create_quick_train_tab():
-    """Create a simplified training interface for quick setup"""
+# Dataset Creator
+datasets_path = os.path.join(now_dir, "assets", "datasets")
 
-    def quick_train(dataset_path, model_name, preset, gpu_ids):
-        """Quick training with preset settings"""
-        if not dataset_path or not model_name:
-            return i18n("Dataset path and model name are required!")
+if not os.path.exists(datasets_path):
+    os.makedirs(datasets_path)
 
-        # Preset configurations
-        presets = {
-            "fast": {
-                "sample_rate": "40000",
-                "batch_size": 8,
-                "total_epoch": 100,
-                "save_every_epoch": 10,
-                "learning_rate": 0.002
-            },
-            "balanced": {
-                "sample_rate": "40000",
-                "batch_size": 4,
-                "total_epoch": 200,
-                "save_every_epoch": 10,
-                "learning_rate": 0.001
-            },
-            "quality": {
-                "sample_rate": "48000",
-                "batch_size": 2,
-                "total_epoch": 500,
-                "save_every_epoch": 20,
-                "learning_rate": 0.0005
-            }
-        }
+datasets_path_relative = os.path.relpath(datasets_path, now_dir)
 
-        if preset not in presets:
-            return i18n("Invalid preset selected!")
 
-        preset_config = presets[preset]
+def get_datasets_list():
+    return [
+        dirpath
+        for dirpath, _, filenames in os.walk(datasets_path_relative)
+        if any(filename.endswith(tuple(sup_audioext)) for filename in filenames)
+    ]
 
-        cmd = [
-            "python",
-            f"{now_dir}/advanced_rvc_inference/rvc/train/training/train.py",
-            "--model_name", model_name,
-            "--dataset_path", dataset_path,
-            "--sample_rate", preset_config["sample_rate"],
-            "--batch_size", str(preset_config["batch_size"]),
-            "--total_epoch", str(preset_config["total_epoch"]),
-            "--save_every_epoch", str(preset_config["save_every_epoch"]),
-            "--learning_rate", str(preset_config["learning_rate"]),
-            "--gpus", gpu_ids
-        ]
 
-        def run_quick_train():
-            try:
-                result = subprocess.run(
-                    cmd, capture_output=True, text=True, check=True)
-                return f"{i18n('Quick training completed!')}\n{result.stdout}"
-            except Exception as e:
-                return f"{i18n('Quick training failed:')} {str(e)}"
+def refresh_datasets():
+    return {"choices": sorted(get_datasets_list()), "__type__": "update"}
 
-        thread = threading.Thread(target=run_quick_train)
-        thread.start()
-        return i18n("Quick training started. This may take several hours.")
 
-    with gr.Tab(i18n("⚡ Quick Train")):
-        gr.Markdown(f"### {i18n('Quick Training with Presets')}")
+# Model Names
+models_path = os.path.join(now_dir, "logs")
 
-        with gr.Row():
-            with gr.Column():
-                dataset_path = gr.Textbox(
-                    label=i18n("Dataset Path"),
-                    placeholder=i18n("Enter path to your audio dataset folder"),
-                    info=i18n("Your training dataset location"))
 
-                model_name = gr.Textbox(
-                    label=i18n("Model Name"),
-                    placeholder=i18n("Enter name for your model"),
-                    info=i18n("Name for your new model")
+def get_models_list():
+    return [
+        os.path.basename(dirpath)
+        for dirpath in os.listdir(models_path)
+        if os.path.isdir(os.path.join(models_path, dirpath))
+        and all(excluded not in dirpath for excluded in ["zips", "mute", "reference"])
+    ]
+
+
+def refresh_models():
+    return {"choices": sorted(get_models_list()), "__type__": "update"}
+
+
+# Refresh Models and Datasets
+def refresh_models_and_datasets():
+    return (
+        {"choices": sorted(get_models_list()), "__type__": "update"},
+        {"choices": sorted(get_datasets_list()), "__type__": "update"},
+    )
+
+
+# Refresh Custom Embedders
+def get_embedder_custom_list():
+    return [
+        os.path.join(dirpath, dirname)
+        for dirpath, dirnames, _ in os.walk(custom_embedder_root_relative)
+        for dirname in dirnames
+    ]
+
+
+def refresh_custom_embedder_list():
+    return {"choices": sorted(get_embedder_custom_list()), "__type__": "update"}
+
+
+# Drop Model
+def save_drop_model(dropbox):
+    if ".pth" not in dropbox:
+        gr.Info(
+            i18n(
+                "The file you dropped is not a valid pretrained file. Please try again."
+            )
+        )
+    else:
+        file_name = os.path.basename(dropbox)
+        pretrained_path = os.path.join(pretraineds_custom_path_relative, file_name)
+        if os.path.exists(pretrained_path):
+            os.remove(pretrained_path)
+        shutil.copy(dropbox, pretrained_path)
+        gr.Info(
+            i18n(
+                "Click the refresh button to see the pretrained file in the dropdown menu."
+            )
+        )
+    return None
+
+
+# Drop Dataset
+def save_drop_dataset_audio(dropbox, dataset_name):
+    if not dataset_name:
+        gr.Info("Please enter a valid dataset name. Please try again.")
+        return None, None
+    else:
+        file_extension = os.path.splitext(dropbox)[1][1:].lower()
+        if file_extension not in sup_audioext:
+            gr.Info("The file you dropped is not a valid audio file. Please try again.")
+        else:
+            dataset_name = format_title(dataset_name)
+            audio_file = format_title(os.path.basename(dropbox))
+            dataset_path = os.path.join(now_dir, "assets", "datasets", dataset_name)
+            if not os.path.exists(dataset_path):
+                os.makedirs(dataset_path)
+            destination_path = os.path.join(dataset_path, audio_file)
+            if os.path.exists(destination_path):
+                os.remove(destination_path)
+            shutil.copy(dropbox, destination_path)
+            gr.Info(
+                i18n(
+                    "The audio file has been successfully added to the dataset. Please click the preprocess button."
                 )
+            )
+            dataset_path = os.path.dirname(destination_path)
+            relative_dataset_path = os.path.relpath(dataset_path, now_dir)
 
-                preset = gr.Radio(
-                    label=i18n("Training Preset"),
-                    choices=[
-                        ("Fast (2-4 hours)", "fast"),
-                        ("Balanced (4-8 hours)", "balanced"),
-                        ("High Quality (8-16 hours)", "quality")
-                    ],
-                    value="balanced",
-                    info=i18n("Choose training speed vs quality")
-                )
+            return None, relative_dataset_path
 
-                gpu_ids = gr.Textbox(
-                    label=i18n("GPU IDs"),
-                    value="0",
-                    info=i18n("Comma separated GPU IDs")
-                )
 
-                quick_train_btn = gr.Button(
-                    i18n("Start Quick Training"), variant="primary")
+# Drop Custom Embedder
+def create_folder_and_move_files(folder_name, bin_file, config_file):
+    if not folder_name:
+        return "Folder name must not be empty."
 
-            with gr.Column():
-                gr.Markdown(f"### {i18n('Training Progress')}")
-                quick_output = gr.Textbox(
-                    label=i18n("Output"),
-                    interactive=False,
-                    lines=15
-                )
+    folder_name = os.path.basename(folder_name)
+    target_folder = os.path.join(custom_embedder_root, folder_name)
 
-        quick_train_btn.click(
-            quick_train,
-            inputs=[dataset_path, model_name, preset, gpu_ids],
-            outputs=[quick_output]
+    normalized_target_folder = os.path.abspath(target_folder)
+    normalized_custom_embedder_root = os.path.abspath(custom_embedder_root)
+
+    if not normalized_target_folder.startswith(normalized_custom_embedder_root):
+        return "Invalid folder name. Folder must be within the custom embedder root directory."
+
+    os.makedirs(target_folder, exist_ok=True)
+
+    if bin_file:
+        shutil.copy(bin_file, os.path.join(target_folder, os.path.basename(bin_file)))
+    if config_file:
+        shutil.copy(
+            config_file, os.path.join(target_folder, os.path.basename(config_file))
         )
 
+    return f"Files moved to folder {target_folder}"
 
-def training_interface():
-    """Main training interface with multiple tabs"""
-    with gr.Column():
-        gr.Markdown(f"# 🎓 {i18n('RVC Training Center')}")
-        gr.Markdown(i18n("Complete training suite for RVC models"))
 
-        create_training_tabs()
-        create_quick_train_tab()
+def refresh_embedders_folders():
+    custom_embedders = [
+        os.path.join(dirpath, dirname)
+        for dirpath, dirnames, _ in os.walk(custom_embedder_root_relative)
+        for dirname in dirnames
+    ]
+    return custom_embedders
+
+
+# Export
+def get_pth_list():
+    return [
+        os.path.relpath(os.path.join(dirpath, filename), now_dir)
+        for dirpath, _, filenames in os.walk(models_path)
+        for filename in filenames
+        if filename.endswith(".pth")
+    ]
+
+
+def get_index_list():
+    return [
+        os.path.relpath(os.path.join(dirpath, filename), now_dir)
+        for dirpath, _, filenames in os.walk(models_path)
+        for filename in filenames
+        if filename.endswith(".index") and "trained" not in filename
+    ]
+
+
+def refresh_pth_and_index_list():
+    return (
+        {"choices": sorted(get_pth_list()), "__type__": "update"},
+        {"choices": sorted(get_index_list()), "__type__": "update"},
+    )
+
+
+# Export Pth and Index Files
+def export_pth(pth_path):
+    allowed_paths = get_pth_list()
+    normalized_allowed_paths = [
+        os.path.abspath(os.path.join(now_dir, p)) for p in allowed_paths
+    ]
+    normalized_pth_path = os.path.abspath(os.path.join(now_dir, pth_path))
+
+    if normalized_pth_path in normalized_allowed_paths:
+        return pth_path
+    else:
+        print(f"Attempted to export invalid pth path: {pth_path}")
+        return None
+
+
+def export_index(index_path):
+    allowed_paths = get_index_list()
+    normalized_allowed_paths = [
+        os.path.abspath(os.path.join(now_dir, p)) for p in allowed_paths
+    ]
+    normalized_index_path = os.path.abspath(os.path.join(now_dir, index_path))
+
+    if normalized_index_path in normalized_allowed_paths:
+        return index_path
+    else:
+        print(f"Attempted to export invalid index path: {index_path}")
+        return None
+
+
+# Upload to Google Drive
+def upload_to_google_drive(pth_path, index_path):
+    def upload_file(file_path):
+        if file_path:
+            try:
+                gr.Info(f"Uploading {pth_path} to Google Drive...")
+                google_drive_folder = "/content/drive/MyDrive/ApplioExported"
+                if not os.path.exists(google_drive_folder):
+                    os.makedirs(google_drive_folder)
+                google_drive_file_path = os.path.join(
+                    google_drive_folder, os.path.basename(file_path)
+                )
+                if os.path.exists(google_drive_file_path):
+                    os.remove(google_drive_file_path)
+                shutil.copy2(file_path, google_drive_file_path)
+                gr.Info("File uploaded successfully.")
+            except Exception as error:
+                print(f"An error occurred uploading to Google Drive: {error}")
+                gr.Info("Error uploading to Google Drive")
+
+    upload_file(pth_path)
+    upload_file(index_path)
+
+
+def auto_enable_checkpointing():
+    try:
+        return max_vram_gpu(0) < 6
+    except:
+        return False
+
+
+# Train Tab
+def train_tab():
+    # Model settings section
+    with gr.Accordion(i18n("Model Settings")):
+        with gr.Row():
+            with gr.Column():
+                model_name = gr.Dropdown(
+                    label=i18n("Model Name"),
+                    info=i18n("Name of the new model."),
+                    choices=get_models_list(),
+                    value="my-project",
+                    interactive=True,
+                    allow_custom_value=True,
+                )
+                architecture = gr.Radio(
+                    label=i18n("Architecture"),
+                    info=i18n(
+                        "Choose the model architecture:\n- **RVC (V2)**: Default option, compatible with all clients.\n- **Applio**: Advanced quality with improved vocoders and higher sample rates, Applio-only."
+                    ),
+                    choices=["RVC", "Applio"],
+                    value="RVC",
+                    interactive=True,
+                    visible=False,  # to be visible once pretraineds are ready
+                )
+            with gr.Column():
+                sampling_rate = gr.Radio(
+                    label=i18n("Sampling Rate"),
+                    info=i18n("The sampling rate of the audio files."),
+                    choices=["32000", "40000", "48000"],
+                    value="40000",
+                    interactive=True,
+                )
+                vocoder = gr.Radio(
+                    label=i18n("Vocoder"),
+                    info=i18n(
+                        "Choose the vocoder for audio synthesis:\n- **HiFi-GAN**: Default option, compatible with all clients.\n- **MRF HiFi-GAN**: Higher fidelity, Applio-only.\n- **RefineGAN**: Superior audio quality, Applio-only."
+                    ),
+                    choices=["HiFi-GAN", "MRF HiFi-GAN", "RefineGAN"],
+                    value="HiFi-GAN",
+                    interactive=False,
+                    visible=False,  # to be visible once pretraineds are ready
+                )
+        with gr.Accordion(
+            i18n("Advanced Settings"),
+            open=False,
+        ):
+            with gr.Row():
+                with gr.Column():
+                    cpu_cores = gr.Slider(
+                        1,
+                        min(cpu_count(), 32),  # max 32 parallel processes
+                        min(cpu_count(), 32),
+                        step=1,
+                        label=i18n("CPU Cores"),
+                        info=i18n(
+                            "The number of CPU cores to use in the extraction process. The default setting are your cpu cores, which is recommended for most cases."
+                        ),
+                        interactive=True,
+                    )
+
+                with gr.Column():
+                    gpu = gr.Textbox(
+                        label=i18n("GPU Number"),
+                        info=i18n(
+                            "Specify the number of GPUs you wish to utilize for extracting by entering them separated by hyphens (-)."
+                        ),
+                        placeholder=i18n("0 to ∞ separated by -"),
+                        value=str(get_number_of_gpus()),
+                        interactive=True,
+                    )
+                    gr.Textbox(
+                        label=i18n("GPU Information"),
+                        info=i18n("The GPU information will be displayed here."),
+                        value=get_gpu_info(),
+                        interactive=False,
+                    )
+    # Preprocess section
+    with gr.Accordion(i18n("Preprocess")):
+        dataset_path = gr.Dropdown(
+            label=i18n("Dataset Path"),
+            info=i18n("Path to the dataset folder."),
+            # placeholder=i18n("Enter dataset path"),
+            choices=get_datasets_list(),
+            allow_custom_value=True,
+            interactive=True,
+        )
+        dataset_creator = gr.Checkbox(
+            label=i18n("Dataset Creator"),
+            value=False,
+            interactive=True,
+            visible=True,
+        )
+        with gr.Column(visible=False) as dataset_creator_settings:
+            with gr.Accordion(i18n("Dataset Creator")):
+                dataset_name = gr.Textbox(
+                    label=i18n("Dataset Name"),
+                    info=i18n("Name of the new dataset."),
+                    placeholder=i18n("Enter dataset name"),
+                    interactive=True,
+                )
+                upload_audio_dataset = gr.File(
+                    label=i18n("Upload Audio Dataset"),
+                    type="filepath",
+                    interactive=True,
+                )
+        refresh = gr.Button(i18n("Refresh"))
+
+        with gr.Accordion(i18n("Advanced Settings"), open=False):
+            cut_preprocess = gr.Radio(
+                label=i18n("Audio cutting"),
+                info=i18n(
+                    "Audio file slicing method: Select 'Skip' if the files are already pre-sliced, 'Simple' if excessive silence has already been removed from the files, or 'Automatic' for automatic silence detection and slicing around it."
+                ),
+                choices=["Skip", "Simple", "Automatic"],
+                value="Automatic",
+                interactive=True,
+            )
+            with gr.Row():
+                chunk_len = gr.Slider(
+                    0.5,
+                    5.0,
+                    3.0,
+                    step=0.1,
+                    label=i18n("Chunk length (sec)"),
+                    info=i18n("Length of the audio slice for 'Simple' method."),
+                    interactive=True,
+                )
+                overlap_len = gr.Slider(
+                    0.0,
+                    0.4,
+                    0.3,
+                    step=0.1,
+                    label=i18n("Overlap length (sec)"),
+                    info=i18n(
+                        "Length of the overlap between slices for 'Simple' method."
+                    ),
+                    interactive=True,
+                )
+
+            with gr.Row():
+                process_effects = gr.Checkbox(
+                    label=i18n("Noise filter"),
+                    info=i18n(
+                        "It's recommended to deactivate this option if your dataset has already been processed."
+                    ),
+                    value=True,
+                    interactive=True,
+                    visible=True,
+                )
+
+                normalization_mode = gr.Radio(
+                    label=i18n("Normalization mode"),
+                    info=i18n(
+                        "Audio normalization: Select 'none' if the files are already normalized, 'pre' to normalize the entire input file at once, or 'post' to normalize each slice individually."
+                    ),
+                    choices=["none", "pre", "post"],
+                    value="none",
+                    interactive=True,
+                    visible=True,
+                )
+
+                noise_reduction = gr.Checkbox(
+                    label=i18n("Noise Reduction"),
+                    info=i18n(
+                        "It's recommended keep deactivate this option if your dataset has already been processed."
+                    ),
+                    value=False,
+                    interactive=True,
+                    visible=True,
+                )
+            clean_strength = gr.Slider(
+                minimum=0,
+                maximum=1,
+                label=i18n("Noise Reduction Strength"),
+                info=i18n(
+                    "Set the clean-up level to the audio you want, the more you increase it the more it will clean up, but it is possible that the audio will be more compressed."
+                ),
+                visible=False,
+                value=0.5,
+                interactive=True,
+            )
+        preprocess_output_info = gr.Textbox(
+            label=i18n("Output Information"),
+            info=i18n("The output information will be displayed here."),
+            value="",
+            max_lines=8,
+            interactive=False,
+        )
+
+        with gr.Row():
+            preprocess_button = gr.Button(i18n("Preprocess Dataset"))
+            preprocess_button.click(
+                fn=run_preprocess_script,
+                inputs=[
+                    model_name,
+                    dataset_path,
+                    sampling_rate,
+                    cpu_cores,
+                    cut_preprocess,
+                    process_effects,
+                    noise_reduction,
+                    clean_strength,
+                    chunk_len,
+                    overlap_len,
+                    normalization_mode,
+                ],
+                outputs=[preprocess_output_info],
+            )
+
+    # Extract section
+    with gr.Accordion(i18n("Extract")):
+        with gr.Row():
+            f0_method = gr.Radio(
+                label=i18n("Pitch extraction algorithm"),
+                info=i18n(
+                    "Pitch extraction algorithm to use for the audio conversion. The default algorithm is rmvpe, which is recommended for most cases."
+                ),
+                choices=[
+                    "crepe",
+                    "crepe-tiny",
+                    "rmvpe",
+                    # "fcpe"
+                ],
+                value="rmvpe",
+                interactive=True,
+            )
+
+            embedder_model = gr.Radio(
+                label=i18n("Embedder Model"),
+                info=i18n("Model used for learning speaker embedding."),
+                choices=[
+                    "contentvec",
+                    # "spin",
+                    "spin-v2",
+                    # "chinese-hubert-base",
+                    # "japanese-hubert-base",
+                    # "korean-hubert-base",
+                    "custom",
+                ],
+                value="contentvec",
+                interactive=True,
+            )
+        include_mutes = gr.Slider(
+            0,
+            10,
+            2,
+            step=1,
+            label=i18n("Silent training files"),
+            info=i18n(
+                "Adding several silent files to the training set enables the model to handle pure silence in inferred audio files. Select 0 if your dataset is clean and already contains segments of pure silence."
+            ),
+            value=True,
+            interactive=True,
+        )
+        with gr.Row(visible=False) as embedder_custom:
+            with gr.Accordion(i18n("Custom Embedder"), open=True):
+                with gr.Row():
+                    embedder_model_custom = gr.Dropdown(
+                        label=i18n("Select Custom Embedder"),
+                        choices=refresh_embedders_folders(),
+                        interactive=True,
+                        allow_custom_value=True,
+                    )
+                    refresh_embedders_button = gr.Button(i18n("Refresh embedders"))
+                folder_name_input = gr.Textbox(
+                    label=i18n("Folder Name"), interactive=True
+                )
+                with gr.Row():
+                    bin_file_upload = gr.File(
+                        label=i18n("Upload .bin"), type="filepath", interactive=True
+                    )
+                    config_file_upload = gr.File(
+                        label=i18n("Upload .json"), type="filepath", interactive=True
+                    )
+                move_files_button = gr.Button(
+                    i18n("Move files to custom embedder folder")
+                )
+
+        extract_output_info = gr.Textbox(
+            label=i18n("Output Information"),
+            info=i18n("The output information will be displayed here."),
+            value="",
+            max_lines=8,
+            interactive=False,
+        )
+        extract_button = gr.Button(i18n("Extract Features"))
+        extract_button.click(
+            fn=run_extract_script,
+            inputs=[
+                model_name,
+                f0_method,
+                cpu_cores,
+                gpu,
+                sampling_rate,
+                embedder_model,
+                embedder_model_custom,
+                include_mutes,
+            ],
+            outputs=[extract_output_info],
+        )
+
+    # Training section
+    with gr.Accordion(i18n("Training")):
+        with gr.Row():
+            batch_size = gr.Slider(
+                1,
+                64,
+                4,
+                step=1,
+                label=i18n("Batch Size"),
+                info=i18n(
+                    "It's advisable to align it with the available VRAM of your GPU. A setting of 4 offers improved accuracy but slower processing, while 8 provides faster and standard results."
+                ),
+                interactive=True,
+            )
+            save_every_epoch = gr.Slider(
+                1,
+                100,
+                10,
+                step=1,
+                label=i18n("Save Every Epoch"),
+                info=i18n("Determine at how many epochs the model will saved at."),
+                interactive=True,
+            )
+            total_epoch = gr.Slider(
+                1,
+                10000,
+                200,
+                step=1,
+                label=i18n("Total Epoch"),
+                info=i18n(
+                    "Specifies the overall quantity of epochs for the model training process."
+                ),
+                interactive=True,
+            )
+        with gr.Accordion(i18n("Advanced Settings"), open=False):
+            with gr.Row():
+                with gr.Column():
+                    save_only_latest = gr.Checkbox(
+                        label=i18n("Save Only Latest"),
+                        info=i18n(
+                            "Enabling this setting will result in the G and D files saving only their most recent versions, effectively conserving storage space."
+                        ),
+                        value=True,
+                        interactive=True,
+                    )
+                    save_every_weights = gr.Checkbox(
+                        label=i18n("Save Every Weights"),
+                        info=i18n(
+                            "This setting enables you to save the weights of the model at the conclusion of each epoch."
+                        ),
+                        value=True,
+                        interactive=True,
+                    )
+                    pretrained = gr.Checkbox(
+                        label=i18n("Pretrained"),
+                        info=i18n(
+                            "Utilize pretrained models when training your own. This approach reduces training duration and enhances overall quality."
+                        ),
+                        value=True,
+                        interactive=True,
+                    )
+                with gr.Column():
+                    cleanup = gr.Checkbox(
+                        label=i18n("Fresh Training"),
+                        info=i18n(
+                            "Enable this setting only if you are training a new model from scratch or restarting the training. Deletes all previously generated weights and tensorboard logs."
+                        ),
+                        value=False,
+                        interactive=True,
+                    )
+                    cache_dataset_in_gpu = gr.Checkbox(
+                        label=i18n("Cache Dataset in GPU"),
+                        info=i18n(
+                            "Cache the dataset in GPU memory to speed up the training process."
+                        ),
+                        value=False,
+                        interactive=True,
+                    )
+                    checkpointing = gr.Checkbox(
+                        label=i18n("Checkpointing"),
+                        info=i18n(
+                            "Enables memory-efficient training. This reduces VRAM usage at the cost of slower training speed. It is useful for GPUs with limited memory (e.g., <6GB VRAM) or when training with a batch size larger than what your GPU can normally accommodate."
+                        ),
+                        value=auto_enable_checkpointing(),
+                        interactive=True,
+                    )
+            with gr.Row():
+                custom_pretrained = gr.Checkbox(
+                    label=i18n("Custom Pretrained"),
+                    info=i18n(
+                        "Utilizing custom pretrained models can lead to superior results, as selecting the most suitable pretrained models tailored to the specific use case can significantly enhance performance."
+                    ),
+                    value=False,
+                    interactive=True,
+                )
+                overtraining_detector = gr.Checkbox(
+                    label=i18n("Overtraining Detector"),
+                    info=i18n(
+                        "Detect overtraining to prevent the model from learning the training data too well and losing the ability to generalize to new data."
+                    ),
+                    value=False,
+                    interactive=True,
+                )
+            with gr.Row():
+                with gr.Column(visible=False) as pretrained_custom_settings:
+                    with gr.Accordion(i18n("Pretrained Custom Settings")):
+                        upload_pretrained = gr.File(
+                            label=i18n("Upload Pretrained Model"),
+                            type="filepath",
+                            interactive=True,
+                        )
+                        refresh_custom_pretaineds_button = gr.Button(
+                            i18n("Refresh Custom Pretraineds")
+                        )
+                        g_pretrained_path = gr.Dropdown(
+                            label=i18n("Custom Pretrained G"),
+                            info=i18n(
+                                "Select the custom pretrained model for the generator."
+                            ),
+                            choices=sorted(pretraineds_list_g),
+                            interactive=True,
+                            allow_custom_value=True,
+                        )
+                        d_pretrained_path = gr.Dropdown(
+                            label=i18n("Custom Pretrained D"),
+                            info=i18n(
+                                "Select the custom pretrained model for the discriminator."
+                            ),
+                            choices=sorted(pretraineds_list_d),
+                            interactive=True,
+                            allow_custom_value=True,
+                        )
+
+                with gr.Column(visible=False) as overtraining_settings:
+                    with gr.Accordion(i18n("Overtraining Detector Settings")):
+                        overtraining_threshold = gr.Slider(
+                            1,
+                            100,
+                            50,
+                            step=1,
+                            label=i18n("Overtraining Threshold"),
+                            info=i18n(
+                                "Set the maximum number of epochs you want your model to stop training if no improvement is detected."
+                            ),
+                            interactive=True,
+                        )
+            index_algorithm = gr.Radio(
+                label=i18n("Index Algorithm"),
+                info=i18n(
+                    "KMeans is a clustering algorithm that divides the dataset into K clusters. This setting is particularly useful for large datasets."
+                ),
+                choices=["Auto", "Faiss", "KMeans"],
+                value="Auto",
+                interactive=True,
+            )
+
+        def enforce_terms(terms_accepted, *args):
+            if not terms_accepted:
+                message = "You must agree to the Terms of Use to proceed."
+                gr.Info(message)
+                return message
+            return run_train_script(*args)
+
+        terms_checkbox = gr.Checkbox(
+            label=i18n("I agree to the terms of use"),
+            info=i18n(
+                "Please ensure compliance with the terms and conditions detailed in [this document](https://github.com/IAHispano/Applio/blob/main/TERMS_OF_USE.md) before proceeding with your training."
+            ),
+            value=False,
+            interactive=True,
+        )
+        train_output_info = gr.Textbox(
+            label=i18n("Output Information"),
+            info=i18n("The output information will be displayed here."),
+            value="",
+            max_lines=8,
+            interactive=False,
+        )
+
+        with gr.Row():
+            train_button = gr.Button(i18n("Start Training"))
+            train_button.click(
+                fn=enforce_terms,
+                inputs=[
+                    terms_checkbox,
+                    model_name,
+                    save_every_epoch,
+                    save_only_latest,
+                    save_every_weights,
+                    total_epoch,
+                    sampling_rate,
+                    batch_size,
+                    gpu,
+                    overtraining_detector,
+                    overtraining_threshold,
+                    pretrained,
+                    cleanup,
+                    index_algorithm,
+                    cache_dataset_in_gpu,
+                    custom_pretrained,
+                    g_pretrained_path,
+                    d_pretrained_path,
+                    vocoder,
+                    checkpointing,
+                ],
+                outputs=[train_output_info],
+            )
+
+            stop_train_button = gr.Button(i18n("Stop Training"), visible=False)
+            stop_train_button.click(
+                fn=stop_train,
+                inputs=[model_name],
+                outputs=[],
+            )
+
+            index_button = gr.Button(i18n("Generate Index"))
+            index_button.click(
+                fn=run_index_script,
+                inputs=[model_name, index_algorithm],
+                outputs=[train_output_info],
+            )
+
+    # Export Model section
+    with gr.Accordion(i18n("Export Model"), open=False):
+        if not os.name == "nt":
+            gr.Markdown(
+                i18n(
+                    "The button 'Upload' is only for google colab: Uploads the exported files to the ApplioExported folder in your Google Drive."
+                )
+            )
+        with gr.Row():
+            with gr.Column():
+                pth_file_export = gr.File(
+                    label=i18n("Exported Pth file"),
+                    type="filepath",
+                    value=None,
+                    interactive=False,
+                )
+                pth_dropdown_export = gr.Dropdown(
+                    label=i18n("Pth file"),
+                    info=i18n("Select the pth file to be exported"),
+                    choices=get_pth_list(),
+                    value=None,
+                    interactive=True,
+                    allow_custom_value=True,
+                )
+            with gr.Column():
+                index_file_export = gr.File(
+                    label=i18n("Exported Index File"),
+                    type="filepath",
+                    value=None,
+                    interactive=False,
+                )
+                index_dropdown_export = gr.Dropdown(
+                    label=i18n("Index File"),
+                    info=i18n("Select the index file to be exported"),
+                    choices=get_index_list(),
+                    value=None,
+                    interactive=True,
+                    allow_custom_value=True,
+                )
+        with gr.Row():
+            with gr.Column():
+                refresh_export = gr.Button(i18n("Refresh"))
+                if not os.name == "nt":
+                    upload_exported = gr.Button(i18n("Upload"))
+                    upload_exported.click(
+                        fn=upload_to_google_drive,
+                        inputs=[pth_dropdown_export, index_dropdown_export],
+                        outputs=[],
+                    )
+
+            def toggle_visible(checkbox):
+                return {"visible": checkbox, "__type__": "update"}
+
+            def toggle_pretrained(pretrained, custom_pretrained):
+                if custom_pretrained == False:
+                    return {"visible": pretrained, "__type__": "update"}, {
+                        "visible": False,
+                        "__type__": "update",
+                    }
+                else:
+                    return {"visible": pretrained, "__type__": "update"}, {
+                        "visible": pretrained,
+                        "__type__": "update",
+                    }
+
+            def enable_stop_train_button():
+                return {"visible": False, "__type__": "update"}, {
+                    "visible": True,
+                    "__type__": "update",
+                }
+
+            def disable_stop_train_button():
+                return {"visible": True, "__type__": "update"}, {
+                    "visible": False,
+                    "__type__": "update",
+                }
+
+            def download_prerequisites():
+                gr.Info(
+                    "Checking for prerequisites with pitch guidance... Missing files will be downloaded. If you already have them, this step will be skipped."
+                )
+                run_prerequisites_script(
+                    pretraineds_hifigan=True,
+                    models=False,
+                    exe=False,
+                )
+                gr.Info(
+                    "Prerequisites check complete. Missing files were downloaded, and you may now start preprocessing."
+                )
+
+            def toggle_visible_embedder_custom(embedder_model):
+                if embedder_model == "custom":
+                    return {"visible": True, "__type__": "update"}
+                return {"visible": False, "__type__": "update"}
+
+            def toggle_architecture(architecture):
+                if architecture == "Applio":
+                    return {
+                        "choices": ["32000", "40000", "48000"],
+                        "__type__": "update",
+                    }, {
+                        "interactive": True,
+                        "__type__": "update",
+                    }
+                else:
+                    return {
+                        "choices": ["32000", "40000", "48000"],
+                        "__type__": "update",
+                        "value": "40000",
+                    }, {"interactive": False, "__type__": "update", "value": "HiFi-GAN"}
+
+            def update_slider_visibility(noise_reduction):
+                return gr.update(visible=noise_reduction)
+
+            noise_reduction.change(
+                fn=update_slider_visibility,
+                inputs=noise_reduction,
+                outputs=clean_strength,
+            )
+            architecture.change(
+                fn=toggle_architecture,
+                inputs=[architecture],
+                outputs=[sampling_rate, vocoder],
+            )
+            refresh.click(
+                fn=refresh_models_and_datasets,
+                inputs=[],
+                outputs=[model_name, dataset_path],
+            )
+            dataset_creator.change(
+                fn=toggle_visible,
+                inputs=[dataset_creator],
+                outputs=[dataset_creator_settings],
+            )
+            upload_audio_dataset.upload(
+                fn=save_drop_dataset_audio,
+                inputs=[upload_audio_dataset, dataset_name],
+                outputs=[upload_audio_dataset, dataset_path],
+            )
+            embedder_model.change(
+                fn=toggle_visible_embedder_custom,
+                inputs=[embedder_model],
+                outputs=[embedder_custom],
+            )
+            embedder_model.change(
+                fn=toggle_visible_embedder_custom,
+                inputs=[embedder_model],
+                outputs=[embedder_custom],
+            )
+            move_files_button.click(
+                fn=create_folder_and_move_files,
+                inputs=[folder_name_input, bin_file_upload, config_file_upload],
+                outputs=[],
+            )
+            refresh_embedders_button.click(
+                fn=refresh_embedders_folders, inputs=[], outputs=[embedder_model_custom]
+            )
+            pretrained.change(
+                fn=toggle_pretrained,
+                inputs=[pretrained, custom_pretrained],
+                outputs=[custom_pretrained, pretrained_custom_settings],
+            )
+            custom_pretrained.change(
+                fn=toggle_visible,
+                inputs=[custom_pretrained],
+                outputs=[pretrained_custom_settings],
+            )
+            refresh_custom_pretaineds_button.click(
+                fn=refresh_custom_pretraineds,
+                inputs=[],
+                outputs=[g_pretrained_path, d_pretrained_path],
+            )
+            upload_pretrained.upload(
+                fn=save_drop_model,
+                inputs=[upload_pretrained],
+                outputs=[upload_pretrained],
+            )
+            overtraining_detector.change(
+                fn=toggle_visible,
+                inputs=[overtraining_detector],
+                outputs=[overtraining_settings],
+            )
+            train_button.click(
+                fn=enable_stop_train_button,
+                inputs=[],
+                outputs=[train_button, stop_train_button],
+            )
+            train_output_info.change(
+                fn=disable_stop_train_button,
+                inputs=[],
+                outputs=[train_button, stop_train_button],
+            )
+            pth_dropdown_export.change(
+                fn=export_pth,
+                inputs=[pth_dropdown_export],
+                outputs=[pth_file_export],
+            )
+            index_dropdown_export.change(
+                fn=export_index,
+                inputs=[index_dropdown_export],
+                outputs=[index_file_export],
+            )
+            refresh_export.click(
+                fn=refresh_pth_and_index_list,
+                inputs=[],
+                outputs=[pth_dropdown_export, index_dropdown_export],
+            )

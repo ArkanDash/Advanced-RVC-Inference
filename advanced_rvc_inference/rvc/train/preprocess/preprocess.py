@@ -1,221 +1,368 @@
-#!/usr/bin/env python3
-"""
-RVC Dataset Preprocessing Script
-Handles dataset preparation for RVC training
-"""
-
-import argparse
-import json
-import multiprocessing as mp
 import os
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
-
-import librosa
+import time
+from scipy import signal
+from scipy.io import wavfile
 import numpy as np
-import soundfile as sf
+import concurrent.futures
+from tqdm import tqdm
+import json
+from distutils.util import strtobool
+import librosa
+import multiprocessing
+import noisereduce as nr
+import soxr
 
-from ...lib.path_manager import path
+now_directory = os.getcwd()
+sys.path.append(now_directory)
 
+from rvc.lib.utils import load_audio
+from rvc.train.preprocess.slicer import Slicer
 
-def setup_directories():
-    """Create necessary directories for training"""
-    # Use the centralized path manager for logs and other key directories
-    base_logs_dir = path('logs_dir')
-    # Create the dataset directory which is now properly managed by path
-    # manager
-    dataset_dir = path('datasets_dir')
+import logging
 
-    dirs = [
-        str(base_logs_dir),
-        str(base_logs_dir / "44k"),
-        str(base_logs_dir / "48k"),
-        str(base_logs_dir / "40k"),
-        str(base_logs_dir / "32k"),
-        str(base_logs_dir / "models"),
-        str(base_logs_dir / "pretraineds"),
-        str(base_logs_dir / "tensorboard"),
-        str(dataset_dir),
-        str(dataset_dir / "records"),
-        str(dataset_dir / "voices"),
-        str(dataset_dir / "preprocess"),
-        str(dataset_dir / "preprocess/separate"),
-        str(dataset_dir / "preprocess/deecho"),
-        str(dataset_dir / "preprocess/denoise")
-    ]
+logging.getLogger("numba.core.byteflow").setLevel(logging.WARNING)
+logging.getLogger("numba.core.ssa").setLevel(logging.WARNING)
+logging.getLogger("numba.core.interpreter").setLevel(logging.WARNING)
 
-    for dir_path in dirs:
-        Path(dir_path).mkdir(parents=True, exist_ok=True)
+OVERLAP = 0.3
+PERCENTAGE = 3.0
+MAX_AMPLITUDE = 0.9
+ALPHA = 0.75
+HIGH_PASS_CUTOFF = 48
+SAMPLE_RATE_16K = 16000
+RES_TYPE = "soxr_vhq"
 
 
-def preprocess_audio_file(audio_path, target_sr, output_path):
-    """Preprocess a single audio file"""
-    try:
-        # Load audio
-        audio, sr = librosa.load(audio_path, sr=None)
-
-        # Resample if needed
-        if sr != target_sr:
-            audio = librosa.resample(audio, orig_sr=sr, target_sr=target_sr)
-
-        # Normalize audio
-        audio = audio / np.max(np.abs(audio))
-
-        # Trim silence
-        audio, _ = librosa.effects.trim(audio, top_db=20)
-
-        # Save preprocessed audio
-        sf.write(output_path, audio, target_sr)
-
-        return {
-            "original": str(audio_path),
-            "preprocessed": str(output_path),
-            "duration": len(audio) / target_sr,
-            "sample_rate": target_sr,
-            "status": "success"
-        }
-    except Exception as e:
-        return {
-            "original": str(audio_path),
-            "error": str(e),
-            "status": "error"
-        }
-
-
-def process_dataset(
-        dataset_path,
-        model_name,
-        sample_rate,
-        cpu_cores,
-        process_effects=False):
-    """Process entire dataset"""
-    dataset_path = Path(dataset_path)
-    if not dataset_path.exists():
-        raise FileNotFoundError(f"Dataset path not found: {dataset_path}")
-
-    # Setup directories
-    setup_directories()
-
-    # Create model directory
-    model_dir = path('logs_dir') / sample_rate / model_name
-    model_dir.mkdir(parents=True, exist_ok=True)
-
-    # Find all audio files
-    audio_extensions = ['.wav', '.mp3', '.flac', '.m4a', '.ogg']
-    audio_files = []
-
-    for ext in audio_extensions:
-        audio_files.extend(dataset_path.rglob(f"*{ext}"))
-        audio_files.extend(dataset_path.rglob(f"*{ext.upper()}"))
-
-    if not audio_files:
-        raise ValueError(f"No audio files found in {dataset_path}")
-
-    print(f"Found {len(audio_files)} audio files")
-
-    # Create preprocessing results
-    results = []
-    sr = int(sample_rate)
-
-    with ThreadPoolExecutor(max_workers=cpu_cores) as executor:
-        futures = []
-
-        for audio_file in audio_files:
-            # Create relative path structure
-            rel_path = audio_file.relative_to(dataset_path)
-            output_path = model_dir / "preprocess" / rel_path
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-
-            future = executor.submit(
-                preprocess_audio_file, audio_file, sr, output_path)
-            futures.append((future, audio_file, output_path))
-
-        for future, original_file, output_path in futures:
-            try:
-                result = future.result()
-                results.append(result)
-                print(f"Processed: {original_file.name}")
-            except Exception as e:
-                print(f"Failed to process {original_file}: {e}")
-                results.append({
-                    "original": str(original_file),
-                    "error": str(e),
-                    "status": "error"
-                })
-
-    # Save preprocessing log
-    log_path = model_dir / "preprocess_log.json"
-    with open(log_path, 'w', encoding='utf-8') as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-
-    # Generate summary
-    successful = sum(1 for r in results if r["status"] == "success")
-    failed = len(results) - successful
-
-    summary = {
-        "total_files": len(results),
-        "successful": successful,
-        "failed": failed,
-        "model_name": model_name,
-        "sample_rate": sample_rate,
-        "cpu_cores": cpu_cores,
-        "process_effects": process_effects
-    }
-
-    summary_path = model_dir / "preprocess_summary.json"
-    with open(summary_path, 'w', encoding='utf-8') as f:
-        json.dump(summary, f, indent=2, ensure_ascii=False)
-
-    print(f"\nPreprocessing completed!")
-    print(f"Total files: {summary['total_files']}")
-    print(f"Successful: {summary['successful']}")
-    print(f"Failed: {summary['failed']}")
-    print(f"Results saved to: {log_path}")
-
-    return summary
-
-
-def main():
-    parser = argparse.ArgumentParser(description="RVC Dataset Preprocessing")
-    parser.add_argument(
-        "--dataset_path",
-        required=True,
-        help="Path to dataset directory")
-    parser.add_argument(
-        "--model_name",
-        required=True,
-        help="Name for the model")
-    parser.add_argument(
-        "--sample_rate",
-        default="40000",
-        help="Target sample rate")
-    parser.add_argument(
-        "--cpu_cores",
-        type=int,
-        default=4,
-        help="Number of CPU cores")
-    parser.add_argument(
-        "--process_effects",
-        action="store_true",
-        help="Apply audio effects")
-
-    args = parser.parse_args()
-
-    try:
-        summary = process_dataset(
-            args.dataset_path,
-            args.model_name,
-            args.sample_rate,
-            args.cpu_cores,
-            args.process_effects
+class PreProcess:
+    def __init__(self, sr: int, exp_dir: str):
+        self.slicer = Slicer(
+            sr=sr,
+            threshold=-42,
+            min_length=1500,
+            min_interval=400,
+            hop_size=15,
+            max_sil_kept=500,
         )
-        print("Preprocessing completed successfully!")
+        self.sr = sr
+        self.b_high, self.a_high = signal.butter(
+            N=5, Wn=HIGH_PASS_CUTOFF, btype="high", fs=self.sr
+        )
+        self.exp_dir = exp_dir
+        self.device = "cpu"
+        self.gt_wavs_dir = os.path.join(exp_dir, "sliced_audios")
+        self.wavs16k_dir = os.path.join(exp_dir, "sliced_audios_16k")
+        os.makedirs(self.gt_wavs_dir, exist_ok=True)
+        os.makedirs(self.wavs16k_dir, exist_ok=True)
 
-    except Exception as e:
-        print(f"Preprocessing failed: {e}")
-        sys.exit(1)
+    def _normalize_audio(self, audio: np.ndarray):
+        tmp_max = np.abs(audio).max()
+        if tmp_max > 2.5:
+            return None
+        return (audio / tmp_max * (MAX_AMPLITUDE * ALPHA)) + (1 - ALPHA) * audio
+
+    def process_audio_segment(
+        self,
+        normalized_audio: np.ndarray,
+        sid: int,
+        idx0: int,
+        idx1: int,
+        normalization_mode: str,
+    ):
+        if normalized_audio is None:
+            print(f"{sid}-{idx0}-{idx1}-filtered")
+            return
+        if normalization_mode == "post":
+            normalized_audio = self._normalize_audio(normalized_audio)
+        wavfile.write(
+            os.path.join(self.gt_wavs_dir, f"{sid}_{idx0}_{idx1}.wav"),
+            self.sr,
+            normalized_audio.astype(np.float32),
+        )
+        audio_16k = librosa.resample(
+            normalized_audio,
+            orig_sr=self.sr,
+            target_sr=SAMPLE_RATE_16K,
+            res_type=RES_TYPE,
+        )
+        wavfile.write(
+            os.path.join(self.wavs16k_dir, f"{sid}_{idx0}_{idx1}.wav"),
+            SAMPLE_RATE_16K,
+            audio_16k.astype(np.float32),
+        )
+
+    def simple_cut(
+        self,
+        audio: np.ndarray,
+        sid: int,
+        idx0: int,
+        chunk_len: float,
+        overlap_len: float,
+        normalization_mode: str,
+    ):
+        chunk_length = int(self.sr * chunk_len)
+        overlap_length = int(self.sr * overlap_len)
+        i = 0
+        while i < len(audio):
+            chunk = audio[i : i + chunk_length]
+            if normalization_mode == "post":
+                chunk = self._normalize_audio(chunk)
+            if len(chunk) == chunk_length:
+                # full SR for training
+                wavfile.write(
+                    os.path.join(
+                        self.gt_wavs_dir,
+                        f"{sid}_{idx0}_{i // (chunk_length - overlap_length)}.wav",
+                    ),
+                    self.sr,
+                    chunk.astype(np.float32),
+                )
+                # 16KHz for feature extraction
+                chunk_16k = librosa.resample(
+                    chunk, orig_sr=self.sr, target_sr=SAMPLE_RATE_16K, res_type=RES_TYPE
+                )
+                wavfile.write(
+                    os.path.join(
+                        self.wavs16k_dir,
+                        f"{sid}_{idx0}_{i // (chunk_length - overlap_length)}.wav",
+                    ),
+                    SAMPLE_RATE_16K,
+                    chunk_16k.astype(np.float32),
+                )
+            i += chunk_length - overlap_length
+
+    def process_audio(
+        self,
+        path: str,
+        idx0: int,
+        sid: int,
+        cut_preprocess: str,
+        process_effects: bool,
+        noise_reduction: bool,
+        reduction_strength: float,
+        chunk_len: float,
+        overlap_len: float,
+        normalization_mode: str,
+    ):
+        audio_length = 0
+        try:
+            audio = load_audio(path, self.sr)
+            audio_length = librosa.get_duration(y=audio, sr=self.sr)
+
+            if process_effects:
+                audio = signal.lfilter(self.b_high, self.a_high, audio)
+            if normalization_mode == "pre":
+                audio = self._normalize_audio(audio)
+            if noise_reduction:
+                audio = nr.reduce_noise(
+                    y=audio, sr=self.sr, prop_decrease=reduction_strength
+                )
+            if cut_preprocess == "Skip":
+                # no cutting
+                self.process_audio_segment(
+                    audio,
+                    sid,
+                    idx0,
+                    0,
+                    normalization_mode,
+                )
+            elif cut_preprocess == "Simple":
+                # simple
+                self.simple_cut(
+                    audio,
+                    sid,
+                    idx0,
+                    chunk_len,
+                    overlap_len,
+                    normalization_mode,
+                )
+            elif cut_preprocess == "Automatic":
+                idx1 = 0
+                # legacy
+                for audio_segment in self.slicer.slice(audio):
+                    i = 0
+                    while True:
+                        start = int(self.sr * (PERCENTAGE - OVERLAP) * i)
+                        i += 1
+                        if (
+                            len(audio_segment[start:])
+                            > (PERCENTAGE + OVERLAP) * self.sr
+                        ):
+                            tmp_audio = audio_segment[
+                                start : start + int(PERCENTAGE * self.sr)
+                            ]
+                            self.process_audio_segment(
+                                tmp_audio,
+                                sid,
+                                idx0,
+                                idx1,
+                                normalization_mode,
+                            )
+                            idx1 += 1
+                        else:
+                            tmp_audio = audio_segment[start:]
+                            self.process_audio_segment(
+                                tmp_audio,
+                                sid,
+                                idx0,
+                                idx1,
+                                normalization_mode,
+                            )
+                            idx1 += 1
+                            break
+
+        except Exception as error:
+            print(f"Error processing audio: {error}")
+        return audio_length
+
+
+def format_duration(seconds):
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds = int(seconds % 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
+
+def save_dataset_duration(file_path, dataset_duration):
+    try:
+        with open(file_path, "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = {}
+
+    formatted_duration = format_duration(dataset_duration)
+    new_data = {
+        "total_dataset_duration": formatted_duration,
+        "total_seconds": dataset_duration,
+    }
+    data.update(new_data)
+
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=4)
+
+
+def process_audio_wrapper(args):
+    (
+        pp,
+        file,
+        cut_preprocess,
+        process_effects,
+        noise_reduction,
+        reduction_strength,
+        chunk_len,
+        overlap_len,
+        normalization_mode,
+    ) = args
+    file_path, idx0, sid = file
+    return pp.process_audio(
+        file_path,
+        idx0,
+        sid,
+        cut_preprocess,
+        process_effects,
+        noise_reduction,
+        reduction_strength,
+        chunk_len,
+        overlap_len,
+        normalization_mode,
+    )
+
+
+def preprocess_training_set(
+    input_root: str,
+    sr: int,
+    num_processes: int,
+    exp_dir: str,
+    cut_preprocess: str,
+    process_effects: bool,
+    noise_reduction: bool,
+    reduction_strength: float,
+    chunk_len: float,
+    overlap_len: float,
+    normalization_mode: str,
+):
+    start_time = time.time()
+    pp = PreProcess(sr, exp_dir)
+    print(f"Starting preprocess with {num_processes} processes...")
+
+    files = []
+    idx = 0
+
+    for root, _, filenames in os.walk(input_root):
+        try:
+            sid = 0 if root == input_root else int(os.path.basename(root))
+            for f in filenames:
+                if f.lower().endswith((".wav", ".mp3", ".flac", ".ogg")):
+                    files.append((os.path.join(root, f), idx, sid))
+                    idx += 1
+        except ValueError:
+            print(
+                f'Speaker ID folder is expected to be integer, got "{os.path.basename(root)}" instead.'
+            )
+
+    # print(f"Number of files: {len(files)}")
+    audio_length = []
+    with tqdm(total=len(files)) as pbar:
+        with concurrent.futures.ProcessPoolExecutor(
+            max_workers=num_processes
+        ) as executor:
+            futures = [
+                executor.submit(
+                    process_audio_wrapper,
+                    (
+                        pp,
+                        file,
+                        cut_preprocess,
+                        process_effects,
+                        noise_reduction,
+                        reduction_strength,
+                        chunk_len,
+                        overlap_len,
+                        normalization_mode,
+                    ),
+                )
+                for file in files
+            ]
+            for future in concurrent.futures.as_completed(futures):
+                audio_length.append(future.result())
+                pbar.update(1)
+
+    audio_length = sum(audio_length)
+    save_dataset_duration(
+        os.path.join(exp_dir, "model_info.json"), dataset_duration=audio_length
+    )
+    elapsed_time = time.time() - start_time
+    print(
+        f"Preprocess completed in {elapsed_time:.2f} seconds on {format_duration(audio_length)} seconds of audio."
+    )
 
 
 if __name__ == "__main__":
-    main()
+    experiment_directory = str(sys.argv[1])
+    input_root = str(sys.argv[2])
+    sample_rate = int(sys.argv[3])
+    num_processes = sys.argv[4]
+    if num_processes.lower() == "none":
+        num_processes = multiprocessing.cpu_count()
+    else:
+        num_processes = int(num_processes)
+    cut_preprocess = str(sys.argv[5])
+    process_effects = strtobool(sys.argv[6])
+    noise_reduction = strtobool(sys.argv[7])
+    reduction_strength = float(sys.argv[8])
+    chunk_len = float(sys.argv[9])
+    overlap_len = float(sys.argv[10])
+    normalization_mode = str(sys.argv[11])
+    preprocess_training_set(
+        input_root,
+        sample_rate,
+        num_processes,
+        experiment_directory,
+        cut_preprocess,
+        process_effects,
+        noise_reduction,
+        reduction_strength,
+        chunk_len,
+        overlap_len,
+        normalization_mode,
+    )

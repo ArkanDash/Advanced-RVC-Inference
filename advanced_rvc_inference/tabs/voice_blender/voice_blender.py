@@ -1,65 +1,98 @@
-from ..lib.i18n import I18nAuto
-import os
-import sys
-
+import os, sys
 import gradio as gr
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
+from assets.i18n.i18n import I18nAuto
+from core import run_model_blender_script
 
 i18n = I18nAuto()
 
 
+def update_model_fusion(dropbox):
+    return dropbox, None
+
+
 def voice_blender_tab():
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown(i18n("## Voice Blender"))
-            gr.Markdown(
-                i18n("Blend multiple voices together to create unique voice combinations."))
-
-            with gr.Row():
-                model_upload_1 = gr.File(
-                    label=i18n("First Model"), file_types=[
-                        ".pth", ".onnx"])
-                model_upload_2 = gr.File(
-                    label=i18n("Second Model"), file_types=[
-                        ".pth", ".onnx"])
-
-            with gr.Row():
-                blend_ratio = gr.Slider(
-                    minimum=0.0,
-                    maximum=1.0,
-                    value=0.5,
-                    step=0.01,
-                    label=i18n("Blend Ratio (0.0 = First Model, 1.0 = Second Model)")
+    gr.Markdown(i18n("## Voice Blender"))
+    gr.Markdown(
+        i18n(
+            "Select two voice models, set your desired blend percentage, and blend them into an entirely new voice."
+        )
+    )
+    with gr.Column():
+        model_fusion_name = gr.Textbox(
+            label=i18n("Model Name"),
+            info=i18n("Name of the new model."),
+            value="",
+            max_lines=1,
+            interactive=True,
+            placeholder=i18n("Enter model name"),
+        )
+        with gr.Row():
+            with gr.Column():
+                model_fusion_a_dropbox = gr.File(
+                    label=i18n("Drag and drop your model here"), type="filepath"
                 )
+                model_fusion_a = gr.Textbox(
+                    label=i18n("Path to Model"),
+                    value="",
+                    interactive=True,
+                    placeholder=i18n("Enter path to model"),
+                    info=i18n("You can also use a custom path."),
+                )
+            with gr.Column():
+                model_fusion_b_dropbox = gr.File(
+                    label=i18n("Drag and drop your model here"), type="filepath"
+                )
+                model_fusion_b = gr.Textbox(
+                    label=i18n("Path to Model"),
+                    value="",
+                    interactive=True,
+                    placeholder=i18n("Enter path to model"),
+                    info=i18n("You can also use a custom path."),
+                )
+        alpha_a = gr.Slider(
+            minimum=0,
+            maximum=1,
+            label=i18n("Blend Ratio"),
+            value=0.5,
+            interactive=True,
+            info=i18n(
+                "Adjusting the position more towards one side or the other will make the model more similar to the first or second."
+            ),
+        )
+        model_fusion_button = gr.Button(i18n("Fusion"))
+        with gr.Row():
+            model_fusion_output_info = gr.Textbox(
+                label=i18n("Output Information"),
+                info=i18n("The output information will be displayed here."),
+                value="",
+            )
+            model_fusion_pth_output = gr.File(
+                label=i18n("Download Model"), type="filepath", interactive=False
+            )
 
-            index_upload = gr.File(
-                label=i18n("Index File (Optional)"),
-                file_types=[".index"])
+    model_fusion_button.click(
+        fn=run_model_blender_script,
+        inputs=[
+            model_fusion_name,
+            model_fusion_a,
+            model_fusion_b,
+            alpha_a,
+        ],
+        outputs=[model_fusion_output_info, model_fusion_pth_output],
+    )
 
-            submit_button = gr.Button(i18n("Blend Voices"), variant="primary")
+    model_fusion_a_dropbox.upload(
+        fn=update_model_fusion,
+        inputs=model_fusion_a_dropbox,
+        outputs=[model_fusion_a, model_fusion_a_dropbox],
+    )
 
-        with gr.Column():
-            output_model = gr.File(label=i18n("Blended Model"))
-            status_output = gr.Textbox(label=i18n("Status"), interactive=False)
-
-    def blend_voices(model1, model2, ratio, index):
-        # Placeholder for actual voice blending implementation
-        if not model1 or not model2:
-            return None, i18n("Please upload two models to blend.")
-
-        try:
-            # In a real implementation, this would blend the models
-            # using techniques like averaging model weights, etc.
-            return None, i18n(
-                "Voice blending feature is implemented. In a complete version, this would blend two voice models based on the specified ratio.")
-        except Exception as e:
-            return None, f"{i18n('Error:')} {str(e)}"
-
-    submit_button.click(
-        blend_voices,
-        inputs=[model_upload_1, model_upload_2, blend_ratio, index_upload],
-        outputs=[output_model, status_output]
+    model_fusion_b_dropbox.upload(
+        fn=update_model_fusion,
+        inputs=model_fusion_b_dropbox,
+        outputs=[model_fusion_b, model_fusion_b_dropbox],
     )
