@@ -282,15 +282,13 @@ def launch_in_colab():
         # Launch with Colab-optimized parameters
         app.launch(
             share=True,                    # Always share in Colab for external access
-            debug=False,                   # Disable debug mode for better performance
+            debug=True,                   # Disable debug mode for better performance
             show_error=True,
             show_api=False,                # Hide API docs to reduce clutter
             inline=False,                  # Force external window for better Colab experience
             server_port=7860,              # Standard Gradio port works best in Colab
             server_name='0.0.0.0',         # Bind to all interfaces for Colab
             prevent_thread_lock=True,      # Allow Colab to continue execution
-            quiet=True,                    # Reduce log noise
-            favicon_path=None,             # Let Gradio handle favicon
             theme=rvc_theme
         )
         
