@@ -21,7 +21,7 @@ setup(
     url='https://github.com/ArkanDash/Advanced-RVC-Inference',
     packages=find_packages(),
     install_requires=requirements,
-    python_requires='>=3.8',
+    python_requires='>=3.9,<3.14',
     entry_points={
         'console_scripts': [
             'advanced-rvc-inference=advanced_rvc_inference.app:main',
@@ -35,10 +35,11 @@ setup(
         'Topic :: Software Development :: Build Tools',
         'License :: OSI Approved :: MIT License',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
     ],
     keywords='rvc, voice conversion, ai, machine learning',
 )

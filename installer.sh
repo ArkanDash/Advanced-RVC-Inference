@@ -51,7 +51,7 @@ echo "Virtual environment activated."
 
 # Install torch with CUDA support
 echo "Installing PyTorch with CUDA support..."
-uv pip install --upgrade torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+uv pip install --upgrade "torch>=2.0.0" "torchvision>=0.15.0" "torchaudio>=2.0.0" --index-url https://download.pytorch.org/whl/cu121
 
 # Install dependencies from requirements.txt
 echo "Installing requirements..."
