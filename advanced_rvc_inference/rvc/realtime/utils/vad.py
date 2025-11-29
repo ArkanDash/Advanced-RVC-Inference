@@ -1,4 +1,8 @@
-import webrtcvad
+try:
+    import webrtcvad
+except ImportError:
+    webrtcvad = None
+    print("Warning: webrtcvad not available. VAD (Voice Activity Detection) functionality will be limited.")
 import numpy as np
 
 
@@ -14,14 +18,20 @@ class VADProcessor:
             frame_duration_ms (int): Duration of each audio frame in ms. Must be 10, 20, or 30.
         """
 
-        if sample_rate not in [8000, 16000, 32000, 48000]:
-            raise ValueError("VAD sample rate must be 8000, 16000, 32000, or 48000 Hz")
-        if frame_duration_ms not in [10, 20, 30]:
-            raise ValueError("VAD frame duration must be 10, 20, or 30 ms")
+        if webrtcvad is None:
+            print("Warning: VAD (Voice Activity Detection) will be disabled as webrtcvad is not available.")
+            self.vad = None
+            self.sample_rate = sample_rate
+            self.frame_length = 0
+        else:
+            if sample_rate not in [8000, 16000, 32000, 48000]:
+                raise ValueError("VAD sample rate must be 8000, 16000, 32000, or 48000 Hz")
+            if frame_duration_ms not in [10, 20, 30]:
+                raise ValueError("VAD frame duration must be 10, 20, or 30 ms")
 
-        self.vad = webrtcvad.Vad(sensitivity_mode)
-        self.sample_rate = sample_rate
-        self.frame_length = int(sample_rate * (frame_duration_ms / 1000.0))
+            self.vad = webrtcvad.Vad(sensitivity_mode)
+            self.sample_rate = sample_rate
+            self.frame_length = int(sample_rate * (frame_duration_ms / 1000.0))
         # print(f"VAD Initialized: SR={sample_rate}, Frame Duration={frame_duration_ms}ms, Frame Length={self.frame_length} samples")
 
     def is_speech(self, audio_chunk_float32):
@@ -35,6 +45,10 @@ class VADProcessor:
         Returns:
             bool: True if speech is detected in the chunk, False otherwise.
         """
+
+        # If VAD is not available, return True assuming speech is present
+        if self.vad is None:
+            return True
 
         if audio_chunk_float32.ndim > 1 and audio_chunk_float32.shape[1] == 1:
             audio_chunk_float32 = audio_chunk_float32.flatten()

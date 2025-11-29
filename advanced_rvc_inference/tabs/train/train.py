@@ -1041,8 +1041,6 @@ def train_tab():
                 inputs=[],
                 outputs=[g_pretrained_path, d_pretrained_path],
             )
-
-    return model_name, dataset_path, sampling_rate, cpu_cores, cut_preprocess, process_effects, noise_reduction, clean_strength, chunk_len, overlap_len, normalization_mode, f0_method, embedder_model, embedder_model_custom, include_mutes, batch_size, save_every_epoch, total_epoch, pretrained, custom_pretrained, g_pretrained_path, d_pretrained_path, overtraining_detector, overtraining_threshold, save_only_latest, save_every_weights, cache_dataset_in_gpu, cleanup, vocoder, checkpointing, index_algorithm
             upload_pretrained.upload(
                 fn=save_drop_model,
                 inputs=[upload_pretrained],
@@ -1078,3 +1076,5 @@ def train_tab():
                 inputs=[],
                 outputs=[pth_dropdown_export, index_dropdown_export],
             )
+
+    return model_name, dataset_path, sampling_rate, cpu_cores, cut_preprocess, process_effects, noise_reduction, clean_strength, chunk_len, overlap_len, normalization_mode, f0_method, embedder_model, embedder_model_custom, include_mutes, batch_size, save_every_epoch, total_epoch, pretrained, custom_pretrained, g_pretrained_path, d_pretrained_path, overtraining_detector, overtraining_threshold, save_only_latest, save_every_weights, cache_dataset_in_gpu, cleanup, vocoder, checkpointing, index_algorithm

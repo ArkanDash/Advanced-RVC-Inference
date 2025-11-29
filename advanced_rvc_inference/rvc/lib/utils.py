@@ -16,7 +16,7 @@ from pydub import AudioSegment
 project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.lib.tools import huggingface
+from advanced_rvc_inference.rvc.lib.tools import huggingface
 from advanced_rvc_inference.lib.backends import directml, opencl
 #from main.app.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
@@ -299,8 +299,20 @@ def load_faiss_index(index_path):
 def load_model(model_path, weights_only=True, log_severity_level=3):
     if not os.path.isfile(model_path): return None
 
-    if model_path.endswith(".pth"): 
+    if model_path.endswith(".pth"):
         return torch.load(model_path, map_location="cpu", weights_only=weights_only)
-    else: 
+    else:
         from main.library.onnx.wrapper import ONNXRVC
         return ONNXRVC(model_path, config.providers, log_severity_level=log_severity_level)
+
+
+def format_title(title):
+    import unicodedata
+    import regex as re
+    formatted_title = (
+        unicodedata.normalize("NFKD", title).encode("ascii", "ignore").decode("utf-8")
+    )
+    formatted_title = re.sub(r"[\u2500-\u257F]+", "", formatted_title)
+    formatted_title = re.sub(r"[^\w\s.-]", "", formatted_title)
+    formatted_title = re.sub(r"\s+", "_", formatted_title)
+    return formatted_title

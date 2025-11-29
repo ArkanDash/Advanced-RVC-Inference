@@ -30,7 +30,21 @@
   },
   "audio": {
     "default_format": "wav",
-    "supported_formats": ["wav", "mp3", "flac", "ogg", "opus", "m4a", "mp4", "aac", "alac", "wma", "aiff", "webm", "ac3"],
+    "supported_formats": [
+      "wav",
+      "mp3",
+      "flac",
+      "ogg",
+      "opus",
+      "m4a",
+      "mp4",
+      "aac",
+      "alac",
+      "wma",
+      "aiff",
+      "webm",
+      "ac3"
+    ],
     "quality": "high",
     "sample_rate": 44100
   },

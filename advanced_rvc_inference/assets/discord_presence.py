@@ -1,4 +1,8 @@
-from pypresence import Presence
+try:
+    from pypresence import Presence
+except ImportError:
+    print("Warning: pypresence not available. Discord presence will be disabled.")
+    Presence = None
 import datetime as dt
 
 
@@ -10,6 +14,9 @@ class RichPresenceManager:
 
     def start_presence(self):
         if not self.running:
+            if Presence is None:
+                print("Discord presence is disabled: pypresence module not available.")
+                return
             self.running = True
             self.rpc = Presence(self.client_id)
             try:

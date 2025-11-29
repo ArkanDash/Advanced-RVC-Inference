@@ -1,15 +1,27 @@
 import os
 import sys
 from pathlib import Path
-import soxr
+try:
+    import soxr
+except ImportError:
+    print("Warning: soxr not available. Some resampling functionality may be limited.")
+    soxr = None
 import time
 import torch
-import librosa
+try:
+    import librosa
+except ImportError:
+    print("Warning: librosa not available. Some inference functionality may be limited.")
+    librosa = None
 import logging
 import traceback
 import numpy as np
 import soundfile as sf
-import noisereduce as nr
+try:
+    import noisereduce as nr
+except ImportError:
+    print("Warning: noisereduce not available. Noise reduction functionality may be limited.")
+    nr = None
 from pedalboard import (
     Pedalboard,
     Chorus,
@@ -109,6 +121,10 @@ class VoiceConverter:
         try:
             if output_format != "WAV":
                 print(f"Saving audio as {output_format}...")
+                if librosa is None:
+                    print("Error: librosa not available for format conversion. Using original audio.")
+                    sf.write(output_path, data, sr, format=output_format.lower())
+                    return output_path
                 audio, sample_rate = librosa.load(input_path, sr=None)
                 common_sample_rates = [
                     8000,
@@ -122,8 +138,10 @@ class VoiceConverter:
                     48000,
                 ]
                 target_sr = min(common_sample_rates, key=lambda x: abs(x - sample_rate))
+                # Use soxr resampling if available, otherwise use default
+                res_type = "soxr_vhq" if soxr is not None else "scipy"
                 audio = librosa.resample(
-                    audio, orig_sr=sample_rate, target_sr=target_sr, res_type="soxr_vhq"
+                    audio, orig_sr=sample_rate, target_sr=target_sr, res_type=res_type
                 )
                 sf.write(output_path, audio, target_sr, format=output_format.lower())
             return output_path

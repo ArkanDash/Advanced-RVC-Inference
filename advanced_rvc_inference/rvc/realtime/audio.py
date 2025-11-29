@@ -1,10 +1,18 @@
 import os
 import sys
 from pathlib import Path
-import librosa
+try:
+    import librosa
+except ImportError:
+    print("Warning: librosa not available. Realtime audio functionality may be limited.")
+    librosa = None
 import traceback
 import numpy as np
-import sounddevice as sd
+try:
+    import sounddevice as sd
+except ImportError:
+    print("Warning: sounddevice not available. Realtime audio functionality may be limited.")
+    sd = None
 from queue import Queue
 from dataclasses import dataclass
 

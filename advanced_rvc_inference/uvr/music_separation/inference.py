@@ -10,7 +10,11 @@ import glob
 import time
 import warnings
 
-import librosa
+try:
+    import librosa
+except ImportError:
+    print("Warning: librosa not available. UVR functionality may be limited.")
+    librosa = None
 import numpy as np
 import soundfile as sf
 import torch
@@ -244,6 +248,9 @@ def proc_file(args=None):
     processing_start = time.time()
 
     # Load audio file
+    if librosa is None:
+        print("Error: librosa is not available. Cannot load audio file.")
+        return
     mix, sr = librosa.load(args.input_file, sr=44100, mono=False)
 
     # Create output directory

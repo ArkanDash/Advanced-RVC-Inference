@@ -1,5 +1,9 @@
 import gradio as gr
-import sounddevice as sd
+try:
+    import sounddevice as sd
+except ImportError:
+    print("Warning: sounddevice not available. Realtime audio functionality may be limited.")
+    sd = None
 import os
 import sys
 from pathlib import Path

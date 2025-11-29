@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 from locale import getdefaultlocale
 
-now_dir = os.getcwd()
+# Get the directory where this file is located
+now_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(now_dir)
 
 
@@ -11,12 +12,22 @@ class I18nAuto:
     LANGUAGE_PATH = os.path.join(now_dir, "assets", "i18n", "languages")
 
     def __init__(self, language=None):
-        with open(
-            os.path.join(now_dir, "assets", "config.json"), "r", encoding="utf8"
-        ) as file:
-            config = json.load(file)
-            override = config["lang"]["override"]
-            lang_prefix = config["lang"]["selected_lang"]
+        config_path = os.path.join(now_dir, "assets", "config.json")
+
+        # Try different possible paths for config.json
+        if not os.path.exists(config_path):
+            # Try config in the advanced_rvc_inference directory
+            config_path = os.path.join(now_dir, "advanced_rvc_inference", "assets", "config.json")
+
+        if not os.path.exists(config_path):
+            # Use default values if config file doesn't exist
+            config = {"lang": {"override": False, "selected_lang": "en_US"}}
+        else:
+            with open(config_path, "r", encoding="utf8") as file:
+                config = json.load(file)
+
+        override = config["lang"]["override"]
+        lang_prefix = config["lang"]["selected_lang"]
 
         self.language = lang_prefix
 

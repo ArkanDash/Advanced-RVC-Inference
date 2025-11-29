@@ -1,6 +1,11 @@
 import torch
 import torch.utils.data
-from librosa.filters import mel as librosa_mel_fn
+
+try:
+    from librosa.filters import mel as librosa_mel_fn
+except ImportError:
+    print("Warning: librosa not available. Some mel processing functionality will be limited.")
+    librosa_mel_fn = None
 
 
 mel_basis = {}
@@ -66,6 +71,11 @@ def spec_to_mel_torch(spec, n_fft, num_mels, sample_rate, fmin, fmax):
     global mel_basis
     dtype_device = str(spec.dtype) + "_" + str(spec.device)
     fmax_dtype_device = str(fmax) + "_" + dtype_device
+
+    if librosa_mel_fn is None:
+        print("Warning: librosa not available, returning original spec")
+        return spec  # Return original spec if librosa is not available
+
     if fmax_dtype_device not in mel_basis:
         mel = librosa_mel_fn(
             sr=sample_rate, n_fft=n_fft, n_mels=num_mels, fmin=fmin, fmax=fmax

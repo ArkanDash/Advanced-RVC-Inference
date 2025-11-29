@@ -9,7 +9,11 @@ import os
 import sys
 import time
 import warnings
-import librosa
+try:
+    import librosa
+except ImportError:
+    print("Warning: librosa not available. UVR functionality may be limited.")
+    librosa = None
 import numpy as np
 import soundfile as sf
 import torch
@@ -168,6 +172,9 @@ def validate_audio_file(file_path):
     """
     Validates an audio file by trying to load it.
     """
+    if librosa is None:
+        return False, {"error": "librosa not available for audio validation"}
+
     try:
         # Try to load the audio file to validate it
         y, sr = librosa.load(file_path)

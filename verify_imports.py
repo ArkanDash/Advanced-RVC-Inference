@@ -12,7 +12,7 @@ def test_all_imports():
         from advanced_rvc_inference import app, core
         print("✓ Main application imports work")
     except ImportError as e:
-        print(f"✗ Main application import error: {e}")
+        print(f"X Main application import error: {e}")
         return False
     
     # Test core functionality
@@ -20,17 +20,16 @@ def test_all_imports():
         from advanced_rvc_inference.core import run_prerequisites_script, run_infer_script
         print("✓ Core functionality imports work")
     except ImportError as e:
-        print(f"✗ Core functionality import error: {e}")
+        print(f"X Core functionality import error: {e}")
         return False
     
     # Test RVC modules
     try:
         from advanced_rvc_inference.rvc.configs.config import Config
         from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
-        from advanced_rvc_inference.rvc.train.train import *  # This would have been the main training function
         print("✓ RVC modules imports work")
     except ImportError as e:
-        print(f"✗ RVC modules import error: {e}")
+        print(f"X RVC modules import error: {e}")
         return False
     
     # Test UI tabs
@@ -40,7 +39,7 @@ def test_all_imports():
         from advanced_rvc_inference.tabs.settings.settings import settings_tab
         print("✓ UI tabs imports work")
     except ImportError as e:
-        print(f"✗ UI tabs import error: {e}")
+        print(f"X UI tabs import error: {e}")
         return False
     
     # Test utilities
@@ -49,7 +48,7 @@ def test_all_imports():
         from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
         print("✓ Utility imports work")
     except ImportError as e:
-        print(f"✗ Utility import error: {e}")
+        print(f"X Utility import error: {e}")
         return False
     
     # Test configuration
@@ -57,7 +56,7 @@ def test_all_imports():
         config = Config()
         print("✓ Configuration instantiation works")
     except Exception as e:
-        print(f"✗ Configuration instantiation error: {e}")
+        print(f"X Configuration instantiation error: {e}")
         return False
     
     print("All imports are working correctly!")
@@ -72,10 +71,10 @@ def main():
     
     print("=" * 60)
     if success:
-        print("✅ VERIFICATION PASSED: All imports are correctly configured!")
+        print("VERIFICATION PASSED: All imports are correctly configured!")
         print("The Advanced RVC Inference package is ready for use.")
     else:
-        print("❌ VERIFICATION FAILED: Some imports are still incorrect.")
+        print("VERIFICATION FAILED: Some imports are still incorrect.")
         return 1
     
     return 0

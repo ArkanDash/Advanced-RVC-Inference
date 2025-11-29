@@ -11,8 +11,8 @@ from tqdm import tqdm
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from rvc.lib.utils import format_title
-from rvc.lib.tools import gdown
+from advanced_rvc_inference.rvc.lib.utils import format_title
+from advanced_rvc_inference.rvc.lib.tools import gdown
 
 
 file_path = os.path.join(now_dir, "logs")

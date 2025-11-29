@@ -238,8 +238,13 @@ def check_spk_diarization(model_size, speechbrain=True):
                 print(f"Downloaded speechbrain model: {f}")
 
 def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=0.8, formant_timbre=0.8):
-    import librosa
     import soundfile as sf
+    try:
+        import librosa
+        librosa_available = True
+    except ImportError:
+        librosa_available = False
+        print("Warning: librosa not available. Some audio processing features may be limited.")
 
     try:
         file = file.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
@@ -248,19 +253,25 @@ def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=
         try:
             audio, sr = sf.read(file, dtype=np.float32)
         except:
-            audio, sr = librosa.load(file, sr=None)
+            if librosa_available:
+                audio, sr = librosa.load(file, sr=None)
+            else:
+                raise RuntimeError("Both soundfile and librosa failed to load the audio. Check your audio file.")
 
-        if len(audio.shape) > 1: audio = librosa.to_mono(audio.T)
-        if sr != sample_rate: audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate, res_type="soxr_vhq")
+        if librosa_available:
+            if len(audio.shape) > 1: audio = librosa.to_mono(audio.T)
+            if sr != sample_rate: audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate, res_type="soxr_vhq")
 
-        if formant_shifting:
+        if formant_shifting and librosa_available:
             from advanced_rvc_inference.rvc.algorithm.stftpitchshift import StftPitchShift
 
             pitchshifter = StftPitchShift(1024, 32, sample_rate)
             audio = pitchshifter.shiftpitch(audio, factors=1, quefrency=formant_qfrency * 1e-3, distortion=formant_timbre)
+        elif formant_shifting and not librosa_available:
+            print("Warning: Formant shifting not available since librosa is not installed.")
     except Exception as e:
         raise RuntimeError(f"{translations['errors_loading_audio']}: {e}")
-    
+
     return audio.flatten()
 
 def pydub_load(input_path, volume = None):
@@ -495,25 +506,32 @@ def autotune_f0(note_dict, f0, f0_autotune_strength):
     return autotuned_f0
 
 def change_rms(source_audio, source_rate, target_audio, target_rate, rate):
-    import librosa
+    try:
+        import librosa
+        librosa_available = True
+    except ImportError:
+        print("Warning: librosa not available. Using simplified RMS change.")
+        # If librosa is not available, return target audio with rate applied differently
+        return target_audio * rate
+
     import torch.nn.functional as F
 
     rms2 = F.interpolate(
         torch.from_numpy(
             librosa.feature.rms(
-                y=target_audio, 
-                frame_length=target_rate // 2 * 2, 
+                y=target_audio,
+                frame_length=target_rate // 2 * 2,
                 hop_length=target_rate // 2
             )
-        ).float().unsqueeze(0), 
-        size=target_audio.shape[0], 
+        ).float().unsqueeze(0),
+        size=target_audio.shape[0],
         mode="linear"
     ).squeeze()
 
     return target_audio * (
         F.interpolate(
-            torch.from_numpy(librosa.feature.rms(y=source_audio, frame_length=source_rate // 2 * 2, hop_length=source_rate // 2)).float().unsqueeze(0), 
-            size=target_audio.shape[0], 
+            torch.from_numpy(librosa.feature.rms(y=source_audio, frame_length=source_rate // 2 * 2, hop_length=source_rate // 2)).float().unsqueeze(0),
+            size=target_audio.shape[0],
             mode="linear"
         ).squeeze().pow(1 - rate) * rms2.maximum(torch.zeros_like(rms2) + 1e-6).pow(rate - 1)
     ).numpy()

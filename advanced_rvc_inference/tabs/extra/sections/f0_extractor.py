@@ -1,7 +1,11 @@
 import os
 import sys
 from pathlib import Path
-import librosa
+try:
+    import librosa
+except ImportError:
+    print("Warning: librosa not available. F0 extractor functionality may be limited.")
+    librosa = None
 import gradio as gr
 from matplotlib import pyplot as plt
 
@@ -9,7 +13,11 @@ from matplotlib import pyplot as plt
 project_root = Path(__file__).parent.parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.rvc.lib.predictors.F0Extractor import F0Extractor
+try:
+    from advanced_rvc_inference.rvc.lib.predictors.F0Extractor import F0Extractor
+except ImportError:
+    print("Warning: F0Extractor module not available. F0 extraction functionality may be limited.")
+    F0Extractor = None
 
 from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
@@ -20,12 +28,20 @@ def extract_f0_curve(audio_path: str, method: str):
     print("Extracting F0 Curve...")
     image_path = os.path.join("logs", "f0_plot.png")
     txt_path = os.path.join("logs", "f0_curve.txt")
+
+    if librosa is None:
+        print("Error: librosa is not available. Cannot extract F0 curve.")
+        return None, None
+
     y, sr = librosa.load(audio_path, sr=None)
     hop_length = 160
 
     librosa.note_to_hz("C1")
     librosa.note_to_hz("C8")
 
+    if F0Extractor is None:
+        print("Error: F0Extractor is not available. Cannot extract F0.")
+        return None, None
     f0_extractor = F0Extractor(audio_path, sample_rate=sr, method=method)
     f0 = f0_extractor.extract_f0()
 

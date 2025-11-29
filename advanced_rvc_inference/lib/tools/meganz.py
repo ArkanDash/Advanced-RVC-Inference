@@ -14,25 +14,15 @@ import tempfile
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
-sys.path.append(os.getcwd())
-
-# Add project root to path
 from pathlib import Path
 import sys
 
-project_root = Path(__file__).parent.parent.parent.absolute()
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-# Try to import translations, with fallback if unavailable
-try:
-    from advanced_rvc_inference.assets.config.variables import translations
-except ImportError:
-    # Define fallback translations
-    translations = {
-        "file_not_access": "File cannot be accessed",
-        "mac_not_match": "MAC does not match",
-        "missing_url": "Missing or invalid URL"
-    }
+# For now, define a basic translations dict to avoid import error
+translations = {"meganz_error": "Error downloading file from Mega.nz"}
 
 def makebyte(x):
     return codecs.latin_1_encode(x)[0]

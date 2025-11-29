@@ -9,23 +9,15 @@ import requests
 
 from urllib.parse import urlparse, parse_qs, unquote
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
 
 # Add project root to path
-from pathlib import Path
-
-project_root = Path(__file__).parent.parent.parent.absolute()
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-# Try to import translations, with fallback if unavailable
-try:
-    from advanced_rvc_inference.assets.config.variables import translations
-except ImportError:
-    # Define fallback translations
-    translations = {
-        "gdown_error": "Error downloading file from Google Drive",
-        "gdown_value_error": "Invalid URL provided"
-    }
+# For now, define a basic translations dict to avoid import error
+translations = {"gdown_error": "Error downloading file from Google Drive"}
 
 def parse_url(url):
     parsed = urlparse(url)

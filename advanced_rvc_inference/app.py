@@ -24,7 +24,9 @@ from advanced_rvc_inference.rvc.lib.zluda import *
 from advanced_rvc_inference.tabs.inference.inference import inference_tab
 from advanced_rvc_inference.tabs.train.train import train_tab
 from advanced_rvc_inference.tabs.extra.extra import extra_tab
-from advanced_rvc_inference.tabs.report.report import report_tab
+# Skipping import for missing report_tab as it doesn't exist in the project
+# from advanced_rvc_inference.tabs.report.report import report_tab
+report_tab = None  # Placeholder to avoid errors
 from advanced_rvc_inference.tabs.download.download import download_tab
 from advanced_rvc_inference.tabs.tts.tts import tts_tab
 from advanced_rvc_inference.tabs.voice_blender.voice_blender import voice_blender_tab
@@ -100,8 +102,9 @@ with gr.Blocks(
     with gr.Tab(i18n("Download")):
         download_tab()
 
-    with gr.Tab(i18n("Report a Bug")):
-        report_tab()
+    if report_tab is not None:
+        with gr.Tab(i18n("Report a Bug")):
+            report_tab()
 
     with gr.Tab(i18n("Extra")):
         extra_tab()

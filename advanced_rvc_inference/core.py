@@ -11,12 +11,30 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
-from advanced_rvc_inference.rvc.train.process.model_blender import model_blender
-from advanced_rvc_inference.rvc.train.process.model_information import model_information
-from advanced_rvc_inference.rvc.lib.tools.analyzer import analyze_audio
-from advanced_rvc_inference.rvc.lib.tools.launch_tensorboard import launch_tensorboard_pipeline
-from advanced_rvc_inference.rvc.lib.tools.model_download import model_download_pipeline
+# Import at function level to avoid circular imports
+def _import_prerequisites_download():
+    from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
+    return prequisites_download_pipeline
+
+def _import_model_blender():
+    from advanced_rvc_inference.rvc.train.process.model_blender import model_blender
+    return model_blender
+
+def _import_model_information():
+    from advanced_rvc_inference.rvc.train.process.model_information import model_information
+    return model_information
+
+def _import_analyzer():
+    from advanced_rvc_inference.rvc.lib.tools.analyzer import analyze_audio
+    return analyze_audio
+
+def _import_tensorboard():
+    from advanced_rvc_inference.rvc.lib.tools.launch_tensorboard import launch_tensorboard_pipeline
+    return launch_tensorboard_pipeline
+
+def _import_model_download():
+    from advanced_rvc_inference.rvc.lib.tools.model_download import model_download_pipeline
+    return model_download_pipeline
 
 python = sys.executable
 
@@ -27,11 +45,33 @@ import torch
 from pedalboard import Pedalboard, Reverb
 from pedalboard.io import AudioFile
 from pydub import AudioSegment
-from audio_separator.separator import Separator
 import logging
 import yaml
-from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
-from advanced_rvc_inference.uvr.music_separation.inference import proc_file
+
+# Delay imports to avoid circular dependencies
+def _import_separator():
+    try:
+        from audio_separator.separator import Separator
+        return Separator
+    except ImportError:
+        print("Warning: audio_separator not available. UVR functionality may be limited.")
+        return None
+
+def _import_voice_converter():
+    try:
+        from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
+        return VoiceConverter
+    except ImportError:
+        print("Warning: VoiceConverter not available.")
+        return None
+
+def _import_proc_file():
+    try:
+        from advanced_rvc_inference.uvr.music_separation.inference import proc_file
+        return proc_file
+    except ImportError:
+        print("Warning: UVR proc_file not available.")
+        return None
 
 # Define logs path relative to the project root
 logs_path = os.path.join(str(project_root), "logs")
@@ -39,7 +79,14 @@ logs_path = os.path.join(str(project_root), "logs")
 # Get TTS Voices -> https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=6A5AA1D4EAFF4E9FB37E23D68491D6F4
 @lru_cache(maxsize=1)  # Cache only one result since the file is static
 def load_voices_data():
-    tts_voices_path = os.path.join(str(project_root), "rvc", "lib", "tools", "tts_voices.json")
+    # The core.py file is in advanced_rvc_inference/ directory
+    # So we need to look in the rvc subdirectory
+    tts_voices_path = os.path.join(os.path.dirname(__file__), "rvc", "lib", "tools", "tts_voices.json")
+
+    if not os.path.exists(tts_voices_path):
+        print(f"Warning: tts_voices.json not found at {tts_voices_path}. Using empty data.")
+        return []
+
     with open(tts_voices_path, "r", encoding="utf-8") as file:
         return json.load(file)
 
@@ -50,9 +97,11 @@ locales = list({voice["ShortName"] for voice in voices_data})
 
 @lru_cache(maxsize=None)
 def import_voice_converter():
-    from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
-
-    return VoiceConverter()
+    VoiceConverter_cls = _import_voice_converter()
+    if VoiceConverter_cls:
+        return VoiceConverter_cls()
+    else:
+        raise ImportError("VoiceConverter could not be imported. Check dependencies.")
 
 
 @lru_cache(maxsize=1)
@@ -729,6 +778,7 @@ def run_index_script(model_name: str, index_algorithm: str):
 
 # Model information
 def run_model_information_script(pth_path: str):
+    model_information = _import_model_information()
     print(model_information(pth_path))
     return model_information(pth_path)
 
@@ -737,17 +787,20 @@ def run_model_information_script(pth_path: str):
 def run_model_blender_script(
     model_name: str, pth_path_1: str, pth_path_2: str, ratio: float
 ):
+    model_blender = _import_model_blender()
     message, model_blended = model_blender(model_name, pth_path_1, pth_path_2, ratio)
     return message, model_blended
 
 
 # Tensorboard
 def run_tensorboard_script():
+    launch_tensorboard_pipeline = _import_tensorboard()
     launch_tensorboard_pipeline()
 
 
 # Download
 def run_download_script(model_link: str):
+    model_download_pipeline = _import_model_download()
     model_download_pipeline(model_link)
     return f"Model downloaded successfully."
 
@@ -758,6 +811,7 @@ def run_prerequisites_script(
     models: bool,
     exe: bool,
 ):
+    prequisites_download_pipeline = _import_prerequisites_download()
     prequisites_download_pipeline(
         pretraineds_hifigan,
         models,
@@ -770,6 +824,7 @@ def run_prerequisites_script(
 def run_audio_analyzer_script(
     input_path: str, save_plot_path: str = "logs/audio_analysis.png"
 ):
+    analyze_audio = _import_analyzer()
     audio_info, plot_path = analyze_audio(input_path, save_plot_path)
     print(
         f"Audio info of {input_path}: {audio_info}",

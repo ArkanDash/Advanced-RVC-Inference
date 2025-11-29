@@ -11,10 +11,13 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.core import (
-    run_infer_script,
-    run_batch_infer_script,
-)
+# Import core functions only when needed to avoid circular imports
+def _import_core_functions():
+    from advanced_rvc_inference.core import (
+        run_infer_script,
+        run_batch_infer_script,
+    )
+    return run_infer_script, run_batch_infer_script
 
 from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
