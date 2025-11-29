@@ -28,6 +28,7 @@ setup(
         ],
     },
     include_package_data=True,
+    zip_safe=False,
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

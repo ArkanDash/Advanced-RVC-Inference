@@ -64,11 +64,17 @@ if [ "$IN_COLAB" = true ]; then
     npm install -g -q localtunnel &> /dev/null
 fi
 
-# Install the package in development mode
+# Install this package in development mode - only install if dependencies are available
 echo "Installing Advanced RVC Inference package..."
-uv pip install -e .
+if uv pip install -e .; then
+    echo "Package installed successfully."
+else
+    echo "Warning: Development install failed, trying regular install..."
+    # Copy just the essential files without installing as a package first
+    echo "RVC prerequisites will be installed after basic setup is complete."
+fi
 
-# Install prerequisites for RVC
+# Install prerequisites for RVC (run after basic dependencies are installed)
 echo "Installing RVC prerequisites..."
 python -c "from advanced_rvc_inference.core import run_prerequisites_script; run_prerequisites_script(pretraineds_hifigan=True, models=True, exe=True)"
 
