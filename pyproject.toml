@@ -39,7 +39,7 @@ dependencies = [
     "httpx==0.27.2",
     "contextlib2==21.6.0",
     "faiss-cpu==1.7.3; python_version < '3.12'",
-    "faiss-cpu>=1.7.3; python_version >= '3.12'",
+    "faiss-cpu>=1.7.3",
     "audio-separator",
     "audiomentations==0.31.0",
     "auraloss==0.4.0",
