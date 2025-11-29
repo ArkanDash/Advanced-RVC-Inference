@@ -2,6 +2,7 @@ import os
 import re
 import gc
 import sys
+from pathlib import Path
 import torch
 import faiss
 import codecs
@@ -11,9 +12,11 @@ import numpy as np
 
 from pydub import AudioSegment
 
-sys.path.append(os.getcwd())
+# Add project root to path
+project_root = Path(__file__).parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.rvc.lib.tools import huggingface
+from advanced_rvc_inference.lib.tools import huggingface
 from advanced_rvc_inference.lib.backends import directml, opencl
 #from main.app.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
