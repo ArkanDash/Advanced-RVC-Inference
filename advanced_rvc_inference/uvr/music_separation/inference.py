@@ -1,5 +1,5 @@
 """
-UVR (Universal Voice Remover) Inference Module
+UVR (Ultimate Vocal Remover) Inference Module
 This module enables advanced audio separation using COVERMAKER features.
 """
 

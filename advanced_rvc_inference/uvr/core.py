@@ -1,5 +1,5 @@
 """
-UVR (Universal Voice Remover) Core Module
+UVR (Ultimate Vocal Remover) Core Module
 This module contains the core functionality for audio separation features.
 """
 

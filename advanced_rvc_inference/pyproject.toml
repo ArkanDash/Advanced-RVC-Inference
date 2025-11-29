@@ -35,7 +35,6 @@ dependencies = [
     "audio-separator[gpu]>=0.10.0",
     "setuptools>=61.0",
     "wheel",
-    "git+https://github.com/BF667/UVRC.git#egg=uvr",
 ]
 
 [project.optional-dependencies]

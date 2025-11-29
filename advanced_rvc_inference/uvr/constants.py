@@ -1,5 +1,5 @@
 """
-Constants for UVR (Universal Voice Remover) functionality
+Constants for UVR (Ultimate Vocal Remover) functionality
 Contains model definitions and other constants for audio separation
 """
 import os

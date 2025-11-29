@@ -10,7 +10,7 @@ setup(
     name="advanced-rvc-inference",
     version="0.1.0",
     author="ArkanDash",
-    description="A state-of-the-art web UI for rapid and effortless inference using RVC",
+    description="A state-of-the-art web UI for rapid and effortless inference using RVC with ultimate vocal remover",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/ArkanDash/Advanced-RVC-Inference",
