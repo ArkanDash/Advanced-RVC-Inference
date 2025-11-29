@@ -16,8 +16,8 @@ from pydub import AudioSegment
 project_root = Path(__file__).parent.parent.absolute()
 sys.path.insert(0, str(project_root))
 
-from advanced_rvc_inference.lib.tools import huggingface
-from advanced_rvc_inference.lib.backends import directml, opencl
+from advanced_rvc_inference.rvc.lib.tools import huggingface
+from advanced_rvc_inference.rvc.lib.backends import directml, opencl
 #from main.app.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 for l in ["httpx", "httpcore"]:
@@ -305,7 +305,7 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
                 embedders_path = str(default_embedders_path)
                 speaker_diarization_path = str(default_speaker_diarization_path)
 
-            from advanced_rvc_inference.lib.tools import huggingface
+            from advanced_rvc_inference.rvc.lib.tools import huggingface
             import codecs
 
             embedders_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/rzorqqref/", "rot13")
@@ -436,7 +436,7 @@ def load_f0_predictor(f0_method, f0_onnx=False):
 
         # Try to download the F0 predictor automatically
         try:
-            from advanced_rvc_inference.lib.tools import huggingface
+            from advanced_rvc_inference.rvc.lib.tools import huggingface
             import codecs
 
             predictors_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cerqvpgbef/", "rot13")
