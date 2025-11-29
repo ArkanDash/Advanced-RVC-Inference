@@ -1,6 +1,7 @@
 import os
 import gc
 import sys
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 import faiss
@@ -10,21 +11,24 @@ from scipy import signal
 from scipy.signal import medfilt
 from torch import Tensor
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.assets.i18n.i18n import I18nAuto
+now_dir = str(project_root)
 
-from rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
-from rvc.lib.predictors.F0Extractor import F0Extractor
-from rvc.lib.predictors.RMVPE import RMVPE0
-from rvc.lib.predictors.FCPE import FCPEF0Predictor
-from rvc.lib.predictors.Generator import (
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+
+from advanced_rvc_inference.rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
+from advanced_rvc_inference.rvc.lib.predictors.F0Extractor import F0Extractor
+from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
+from advanced_rvc_inference.rvc.lib.predictors.FCPE import FCPEF0Predictor
+from advanced_rvc_inference.rvc.lib.predictors.Generator import (
     PM_AC, PM_CC, PM_SHS, DIO, Harvest, PYIN, SWIPE, PIPTRACK, Penn, DJCM, Swift, Pesto,
     MangioCrepNET, MangioPerrYMoss, MangioPENN
 )
 # Import the F0Extractor for handling different methods
-from rvc.lib.predictors.F0Extractor import F0Extractor
+from advanced_rvc_inference.rvc.lib.predictors.F0Extractor import F0Extractor
 
 import logging
 
@@ -374,7 +378,7 @@ class Pipeline:
         return self._resize_f0(f0, p_len)
 
     def get_f0_mangio_crepe(self, x, p_len, model="full"):
-        from rvc.lib.predictors.CREPE.CREPE import CREPE
+        from advanced_rvc_inference.rvc.lib.predictors.CREPE.CREPE import CREPE
 
         # Create a CREPE instance for mangio-crepe
         crepe_model = CREPE(
@@ -387,8 +391,8 @@ class Pipeline:
         return self._resize_f0(f0, p_len)
 
     def get_f0_crepe(self, x, p_len, model="full", filter_radius=3):
-        from rvc.lib.predictors.f0 import CREPE
-        from rvc.lib.predictors.CREPE.filter import mean, median
+        from advanced_rvc_inference.rvc.lib.predictors.f0 import CREPE
+        from advanced_rvc_inference.rvc.lib.predictors.CREPE.filter import mean, median
 
         model = CREPE(
             device=self.device, sample_rate=self.sample_rate, hop_size=self.window
@@ -402,7 +406,7 @@ class Pipeline:
         return self._resize_f0(f0, p_len)
 
     def get_f0_fcpe(self, x, p_len, legacy=False, previous=False, filter_radius=3):
-        from rvc.lib.predictors.FCPE.FCPE import FCPE
+        from advanced_rvc_inference.rvc.lib.predictors.FCPE.FCPE import FCPE
 
         fcpe_model = FCPEF0Predictor(self.sample_rate, self.device, "default") # Use default for now
         f0 = fcpe_model.get_f0(x, p_len)
@@ -410,7 +414,7 @@ class Pipeline:
         return self._resize_f0(f0, p_len)
 
     def get_f0_rmvpe(self, x, p_len, clipping=False, filter_radius=3):
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -421,7 +425,7 @@ class Pipeline:
         # Using the existing methods if available - currently using placeholder
         # The actual pyworld implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -431,7 +435,7 @@ class Pipeline:
     def get_f0_swipe(self, x, p_len, filter_radius=3):
         # Using the actual swipe implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -463,7 +467,7 @@ class Pipeline:
     def get_f0_penn(self, x, p_len, filter_radius=3):
         # Using the actual penn implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -473,7 +477,7 @@ class Pipeline:
     def get_f0_mangio_penn(self, x, p_len):
         # Using the actual penn implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -483,7 +487,7 @@ class Pipeline:
     def get_f0_djcm(self, x, p_len, clipping=False, filter_radius=3):
         # Using the actual djcm implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -493,7 +497,7 @@ class Pipeline:
     def get_f0_swift(self, x, p_len, filter_radius=3):
         # Using the actual swift implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)
@@ -503,7 +507,7 @@ class Pipeline:
     def get_f0_pesto(self, x, p_len):
         # Using the actual pesto implementation would go here
         # For now, default to rmvpe
-        from rvc.lib.predictors.RMVPE import RMVPE0
+        from advanced_rvc_inference.rvc.lib.predictors.RMVPE import RMVPE0
 
         rmvpe_model = RMVPE0(self.sample_rate, self.device, "default", 0)
         f0 = rmvpe_model.get_f0(x, p_len)

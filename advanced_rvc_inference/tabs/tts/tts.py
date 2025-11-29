@@ -2,16 +2,18 @@ import json
 import os
 import random
 import sys
+from pathlib import Path
 
 import gradio as gr
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from assets.i18n.i18n import I18nAuto
-from core import run_tts_script
-from tabs.settings.sections.filter import get_filter_trigger, load_config_filter
-from tabs.inference.inference import (
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.core import run_tts_script
+from advanced_rvc_inference.tabs.settings.sections.filter import get_filter_trigger, load_config_filter
+from advanced_rvc_inference.tabs.inference.inference import (
     change_choices,
     create_folder_and_move_files,
     get_files,
@@ -25,11 +27,11 @@ from tabs.inference.inference import (
 )
 
 i18n = I18nAuto()
+now_dir = str(project_root)
 
 
-with open(
-    os.path.join("rvc", "lib", "tools", "tts_voices.json"), "r", encoding="utf-8"
-) as file:
+tts_voices_path = os.path.join(str(project_root), "rvc", "lib", "tools", "tts_voices.json")
+with open(tts_voices_path, "r", encoding="utf-8") as file:
     tts_voices_data = json.load(file)
 
 short_names = [voice.get("ShortName", "") for voice in tts_voices_data]

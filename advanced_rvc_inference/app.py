@@ -2,7 +2,7 @@ import gradio as gr
 import sys
 import os
 import logging
-
+from pathlib import Path
 from typing import Any
 
 DEFAULT_SERVER_NAME = "127.0.0.1"
@@ -13,29 +13,29 @@ MAX_PORT_ATTEMPTS = 10
 logging.getLogger("uvicorn").setLevel(logging.WARNING)
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
-# Add current directory to sys.path
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Get the absolute path of the project root directory
+project_root = Path(__file__).parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
 # Zluda hijack
-import rvc.lib.zluda
+from advanced_rvc_inference.rvc.lib.zluda import *
 
 # Import Tabs
-from tabs.inference.inference import inference_tab
-from tabs.train.train import train_tab
-from tabs.extra.extra import extra_tab
-from tabs.report.report import report_tab
-from tabs.download.download import download_tab
-from tabs.tts.tts import tts_tab
-from tabs.voice_blender.voice_blender import voice_blender_tab
-from tabs.plugins.plugins import plugins_tab
-from tabs.settings.settings import settings_tab
-from tabs.realtime.realtime import realtime_tab
-from tabs.separation.separation import separation_tab
-from tabs.full_inference.full_inference import full_inference_tab
+from advanced_rvc_inference.tabs.inference.inference import inference_tab
+from advanced_rvc_inference.tabs.train.train import train_tab
+from advanced_rvc_inference.tabs.extra.extra import extra_tab
+from advanced_rvc_inference.tabs.report.report import report_tab
+from advanced_rvc_inference.tabs.download.download import download_tab
+from advanced_rvc_inference.tabs.tts.tts import tts_tab
+from advanced_rvc_inference.tabs.voice_blender.voice_blender import voice_blender_tab
+from advanced_rvc_inference.tabs.plugins.plugins import plugins_tab
+from advanced_rvc_inference.tabs.settings.settings import settings_tab
+from advanced_rvc_inference.tabs.realtime.realtime import realtime_tab
+from advanced_rvc_inference.tabs.separation.separation import separation_tab
+from advanced_rvc_inference.tabs.full_inference.full_inference import full_inference_tab
 
 # Run prerequisites
-from core import run_prerequisites_script
+from advanced_rvc_inference.core import run_prerequisites_script
 
 run_prerequisites_script(
     pretraineds_hifigan=True,
@@ -44,25 +44,25 @@ run_prerequisites_script(
 )
 
 # Initialize i18n
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 
 # Start Discord presence if enabled
-from tabs.settings.sections.presence import load_config_presence
+from advanced_rvc_inference.tabs.settings.sections.presence import load_config_presence
 
 if load_config_presence():
-    from assets.discord_presence import RPCManager
+    from advanced_rvc_inference.assets.discord_presence import RPCManager
 
     RPCManager.start_presence()
 
 # Check installation
-import assets.installation_checker as installation_checker
+import advanced_rvc_inference.assets.installation_checker as installation_checker
 
 installation_checker.check_installation()
 
 # Load theme
-import assets.themes.loadThemes as loadThemes
+import advanced_rvc_inference.assets.themes.loadThemes as loadThemes
 
 my_applio = loadThemes.load_theme() or "terastudio/yellow"
 
@@ -119,8 +119,9 @@ with gr.Blocks(
 
 
 def launch_gradio(server_name: str, server_port: int) -> None:
+    favicon_path = os.path.join(str(project_root), "assets", "ICON.ico")
     Applio.launch(
-        favicon_path="assets/ICON.ico",
+        favicon_path=favicon_path,
         share="--share" in sys.argv,
         inbrowser="--open" in sys.argv,
         server_name=server_name,

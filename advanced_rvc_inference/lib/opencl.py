@@ -9,9 +9,14 @@ try:
 except:
     pytorch_ocl = None
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
 
-from main.library.backends.utils import GRU
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.lib.backends.utils import GRU
 
 torch_available = pytorch_ocl != None
 if torch_available: adaptive_orig = torch.nn.AdaptiveAvgPool2d

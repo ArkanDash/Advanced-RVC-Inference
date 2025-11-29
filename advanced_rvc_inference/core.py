@@ -5,19 +5,18 @@ import argparse
 import subprocess
 from functools import lru_cache
 from distutils.util import strtobool
+from pathlib import Path
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Get the absolute path of the project root directory
+project_root = Path(__file__).parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-current_script_directory = os.path.dirname(os.path.realpath(__file__))
-logs_path = os.path.join(current_script_directory, "logs")
-
-from rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
-from rvc.train.process.model_blender import model_blender
-from rvc.train.process.model_information import model_information
-from rvc.lib.tools.analyzer import analyze_audio
-from rvc.lib.tools.launch_tensorboard import launch_tensorboard_pipeline
-from rvc.lib.tools.model_download import model_download_pipeline
+from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
+from advanced_rvc_inference.rvc.train.process.model_blender import model_blender
+from advanced_rvc_inference.rvc.train.process.model_information import model_information
+from advanced_rvc_inference.rvc.lib.tools.analyzer import analyze_audio
+from advanced_rvc_inference.rvc.lib.tools.launch_tensorboard import launch_tensorboard_pipeline
+from advanced_rvc_inference.rvc.lib.tools.model_download import model_download_pipeline
 
 python = sys.executable
 
@@ -31,16 +30,17 @@ from pydub import AudioSegment
 from audio_separator.separator import Separator
 import logging
 import yaml
-from rvc.infer.infer import VoiceConverter
-from uvr.music_separation.inference import proc_file
+from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
+from advanced_rvc_inference.uvr.music_separation.inference import proc_file
 
+# Define logs path relative to the project root
+logs_path = os.path.join(str(project_root), "logs")
 
 # Get TTS Voices -> https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=6A5AA1D4EAFF4E9FB37E23D68491D6F4
 @lru_cache(maxsize=1)  # Cache only one result since the file is static
 def load_voices_data():
-    with open(
-        os.path.join("rvc", "lib", "tools", "tts_voices.json"), "r", encoding="utf-8"
-    ) as file:
+    tts_voices_path = os.path.join(str(project_root), "rvc", "lib", "tools", "tts_voices.json")
+    with open(tts_voices_path, "r", encoding="utf-8") as file:
         return json.load(file)
 
 
@@ -50,14 +50,14 @@ locales = list({voice["ShortName"] for voice in voices_data})
 
 @lru_cache(maxsize=None)
 def import_voice_converter():
-    from rvc.infer.infer import VoiceConverter
+    from advanced_rvc_inference.rvc.infer.infer import VoiceConverter
 
     return VoiceConverter()
 
 
 @lru_cache(maxsize=1)
 def get_config():
-    from rvc.configs.config import Config
+    from advanced_rvc_inference.rvc.configs.config import Config
 
     return Config()
 
@@ -453,10 +453,11 @@ def run_tts_script(
     sid: int = 0,
 ):
 
-    tts_script_path = os.path.join("rvc", "lib", "tools", "tts.py")
+    tts_script_path = os.path.join(str(project_root), "rvc", "lib", "tools", "tts.py")
 
+    assets_path = os.path.join(str(project_root), "assets")
     if os.path.exists(output_tts_path) and os.path.abspath(output_tts_path).startswith(
-        os.path.abspath("assets")
+        os.path.abspath(assets_path)
     ):
         os.remove(output_tts_path)
 
@@ -533,7 +534,7 @@ def run_preprocess_script(
     overlap_len: float,
     normalization_mode: str = "none",
 ):
-    preprocess_script_path = os.path.join("rvc", "train", "preprocess", "preprocess.py")
+    preprocess_script_path = os.path.join(str(project_root), "rvc", "train", "preprocess", "preprocess.py")
     command = [
         python,
         preprocess_script_path,
@@ -619,11 +620,11 @@ def run_extract_script(
     mapped_f0_method = f0_mapping.get(f0_method, f0_method)
 
     model_path = os.path.join(logs_path, model_name)
-    extract = os.path.join("rvc", "train", "extract", "extract.py")
+    extract_script_path = os.path.join(str(project_root), "rvc", "train", "extract", "extract.py")
 
     command_1 = [
         python,
-        extract,
+        extract_script_path,
         *map(
             str,
             [
@@ -668,7 +669,7 @@ def run_train_script(
 ):
 
     if pretrained == True:
-        from rvc.lib.tools.pretrained_selector import pretrained_selector
+        from advanced_rvc_inference.rvc.lib.tools.pretrained_selector import pretrained_selector
 
         if custom_pretrained == False:
             pg, pd = pretrained_selector(str(vocoder), int(sample_rate))
@@ -681,7 +682,7 @@ def run_train_script(
     else:
         pg, pd = "", ""
 
-    train_script_path = os.path.join("rvc", "train", "train.py")
+    train_script_path = os.path.join(str(project_root), "rvc", "train", "train.py")
     command = [
         python,
         train_script_path,
@@ -714,7 +715,7 @@ def run_train_script(
 
 # Index
 def run_index_script(model_name: str, index_algorithm: str):
-    index_script_path = os.path.join("rvc", "train", "process", "extract_index.py")
+    index_script_path = os.path.join(str(project_root), "rvc", "train", "process", "extract_index.py")
     command = [
         python,
         index_script_path,

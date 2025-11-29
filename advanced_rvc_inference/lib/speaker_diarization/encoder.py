@@ -5,10 +5,15 @@ import torch
 import itertools
 import collections
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
 
-from main.library.speaker_diarization.speechbrain import if_main_process, ddp_barrier
-from main.library.speaker_diarization.features import register_checkpoint_hooks, mark_as_saver, mark_as_loader
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.lib.speaker_diarization.speechbrain import if_main_process, ddp_barrier
+from advanced_rvc_inference.lib.speaker_diarization.features import register_checkpoint_hooks, mark_as_saver, mark_as_loader
 
 @register_checkpoint_hooks
 class CategoricalEncoder:

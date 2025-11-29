@@ -5,22 +5,26 @@ import shutil
 import datetime
 import json
 import torch
+from pathlib import Path
 
-from core import (
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.core import (
     run_infer_script,
     run_batch_infer_script,
 )
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
-from rvc.lib.utils import format_title
-from tabs.settings.sections.restart import stop_infer
-from tabs.settings.sections.filter import get_filter_trigger, load_config_filter
+from advanced_rvc_inference.rvc.lib.utils import format_title
+from advanced_rvc_inference.tabs.settings.sections.restart import stop_infer
+from advanced_rvc_inference.tabs.settings.sections.filter import get_filter_trigger, load_config_filter
 
 i18n = I18nAuto()
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+now_dir = str(project_root)
 
 model_root = os.path.join(now_dir, "logs")
 audio_root = os.path.join(now_dir, "assets", "audios")

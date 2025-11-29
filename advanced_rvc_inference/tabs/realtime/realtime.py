@@ -2,20 +2,24 @@ import gradio as gr
 import sounddevice as sd
 import os
 import sys
+from pathlib import Path
 import time
 import json
 import regex as re
 import shutil
 import torch
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.realtime.callbacks import AudioCallbacks
-from rvc.realtime.audio import list_audio_device
-from rvc.realtime.core import AUDIO_SAMPLE_RATE
+now_dir = str(project_root)
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.rvc.realtime.callbacks import AudioCallbacks
+from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
+from advanced_rvc_inference.rvc.realtime.core import AUDIO_SAMPLE_RATE
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 

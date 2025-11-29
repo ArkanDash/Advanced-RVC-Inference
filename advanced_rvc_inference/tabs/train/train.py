@@ -2,24 +2,28 @@ import os
 import shutil
 import sys
 from multiprocessing import cpu_count
+from pathlib import Path
 
 import gradio as gr
 
-from assets.i18n.i18n import I18nAuto
-from core import (
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.core import (
     run_extract_script,
     run_index_script,
     run_preprocess_script,
     run_prerequisites_script,
     run_train_script,
 )
-from rvc.configs.config import get_gpu_info, get_number_of_gpus, max_vram_gpu
-from rvc.lib.utils import format_title
-from tabs.settings.sections.restart import stop_train
+from advanced_rvc_inference.rvc.configs.config import get_gpu_info, get_number_of_gpus, max_vram_gpu
+from advanced_rvc_inference.rvc.lib.utils import format_title
+from advanced_rvc_inference.tabs.settings.sections.restart import stop_train
 
 i18n = I18nAuto()
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+now_dir = str(project_root)
 
 
 sup_audioext = {
@@ -1037,6 +1041,8 @@ def train_tab():
                 inputs=[],
                 outputs=[g_pretrained_path, d_pretrained_path],
             )
+
+    return model_name, dataset_path, sampling_rate, cpu_cores, cut_preprocess, process_effects, noise_reduction, clean_strength, chunk_len, overlap_len, normalization_mode, f0_method, embedder_model, embedder_model_custom, include_mutes, batch_size, save_every_epoch, total_epoch, pretrained, custom_pretrained, g_pretrained_path, d_pretrained_path, overtraining_detector, overtraining_threshold, save_only_latest, save_every_weights, cache_dataset_in_gpu, cleanup, vocoder, checkpointing, index_algorithm
             upload_pretrained.upload(
                 fn=save_drop_model,
                 inputs=[upload_pretrained],

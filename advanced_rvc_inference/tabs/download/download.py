@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import json
 import shutil
 import requests
@@ -11,13 +12,16 @@ from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from core import run_download_script
-from rvc.lib.utils import format_title
+now_dir = str(project_root)
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.core import run_download_script
+from advanced_rvc_inference.rvc.lib.utils import format_title
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 

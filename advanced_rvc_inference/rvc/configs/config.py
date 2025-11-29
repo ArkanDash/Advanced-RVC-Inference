@@ -1,98 +1,71 @@
 import torch
-import json
 import os
+import sys
+from pathlib import Path
 
-version_config_paths = [
-    os.path.join("48000.json"),
-    os.path.join("40000.json"),
-    os.path.join("32000.json"),
-]
+now_dir = os.getcwd()
+sys.path.append(now_dir)
 
-
-def singleton(cls):
-    instances = {}
-
-    def get_instance(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return get_instance
-
-
-@singleton
 class Config:
     def __init__(self):
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.gpu_name = (
-            torch.cuda.get_device_name(int(self.device.split(":")[-1]))
-            if self.device.startswith("cuda")
-            else None
-        )
-        self.json_config = self.load_config_json()
+        self.device = "cuda:0"
+        self.is_half = True
+        self.n_cpu = 0
+        self.gpu_name = None
         self.gpu_mem = None
         self.x_pad, self.x_query, self.x_center, self.x_max = self.device_config()
 
-    def load_config_json(self):
-        configs = {}
-        for config_file in version_config_paths:
-            config_path = os.path.join("rvc", "configs", config_file)
-            with open(config_path, "r") as f:
-                configs[config_file] = json.load(f)
-        return configs
-
-    def device_config(self):
-        if self.device.startswith("cuda"):
-            self.set_cuda_config()
+    def device_config(self) -> tuple:
+        if torch.cuda.is_available():
+            i_device = int(self.device.split(":")[-1])
+            self.gpu_name = torch.cuda.get_device_name(i_device)
+            if (
+                "40 Series" in self.gpu_name
+                or "RTX 40" in self.gpu_name
+                or "40_" in self.gpu_name
+                or "40-" in self.gpu_name
+                or "Ampere" in self.gpu_name
+            ):
+                print("Half precision disabled for 40 Series/RTX 40 GPUs")
+                self.is_half = False
+            else:
+                self.gpu_mem = torch.cuda.get_device_properties(i_device).total_memory
+            return 1, 8, 64, 128
+        elif torch.backends.mps.is_available():
+            print("Using Mac Metal Performance Shaders (MPS) backend")
+            return 1, 8, 64, 128
         else:
-            self.device = "cpu"
-
-        # Configuration for 6GB GPU memory
-        x_pad, x_query, x_center, x_max = (1, 6, 38, 41)
-        if self.gpu_mem is not None and self.gpu_mem <= 4:
-            # Configuration for 5GB GPU memory
-            x_pad, x_query, x_center, x_max = (1, 5, 30, 32)
-
-        return x_pad, x_query, x_center, x_max
-
-    def set_cuda_config(self):
-        i_device = int(self.device.split(":")[-1])
-        self.gpu_name = torch.cuda.get_device_name(i_device)
-        self.gpu_mem = torch.cuda.get_device_properties(i_device).total_memory // (
-            1024**3
-        )
-
-
-def max_vram_gpu(gpu):
-    if torch.cuda.is_available():
-        gpu_properties = torch.cuda.get_device_properties(gpu)
-        total_memory_gb = round(gpu_properties.total_memory / 1024 / 1024 / 1024)
-        return total_memory_gb
-    else:
-        return "8"
-
+            print("Using CPU backend")
+            return 1, 8, 64, 128
 
 def get_gpu_info():
-    ngpu = torch.cuda.device_count()
-    gpu_infos = []
-    if torch.cuda.is_available() or ngpu != 0:
-        for i in range(ngpu):
-            gpu_name = torch.cuda.get_device_name(i)
-            mem = int(
-                torch.cuda.get_device_properties(i).total_memory / 1024 / 1024 / 1024
-                + 0.4
-            )
-            gpu_infos.append(f"{i}: {gpu_name} ({mem} GB)")
-    if len(gpu_infos) > 0:
-        gpu_info = "\n".join(gpu_infos)
-    else:
-        gpu_info = "Unfortunately, there is no compatible GPU available to support your training."
-    return gpu_info
-
+    try:
+        if torch.cuda.is_available():
+            gpu_count = torch.cuda.device_count()
+            gpu_info_list = []
+            for i in range(gpu_count):
+                gpu_name = torch.cuda.get_device_name(i)
+                gpu_mem = torch.cuda.get_device_properties(i).total_memory / 1024**3
+                gpu_info_list.append(f"GPU {i}: {gpu_name} ({gpu_mem:.1f} GB)")
+            return " | ".join(gpu_info_list)
+        else:
+            return "No GPU available"
+    except:
+        return "GPU info unavailable"
 
 def get_number_of_gpus():
-    if torch.cuda.is_available():
-        num_gpus = torch.cuda.device_count()
-        return "-".join(map(str, range(num_gpus)))
-    else:
-        return "-"
+    try:
+        if torch.cuda.is_available():
+            return torch.cuda.device_count()
+        else:
+            return 0
+    except:
+        return 0
+
+def max_vram_gpu(gpu_id=0):
+    try:
+        if torch.cuda.is_available() and gpu_id < torch.cuda.device_count():
+            return torch.cuda.get_device_properties(gpu_id).total_memory / 1024**3
+        return 0
+    except:
+        return 0

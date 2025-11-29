@@ -1,11 +1,17 @@
 import os
+import sys
+from pathlib import Path
 import librosa
 import gradio as gr
 from matplotlib import pyplot as plt
 
-from rvc.lib.predictors.F0Extractor import F0Extractor
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.rvc.lib.predictors.F0Extractor import F0Extractor
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 

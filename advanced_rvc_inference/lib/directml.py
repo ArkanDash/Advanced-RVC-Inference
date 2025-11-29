@@ -4,7 +4,12 @@ import sys
 import torch
 import subprocess
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
+
+# Add project root to path
+project_root = Path(__file__).parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
 from advanced_rvc_inference.rvc.embedders import fairseq
 from advanced_rvc_inference.lib.backends.utils import GRU

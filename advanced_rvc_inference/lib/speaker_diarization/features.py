@@ -5,9 +5,14 @@ import torch
 import inspect
 import functools
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
 
-from main.library.speaker_diarization.speechbrain import MAIN_PROC_ONLY, is_distributed_initialized, main_process_only
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.lib.speaker_diarization.speechbrain import MAIN_PROC_ONLY, is_distributed_initialized, main_process_only
 
 KEYS_MAPPING = {".mutihead_attn": ".multihead_attn",  ".convs_intermedite": ".convs_intermediate"}
 

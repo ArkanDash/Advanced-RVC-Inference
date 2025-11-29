@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import glob
 import time
 import tqdm
@@ -10,16 +11,19 @@ import concurrent.futures
 import multiprocessing as mp
 import json
 
-now_dir = os.getcwd()
-sys.path.append(os.path.join(now_dir))
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+now_dir = str(project_root)
 
 # Zluda hijack
-import rvc.lib.zluda
+import advanced_rvc_inference.rvc.lib.zluda
 
-from rvc.lib.utils import load_audio_16k, load_embedding
-from rvc.train.extract.preparing_files import generate_config, generate_filelist
-from rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
-from rvc.configs.config import Config
+from advanced_rvc_inference.rvc.lib.utils import load_audio_16k, load_embedding
+from advanced_rvc_inference.rvc.train.extract.preparing_files import generate_config, generate_filelist
+from advanced_rvc_inference.rvc.lib.predictors.f0 import CREPE, FCPE, RMVPE
+from advanced_rvc_inference.rvc.configs.config import Config
 
 # Load config
 config = Config()

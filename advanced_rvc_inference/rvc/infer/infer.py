@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import soxr
 import time
 import torch
@@ -23,14 +24,17 @@ from pedalboard import (
     Delay,
 )
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.infer.pipeline import Pipeline as VC
-from rvc.lib.utils import load_audio_infer, load_embedding
-from rvc.lib.tools.split_audio import process_audio, merge_audio
-from rvc.lib.algorithm.synthesizers import Synthesizer
-from rvc.configs.config import Config
+now_dir = str(project_root)
+
+from advanced_rvc_inference.rvc.infer.pipeline import Pipeline as VC
+from advanced_rvc_inference.rvc.lib.utils import load_audio_infer, load_embedding
+from advanced_rvc_inference.rvc.lib.tools.split_audio import process_audio, merge_audio
+from advanced_rvc_inference.rvc.lib.algorithm.synthesizers import Synthesizer
+from advanced_rvc_inference.rvc.configs.config import Config
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 logging.getLogger("httpcore").setLevel(logging.WARNING)

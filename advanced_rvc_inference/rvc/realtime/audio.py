@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import librosa
 import traceback
 import numpy as np
@@ -7,10 +8,13 @@ import sounddevice as sd
 from queue import Queue
 from dataclasses import dataclass
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.realtime.core import AUDIO_SAMPLE_RATE
+now_dir = str(project_root)
+
+from advanced_rvc_inference.rvc.realtime.core import AUDIO_SAMPLE_RATE
 
 
 @dataclass

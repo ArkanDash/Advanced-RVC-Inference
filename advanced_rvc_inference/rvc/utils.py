@@ -136,7 +136,7 @@ def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=
         if sr != sample_rate: audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate, res_type="soxr_vhq")
 
         if formant_shifting:
-            from main.library.algorithm.stftpitchshift import StftPitchShift
+            from advanced_rvc_inference.rvc.algorithm.stftpitchshift import StftPitchShift
 
             pitchshifter = StftPitchShift(1024, 32, sample_rate)
             audio = pitchshifter.shiftpitch(audio, factors=1, quefrency=formant_qfrency * 1e-3, distortion=formant_timbre)
@@ -166,16 +166,16 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
 
     try:
         if embedders_mode == "fairseq":
-            from main.library.embedders.fairseq import load_model
+            from advanced_rvc_inference.rvc.embedders.fairseq import load_model
             hubert_model = load_model(embedder_model_path)
         elif embedders_mode == "onnx":
-            from main.library.embedders.onnx import HubertModelONNX
+            from advanced_rvc_inference.rvc.embedders.onnx import HubertModelONNX
             hubert_model = HubertModelONNX(embedder_model_path, config.providers, config.device)
         elif embedders_mode == "transformers":
-            from main.library.embedders.transformers import HubertModelWithFinalProj
+            from advanced_rvc_inference.rvc.embedders.transformers import HubertModelWithFinalProj
             hubert_model = HubertModelWithFinalProj.from_pretrained(embedder_model_path)
         elif embedders_mode == "whisper":
-            from main.library.embedders.ppg import WhisperModel
+            from advanced_rvc_inference.rvc.embedders.ppg import WhisperModel
             hubert_model = WhisperModel(embedder_model_path, config.device)
         else: raise ValueError(translations["option_not_valid"])
     except Exception as e:
@@ -184,7 +184,7 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
     return hubert_model
 
 def cut(audio, sr, db_thresh=-60, min_interval=250):
-    from main.inference.preprocess.slicer2 import Slicer2
+    from advanced_rvc_inference.rvc.inference.preprocess.slicer2 import Slicer2
 
     slicer = Slicer2(sr=sr, threshold=db_thresh, min_interval=min_interval)
     return slicer.slice2(audio)
@@ -299,5 +299,5 @@ def load_model(model_path, weights_only=True, log_severity_level=3):
     if model_path.endswith(".pth"): 
         return torch.load(model_path, map_location="cpu", weights_only=weights_only)
     else: 
-        from main.library.onnx.wrapper import ONNXRVC
+        from advanced_rvc_inference.rvc.onnx.wrapper import ONNXRVC
         return ONNXRVC(model_path, config.providers, log_severity_level=log_severity_level)

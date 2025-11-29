@@ -1,15 +1,19 @@
 import os
 import sys
+from pathlib import Path
 import gradio as gr
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from tabs.extra.sections.processing import processing_tab
-from tabs.extra.sections.analyzer import analyzer_tab
-from tabs.extra.sections.f0_extractor import f0_extractor_tab
+from advanced_rvc_inference.tabs.extra.sections.processing import processing_tab
+from advanced_rvc_inference.tabs.extra.sections.analyzer import analyzer_tab
+from advanced_rvc_inference.tabs.extra.sections.f0_extractor import f0_extractor_tab
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+
+now_dir = str(project_root)
 
 i18n = I18nAuto()
 

@@ -8,9 +8,14 @@ import torch.nn.functional as F
 from functools import cached_property
 from torch.nn.utils.rnn import pad_sequence
 
-sys.path.append(os.getcwd())
+from pathlib import Path
+import sys
 
-from main.library.speaker_diarization.speechbrain import EncoderClassifier
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.lib.speaker_diarization.speechbrain import EncoderClassifier
 
 class SpeechBrainPretrainedSpeakerEmbedding:
     def __init__(self, embedding, device = None):

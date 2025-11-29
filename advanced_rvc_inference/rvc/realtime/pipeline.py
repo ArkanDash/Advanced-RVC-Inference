@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import faiss
 import numpy as np
 import torch
@@ -8,15 +9,18 @@ import torch.nn.functional as F
 import torchaudio.transforms as tat
 from torch import Tensor
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.realtime.utils.torch import circular_write
-from rvc.configs.config import Config
-from rvc.infer.pipeline import Autotune, AudioProcessor
-from rvc.lib.algorithm.synthesizers import Synthesizer
-from rvc.lib.predictors.f0 import FCPE, RMVPE
-from rvc.lib.utils import load_embedding, HubertModelWithFinalProj
+now_dir = str(project_root)
+
+from advanced_rvc_inference.rvc.realtime.utils.torch import circular_write
+from advanced_rvc_inference.rvc.configs.config import Config
+from advanced_rvc_inference.rvc.infer.pipeline import Autotune, AudioProcessor
+from advanced_rvc_inference.rvc.lib.algorithm.synthesizers import Synthesizer
+from advanced_rvc_inference.rvc.lib.predictors.f0 import FCPE, RMVPE
+from advanced_rvc_inference.rvc.lib.utils import load_embedding, HubertModelWithFinalProj
 
 
 class RealtimeVoiceConverter:

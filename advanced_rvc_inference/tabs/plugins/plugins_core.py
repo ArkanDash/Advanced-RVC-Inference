@@ -3,15 +3,19 @@ import json
 import gradio as gr
 import zipfile
 import subprocess
+from pathlib import Path
 
-from assets.i18n.i18n import I18nAuto
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+now_dir = str(project_root)
 
-from tabs.settings.sections.restart import restart_applio
+from advanced_rvc_inference.tabs.settings.sections.restart import restart_applio
 
 plugins_path = os.path.join(now_dir, "tabs", "plugins", "installed")
 if not os.path.exists(plugins_path):

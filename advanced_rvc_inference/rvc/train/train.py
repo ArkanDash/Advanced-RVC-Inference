@@ -40,9 +40,9 @@ from utils import (
 )
 
 # Zluda hijack
-import rvc.lib.zluda
-from rvc.lib.algorithm import commons
-from rvc.train.process.extract_model import extract_model
+import advanced_rvc_inference.rvc.lib.zluda
+from advanced_rvc_inference.rvc.lib.algorithm import commons
+from advanced_rvc_inference.rvc.train.process.extract_model import extract_model
 
 # Parse command line arguments
 model_name = sys.argv[1]
@@ -409,8 +409,8 @@ def run(
     config.model.spk_embed_dim = spk_dim
 
     # Initialize models and optimizers
-    from rvc.lib.algorithm.discriminators import MultiPeriodDiscriminator
-    from rvc.lib.algorithm.synthesizers import Synthesizer
+    from advanced_rvc_inference.rvc.lib.algorithm.discriminators import MultiPeriodDiscriminator
+    from advanced_rvc_inference.rvc.lib.algorithm.synthesizers import Synthesizer
 
     net_g = Synthesizer(
         config.data.filter_length // 2 + 1,
@@ -436,7 +436,7 @@ def run(
 
     if bf16_adamw == True and train_dtype == torch.bfloat16:
         print("Using BFload16 AdamW optimizer")
-        from rvc.train.anyprecision_optimizer import AnyPrecisionAdamW
+        from advanced_rvc_inference.rvc.train.anyprecision_optimizer import AnyPrecisionAdamW
 
         optimizer = AnyPrecisionAdamW
     else:

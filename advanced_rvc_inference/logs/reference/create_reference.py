@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import librosa
 import soundfile as sf
-from rvc.lib.predictors.f0 import RMVPE
+from advanced_rvc_inference.rvc.lib.predictors.f0 import RMVPE
 from transformers import HubertModel
 
 

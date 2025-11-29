@@ -1,12 +1,15 @@
 import os
 import sys
+from pathlib import Path
 import threading
 import numpy as np
 
-sys.path.append(os.getcwd())
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.realtime.audio import Audio
-from rvc.realtime.core import VoiceChanger
+from advanced_rvc_inference.rvc.realtime.audio import Audio
+from advanced_rvc_inference.rvc.realtime.core import VoiceChanger
 
 
 class AudioCallbacks:

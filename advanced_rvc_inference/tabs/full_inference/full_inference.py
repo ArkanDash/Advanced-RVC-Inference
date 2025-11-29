@@ -1,19 +1,23 @@
 import os
 import sys
+from pathlib import Path
 import gradio as gr
 import torch
 import shutil
 import unicodedata
 import regex as re
 
-from assets.i18n.i18n import I18nAuto
-from core import run_infer_script
-from rvc.lib.utils import format_title
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
+
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.core import run_infer_script
+from advanced_rvc_inference.rvc.lib.utils import format_title
 
 i18n = I18nAuto()
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+now_dir = str(project_root)
 
 model_root = os.path.join(now_dir, "logs")
 audio_root = os.path.join(now_dir, "assets", "audios")

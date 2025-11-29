@@ -1,17 +1,21 @@
 import os
 import sys
+from pathlib import Path
 import time
 import torch
 import torch.nn.functional as F
 import torchaudio.transforms as tat
 import numpy as np
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.realtime.utils.torch import circular_write
-from rvc.realtime.utils.vad import VADProcessor
-from rvc.realtime.pipeline import create_pipeline
+now_dir = str(project_root)
+
+from advanced_rvc_inference.rvc.realtime.utils.torch import circular_write
+from advanced_rvc_inference.rvc.realtime.utils.vad import VADProcessor
+from advanced_rvc_inference.rvc.realtime.pipeline import create_pipeline
 
 SAMPLE_RATE = 16000
 AUDIO_SAMPLE_RATE = 48000

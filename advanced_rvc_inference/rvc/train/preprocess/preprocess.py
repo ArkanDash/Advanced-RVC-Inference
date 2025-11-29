@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 import time
 from scipy import signal
 from scipy.io import wavfile
@@ -13,11 +14,14 @@ import multiprocessing
 import noisereduce as nr
 import soxr
 
-now_directory = os.getcwd()
-sys.path.append(now_directory)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from rvc.lib.utils import load_audio
-from rvc.train.preprocess.slicer import Slicer
+now_directory = str(project_root)
+
+from advanced_rvc_inference.rvc.lib.utils import load_audio
+from advanced_rvc_inference.rvc.train.preprocess.slicer import Slicer
 
 import logging
 

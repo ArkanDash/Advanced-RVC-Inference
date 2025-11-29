@@ -1,22 +1,26 @@
 import os
 import sys
+from pathlib import Path
 import gradio as gr
 
-now_dir = os.getcwd()
-sys.path.append(now_dir)
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.absolute()
+sys.path.insert(0, str(project_root))
 
-from assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+
+now_dir = str(project_root)
 
 i18n = I18nAuto()
 
-from tabs.settings.sections.presence import presence_tab
-from tabs.settings.sections.themes import theme_tab
-from tabs.settings.sections.version import version_tab
-from tabs.settings.sections.lang import lang_tab
-from tabs.settings.sections.restart import restart_tab
-from tabs.settings.sections.model_author import model_author_tab
-from tabs.settings.sections.precision import precision_tab
-from tabs.settings.sections.filter import filter_tab, get_filter_trigger
+from advanced_rvc_inference.tabs.settings.sections.presence import presence_tab
+from advanced_rvc_inference.tabs.settings.sections.themes import theme_tab
+from advanced_rvc_inference.tabs.settings.sections.version import version_tab
+from advanced_rvc_inference.tabs.settings.sections.lang import lang_tab
+from advanced_rvc_inference.tabs.settings.sections.restart import restart_tab
+from advanced_rvc_inference.tabs.settings.sections.model_author import model_author_tab
+from advanced_rvc_inference.tabs.settings.sections.precision import precision_tab
+from advanced_rvc_inference.tabs.settings.sections.filter import filter_tab, get_filter_trigger
 
 
 def settings_tab(filter_state_trigger=None):
