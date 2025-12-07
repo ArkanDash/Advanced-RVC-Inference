@@ -638,7 +638,7 @@ def run_prerequisites_script(
     exe: bool,
 ):
     prequisites_download_pipeline = _import_prerequisites_download()
-    prerequisites_download_pipeline(
+    prequisites_download_pipeline(
         pretraineds_hifigan,
         models,
         exe,
