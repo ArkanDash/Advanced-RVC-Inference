@@ -4,6 +4,8 @@ from tqdm import tqdm
 import requests
 
 url_base = "https://huggingface.co/IAHispano/Applio/resolve/main/Resources"
+f0_models_url = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
+embedders_url = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
 
 pretraineds_hifigan_list = [
     (
@@ -18,8 +20,44 @@ pretraineds_hifigan_list = [
         ],
     )
 ]
-models_list = [("predictors/", ["rmvpe.pt", "fcpe.pt"])]
-embedders_list = [("embedders/contentvec/", ["pytorch_model.bin", "config.json"])]
+
+# Vietnamese-RVC inspired F0 models list
+models_list = [
+    ("predictors/", [
+        "rmvpe.pth",
+        "fcpe.pth", 
+        "fcpe_legacy.pth",
+        "crepe.pth",
+        "penn.pth",
+        "djcm.pth",
+        "pesto.pth",
+        "swift.pth",
+        "rmvpe.onnx",
+        "fcpe.onnx",
+        "fcpe_legacy.onnx",
+        "crepe.onnx",
+        "penn.onnx",
+        "djcm.onnx",
+        "pesto.onnx",
+        "swift.onnx"
+    ]),
+    ("crepe_models/", [
+        "tiny.pth",
+        "small.pth", 
+        "medium.pth",
+        "large.pth",
+        "full.pth"
+    ])
+]
+
+# Enhanced embedders list with multiple modes
+embedders_list = [
+    ("embedders/contentvec/", ["pytorch_model.bin", "config.json"]),
+    ("embedders/fairseq/", ["hubert_base.pt"]),
+    ("embedders/transformers/", ["pytorch_model.bin", "config.json"]),
+    ("embedders/whisper/", ["base.pt", "small.pt", "medium.pt"]),
+    ("embedders/onnx/", ["hubert_base.onnx"])
+]
 executables_list = [
     ("", ["ffmpeg.exe", "ffprobe.exe"]),
 ]
@@ -27,7 +65,12 @@ executables_list = [
 folder_mapping_list = {
     "pretrained_v2/": "advanced_rvc_inference/rvc/models/pretraineds/hifi-gan/",
     "embedders/contentvec/": "advanced_rvc_inference/rvc/models/embedders/contentvec/",
+    "embedders/fairseq/": "advanced_rvc_inference/rvc/models/embedders/fairseq/",
+    "embedders/transformers/": "advanced_rvc_inference/rvc/models/embedders/transformers/",
+    "embedders/whisper/": "advanced_rvc_inference/rvc/models/embedders/whisper/",
+    "embedders/onnx/": "advanced_rvc_inference/rvc/models/embedders/onnx/",
     "predictors/": "advanced_rvc_inference/rvc/models/predictors/",
+    "crepe_models/": "advanced_rvc_inference/rvc/models/crepe/",
     "formant/": "advanced_rvc_inference/rvc/models/formant/",
 }
 
@@ -42,10 +85,23 @@ def get_file_size_if_missing(file_list):
         for file in files:
             destination_path = os.path.join(local_folder, file)
             if not os.path.exists(destination_path):
-                url = f"{url_base}/{remote_folder}{file}"
-                response = requests.head(url)
-                total_size += int(response.headers.get("content-length", 0))
+                url = get_download_url(remote_folder, file)
+                try:
+                    response = requests.head(url)
+                    total_size += int(response.headers.get("content-length", 0))
+                except Exception as e:
+                    print(f"Could not get size for {url}: {e}")
     return total_size
+
+
+def get_download_url(remote_folder, file_name):
+    """Get the appropriate download URL based on the file type and folder."""
+    if remote_folder.startswith("predictors/") or remote_folder.startswith("crepe_models/"):
+        return f"{f0_models_url}/{remote_folder}{file_name}"
+    elif remote_folder.startswith("embedders/"):
+        return f"{embedders_url}/{remote_folder}{file_name}"
+    else:
+        return f"{url_base}/{remote_folder}{file_name}"
 
 
 def download_file(url, destination_path, global_bar):
@@ -84,7 +140,7 @@ def download_mapping_files(file_mapping_list, global_bar):
             for file in file_list:
                 destination_path = os.path.join(local_folder, file)
                 if not os.path.exists(destination_path):
-                    url = f"{url_base}/{remote_folder}{file}"
+                    url = get_download_url(remote_folder, file)
                     futures.append(
                         executor.submit(
                             download_file, url, destination_path, global_bar
