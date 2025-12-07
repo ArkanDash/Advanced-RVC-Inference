@@ -76,7 +76,7 @@ class Config:
 
         for config_file in version_config_paths:
             try:
-                with open(os.path.join("main", "configs", config_file), "r") as f:
+                with open(os.path.join("advanced_rvc_inference", "configs", config_file), "r") as f:
                     configs[config_file] = json.load(f)
             except json.JSONDecodeError:
                 print(self.translations["empty_json"].format(file=config_file))
