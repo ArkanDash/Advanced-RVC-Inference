@@ -500,14 +500,14 @@ def download_tab():
                     label=i18n("Pretrained"),
                     info=i18n("Select the pretrained model you want to download."),
                     choices=get_pretrained_list(),
-                    value="Titan",
+                    value=get_pretrained_list()[0] if get_pretrained_list() else "Titan",
                     interactive=True,
                 )
                 pretrained_sample_rate = gr.Dropdown(
                     label=i18n("Sampling Rate"),
                     info=i18n("And select the sampling rate."),
                     choices=get_pretrained_sample_rates(pretrained_model.value),
-                    value="40k",
+                    value=get_pretrained_sample_rates(pretrained_model.value)[0] if get_pretrained_sample_rates(pretrained_model.value) else "40k",
                     interactive=True,
                     allow_custom_value=True,
                 )
