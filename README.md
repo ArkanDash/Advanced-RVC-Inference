@@ -118,8 +118,6 @@ The web interface provides an intuitive way to use all features:
 - Add tests for new functionality
 
 
-```
-
 
 ## License
 
@@ -134,12 +132,4 @@ For questions and discussions, join our community:
 
 
 
-## Credits
 
----
-Arkandash - Owner this project
-
-BF667 - Dev
-
-PhamHuynhAnh16/Vietnamese-RVC - Base Code
----
