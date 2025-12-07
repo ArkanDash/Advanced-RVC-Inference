@@ -12,7 +12,7 @@ sys.path.append(now_dir)
 # Import at function level to avoid circular imports
 def _import_prerequisites_download():
     from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
-    return prequisites_download_pipeline
+    return prerequisites_download_pipeline
 
 def _import_model_blender():
     from advanced_rvc_inference.rvc.train.process.model_blender import model_blender
