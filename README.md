@@ -26,30 +26,6 @@ Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to s
 
 ## Installation
 
-### Using pip
-
-```bash
-pip install advanced-rvc-inference
-```
-
-### Using uv (recommended)
-
-```bash
-# Install uv if you don't have it
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Create virtual environment
-uv venv
-
-# Activate virtual environment
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install the package
-uv pip install -e .
-```
-
-### For development
-
 ```bash
 # Clone the repository
 git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
@@ -204,5 +180,6 @@ If you encounter any issues, please open an issue on [GitHub](https://github.com
 
 For questions and discussions, join our community:
 - [GitHub Discussions](https://github.com/ArkanDash/Advanced-RVC-Inference/discussions)
+
 
 
