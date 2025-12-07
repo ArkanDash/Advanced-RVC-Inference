@@ -58,14 +58,14 @@ def separate_tab():
                 input_audio = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, allow_custom_value=True, interactive=True)
                 refresh_audio = gr.Button(translations["refresh"])
                 output_dirs = gr.Textbox(label=translations["output_folder"], value="audios", placeholder="audios", info=translations["output_folder_info"], interactive=True)
-            audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+            audio_input = gr.Audio(interactive=False, label=translations["input_audio"])
     with gr.Row():
         gr.Markdown(translations["output_separator"])
     with gr.Row():
-        instruments_audio = gr.Audio(show_download_button=True, interactive=False, label=translations["instruments"])
-        original_vocals = gr.Audio(show_download_button=True, interactive=False, label=translations["original_vocal"])
-        main_vocals = gr.Audio(show_download_button=True, interactive=False, label=translations["main_vocal"], visible=separate_backing.value)
-        backing_vocals = gr.Audio(show_download_button=True, interactive=False, label=translations["backing_vocal"], visible=separate_backing.value)
+        instruments_audio = gr.Audio(interactive=False, label=translations["instruments"])
+        original_vocals = gr.Audio(interactive=False, label=translations["original_vocal"])
+        main_vocals = gr.Audio(interactive=False, label=translations["main_vocal"], visible=separate_backing.value)
+        backing_vocals = gr.Audio(interactive=False, label=translations["backing_vocal"], visible=separate_backing.value)
     with gr.Row():
         model_name.change(fn=lambda a: valueFalse_interactive(a in list(mdx_models.keys()) + list(vr_models.keys())), inputs=[model_name], outputs=[enable_denoise])
         separate_backing.change(fn=lambda a, b: valueFalse_interactive(a or b), inputs=[separate_backing, separate_reverb], outputs=[enable_denoise])
