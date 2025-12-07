@@ -486,7 +486,8 @@ with gr.Blocks(
                     server_port=port, 
                     show_error=configs.get("app_show_error", False), 
                     inbrowser="--open" in sys.argv, 
-                    share=share, 
+                    share=share,
+                    prevent_thread_lock=True,
                     allowed_paths=allow_disk,
                 )
                 break
