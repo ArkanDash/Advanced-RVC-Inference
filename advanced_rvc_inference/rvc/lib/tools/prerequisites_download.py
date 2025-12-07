@@ -1,4 +1,3 @@
-
 import os
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
@@ -7,8 +6,7 @@ import requests
 # Base URLs
 url_base = "https://huggingface.co/IAHispano/Applio/resolve/main/Resources"
 vietnamese_base = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main"
-ffmpeg = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/ffmpeg/"
-
+ffmpeg_base = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/ffmpeg/"
 
 # Files that actually exist (updated based on available files)
 pretraineds_hifigan_list = [
@@ -32,7 +30,7 @@ models_list = [
         "rmvpe.onnx",
         "fcpe.pt",   # Changed from .pth
         "fcpe.onnx",
-        "swift.onnx"  # Only this exists, removed others that don't
+        "swift.onnx"
     ])
 ]
 
@@ -43,10 +41,9 @@ embedders_list = [
     ("embedders/onnx/", ["hubert_base.onnx"])
 ]
 
-# Removed executables_list since they don't exist in the repositories
+# FFmpeg executables for Windows
 executables_list = [
-    "ffmpeg.exe",
-    "ffprobe.exe",
+    ("ffmpeg/", ["ffmpeg.exe", "ffprobe.exe"]),
 ]
 
 folder_mapping_list = {
@@ -55,6 +52,7 @@ folder_mapping_list = {
     "embedders/fairseq/": "advanced_rvc_inference/rvc/models/embedders/fairseq/",
     "embedders/onnx/": "advanced_rvc_inference/rvc/models/embedders/onnx/",
     "predictors/": "advanced_rvc_inference/rvc/models/predictors/",
+    "ffmpeg/": "advanced_rvc_inference/ffmpeg/",  # Added FFmpeg folder mapping
 }
 
 
@@ -82,8 +80,11 @@ def get_file_size_if_missing(file_list):
 
 def get_download_url(remote_folder, file_name):
     """Get the appropriate download URL based on the file type and folder."""
+    # FFmpeg executables
+    if remote_folder == "ffmpeg/":
+        return f"{ffmpeg_base}{file_name}"
     # Files from Vietnamese-RVC-Project repository
-    if remote_folder.startswith("predictors/") or remote_folder.startswith("embedders/"):
+    elif remote_folder.startswith("predictors/") or remote_folder.startswith("embedders/"):
         return f"{vietnamese_base}/{remote_folder}{file_name}"
     # Files from Applio repository
     else:
@@ -116,16 +117,16 @@ def download_file(url, destination_path, global_bar):
                 file.write(data)
                 global_bar.update(len(data))
         
-        print(f"Downloaded: {os.path.basename(destination_path)}")
+        print(f"✓ Downloaded: {os.path.basename(destination_path)}")
                 
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
-            print(f"File not found (404): {url}")
+            print(f"✗ File not found (404): {url}")
         else:
-            print(f"Failed to download {url}: {str(e)}")
+            print(f"✗ Failed to download {url}: {str(e)}")
         # Don't create empty file - let it fail
     except Exception as e:
-        print(f"Failed to download {url}: {str(e)}")
+        print(f"✗ Failed to download {url}: {str(e)}")
 
 
 def download_mapping_files(file_mapping_list, global_bar):
@@ -190,7 +191,9 @@ def prerequisites_download_pipeline(
     """
     Manage the download pipeline for different categories of files.
     """
+    print("=" * 60)
     print("Checking for missing files...")
+    print("=" * 60)
     
     total_size = calculate_total_size(
         pretraineds_hifigan,
@@ -200,33 +203,86 @@ def prerequisites_download_pipeline(
 
     if total_size > 0:
         print(f"Total download size: {total_size / (1024*1024):.2f} MB")
+        print("-" * 60)
         with tqdm(
             total=total_size, unit="B", unit_scale=True, unit_divisor=1024, 
-            desc="Downloading files"
+            desc="Overall Progress", ncols=80
         ) as global_bar:
             if models:
-                print("Downloading models...")
+                print("\nDownloading models...")
                 download_mapping_files(models_list, global_bar)
                 download_mapping_files(embedders_list, global_bar)
+            
             if exe:
-                if os.name == "nt" and executables_list:
-                    print("Downloading executables...")
+                if os.name == "nt":
+                    print("\nDownloading FFmpeg executables...")
                     download_mapping_files(executables_list, global_bar)
                 else:
-                    print("No executables needed or available")
+                    print("\nNote: FFmpeg executables are only available for Windows")
+            
             if pretraineds_hifigan:
-                print("Downloading pretrained models...")
+                print("\nDownloading pretrained models...")
                 download_mapping_files(pretraineds_hifigan_list, global_bar)
+        
+        print("\n" + "=" * 60)
         print("Download completed!")
+        print("=" * 60)
     else:
-        print("All required files are already downloaded.")
+        print("\nAll required files are already downloaded.")
+        print("=" * 60)
+
+
+# Utility function to verify file existence
+def check_file_existence():
+    """Check if files exist at their URLs before attempting download."""
+    print("Verifying file URLs...")
+    print("-" * 60)
+    
+    # Check predictors
+    print("Checking predictors:")
+    for remote_folder, files in models_list:
+        for file in files:
+            url = get_download_url(remote_folder, file)
+            try:
+                response = requests.head(url, timeout=5)
+                status = "✓" if response.status_code == 200 else "✗"
+                print(f"  {status} {file}: {response.status_code}")
+            except:
+                print(f"  ✗ {file}: Connection failed")
+    
+    print("\nChecking embedders:")
+    for remote_folder, files in embedders_list:
+        for file in files:
+            url = get_download_url(remote_folder, file)
+            try:
+                response = requests.head(url, timeout=5)
+                status = "✓" if response.status_code == 200 else "✗"
+                print(f"  {status} {file}: {response.status_code}")
+            except:
+                print(f"  ✗ {file}: Connection failed")
+    
+    print("\nChecking FFmpeg executables:")
+    for remote_folder, files in executables_list:
+        for file in files:
+            url = get_download_url(remote_folder, file)
+            try:
+                response = requests.head(url, timeout=5)
+                status = "✓" if response.status_code == 200 else "✗"
+                print(f"  {status} {file}: {response.status_code}")
+            except:
+                print(f"  ✗ {file}: Connection failed")
+    
+    print("-" * 60)
 
 
 # Example usage:
 if __name__ == "__main__":
-    # Download everything
+    # First verify files exist
+    check_file_existence()
+    
+    # Then download everything
     prerequisites_download_pipeline(
         pretraineds_hifigan=True,
         models=True,
-        exe=False  # Set to True if you have executable URLs
+        exe=True  # Download FFmpeg executables
     )
