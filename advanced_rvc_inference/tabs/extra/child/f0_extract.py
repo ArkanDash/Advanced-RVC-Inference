@@ -17,7 +17,7 @@ def f0_extract_tab():
     with gr.Row():
         with gr.Column():
             upload_audio_file = gr.Files(label=translations["drop_audio"], file_types=file_types)
-            audioplay = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+            audioplay = gr.Audio(interactive=False, label=translations["input_audio"])
         with gr.Column():
             with gr.Accordion(translations["f0_method"], open=False):
                 with gr.Group():
@@ -32,7 +32,7 @@ def f0_extract_tab():
         gr.Markdown("___")
     with gr.Row():
         file_output = gr.File(label="", file_types=[".txt"], interactive=False)
-        image_output = gr.Image(label="", interactive=False, show_download_button=True)
+        image_output = gr.Image(label="", interactive=False)
     with gr.Row():
         upload_audio_file.upload(fn=lambda audio_in: [shutil_move(audio.name, configs["audios_path"]) for audio in audio_in][0], inputs=[upload_audio_file], outputs=[input_audio_path])
         input_audio_path.change(fn=lambda audio: audio if os.path.isfile(audio) else None, inputs=[input_audio_path], outputs=[audioplay])
