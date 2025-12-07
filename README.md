@@ -8,7 +8,6 @@ Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to s
 - Model training capabilities
 - Batch inference support
 - Text-to-speech integration
-- Real-time voice conversion
 - Audio separation tools
 - Web UI interface with Gradio
 
@@ -76,27 +75,7 @@ pip install -e .
 
 4. Access the UI in your browser at the displayed URL (typically http://127.0.0.1:6969)
 
-## Using the Web UI
 
-The Advanced RVC Inference web UI has several main tabs:
-
-### Inference Tab
-- **Single**: Convert a single audio file using your trained model
-- **Batch**: Convert multiple audio files at once
-- **TTS**: Generate speech from text and then convert it with voice cloning
-
-### Training Tab
-- **Preprocess**: Prepare your dataset for training
-- **Extract**: Extract features from your dataset
-- **Train**: Train your voice conversion model
-- **Export Model**: Download your trained model files
-
-### Additional Features
-- **Realtime**: Real-time voice conversion
-- **Separation**: Audio source separation
-- **Voice Blender**: Blend multiple models together
-- **Plugins**: Extend functionality with plugins
-- **Settings**: Configure application behavior
 
 ## Command Line Usage
 
@@ -318,3 +297,4 @@ If you encounter any issues, please open an issue on [GitHub](https://github.com
 
 For questions and discussions, join our community:
 - [GitHub Discussions](https://github.com/ArkanDash/Advanced-RVC-Inference/discussions)
+
