@@ -22,7 +22,7 @@ def singleton(cls):
 @singleton
 class Config:
     def __init__(self):
-        self.configs_path = os.path.join("main", "configs", "config.json")
+        self.configs_path = os.path.join("advanced_rvc_inference", "configs", "config.json")
         self.configs = json.load(open(self.configs_path, "r"))
 
         self.cpu_mode = self.configs.get("cpu_mode", False)
