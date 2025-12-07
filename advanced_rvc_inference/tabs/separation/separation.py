@@ -4,8 +4,8 @@ import gradio as gr
 import subprocess
 import shutil
 
-from assets.i18n.i18n import I18nAuto
-from uvr.constants import (
+from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+from advanced_rvc_inference.uvr.constants import (
     models_vocals,
     karaoke_models,
     denoise_models,
@@ -68,7 +68,7 @@ def audio_separation(
         os.makedirs(output_dir, exist_ok=True)
 
     # Define the separation script from COVERMAKER
-    separation_script = os.path.join(now_dir, "uvr", "music_separation", "inference.py")
+    separation_script = os.path.join(now_dir, "advanced_rvc_inference", "uvr", "music_separation", "inference.py")
 
     if not os.path.exists(separation_script):
         return f"Separation script not found: {separation_script}", None
