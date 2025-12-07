@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9,<3.14"
 license = {file = "LICENSE"}
 authors = [
-    {name = "ArkanDash", email = "your-email@example.com"}
+    {name = "ArkanDash"}
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -104,7 +104,7 @@ Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference"
 Issues = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
 
 [project.scripts]
-advanced-rvc-inference = "advanced_rvc_inference.app:main"
+advanced-rvc-inference = "advanced_rvc_inference.app:app"
 
 [tool.setuptools.packages.find]
 include = ["advanced_rvc_inference*"]
@@ -118,3 +118,4 @@ advanced_rvc_inference = [
     "models/**/*",
     "uvr/**/*",
 ]
+
