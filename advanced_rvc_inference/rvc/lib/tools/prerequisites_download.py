@@ -43,8 +43,7 @@ models_list = [
         "rmvpe.onnx",
         "fcpe.pt",  
         "fcpe.onnx",
-        "swift.onnx",  # Fixed: Added missing comma
-        "swift.pt",
+        "swift.onnx",  
         "djcm.pt",
         "djcm.onnx",
         "fcn.pt",
