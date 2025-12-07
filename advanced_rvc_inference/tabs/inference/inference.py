@@ -15,7 +15,7 @@ def inference_tab():
 	with gr.TabItem(translations["convert_audio"], visible=configs.get("convert_tab", True))
             gr.Markdown(f"## {translations['convert_audio']}")
             convert_tab()
-    with gr.TabItem(translations["inference"], visible=configs.get("inference_tab", True)):
+    with gr.TabItem(translations["inference"], visible=configs.get("inference_tab", True))
         with gr.TabItem(translations["separator_tab"], visible=configs.get("separator_tab", True)
             gr.Markdown(f"## {translations['separator_tab']}")
             separate_tab()    
