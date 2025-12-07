@@ -39,7 +39,7 @@ def convert_tab():
     with gr.Row():
         with gr.Column():
             input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)  
-            play_audio = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+            play_audio = gr.Audio(interactive=False, label=translations["input_audio"])
         with gr.Column():
             with gr.Accordion(translations["model_accordion"], open=True):
                 with gr.Row():
