@@ -121,12 +121,12 @@ def convert_tab():
     with gr.Row():
         gr.Markdown(translations["output_convert"])
     with gr.Row():
-        main_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["main_convert"])
-        backing_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["convert_backing"], visible=convert_backing.value)
-        main_backing = gr.Audio(show_download_button=True, interactive=False, label=translations["main_or_backing"], visible=convert_backing.value)  
+        main_convert = gr.Audio(interactive=False, label=translations["main_convert"])
+        backing_convert = gr.Audio(interactive=False, label=translations["convert_backing"], visible=convert_backing.value)
+        main_backing = gr.Audio(interactive=False, label=translations["main_or_backing"], visible=convert_backing.value)  
     with gr.Row():
-        original_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["convert_original"], visible=use_original.value)
-        vocal_instrument = gr.Audio(show_download_button=True, interactive=False, label=translations["voice_or_instruments"], visible=merge_instrument.value)  
+        original_convert = gr.Audio(interactive=False, label=translations["convert_original"], visible=use_original.value)
+        vocal_instrument = gr.Audio(interactive=False, label=translations["voice_or_instruments"], visible=merge_instrument.value)  
     with gr.Row():
         upload_f0_file.upload(fn=lambda inp: shutil_move(inp.name, configs["f0_path"]), inputs=[upload_f0_file], outputs=[f0_file_dropdown])
         refresh_f0_file.click(fn=change_f0_choices, inputs=[], outputs=[f0_file_dropdown])
