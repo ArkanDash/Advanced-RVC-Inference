@@ -2,6 +2,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import requests
+from urllib.parse import urlparse
 
 # Base URLs
 url_base = "https://huggingface.co/IAHispano/Applio/resolve/main/Resources"
@@ -23,18 +24,17 @@ pretraineds_hifigan_list = [
     )
 ]
 
-# Updated models list with files that actually exist
+# Fixed models list with correct filenames and paths
 models_list = [
     ("predictors/", [
-
         "crepe_full.onnx",
         "crepe_full.pth",
         "crepe_large.pth",
         "crepe_large.onnx",
-        "crepe_medium.pth"
+        "crepe_medium.pth",  # Fixed: Added missing comma
         "crepe_medium.onnx",
         "crepe_small.pth",
-        "crepe_small.onxx",
+        "crepe_small.onnx",  # Fixed: Corrected typo from "onxx" to "onnx"
         "crepe_tiny.onnx",
         "crepe_tiny.pth",
         "fcpe_legacy.pt",
@@ -43,13 +43,12 @@ models_list = [
         "rmvpe.onnx",
         "fcpe.pt",  
         "fcpe.onnx",
-        "swift.onnx"
+        "swift.onnx",  # Fixed: Added missing comma
         "swift.pt",
         "djcm.pt",
         "djcm.onnx",
         "fcn.pt",
         "fcn.onnx",
-        
     ])
 ]
 
@@ -71,7 +70,7 @@ folder_mapping_list = {
     "embedders/fairseq/": "advanced_rvc_inference/rvc/models/embedders/fairseq/",
     "embedders/onnx/": "advanced_rvc_inference/rvc/models/embedders/onnx/",
     "predictors/": "advanced_rvc_inference/rvc/models/predictors/",
-    "ffmpeg/": "advanced_rvc_inference/ffmpeg/",  # Added FFmpeg folder mapping
+    "ffmpeg/": "advanced_rvc_inference/ffmpeg/",
 }
 
 
@@ -87,11 +86,14 @@ def get_file_size_if_missing(file_list):
             if not os.path.exists(destination_path):
                 url = get_download_url(remote_folder, file)
                 try:
-                    response = requests.head(url, timeout=10)
+                    # Use GET with stream=True to handle redirects properly
+                    response = requests.get(url, stream=True, timeout=10)
                     if response.status_code == 200:
-                        total_size += int(response.headers.get("content-length", 0))
+                        total_size = int(response.headers.get("content-length", 0))
+                        response.close()  # Close the connection immediately
                     else:
                         print(f"Warning: File not found {url} (Status: {response.status_code})")
+                        response.close()
                 except Exception as e:
                     print(f"Could not get size for {url}: {e}")
     return total_size
@@ -124,7 +126,8 @@ def download_file(url, destination_path, global_bar):
         return
     
     try:
-        response = requests.get(url, stream=True, timeout=30)
+        # Handle redirects properly by allowing them
+        response = requests.get(url, stream=True, timeout=30, allow_redirects=True)
         response.raise_for_status()
         
         # Get total size for better progress tracking
@@ -137,6 +140,7 @@ def download_file(url, destination_path, global_bar):
                 global_bar.update(len(data))
         
         print(f"✓ Downloaded: {os.path.basename(destination_path)}")
+        response.close()
                 
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
@@ -144,8 +148,12 @@ def download_file(url, destination_path, global_bar):
         else:
             print(f"✗ Failed to download {url}: {str(e)}")
         # Don't create empty file - let it fail
+        if 'response' in locals():
+            response.close()
     except Exception as e:
         print(f"✗ Failed to download {url}: {str(e)}")
+        if 'response' in locals():
+            response.close()
 
 
 def download_mapping_files(file_mapping_list, global_bar):
@@ -263,9 +271,10 @@ def check_file_existence():
         for file in files:
             url = get_download_url(remote_folder, file)
             try:
-                response = requests.head(url, timeout=5)
+                response = requests.head(url, timeout=5, allow_redirects=True)
                 status = "✓" if response.status_code == 200 else "✗"
                 print(f"  {status} {file}: {response.status_code}")
+                response.close()
             except:
                 print(f"  ✗ {file}: Connection failed")
     
@@ -274,9 +283,10 @@ def check_file_existence():
         for file in files:
             url = get_download_url(remote_folder, file)
             try:
-                response = requests.head(url, timeout=5)
+                response = requests.head(url, timeout=5, allow_redirects=True)
                 status = "✓" if response.status_code == 200 else "✗"
                 print(f"  {status} {file}: {response.status_code}")
+                response.close()
             except:
                 print(f"  ✗ {file}: Connection failed")
     
@@ -285,9 +295,10 @@ def check_file_existence():
         for file in files:
             url = get_download_url(remote_folder, file)
             try:
-                response = requests.head(url, timeout=5)
+                response = requests.head(url, timeout=5, allow_redirects=True)
                 status = "✓" if response.status_code == 200 else "✗"
                 print(f"  {status} {file}: {response.status_code}")
+                response.close()
             except:
                 print(f"  ✗ {file}: Connection failed")
     
