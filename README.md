@@ -37,19 +37,13 @@ pip install -e .
 
 ## Quick Start Guide
 
-1. **Install the package** using one of the methods above.
 
-2. **Download prerequisites**:
-   ```bash
-   python -c "from advanced_rvc_inference.core import run_prerequisites_script; run_prerequisites_script(pretraineds_hifigan=True, models=True, exe=True)"
-   ```
-
-3. **Launch the web interface**:
+1. **Launch the web interface**:
    ```bash
    python -m advanced_rvc_inference.app
    ```
 
-4. Access the UI in your browser at the displayed URL (typically http://127.0.0.1:6969)
+2. Access the UI in your browser at the displayed URL (typically http://127.0.0.1:7860)
 
 ## Using the Web UI
 
@@ -73,7 +67,7 @@ The web interface provides an intuitive way to use all features:
 
 ### Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - Git
 - [uv](https://github.com/astral-sh/uv) (optional but recommended)
 
@@ -98,49 +92,6 @@ The web interface provides an intuitive way to use all features:
    ```
 
 
-
-
-### Adding New Features
-
-1. **Core Functions**: Add to appropriate modules in `core/`, `infer/`, or `library/`
-2. **Web UI**: Create new tabs in `tabs/` directory
-3. **CLI Commands**: Extend `parser.py` with new command definitions
-4. **Configuration**: Update `variables.py` for new settings
-
-## Troubleshooting
-
-### Common Issues
-
-**CUDA Out of Memory Errors:**
-- Reduce batch size in training
-- Use `cache_dataset_in_gpu=False`
-- Use `checkpointing=True` for memory-efficient training
-
-**Model Loading Issues:**
-- Ensure model files (.pth, .index) are in the correct locations
-- Check file permissions and paths
-- Verify model compatibility with your installation
-
-**Audio Format Issues:**
-- Convert audio to supported formats (WAV, MP3, FLAC, etc.)
-- Ensure correct sample rate (32000, 40000, 48000 Hz)
-- Use preprocessing tools to normalize audio
-
-**Web Interface Not Starting:**
-- Check if the port is already in use
-- Try using `--port` option with a different port
-- Ensure all dependencies are installed
-
-**Import Errors:**
-- Ensure you're using the correct import structure: `from advanced_rvc_inference.xxx import ...`
-- Check that the package is installed correctly
-- Verify Python path and virtual environment activation
-
-### Logging Issues
-To get more detailed logs, you can modify logging levels by setting environment variables:
-```bash
-PYTHONPATH=. python -m advanced_rvc_inference.app
-```
 
 ### Performance Optimization
 
@@ -183,3 +134,12 @@ For questions and discussions, join our community:
 
 
 
+## Credits
+
+---
+Arkandash - Owner this project
+
+BF667 - Dev
+
+PhamHuynhAnh16/Vietnamese-RVC - Base Code
+---
