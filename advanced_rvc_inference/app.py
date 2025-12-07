@@ -47,48 +47,41 @@ my_rvc = "terastudio/yellow"
 # Define Gradio interface
 with gr.Blocks(
     title="Advanced RVC Inference"
-) as Applio:
+) as app:
     gr.Markdown("# Advanced RVC inference")
-    
-    
+
     with gr.Tab(i18n("Inference")):
-        inference_tab()
-
-    with gr.Tab(i18n("Training")):
-        train_tab()
-
-    with gr.Tab(i18n("TTS")):
-        tts_tab()
-
-    with gr.Tab(i18n("Voice Blender")):
-        voice_blender_tab()
-
-    with gr.Tab(i18n("Separation")):
-        separation_tab()
-
-    with gr.Tab(i18n("Full Inference (RVC x UVR)")):
-        full_inference_tab()
+        with gr.Tab(i18n("Inference")):
+            inference_tab()
+        with gr.Tab(i18n("Full Inference (RVC x UVR)")):
+            full_inference_tab()
+        with gr.Tab(i18n("Separation")):
+            separation_tab()
+        with gr.Tab(i18n("TTS")):
+            tts_tab()
 
     with gr.Tab(i18n("Download")):
         download_tab()
 
+    
+    with gr.Tab(i18n("Training")):
+        train_tab()
+    
+    with gr.Tab(i18n("Voice Blender")):
+        voice_blender_tab()
+
+      
     with gr.Tab(i18n("Extra")):
         extra_tab()
 
     with gr.Tab(i18n("Settings")):
         settings_tab()
 
-    gr.Markdown(
-        """
-    <div style="text-align: center; font-size: 0.9em; text-color: a3a3a3;">
-    By using Applio, you agree to comply with ethical and legal standards, respect intellectual property and privacy rights, avoid harmful or prohibited uses, and accept full responsibility for any outcomes, while Applio disclaims liability and reserves the right to amend these terms.
-    </div>
-    """
-    )
+    
 
 
 def launch_gradio(server_name: str, server_port: int) -> None:
-    Applio.launch(
+    app.launch(
         # favicon_path=favicon_path,
         theme=my_rvc,
         css="footer{display:none !important}",
@@ -123,3 +116,4 @@ if __name__ == "__main__":
         except Exception as error:
             print(f"An error occurred launching Gradio: {error}")
             break
+
