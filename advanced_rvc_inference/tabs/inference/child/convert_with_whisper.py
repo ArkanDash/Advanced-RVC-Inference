@@ -90,8 +90,8 @@ def convert_with_whisper_tab():
     with gr.Row():
         gr.Markdown(translations["input_output"])
     with gr.Row():
-        play_audio2 = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
-        play_audio3 = gr.Audio(show_download_button=True, interactive=False, label=translations["output_file_tts_convert"])
+        play_audio2 = gr.Audio(interactive=False, label=translations["input_audio"])
+        play_audio3 = gr.Audio(interactive=False, label=translations["output_file_tts_convert"])
     with gr.Row():
         autotune2.change(fn=visible, inputs=[autotune2], outputs=[f0_autotune_strength3])
         cleaner2.change(fn=visible, inputs=[cleaner2], outputs=[clean_strength3])
