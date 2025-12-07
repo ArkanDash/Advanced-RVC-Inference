@@ -464,7 +464,8 @@ with gr.Blocks(
     with gr.Row():
         gr.Markdown(translations["exemption"])
     
-    if __name__ == "__advanced_rvc_inference__":
+    # This is the corrected line. It now correctly checks if the script is being run directly.
+    if __name__ == "__main__":
         logger.info(config.device.replace("privateuseone", "dml"))
         logger.info(translations["start_app"])
         logger.info(translations["set_lang"].format(lang=language))
