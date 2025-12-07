@@ -122,8 +122,8 @@ def convert_tts_tab():
     with gr.Row():
         gr.Markdown(translations["output_tts_markdown"])
     with gr.Row():
-        tts_voice_audio = gr.Audio(show_download_button=True, interactive=False, label=translations["output_text_to_speech"])
-        tts_voice_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["output_file_tts_convert"])
+        tts_voice_audio = gr.Audio(interactive=False, label=translations["output_text_to_speech"])
+        tts_voice_convert = gr.Audio(interactive=False, label=translations["output_file_tts_convert"])
     with gr.Row():
         load_click.click(
             fn=load_presets, 
