@@ -51,7 +51,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio==6.0.0
+gradio>=6.0.0
 requests>=2.32.3
 aiohttp
 pysrt
@@ -89,4 +89,5 @@ rich>=13.0.0
 click>=8.1.7
 colorama>=0.4.6
 tqdm>=4.66.5
+
 
