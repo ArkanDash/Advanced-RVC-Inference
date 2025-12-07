@@ -451,10 +451,10 @@ def full_inference_tab():
         )
 
     def update_dropdown_visibility(checkbox):
-        return gr.update(visible=checkbox)
+        return gr.Dropdown.update(visible=checkbox)
 
     def update_visibility_denoise(denoise_checked):
-        return gr.update(visible=denoise_checked)
+        return gr.Dropdown.update(visible=denoise_checked)
 
     def run_full_inference(
         model_file,

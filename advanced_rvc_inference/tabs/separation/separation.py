@@ -367,10 +367,10 @@ def separation_tab():
     
     # Update visibility based on checkbox states
     def update_deecho_visibility(checked):
-        return gr.update(visible=checked)
+        return gr.Dropdown.update(visible=checked)
     
     def update_denoise_visibility(checked):
-        return gr.update(visible=checked)
+        return gr.Dropdown.update(visible=checked)
     
     deecho.change(
         fn=update_deecho_visibility,

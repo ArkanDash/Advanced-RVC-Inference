@@ -25,7 +25,7 @@ def settings_tab(filter_state_trigger=None):
         filter_component = filter_tab()
 
         filter_component.change(
-            fn=lambda checked: gr.update(value=str(checked)),
+            fn=lambda checked: gr.Checkbox.update(value=str(checked)),
             inputs=[filter_component],
             outputs=[filter_state_trigger],
             show_progress=False,

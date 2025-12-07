@@ -92,8 +92,8 @@ def tts_tab():
 
             unload_button.click(
                 fn=lambda: (
-                    {"value": "", "__type__": "update"},
-                    {"value": "", "__type__": "update"},
+                    gr.Dropdown.update(value=""),
+                    gr.Dropdown.update(value=""),
                 ),
                 inputs=[],
                 outputs=[model_file, index_file],
@@ -376,12 +376,12 @@ def tts_tab():
         vc_output2 = gr.Audio(label=i18n("Export Audio"))
 
     def toggle_visible(checkbox):
-        return {"visible": checkbox, "__type__": "update"}
+        return gr.Slider.update(visible=checkbox)
 
     def toggle_visible_embedder_custom(embedder_model):
         if embedder_model == "custom":
-            return {"visible": True, "__type__": "update"}
-        return {"visible": False, "__type__": "update"}
+            return gr.Row.update(visible=True)
+        return gr.Row.update(visible=False)
 
     autotune.change(
         fn=toggle_visible,
@@ -423,7 +423,7 @@ def tts_tab():
         outputs=[],
     )
     refresh_embedders_button.click(
-        fn=lambda: gr.update(choices=refresh_embedders_folders()),
+        fn=lambda: gr.Dropdown.update(choices=refresh_embedders_folders()),
         inputs=[],
         outputs=[embedder_model_custom],
     )

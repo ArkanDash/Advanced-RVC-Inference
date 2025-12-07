@@ -213,7 +213,7 @@ def list_json_files(directory):
 
 def refresh_presets():
     json_files = list_json_files(PRESETS_DIR)
-    return gr.update(choices=json_files)
+    return gr.Dropdown.update(choices=json_files)
 
 
 def output_path_fn(input_audio_path):
@@ -244,25 +244,23 @@ def change_choices(model):
     ]
 
     return (
-        {"choices": sorted(models_list), "__type__": "update"},
-        {"choices": sorted(indexes_list), "__type__": "update"},
-        {"choices": sorted(audio_paths), "__type__": "update"},
-        {
-            "choices": (
+        gr.Dropdown.update(choices=sorted(models_list)),
+        gr.Dropdown.update(choices=sorted(indexes_list)),
+        gr.Dropdown.update(choices=sorted(audio_paths)),
+        gr.Dropdown.update(
+            choices=(
                 sorted(speakers)
                 if speakers is not None and isinstance(speakers, (list, tuple))
                 else [0]
-            ),
-            "__type__": "update",
-        },
-        {
-            "choices": (
+            )
+        ),
+        gr.Dropdown.update(
+            choices=(
                 sorted(speakers)
                 if speakers is not None and isinstance(speakers, (list, tuple))
                 else [0]
-            ),
-            "__type__": "update",
-        },
+            )
+        ),
     )
 
 
@@ -451,7 +449,7 @@ def create_folder_and_move_files(folder_name, bin_file, config_file):
 
 def refresh_formant():
     json_files = list_json_files(FORMANTSHIFT_DIR)
-    return gr.update(choices=json_files)
+    return gr.Dropdown.update(choices=json_files)
 
 
 def refresh_embedders_folders():
@@ -487,16 +485,16 @@ def filter_dropdowns(filter_text):
         all_indexes = sorted(get_files("index"))
         filtered_models = [m for m in all_models if ft in m.lower()]
         filtered_indexes = [i for i in all_indexes if ft in i.lower()]
-        return (gr.update(choices=filtered_models), gr.update(choices=filtered_indexes))
+        return (gr.Dropdown.update(choices=filtered_models), gr.Dropdown.update(choices=filtered_indexes))
 
 
 def update_filter_visibility(_):
     en = load_config_filter()
     if not en:
-        box = gr.update(visible=False, value="")
+        box = gr.Textbox.update(visible=False, value="")
         m_upd, i_upd = filter_dropdowns("")
         return box, m_upd, i_upd
-    return gr.update(visible=True), gr.skip(), gr.skip()
+    return gr.Textbox.update(visible=True), gr.skip(), gr.skip()
 
 
 # Inference tab
@@ -545,8 +543,8 @@ def inference_tab():
 
             unload_button.click(
                 fn=lambda: (
-                    {"value": "", "__type__": "update"},
-                    {"value": "", "__type__": "update"},
+                    gr.Dropdown.update(value=""),
+                    gr.Dropdown.update(value=""),
                 ),
                 inputs=[],
                 outputs=[model_file, index_file],
@@ -1887,66 +1885,71 @@ def inference_tab():
             )
 
     def toggle_visible(checkbox):
-        return {"visible": checkbox, "__type__": "update"}
+        return gr.Slider.update(visible=checkbox)
 
     def toggle_visible_embedder_custom(embedder_model):
         if embedder_model == "custom":
-            return {"visible": True, "__type__": "update"}
-        return {"visible": False, "__type__": "update"}
+            return gr.Column.update(visible=True)
+        return gr.Column.update(visible=False)
 
     def enable_stop_convert_button():
-        return {"visible": False, "__type__": "update"}, {
-            "visible": True,
-            "__type__": "update",
-        }
+        return gr.Button.update(visible=False), gr.Button.update(visible=True)
 
     def disable_stop_convert_button():
-        return {"visible": True, "__type__": "update"}, {
-            "visible": False,
-            "__type__": "update",
-        }
+        return gr.Button.update(visible=True), gr.Button.update(visible=False)
 
     def toggle_visible_formant_shifting(checkbox):
         if checkbox:
             return (
-                gr.update(visible=True),
-                gr.update(visible=True),
-                gr.update(visible=True),
-                gr.update(visible=True),
-                gr.update(visible=True),
+                gr.Row.update(visible=True),
+                gr.Dropdown.update(visible=True),
+                gr.Button.update(visible=True),
+                gr.Slider.update(visible=True),
+                gr.Slider.update(visible=True),
             )
         else:
             return (
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
+                gr.Row.update(visible=False),
+                gr.Dropdown.update(visible=False),
+                gr.Button.update(visible=False),
+                gr.Slider.update(visible=False),
+                gr.Slider.update(visible=False),
             )
 
-    def update_visibility(checkbox, count):
-        return [gr.update(visible=checkbox) for _ in range(count)]
-
     def post_process_visible(checkbox):
-        return update_visibility(checkbox, 10)
+        return [
+            gr.Checkbox.update(visible=checkbox) for _ in range(10)
+        ]
 
     def reverb_visible(checkbox):
-        return update_visibility(checkbox, 6)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(6)
+        ]
 
     def limiter_visible(checkbox):
-        return update_visibility(checkbox, 2)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(2)
+        ]
 
     def chorus_visible(checkbox):
-        return update_visibility(checkbox, 6)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(6)
+        ]
 
     def bitcrush_visible(checkbox):
-        return update_visibility(checkbox, 1)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(1)
+        ]
 
     def compress_visible(checkbox):
-        return update_visibility(checkbox, 4)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(4)
+        ]
 
     def delay_visible(checkbox):
-        return update_visibility(checkbox, 3)
+        return [
+            gr.Slider.update(visible=checkbox) for _ in range(3)
+        ]
 
     autotune.change(
         fn=toggle_visible,
@@ -2239,7 +2242,7 @@ def inference_tab():
         outputs=[],
     )
     refresh_embedders_button.click(
-        fn=lambda: gr.update(choices=refresh_embedders_folders()),
+        fn=lambda: gr.Dropdown.update(choices=refresh_embedders_folders()),
         inputs=[],
         outputs=[embedder_model_custom],
     )
@@ -2253,7 +2256,7 @@ def inference_tab():
         outputs=[],
     )
     refresh_embedders_button_batch.click(
-        fn=lambda: gr.update(choices=refresh_embedders_folders()),
+        fn=lambda: gr.Dropdown.update(choices=refresh_embedders_folders()),
         inputs=[],
         outputs=[embedder_model_custom_batch],
     )

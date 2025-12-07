@@ -161,11 +161,10 @@ def download_pretrained_model(model, sample_rate, url_g="", url_d=""):
 
 
 def update_sample_rate_dropdown(model):
-    return {
-        "choices": get_pretrained_sample_rates(model),
-        "value": get_pretrained_sample_rates(model)[0],
-        "__type__": "update",
-    }
+    return gr.Dropdown.update(
+        choices=get_pretrained_sample_rates(model),
+        value=get_pretrained_sample_rates(model)[0]
+    )
 
 
 def download_handler(is_custom, model, sample_rate, url_g, url_d):
@@ -254,8 +253,8 @@ def download_tab():
 
         use_custom.change(
             fn=lambda x: (
-                {"visible": not x, "__type__": "update"},
-                {"visible": x, "__type__": "update"},
+                gr.Group.update(visible=not x),
+                gr.Group.update(visible=x),
             ),
             inputs=[use_custom],
             outputs=[default, custom],

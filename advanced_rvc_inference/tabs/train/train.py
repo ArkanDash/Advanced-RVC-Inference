@@ -70,8 +70,8 @@ pretraineds_list_g = get_pretrained_list("G")
 
 def refresh_custom_pretraineds():
     return (
-        {"choices": sorted(get_pretrained_list("G")), "__type__": "update"},
-        {"choices": sorted(get_pretrained_list("D")), "__type__": "update"},
+        gr.Dropdown.update(choices=sorted(get_pretrained_list("G"))),
+        gr.Dropdown.update(choices=sorted(get_pretrained_list("D"))),
     )
 
 
@@ -93,7 +93,7 @@ def get_datasets_list():
 
 
 def refresh_datasets():
-    return {"choices": sorted(get_datasets_list()), "__type__": "update"}
+    return gr.Dropdown.update(choices=sorted(get_datasets_list()))
 
 
 # Model Names
@@ -110,14 +110,14 @@ def get_models_list():
 
 
 def refresh_models():
-    return {"choices": sorted(get_models_list()), "__type__": "update"}
+    return gr.Dropdown.update(choices=sorted(get_models_list()))
 
 
 # Refresh Models and Datasets
 def refresh_models_and_datasets():
     return (
-        {"choices": sorted(get_models_list()), "__type__": "update"},
-        {"choices": sorted(get_datasets_list()), "__type__": "update"},
+        gr.Dropdown.update(choices=sorted(get_models_list())),
+        gr.Dropdown.update(choices=sorted(get_datasets_list())),
     )
 
 
@@ -131,7 +131,7 @@ def get_embedder_custom_list():
 
 
 def refresh_custom_embedder_list():
-    return {"choices": sorted(get_embedder_custom_list()), "__type__": "update"}
+    return gr.Dropdown.update(choices=sorted(get_embedder_custom_list()))
 
 
 # Drop Model
@@ -242,8 +242,8 @@ def get_index_list():
 
 def refresh_pth_and_index_list():
     return (
-        {"choices": sorted(get_pth_list()), "__type__": "update"},
-        {"choices": sorted(get_index_list()), "__type__": "update"},
+        gr.Dropdown.update(choices=sorted(get_pth_list())),
+        gr.Dropdown.update(choices=sorted(get_index_list())),
     )
 
 
@@ -915,31 +915,19 @@ def train_tab():
                     )
 
             def toggle_visible(checkbox):
-                return {"visible": checkbox, "__type__": "update"}
+                return gr.Column.update(visible=checkbox)
 
             def toggle_pretrained(pretrained, custom_pretrained):
                 if custom_pretrained == False:
-                    return {"visible": pretrained, "__type__": "update"}, {
-                        "visible": False,
-                        "__type__": "update",
-                    }
+                    return gr.Checkbox.update(visible=pretrained), gr.Column.update(visible=False)
                 else:
-                    return {"visible": pretrained, "__type__": "update"}, {
-                        "visible": pretrained,
-                        "__type__": "update",
-                    }
+                    return gr.Checkbox.update(visible=pretrained), gr.Column.update(visible=pretrained)
 
             def enable_stop_train_button():
-                return {"visible": False, "__type__": "update"}, {
-                    "visible": True,
-                    "__type__": "update",
-                }
+                return gr.Button.update(visible=False), gr.Button.update(visible=True)
 
             def disable_stop_train_button():
-                return {"visible": True, "__type__": "update"}, {
-                    "visible": False,
-                    "__type__": "update",
-                }
+                return gr.Button.update(visible=True), gr.Button.update(visible=False)
 
             def download_prerequisites():
                 gr.Info(
@@ -956,27 +944,23 @@ def train_tab():
 
             def toggle_visible_embedder_custom(embedder_model):
                 if embedder_model == "custom":
-                    return {"visible": True, "__type__": "update"}
-                return {"visible": False, "__type__": "update"}
+                    return gr.Row.update(visible=True)
+                return gr.Row.update(visible=False)
 
             def toggle_architecture(architecture):
                 if architecture == "Applio":
-                    return {
-                        "choices": ["32000", "40000", "48000"],
-                        "__type__": "update",
-                    }, {
-                        "interactive": True,
-                        "__type__": "update",
-                    }
+                    return (
+                        gr.Dropdown.update(choices=["32000", "40000", "48000"]),
+                        gr.Dropdown.update(interactive=True),
+                    )
                 else:
-                    return {
-                        "choices": ["32000", "40000", "48000"],
-                        "__type__": "update",
-                        "value": "40000",
-                    }, {"interactive": False, "__type__": "update", "value": "HiFi-GAN"}
+                    return (
+                        gr.Dropdown.update(choices=["32000", "40000", "48000"], value="40000"),
+                        gr.Dropdown.update(interactive=False, value="HiFi-GAN")
+                    )
 
             def update_slider_visibility(noise_reduction):
-                return gr.update(visible=noise_reduction)
+                return gr.Slider.update(visible=noise_reduction)
 
             noise_reduction.change(
                 fn=update_slider_visibility,
