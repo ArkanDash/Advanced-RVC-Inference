@@ -29,17 +29,7 @@ def separate_tab():
                 refresh_audio = gr.Button(translations["refresh"], scale=1)
                 audio_input = gr.Audio(interactive=False, label=translations["input_audio"])
     
-    # Model Selection Section
-    with gr.Row():
-        with gr.Column():
-            gr.Markdown("### Model Selection")
-            with gr.Row():
-                model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
-                karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0], choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
-                reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
-                denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
-    
-    # Processing Options Section
+    # Processing Options Section (moved before Model Selection)
     with gr.Row():
         with gr.Column():
             gr.Markdown("### Processing Options")
@@ -69,6 +59,16 @@ def separate_tab():
                         with gr.Row():
                             hop_length = gr.Slider(label=translations['hop_length'], info=translations["hop_length_info"], minimum=64, maximum=8192, value=1024, step=1, interactive=True, visible=False)
                             post_process_threshold = gr.Slider(label=translations['post_process_threshold'], info=translations["post_process_threshold_info"], minimum=0.1, maximum=0.3, value=0.2, step=0.1, interactive=True, visible=False)
+    
+    # Model Selection Section (moved after Processing Options)
+    with gr.Row():
+        with gr.Column():
+            gr.Markdown("### Model Selection")
+            with gr.Row():
+                model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
+                karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0], choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
+                reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
+                denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
     
     # Output Settings Section
     with gr.Row():
