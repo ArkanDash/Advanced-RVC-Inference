@@ -26,15 +26,30 @@ pretraineds_hifigan_list = [
 # Updated models list with files that actually exist
 models_list = [
     ("predictors/", [
-        "rmvpe.pt",  # Changed from .pth
-        "rmvpe.onnx",
-        "fcpe.pt",   # Changed from .pth
-        "fcpe.onnx",
-        "swift.onnx"
+
         "crepe_full.onnx",
         "crepe_full.pth",
+        "crepe_large.pth",
+        "crepe_large.onnx",
+        "crepe_medium.pth"
+        "crepe_medium.onnx",
+        "crepe_small.pth",
+        "crepe_small.onxx",
+        "crepe_tiny.onnx",
+        "crepe_tiny.pth",
         "fcpe_legacy.pt",
+        "fcpe_legacy.onnx",
+        "rmvpe.pt",  
+        "rmvpe.onnx",
+        "fcpe.pt",  
+        "fcpe.onnx",
+        "swift.onnx"
+        "swift.pt",
         "djcm.pt",
+        "djcm.onnx",
+        "fcn.pt",
+        "fcn.onnx",
+        
     ])
 ]
 
