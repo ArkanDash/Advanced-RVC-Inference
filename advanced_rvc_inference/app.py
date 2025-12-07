@@ -479,7 +479,7 @@ with gr.Blocks(
 
         for i in range(configs.get("num_of_restart", 5)):
             try:
-                gradio_app, _, share_url = app.queue().launch(
+                gradio_app, _, share_url = app.launch(
                     js=js_code if client_mode else None, 
                     theme=theme,
                     server_name=server_name, 
@@ -488,8 +488,7 @@ with gr.Blocks(
                     inbrowser="--open" in sys.argv, 
                     share=share, 
                     allowed_paths=allow_disk,
-                    prevent_thread_lock=True,
-                    quiet=True
+                    quiet=False
                 )
                 break
             except OSError:
