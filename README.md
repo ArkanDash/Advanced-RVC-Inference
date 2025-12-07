@@ -6,7 +6,6 @@ Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to s
 
 - Voice conversion with multiple pitch extraction methods
 - Model training capabilities
-- Batch inference support
 - Text-to-speech integration
 - Audio separation tools
 - Web UI interface with Gradio
@@ -129,6 +128,7 @@ If you encounter any issues, please open an issue on [GitHub](https://github.com
 
 For questions and discussions, join our community:
 - [GitHub Discussions](https://github.com/ArkanDash/Advanced-RVC-Inference/discussions)
+
 
 
 
