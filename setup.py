@@ -14,7 +14,7 @@ setup(
     name='advanced-rvc-inference',
     version='0.1.0',
     author='ArkanDash',
-    author_email='your-email@example.com',
+    author_email='',
     description='Advanced RVC Inference - A state-of-the-art web UI for rapid and effortless inference.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -42,4 +42,5 @@ setup(
         'Programming Language :: Python :: 3.13',
     ],
     keywords='rvc, voice conversion, ai, machine learning',
+
 )
