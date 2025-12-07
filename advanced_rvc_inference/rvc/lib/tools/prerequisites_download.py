@@ -31,6 +31,10 @@ models_list = [
         "fcpe.pt",   # Changed from .pth
         "fcpe.onnx",
         "swift.onnx"
+        "crepe_full.onnx",
+        "crepe_full.pth",
+        "fcpe_legacy.pt",
+        "djcm.pt",
     ])
 ]
 
