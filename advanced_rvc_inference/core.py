@@ -52,7 +52,7 @@ logs_path = os.path.join("advanced_rvc_inference", "logs")
 def load_voices_data():
     # The core.py file is in advanced_rvc_inference/ directory
     # So we need to look in the rvc subdirectory
-    tts_voices_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "rvc", "lib", "tools", "tts_voices.json")
+    tts_voices_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "advanced_rvc_inference", "rvc", "lib", "tools", "tts_voices.json")
 
     if not os.path.exists(tts_voices_path):
         print(f"Warning: tts_voices.json not found at {tts_voices_path}. Using empty data.")
