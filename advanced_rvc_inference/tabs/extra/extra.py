@@ -1,25 +1,40 @@
 import os
 import sys
-from pathlib import Path
+
 import gradio as gr
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent.absolute()
-sys.path.insert(0, str(project_root))
+sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.tabs.extra.sections.processing import processing_tab
-from advanced_rvc_inference.tabs.extra.sections.analyzer import analyzer_tab
+from advanced_rvc_inference.variables import translations, configs
+from advanced_rvc_inference.tabs.extra.child.fushion import fushion_tab
+from advanced_rvc_inference.tabs.extra.child.settings import settings_tab
+from advanced_rvc_inference.tabs.extra.child.read_model import read_model_tab
+from advanced_rvc_inference.tabs.extra.child.f0_extract import f0_extract_tab
+from advanced_rvc_inference.tabs.extra.child.create_srt import create_srt_tab
+from advanced_rvc_inference.tabs.extra.child.convert_model import convert_model_tab
 
-from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
+def extra_tab(app):
+    with gr.TabItem(translations["extra"], visible=configs.get("extra_tab", True)):
+        with gr.TabItem(translations["fushion"], visible=configs.get("fushion_tab", True)):
+            gr.Markdown(translations["fushion_markdown"])
+            fushion_tab()
 
-now_dir = str(project_root)
+        with gr.TabItem(translations["read_model"], visible=configs.get("read_tab", True)):
+            gr.Markdown(translations["read_model_markdown"])
+            read_model_tab()
 
-i18n = I18nAuto()
+        with gr.TabItem(translations["convert_model"], visible=configs.get("onnx_tab", True)):
+            gr.Markdown(translations["pytorch2onnx"])
+            convert_model_tab()
 
+        with gr.TabItem(translations["f0_extractor_tab"], visible=configs.get("f0_extractor_tab", True)):
+            gr.Markdown(translations["f0_extractor_markdown"])
+            f0_extract_tab()
 
-def extra_tab():
-    with gr.TabItem(i18n("Model information")):
-        processing_tab()
+        with gr.TabItem(translations["create_srt_tab"], visible=configs.get("create_srt_tab", True)):
+            gr.Markdown(translations["create_srt_markdown"])
+            create_srt_tab()
 
-    with gr.TabItem(i18n("Audio Analyzer")):
-        analyzer_tab()
+        with gr.TabItem(translations["settings"], visible=configs.get("settings_tab", True)):
+            gr.Markdown(translations["settings_markdown"])
+            settings_tab(app)

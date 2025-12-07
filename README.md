@@ -172,67 +172,6 @@ python -m advanced_rvc_inference.core train \
    python -m advanced_rvc_inference.app
    ```
 
-4. Run tests to ensure everything works:
-   ```bash
-   python test_package.py
-   ```
-
-## API Reference
-
-### Core Functions
-
-```python
-from advanced_rvc_inference.core import run_infer_script, run_batch_infer_script, run_train_script
-
-# Run inference with specified parameters
-result = run_infer_script(
-    pitch=12,
-    index_rate=0.5,
-    volume_envelope=1.0,
-    protect=0.33,
-    f0_method="rmvpe",
-    input_path="path/to/input.wav",
-    output_path="path/to/output.wav",
-    pth_path="path/to/model.pth",
-    index_path="path/to/index.index",
-    split_audio=False,
-    f0_autotune=False,
-    clean_audio=False,
-    export_format="WAV",
-    embedder_model="contentvec",
-)
-
-# Batch inference
-result = run_batch_infer_script(
-    pitch=12,
-    index_rate=0.5,
-    f0_method="rmvpe",
-    input_folder="path/to/input_folder",
-    output_folder="path/to/output_folder",
-    pth_path="path/to/model.pth",
-    index_path="path/to/index.index",
-    export_format="WAV",
-    embedder_model="contentvec",
-)
-```
-
-### Model Training
-
-```python
-from advanced_rvc_inference.core import run_train_script
-
-# Train a model
-result = run_train_script(
-    model_name="my_model",
-    save_every_epoch=10,
-    total_epoch=200,
-    sample_rate=40000,
-    batch_size=8,
-    gpu="0",
-    pretrained=True,
-    overtraining_detector=False,
-)
-```
 
 ## Troubleshooting
 
