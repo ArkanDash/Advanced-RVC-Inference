@@ -1,0 +1,24 @@
+include README.md
+include LICENSE
+include requirements.txt
+include pyproject.toml
+include setup.py
+include uv.lock
+include uv-install.sh
+include uv-install.bat
+
+recursive-include advanced_rvc_inference/assets *
+recursive-include advanced_rvc_inference/rvc *
+recursive-include advanced_rvc_inference/tabs *
+recursive-include advanced_rvc_inference/lib *
+recursive-include advanced_rvc_inference/models *
+recursive-include advanced_rvc_inference/uvr *
+
+global-exclude __pycache__
+global-exclude *.py[co]
+global-exclude *~
+global-exclude .git*
+global-exclude .pytest_cache/*
+global-exclude .venv/*
+global-exclude venv/*
+global-exclude .env/*
