@@ -30,7 +30,7 @@ def create_srt_tab():
             with gr.Row():
                 input_file = gr.Files(label=translations["drop_audio"], file_types=file_types)
     with gr.Row():
-        play_audio = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+        play_audio = gr.Audio(interactive=False, label=translations["input_audio"])
     with gr.Row():
         output_srt = gr.File(label=translations["srt_output_file"], file_types=[".srt"], interactive=False, visible=False)
     with gr.Row():
@@ -52,5 +52,3 @@ def create_srt_tab():
             ],
             api_name="create_srt"
         )
-
-
