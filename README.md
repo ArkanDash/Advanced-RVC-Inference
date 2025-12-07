@@ -75,74 +75,23 @@ pip install -e .
 
 4. Access the UI in your browser at the displayed URL (typically http://127.0.0.1:6969)
 
+## Using the Web UI
+
+The web interface provides an intuitive way to use all features:
+
+1. **Voice Conversion**: Upload your source audio and target model
+2. **Model Training**: Upload datasets and configure training parameters
+3. **Batch Processing**: Process multiple files simultaneously
+4. **Audio Analysis**: Analyze audio characteristics and quality
+
+### Web UI Features
+
+- **Real-time Preview**: Listen to results before saving
+- **Parameter Adjustment**: Fine-tune pitch, tone, and other parameters
+- **Progress Monitoring**: Track training and inference progress
+- **Model Management**: Organize and manage your voice models
 
 
-## Command Line Usage
-
-### Basic Inference
-```bash
-python -m advanced_rvc_inference.core infer \
-  --input_path path/to/input.wav \
-  --output_path path/to/output.wav \
-  --pth_path path/to/model.pth \
-  --index_path path/to/index.index \
-  --pitch 12 \
-  --f0_method rmvpe \
-  --index_rate 0.5
-```
-
-### Batch Inference
-```bash
-python -m advanced_rvc_inference.core batch_infer \
-  --input_folder path/to/input_folder \
-  --output_folder path/to/output_folder \
-  --pth_path path/to/model.pth \
-  --index_path path/to/index.index \
-  --pitch 12 \
-  --f0_method rmvpe \
-  --index_rate 0.5
-```
-
-### Training
-```bash
-# Preprocess
-python -m advanced_rvc_inference.core preprocess \
-  --model_name my_model \
-  --dataset_path path/to/dataset \
-  --sample_rate 40000 \
-  --cpu_cores 4
-
-# Extract features
-python -m advanced_rvc_inference.core extract \
-  --model_name my_model \
-  --f0_method rmvpe \
-  --sample_rate 40000 \
-  --embedder_model contentvec
-
-# Train
-python -m advanced_rvc_inference.core train \
-  --model_name my_model \
-  --save_every_epoch 10 \
-  --total_epoch 200 \
-  --sample_rate 40000 \
-  --batch_size 8 \
-  --pretrained True
-```
-
-### Available Commands
-- `infer`: Single audio inference
-- `batch_infer`: Batch audio inference
-- `tts`: Text-to-speech inference
-- `preprocess`: Dataset preprocessing
-- `extract`: Feature extraction
-- `train`: Model training
-- `index`: Index file generation
-- `model_information`: Model details
-- `model_blender`: Model blending
-- `tensorboard`: Launch tensorboard
-- `download`: Model download
-- `prerequisites`: Install prerequisites
-- `audio_analyzer`: Audio analysis
 
 ## Development Setup
 
@@ -173,6 +122,15 @@ python -m advanced_rvc_inference.core train \
    ```
 
 
+```
+
+### Adding New Features
+
+1. **Core Functions**: Add to appropriate modules in `core/`, `infer/`, or `library/`
+2. **Web UI**: Create new tabs in `tabs/` directory
+3. **CLI Commands**: Extend `parser.py` with new command definitions
+4. **Configuration**: Update `variables.py` for new settings
+
 ## Troubleshooting
 
 ### Common Issues
@@ -197,11 +155,23 @@ python -m advanced_rvc_inference.core train \
 - Try using `--port` option with a different port
 - Ensure all dependencies are installed
 
+**Import Errors:**
+- Ensure you're using the correct import structure: `from advanced_rvc_inference.xxx import ...`
+- Check that the package is installed correctly
+- Verify Python path and virtual environment activation
+
 ### Logging Issues
 To get more detailed logs, you can modify logging levels by setting environment variables:
 ```bash
 PYTHONPATH=. python -m advanced_rvc_inference.app
 ```
+
+### Performance Optimization
+
+- **GPU Memory**: Monitor GPU usage and adjust batch sizes accordingly
+- **CPU Usage**: Use multiple CPU cores for preprocessing and feature extraction
+- **Disk Space**: Ensure sufficient space for models and temporary files
+- **Network**: Stable internet connection for model downloads
 
 ## Contributing
 
@@ -220,11 +190,9 @@ PYTHONPATH=. python -m advanced_rvc_inference.app
 - Include type hints where appropriate
 - Add tests for new functionality
 
-### Testing
-Run the test suite to ensure your changes don't break existing functionality:
-```bash
-python test_package.py
+
 ```
+
 
 ## License
 
