@@ -2,7 +2,6 @@
 pip>=23.3
 wheel
 omegaconf>=2.0.6
-
 onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu; sys_platform != 'darwin'
 
@@ -39,7 +38,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio>=6.0.0<5.23.3
+gradio>=6.0.0
 requests>=2.32.3
 aiohttp
 pysrt
@@ -63,3 +62,4 @@ pycryptodome>=3.9.6,<4.0.0
 # Realtime and VAD
 sounddevice>=0.5.2
 webrtcvad-wheels>=2.0.14
+
