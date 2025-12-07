@@ -36,7 +36,7 @@ def create_reference_tab():
                 with gr.Column():
                     upload_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)
                 with gr.Column():
-                    play_audio = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+                    play_audio = gr.Audio(interactive=False, label=translations["input_audio"])
         with gr.Column() as f0_method_column:
             with gr.Accordion(label=translations["f0_method"], open=False):
                 with gr.Group():
