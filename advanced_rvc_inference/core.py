@@ -2654,7 +2654,7 @@ def main():
                 model_link=args.model_link,
             )
         elif args.mode == "prerequisites":
-            run_prerequisites_script(
+            prerequisites_download_pipeline(
                 pretraineds_hifigan=args.pretraineds_hifigan,
                 models=args.models,
                 exe=args.exe,
