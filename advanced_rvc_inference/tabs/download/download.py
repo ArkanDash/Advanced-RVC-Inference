@@ -6,6 +6,8 @@ import requests
 import tempfile
 import numpy as np
 import math
+import codecs
+import re
 import gradio as gr
 
 from concurrent.futures import ThreadPoolExecutor
@@ -22,25 +24,38 @@ from advanced_rvc_inference.assets.i18n.i18n import I18nAuto
 
 i18n = I18nAuto()
 
-# Vietnamese-RVC inspired F0 methods and download functionality
+# Vietnamese-RVC URLs (decoded from rot13)
+predictors_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cerqvpgbef/", "rot13")
+embedders_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/rzorqqref/", "rot13")
+whisper_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13")
+
+# Vietnamese-RVC F0 methods and download functionality
 F0_METHODS = {
     "rmvpe": "RMVPE (Recommended)",
     "fcpe": "FCPE (Fast Cepstral Pitch Estimator)",
-    "fcpe_legacy": "FCPE Legacy",
+    "fcpe_legacy": "FCPE Legacy", 
     "crepe": "CREPE (Deep Learning)",
     "penn": "Penn",
     "djcm": "DJCM",
     "pesto": "Pesto",
     "swift": "Swift",
     "hybrid[rmvpe+fcpe]": "Hybrid RMVPE+FCPE",
-    "hybrid[rmvpe+crepe]": "Hybrid RMVPE+CREPE"
+    "hybrid[rmvpe+crepe]": "Hybrid RMVPE+CREPE",
+    "mangio-crepe-tiny": "Mangio CREPE Tiny",
+    "mangio-crepe-small": "Mangio CREPE Small",
+    "mangio-crepe-medium": "Mangio CREPE Medium",
+    "mangio-crepe-large": "Mangio CREPE Large",
+    "mangio-crepe-full": "Mangio CREPE Full",
+    "fcpe_previous": "FCPE Previous",
+    "fcpe_legacy_previous": "FCPE Legacy Previous"
 }
 
 EMBEDDER_MODES = {
     "fairseq": "Fairseq (Default)",
     "onnx": "ONNX",
     "transformers": "Transformers",
-    "whisper": "Whisper"
+    "whisper": "Whisper",
+    "spin": "Spin (Transformers)"
 }
 
 gradio_temp_dir = os.path.join(tempfile.gettempdir(), "gradio")
@@ -49,37 +64,28 @@ if os.path.exists(gradio_temp_dir):
     shutil.rmtree(gradio_temp_dir)
 
 
-def get_modelname(f0_method: str, f0_onnx: bool = False) -> str:
-    """Determine the appropriate model name based on F0 extraction method."""
-    if f0_onnx:
-        suffix = '.onnx'
+def get_modelname(f0_method, f0_onnx=False):
+    """Get model name based on F0 method (Vietnamese-RVC implementation)."""
+    suffix = ".onnx" if f0_onnx else (".pt" if "crepe" not in f0_method else ".pth")
+
+    if "rmvpe" in f0_method:
+        modelname = "rmvpe"
+    elif "fcpe" in f0_method:
+        modelname = ("fcpe" + ("_legacy" if "legacy" in f0_method and "previous" not in f0_method else "")) if "previous" in f0_method else "ddsp_200k"
+    elif "crepe" in f0_method:
+        modelname = "crepe_" + f0_method.replace("mangio-", "").split("-")[1]
+    elif "penn" in f0_method:
+        modelname = "fcn"
+    elif "djcm" in f0_method:
+        modelname = "djcm"
+    elif "pesto" in f0_method:
+        modelname = "pesto"
+    elif "swift" in f0_method:
+        return "swift.onnx"
     else:
-        suffix = '.pt' if 'crepe' in f0_method else '.pth'
+        return None
     
-    if f0_method == 'rmvpe':
-        return f'rmvpe{suffix}'
-    elif f0_method == 'fcpe':
-        return f'fcpe{suffix}'
-    elif f0_method == 'fcpe_legacy':
-        return f'fcpe_legacy{suffix}'
-    elif f0_method == 'ddsp_200k':
-        return f'ddsp_200k{suffix}'
-    elif f0_method == 'crepe':
-        return f'crepe{suffix}'
-    elif f0_method == 'penn':
-        return f'penn{suffix}'
-    elif f0_method == 'djcm':
-        return f'djcm{suffix}'
-    elif f0_method == 'pesto':
-        return f'pesto{suffix}'
-    elif f0_method == 'swift':
-        return f'swift{suffix}'
-    elif f0_method.startswith('hybrid'):
-        # For hybrid methods, we use the first method in the hybrid
-        method_part = f0_method.split('[')[1].split('+')[0]
-        return get_modelname(method_part, f0_onnx)
-    else:
-        return f'{f0_method}{suffix}'
+    return modelname + suffix
 
 
 def autotune_f0(note_dict, f0: np.ndarray, f0_autotune_strength: float) -> np.ndarray:
@@ -151,80 +157,108 @@ EMBEDDERS_URL = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main
 json_url = "https://huggingface.co/IAHispano/Applio/raw/main/pretrains.json"
 
 
-def check_assets(f0_method: str, hubert: str = "hubert_base", f0_onnx: bool = False, embedders_mode: str = "fairseq"):
-    """Check for and download necessary predictor and embedder models."""
-    success = True
-    
-    try:
-        # Download F0 predictor if needed
-        if f0_method and f0_method != "none":
-            predictor_name = get_modelname(f0_method, f0_onnx)
-            success &= download_predictor(predictor_name)
-        
-        # Download embedder
-        success &= download_embedder(embedders_mode, hubert)
-        
-        return success
-    except Exception as e:
-        print(f"Error checking assets: {e}")
-        return False
+def check_assets(f0_method, hubert="hubert_base", f0_onnx=False, embedders_mode="fairseq"):
+    """Check and download assets (Vietnamese-RVC implementation)."""
+    # Handle spin mode
+    if embedders_mode == "spin": 
+        embedders_mode = "transformers"
+
+    results = []
+    count = 5  # Number of retries
+
+    # Define embedder models list
+    embedders_model = ["hubert_base", "fairseq"]
+    spin_model = ["spin"]
+    whisper_model = ["whisper-base", "whisper-small", "whisper-medium", "whisper-large", "whisper-tiny"]
+
+    for _ in range(count):
+        if "hybrid" in f0_method:
+            methods_str = re.search(r"hybrid\[(.+)\]", f0_method)
+            if methods_str: 
+                methods = [f0_method.strip() for f0_method in methods_str.group(1).split("+")]
+
+            for method in methods:
+                modelname = get_modelname(method, f0_onnx)
+                if modelname is not None: 
+                    results.append(download_predictor(modelname))
+        else: 
+            modelname = get_modelname(f0_method, f0_onnx)
+            if modelname is not None: 
+                results.append(download_predictor(modelname))
+
+        if hubert in embedders_model + spin_model + whisper_model:
+            if embedders_mode != "transformers": 
+                hubert += ".pt" if embedders_mode in ["fairseq", "whisper"] else ".onnx"
+            results.append(download_embedder(embedders_mode, hubert))
+
+        if all(results): 
+            return True
+        else: 
+            results = []
+
+    print(f"Failed to download all assets after {count} attempts")
+    return False
 
 
-def download_predictor(predictor: str) -> bool:
-    """Download a specified predictor model."""
+def download_predictor(predictor):
+    """Download predictor model (Vietnamese-RVC implementation)."""
     predictors_path = os.path.join("advanced_rvc_inference", "rvc", "models", "predictors")
     os.makedirs(predictors_path, exist_ok=True)
     
-    predictor_path = os.path.join(predictors_path, predictor)
-    
-    if not os.path.exists(predictor_path):
+    model_path = os.path.join(predictors_path, predictor)
+
+    if not os.path.exists(model_path): 
         try:
-            url = f"{F0_MODELS_URL}/{predictor}"
-            download_file_from_url(url, predictor_path)
-            return os.path.exists(predictor_path)
+            download_file_from_url(predictors_url + predictor, model_path)
         except Exception as e:
             print(f"Failed to download predictor {predictor}: {e}")
             return False
-    
-    return True
+
+    return os.path.exists(model_path)
 
 
-def download_embedder(embedders_mode: str, hubert: str) -> bool:
-    """Download an embedder model based on mode and hubert model name."""
-    embedders_path = os.path.join("advanced_rvc_inference", "rvc", "models", "embedders")
-    os.makedirs(embedders_path, exist_ok=True)
+def download_embedder(embedders_mode, hubert):
+    """Download embedder model (Vietnamese-RVC implementation)."""
+    configs = {
+        "speaker_diarization_path": "advanced_rvc_inference/rvc/models/speaker_diarization",
+        "embedders_path": "advanced_rvc_inference/rvc/models/embedders"
+    }
     
-    if embedders_mode == "fairseq":
-        embedder_path = os.path.join(embedders_path, f"{hubert}.pth")
-    elif embedders_mode == "transformers":
-        embedder_path = os.path.join(embedders_path, hubert)
-    elif embedders_mode == "whisper":
-        embedder_path = os.path.join(embedders_path, f"{hubert}.pt")
-    else:
-        embedder_path = os.path.join(embedders_path, f"{hubert}.onnx")
-    
-    if not os.path.exists(embedder_path):
+    # Handle spin mode
+    if embedders_mode == "spin": 
+        embedders_mode = "transformers"
+
+    model_path = os.path.join(configs["speaker_diarization_path"], "models", hubert) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], hubert)
+
+    if embedders_mode != "transformers" and not os.path.exists(model_path): 
         try:
-            if embedders_mode == "fairseq":
-                url = f"{EMBEDDERS_URL}/hubert_base.pt"
-            elif embedders_mode == "transformers":
-                url = f"https://huggingface.co/{hubert}/resolve/main/pytorch_model.bin"
-                embedder_dir = os.path.join(embedders_path, hubert)
-                os.makedirs(embedder_dir, exist_ok=True)
-                download_file_from_url(url, os.path.join(embedder_dir, "pytorch_model.bin"))
-                return True
-            elif embedders_mode == "whisper":
-                url = f"{EMBEDDERS_URL}/whisper/{hubert}.pt"
+            if embedders_mode == "whisper":
+                download_file_from_url("".join([whisper_url, hubert]), model_path)
             else:
-                url = f"{EMBEDDERS_URL}/onnx/{hubert}.onnx"
-            
-            download_file_from_url(url, embedder_path)
-            return os.path.exists(embedder_path)
+                download_file_from_url("".join([embedders_url, "fairseq/" if embedders_mode == "fairseq" else "onnx/", hubert]), model_path)
         except Exception as e:
             print(f"Failed to download embedder {hubert}: {e}")
             return False
-    
-    return True
+    elif embedders_mode == "transformers":
+        url = "transformers/" if not hubert.startswith("spin") else "spin/"
+
+        bin_file = os.path.join(model_path, "model.safetensors")
+        config_file = os.path.join(model_path, "config.json")
+
+        os.makedirs(model_path, exist_ok=True)
+
+        try:
+            if not os.path.exists(bin_file): 
+                download_file_from_url("".join([embedders_url, url, hubert, "/model.safetensors"]), bin_file)
+            if not os.path.exists(config_file): 
+                download_file_from_url("".join([embedders_url, url, hubert, "/config.json"]), config_file)
+        except Exception as e:
+            print(f"Failed to download transformer model {hubert}: {e}")
+            return False
+
+        return os.path.exists(bin_file) and os.path.exists(config_file)
+
+    return os.path.exists(model_path)
 
 
 def fetch_pretrained_data():

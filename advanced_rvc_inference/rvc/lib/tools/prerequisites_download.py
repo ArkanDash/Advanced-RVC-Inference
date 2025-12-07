@@ -2,10 +2,14 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 import requests
+import codecs
 
 url_base = "https://huggingface.co/IAHispano/Applio/resolve/main/Resources"
-f0_models_url = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
-embedders_url = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
+
+# Vietnamese-RVC URLs (decoded from rot13)
+predictors_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cerqvpgbef/", "rot13")
+embedders_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/rzorqqref/", "rot13")
+whisper_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13")
 
 pretraineds_hifigan_list = [
     (
@@ -21,41 +25,27 @@ pretraineds_hifigan_list = [
     )
 ]
 
-# Vietnamese-RVC inspired F0 models list
+# Vietnamese-RVC F0 models list (only models that actually exist)
 models_list = [
     ("predictors/", [
         "rmvpe.pth",
-        "fcpe.pth", 
-        "fcpe_legacy.pth",
-        "crepe.pth",
-        "penn.pth",
-        "djcm.pth",
-        "pesto.pth",
-        "swift.pth",
         "rmvpe.onnx",
+        "fcpe.pth", 
         "fcpe.onnx",
-        "fcpe_legacy.onnx",
-        "crepe.onnx",
-        "penn.onnx",
+        "fcn.pth",
+        "fcn.onnx",
+        "djcm.pth",
         "djcm.onnx",
+        "pesto.pth",
         "pesto.onnx",
         "swift.onnx"
-    ]),
-    ("crepe_models/", [
-        "tiny.pth",
-        "small.pth", 
-        "medium.pth",
-        "large.pth",
-        "full.pth"
     ])
 ]
 
-# Enhanced embedders list with multiple modes
+# Enhanced embedders list with multiple modes (only models that exist)
 embedders_list = [
     ("embedders/contentvec/", ["pytorch_model.bin", "config.json"]),
     ("embedders/fairseq/", ["hubert_base.pt"]),
-    ("embedders/transformers/", ["pytorch_model.bin", "config.json"]),
-    ("embedders/whisper/", ["base.pt", "small.pt", "medium.pt"]),
     ("embedders/onnx/", ["hubert_base.onnx"])
 ]
 executables_list = [
@@ -66,11 +56,8 @@ folder_mapping_list = {
     "pretrained_v2/": "advanced_rvc_inference/rvc/models/pretraineds/hifi-gan/",
     "embedders/contentvec/": "advanced_rvc_inference/rvc/models/embedders/contentvec/",
     "embedders/fairseq/": "advanced_rvc_inference/rvc/models/embedders/fairseq/",
-    "embedders/transformers/": "advanced_rvc_inference/rvc/models/embedders/transformers/",
-    "embedders/whisper/": "advanced_rvc_inference/rvc/models/embedders/whisper/",
     "embedders/onnx/": "advanced_rvc_inference/rvc/models/embedders/onnx/",
     "predictors/": "advanced_rvc_inference/rvc/models/predictors/",
-    "crepe_models/": "advanced_rvc_inference/rvc/models/crepe/",
     "formant/": "advanced_rvc_inference/rvc/models/formant/",
 }
 
@@ -96,10 +83,15 @@ def get_file_size_if_missing(file_list):
 
 def get_download_url(remote_folder, file_name):
     """Get the appropriate download URL based on the file type and folder."""
-    if remote_folder.startswith("predictors/") or remote_folder.startswith("crepe_models/"):
-        return f"{f0_models_url}/{remote_folder}{file_name}"
+    if remote_folder.startswith("predictors/"):
+        return f"{predictors_url}{file_name}"
     elif remote_folder.startswith("embedders/"):
-        return f"{embedders_url}/{remote_folder}{file_name}"
+        if "whisper" in remote_folder:
+            return f"{whisper_url}{file_name}"
+        elif "fairseq" in remote_folder or "onnx" in remote_folder:
+            return f"{embedders_url}fairseq/{file_name}" if "fairseq" in remote_folder else f"{embedders_url}onnx/{file_name}"
+        else:
+            return f"{embedders_url}{remote_folder}{file_name}"
     else:
         return f"{url_base}/{remote_folder}{file_name}"
 
