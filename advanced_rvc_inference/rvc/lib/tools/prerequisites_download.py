@@ -7,9 +7,9 @@ import codecs
 url_base = "https://huggingface.co/IAHispano/Applio/resolve/main/Resources"
 
 # Vietnamese-RVC URLs (decoded from rot13)
-predictors_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/tree/main/embedders/"
+embedders_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/tree/main/embedders/"
 
-embedders_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/tree/main/predictors/"
+predictors_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/tree/main/predictors/"
 
 whisper_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/tree/main/speaker_diarization/"
 
