@@ -11,7 +11,7 @@ sys.path.append(now_dir)
 
 # Import at function level to avoid circular imports
 def _import_prerequisites_download():
-    from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prequisites_download_pipeline
+    from advanced_rvc_inference.rvc.lib.tools.prerequisites_download import prerequisites_download_pipeline
     return prequisites_download_pipeline
 
 def _import_model_blender():
@@ -638,7 +638,7 @@ def run_prerequisites_script(
     exe: bool,
 ):
     prequisites_download_pipeline = _import_prerequisites_download()
-    prequisites_download_pipeline(
+    prerequisites_download_pipeline(
         pretraineds_hifigan,
         models,
         exe,
