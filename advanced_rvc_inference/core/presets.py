@@ -5,7 +5,7 @@ import json
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.variables import translations, configs
-from advanced_rvc_inference.ui import gr_info, gr_warning, change_preset_choices, change_effect_preset_choices
+from advanced_rvc_inference.core.ui import gr_info, gr_warning, change_preset_choices, change_effect_preset_choices
 
 def load_presets(presets, cleaner, autotune, pitch, clean_strength, index_strength, resample_sr, filter_radius, rms_mix_rate, protect, split_audio, f0_autotune_strength, formant_shifting, formant_qfrency, formant_timbre, proposal_pitch, proposal_pitch_threshold):
     if not presets: gr_warning(translations["provide_file_settings"])
