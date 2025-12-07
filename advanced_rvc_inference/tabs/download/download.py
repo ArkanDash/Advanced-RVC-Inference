@@ -150,11 +150,9 @@ def save_drop_model(dropbox):
     return None
 
 
-# F0 Models and Embedders URLs (Vietnamese-RVC inspired)
-F0_MODELS_URL = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
-EMBEDDERS_URL = "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main"
-
-json_url = "https://huggingface.co/IAHispano/Applio/raw/main/pretrains.json"
+# Pretrained models source
+PRETRAINED_BASE_URL = "https://huggingface.co"
+json_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/json/custom_pretrained.json"
 
 
 def check_assets(f0_method, hubert="hubert_base", f0_onnx=False, embedders_mode="fairseq"):
@@ -347,7 +345,7 @@ def download_pretrained_model(model, sample_rate, url_g="", url_d=""):
         paths = data[model][sample_rate]
         tasks = [
             (
-                f"https://huggingface.co/{p}",
+                f"{PRETRAINED_BASE_URL}/{p}",
                 os.path.join(save_path, os.path.basename(p)),
             )
             for p in [paths["D"], paths["G"]]
