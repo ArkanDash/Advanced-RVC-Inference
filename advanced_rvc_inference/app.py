@@ -19,7 +19,7 @@ from advanced_rvc_inference.tabs.inference.inference import inference_tab
 from advanced_rvc_inference.configs.rpc import connect_discord_ipc, send_discord_rpc
 from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
 
-ssl._create_default_https_context = ssl._create_unverified_context
+#ssl._create_default_https_context = ssl._create_unverified_context
 
 warnings.filterwarnings("ignore")
 for l in ["httpx", "gradio", "uvicorn", "httpcore", "urllib3"]:
