@@ -438,7 +438,9 @@ js_code = """
 client_mode = "--client" in sys.argv
 
 with gr.Blocks(
-    title="📱 Advanced RVC Inference",  
+    title="📱 Advanced RVC Inference",
+    js=js_code if client_mode else None, 
+    theme=theme,
 ) as app:
     gr.HTML("<h1 style='text-align: center;'>Advanced RVC Inference</h1>")
     
@@ -480,8 +482,6 @@ with gr.Blocks(
         for i in range(configs.get("num_of_restart", 5)):
             try:
                 gradio_app, _, share_url = app.launch(
-                    js=js_code if client_mode else None, 
-                    theme=theme,
                     server_name=server_name, 
                     server_port=port, 
                     show_error=configs.get("app_show_error", False), 
