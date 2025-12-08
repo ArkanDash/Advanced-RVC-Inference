@@ -16,7 +16,7 @@ def separate_tab():
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                enable_denoise = gr.Checkbox(label=translations["denoise_mdx"], value=False, interactive=False)
+                enable_denoise = gr.Checkbox(label=translations["denoise_mdx"], value=False, interactive=True)
                 separate_backing = gr.Checkbox(label=translations["separator_backing"], value=False, interactive=True)
                 separate_reverb = gr.Checkbox(label=translations["dereveb_audio"], value=False, interactive=True)
             with gr.Row():
