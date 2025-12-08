@@ -11,11 +11,10 @@ from advanced_rvc_inference.variables import translations, paths_for_files, samp
 def convert_with_whisper_tab():
     with gr.Row():
         gr.Markdown(translations["convert_with_whisper_info"])
-    model_pth2 = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
-    model_index2 = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
+        model_pth2 = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
+        model_index2 = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
     with gr.Row():
-        refresh2 = gr.Button(translations["refresh"])
-    
+        refresh2 = gr.Button(translations["refresh"])   
     with gr.Row():
         with gr.Column():
             convert_button3 = gr.Button(translations["convert_audio"], variant="primary")
