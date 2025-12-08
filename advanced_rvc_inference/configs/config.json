@@ -4,7 +4,7 @@
         "en-US",
         "vi-VN"
     ],
-    "theme": "NoCrypt/miku",
+    "theme": "aliabid94/new-theme",
     "themes": [
         "NoCrypt/miku",
         "gstaff/xkcd",
@@ -96,11 +96,11 @@
         "default"
     ],
     "mdx_models": {
-        "advanced_rvc_inference_340": "UVR-MDX-NET_advanced_rvc_inference_340.onnx",
-        "advanced_rvc_inference_390": "UVR-MDX-NET_advanced_rvc_inference_390.onnx",
-        "advanced_rvc_inference_406": "UVR-MDX-NET_advanced_rvc_inference_406.onnx",
-        "advanced_rvc_inference_427": "UVR-MDX-NET_advanced_rvc_inference_427.onnx",
-        "advanced_rvc_inference_438": "UVR-MDX-NET_advanced_rvc_inference_438.onnx",
+        "Main_340": "UVR-MDX-NET_Main_340.onnx",
+        "Main_390": "UVR-MDX-NET_Main_390.onnx",
+        "Main_406": "UVR-MDX-NET_Main_406.onnx",
+        "Main_427": "UVR-MDX-NET_Main_427.onnx",
+        "Main_438": "UVR-MDX-NET_Main_438.onnx",
         "Inst_full_292": "UVR-MDX-NET-Inst_full_292.onnx",
         "Inst_HQ_1": "UVR-MDX-NET-Inst_HQ_1.onnx",
         "Inst_HQ_2": "UVR-MDX-NET-Inst_HQ_2.onnx",
@@ -120,10 +120,15 @@
         "Inst_2": "UVR-MDX-NET-Inst_2.onnx",
         "Inst_3": "UVR-MDX-NET-Inst_3.onnx",
         "MDXNET_1_9703": "UVR_MDXNET_1_9703.onnx",
+        "MDXNET_9482": "UVR_MDXNET_9482.onnx",
+        "Inst_1": "UVR-MDX-NET-Inst_1.onnx",
+        "Inst_2": "UVR-MDX-NET-Inst_2.onnx",
+        "Inst_3": "UVR-MDX-NET-Inst_3.onnx",
+        "MDXNET_1_9703": "UVR_MDXNET_1_9703.onnx",
         "MDXNET_2_9682": "UVR_MDXNET_2_9682.onnx",
         "MDXNET_3_9662": "UVR_MDXNET_3_9662.onnx",
-        "Inst_advanced_rvc_inference": "UVR-MDX-NET-Inst_advanced_rvc_inference.onnx",
-        "MDXNET_advanced_rvc_inference": "UVR_MDXNET_advanced_rvc_inference.onnx"
+        "Inst_Main": "UVR-MDX-NET-Inst_Main.onnx",
+        "MDXNET_Main": "UVR_MDXNET_Main.onnx"
     },
     "demucs_models": {
         "HT-Tuned": "htdemucs_ft.yaml",
