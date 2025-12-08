@@ -11,7 +11,7 @@ except IndexError:
 argv_is_allows = ["--audio_effects", "--convert", "--create_dataset", "--create_index", "--extract", "--preprocess", "--separator_music", "--train", "--help_audio_effects", "--help_convert", "--help_create_dataset", "--help_create_index", "--help_extract", "--help_preprocess", "--help_separate_music",  "--help_train", "--help", "--create_reference", "help_create_reference"]
 
 if argv not in argv_is_allows:
-    print("Cú pháp không hợp lệ! Sử dụng --help để biết thêm")
+    print("Invalid syntax! Use --help for more information")
     quit()
 
 
@@ -25,269 +25,269 @@ elif argv_is_allows[7] in argv: from advanced_rvc_inference.infer.training.train
 elif argv_is_allows[17] in argv: from advanced_rvc_inference.infer.create_reference import main
 
 elif argv_is_allows[9] in argv:
-    print("""Các tham số của --convert:
-        1. Cấu hình xử lí giọng nói:
-            - `--pitch` (mặc định: `0`): Điều chỉnh cao độ.
-            - `--filter_radius` (mặc định: `3`): Độ mượt của đường F0.
-            - `--index_rate` (mặc định: `0.5`): Tỷ lệ sử dụng chỉ mục giọng nói.
-            - `--rms_mix_rate` (mặc định: `1`): Hệ số điều chỉnh biên độ âm lượng.
-            - `--protect` (mặc định: `0.33`): Bảo vệ phụ âm.
-            - `--hop_length` (mặc định: `64`): Bước nhảy khi xử lí âm thanh.
+    print("""Parameters for --convert:
+        1. Voice processing configuration:
+            - `--pitch` (default: `0`): Adjust pitch.
+            - `--filter_radius` (default: `3`): Smoothness of the F0 contour.
+            - `--index_rate` (default: `0.5`): Ratio for using voice index.
+            - `--rms_mix_rate` (default: `1`): Coefficient for adjusting amplitude/volume.
+            - `--protect` (default: `0.33`): Protect consonants.
+            - `--hop_length` (default: `64`): Hop length for audio processing.
 
-        2. Cấu hình F0:
-            - `--f0_method` (mặc định: `rmvpe`): Phương pháp dự đoán F0 (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
-            - `--f0_autotune` (mặc định: `False`): Có tự động điều chỉnh F0 hay không.
-            - `--f0_autotune_strength` (mặc định: `1`): Cường độ hiệu chỉnh tự động F0.
-            - `--f0_file` (mặc định: ``): Đường dẫn tệp F0 có sẵn.
-            - `--f0_onnx` (mặc định: `False`): Có sử dụng phiên bản ONNX của F0 hay không.
-            - `--proposal_pitch` (mặc định: `False`): Đề xuất cao độ thay vì điều chỉnh thủ công.
-            - `--proposal_pitch_threshold` (mặc định: `0.0`): Ngưỡng tần số ước tính cao độ.
-            - `--alpha` (mặc định: `0.5`): Ngưỡng trộn cao độ khi ước tính cao độ hybrid.
+        2. F0 configuration:
+            - `--f0_method` (default: `rmvpe`): F0 prediction method (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
+            - `--f0_autotune` (default: `False`): Enable F0 autotune.
+            - `--f0_autotune_strength` (default: `1`): Strength of F0 autotune correction.
+            - `--f0_file` (default: ``): Path to pre-existing F0 file.
+            - `--f0_onnx` (default: `False`): Use ONNX version of F0.
+            - `--proposal_pitch` (default: `False`): Propose pitch instead of manual adjustment.
+            - `--proposal_pitch_threshold` (default: `0.0`): Threshold for pitch frequency estimation.
+            - `--alpha` (default: `0.5`): Pitch blending threshold for hybrid pitch estimation.
 
-        3. Mô hình nhúng:
-            - `--embedder_model` (mặc định: `hubert_base`): Mô hình nhúng sử dụng.
-            - `--embedders_mode` (mặc định: `fairseq`): Chế độ nhúng (`fairseq`, `transformers`, `onnx`, `whisper`).
+        3. Embedding model:
+            - `--embedder_model` (default: `hubert_base`): Embedding model to use.
+            - `--embedders_mode` (default: `fairseq`): Embedding mode (`fairseq`, `transformers`, `onnx`, `whisper`).
 
-        4. Đường dẫn tệp:
-            - `--input_path` (bắt buộc): Đường dẫn tệp âm thanh đầu vào.
-            - `--output_path` (mặc định: `./audios/output.wav`): Đường dẫn lưu tệp đầu ra.
-            - `--export_format` (mặc định: `wav`): Định dạng xuất tệp.
-            - `--pth_path` (bắt buộc): Đường dẫn đến tệp mô hình `.pth`.
-            - `--index_path` (mặc định: `None`): Đường dẫn tệp chỉ mục (nếu có).
+        4. File paths:
+            - `--input_path` (required): Path to input audio file.
+            - `--output_path` (default: `./audios/output.wav`): Path to save output file.
+            - `--export_format` (default: `wav`): Export file format.
+            - `--pth_path` (required): Path to `.pth` model file.
+            - `--index_path` (default: `None`): Path to index file (if any).
 
-        5. Làm sạch âm thanh:
-            - `--clean_audio` (mặc định: `False`): Có áp dụng làm sạch âm thanh không.
-            - `--clean_strength` (mặc định: `0.7`): Mức độ làm sạch.
+        5. Audio cleaning:
+            - `--clean_audio` (default: `False`): Apply audio cleaning.
+            - `--clean_strength` (default: `0.7`): Cleaning strength.
 
-        6. Resampling & chia nhỏ âm thanh:
-            - `--resample_sr` (mặc định: `0`): Tần số lấy mẫu mới (0 nghĩa là giữ nguyên).
-            - `--split_audio` (mặc định: `False`): Có chia nhỏ audio trước khi xử lí không.
+        6. Resampling & audio splitting:
+            - `--resample_sr` (default: `0`): New sampling frequency (0 means keep original).
+            - `--split_audio` (default: `False`): Split audio before processing.
 
-        7. Kiểm tra & tối ưu hóa:
-            - `--checkpointing` (mặc định: `False`): Bật/tắt checkpointing để tiết kiệm RAM.
+        7. Testing & optimization:
+            - `--checkpointing` (default: `False`): Enable/disable checkpointing to save RAM.
 
-        8. Dịch formant:
-            - `--formant_shifting` (mặc định: `False`): Có bật hiệu ứng dịch formant không.
-            - `--formant_qfrency` (mặc định: `0.8`): Hệ số dịch formant theo tần số.
-            - `--formant_timbre` (mặc định: `0.8`): Hệ số thay đổi màu sắc giọng.
+        8. Formant shifting:
+            - `--formant_shifting` (default: `False`): Enable formant shifting effect.
+            - `--formant_qfrency` (default: `0.8`): Formant shift frequency coefficient.
+            - `--formant_timbre` (default: `0.8`): Voice timbre change coefficient.
     """)
     quit()
 elif argv_is_allows[10] in argv:
-    print("""Các tham số của --create_dataset:
-        1. Đường dẫn & cấu hình dataset:
-            - `--input_data` (bắt buộc): Đường dẫn liên kết đến âm thanh (Liên kết Youtube, có thể dùng dấu `,` để dùng nhiều liên kết).
-            - `--output_dirs` (mặc định: `./dataset`): Thư mục xuất dữ liệu đầu ra.
-            - `--sample_rate` (mặc định: `48000`): Tần số lấy mẫu cho âm thanh.
+    print("""Parameters for --create_dataset:
+        1. Dataset path & configuration:
+            - `--input_data` (required): Audio source link (YouTube link, use `,` to separate multiple links).
+            - `--output_dirs` (default: `./dataset`): Output data folder.
+            - `--sample_rate` (default: `48000`): Audio sample rate.
 
-        2. Làm sạch dữ liệu:
-            - `--clean_dataset` (mặc định: `False`): Có áp dụng làm sạch dữ liệu hay không.
-            - `--clean_strength` (mặc định: `0.7`): Mức độ làm sạch dữ liệu.
+        2. Data cleaning:
+            - `--clean_dataset` (default: `False`): Apply data cleaning.
+            - `--clean_strength` (default: `0.7`): Data cleaning strength.
 
-        3. Tách giọng & hiệu ứng:
-            - `--separate` (mặc định: `True`): có tách nhạc hay không.
-            - `--separator_reverb` (mặc định: `False`): Có tách vang giọng không.
-            - `--model_name` (mặc định: `MDXNET_Main`): Mô hình tách nhạc ('Main_340', 'Main_390', 'Main_406', 'Main_427', 'Main_438', 'Inst_full_292', 'Inst_HQ_1', 'Inst_HQ_2', 'Inst_HQ_3', 'Inst_HQ_4', 'Inst_HQ_5', 'Kim_Vocal_1', 'Kim_Vocal_2', 'Kim_Inst', 'Inst_187_beta', 'Inst_82_beta', 'Inst_90_beta', 'Voc_FT', 'Crowd_HQ', 'MDXNET_9482', 'Inst_1', 'Inst_2', 'Inst_3', 'MDXNET_1_9703', 'MDXNET_2_9682', 'MDXNET_3_9662', 'Inst_Main', 'MDXNET_Main', 'HT-Tuned', 'HT-Normal', 'HD_MMI', 'HT_6S', 'HP-1', 'HP-2', 'HP-Vocal-1', 'HP-Vocal-2', 'HP2-1', 'HP2-2', 'HP2-3', 'SP-2B-1', 'SP-2B-2', 'SP-3B-1', 'SP-4B-1', 'SP-4B-2', 'SP-MID-1', 'SP-MID-2').
-            - `--reverb_model` (mặc định: `MDX-Reverb`): Mô hình tách nhạc ("MDX-Reverb", 'VR-Reverb', 'Echo-Aggressive', 'Echo-Normal').
-            - `--denoise_model` (mặc định: `Normal`): Mô hình tách nhạc ('Lite', 'Normal').
- 
-        4. Cấu hình xử lí âm thanh:
-            - `--shifts` (mặc định: `2`): Số lượng dự đoán.
-            - `--batch_size` (mặc định: `1`): Kích thước lô.
-            - `--overlap` (mặc định: `0.25`): Mức độ chồng lấn giữa các đoạn.
-            - `--aggression` (mặc định: `5`): Cường độ chiết xuất thân chính.
-            - `--hop_length` (mặc định: `1024`): Bước nhảy MDX khi xử lí.
-            - `--window_size` (mặc định: `512`): Kích thước cửa sổ.
-            - `--segments_size` (mặc định: `256`): Kích thước phân đoạn âm thanh.
-            - `--post_process_threshold` (mặc định: `0.2`): Mức độ xử lí hậu kỳ sau khi tách nhạc.
+        3. Vocal separation & effects:
+            - `--separate` (default: `True`): Separate music.
+            - `--separator_reverb` (default: `False`): Separate vocal reverb.
+            - `--model_name` (default: `MDXNET_Main`): Separation model ('Main_340', 'Main_390', 'Main_406', 'Main_427', 'Main_438', 'Inst_full_292', 'Inst_HQ_1', 'Inst_HQ_2', 'Inst_HQ_3', 'Inst_HQ_4', 'Inst_HQ_5', 'Kim_Vocal_1', 'Kim_Vocal_2', 'Kim_Inst', 'Inst_187_beta', 'Inst_82_beta', 'Inst_90_beta', 'Voc_FT', 'Crowd_HQ', 'MDXNET_9482', 'Inst_1', 'Inst_2', 'Inst_3', 'MDXNET_1_9703', 'MDXNET_2_9682', 'MDXNET_3_9662', 'Inst_Main', 'MDXNET_Main', 'HT-Tuned', 'HT-Normal', 'HD_MMI', 'HT_6S', 'HP-1', 'HP-2', 'HP-Vocal-1', 'HP-Vocal-2', 'HP2-1', 'HP2-2', 'HP2-3', 'SP-2B-1', 'SP-2B-2', 'SP-3B-1', 'SP-4B-1', 'SP-4B-2', 'SP-MID-1', 'SP-MID-2').
+            - `--reverb_model` (default: `MDX-Reverb`): Separation model ("MDX-Reverb", 'VR-Reverb', 'Echo-Aggressive', 'Echo-Normal').
+            - `--denoise_model` (default: `Normal`): Separation model ('Lite', 'Normal').
 
-        5. Cấu hình xử lí âm thanh khác:
-            - `--enable_tta` (mặc định: `False`): Tăng cường suy luận.
-            - `--enable_denoise` (mặc định: `False`): Khữ tách nhạc.
-            - `--high_end_process` (mặc định: `False`): Xử lí dải cao.
-            - `--enable_post_process` (mặc định: `False`): Hậu xử lí.
+        4. Audio processing configuration:
+            - `--shifts` (default: `2`): Number of predictions.
+            - `--batch_size` (default: `1`): Batch size.
+            - `--overlap` (default: `0.25`): Overlap between segments.
+            - `--aggression` (default: `5`): Intensity of main vocal extraction.
+            - `--hop_length` (default: `1024`): MDX hop length during processing.
+            - `--window_size` (default: `512`): Window size.
+            - `--segments_size` (default: `256`): Audio segment size.
+            - `--post_process_threshold` (default: `0.2`): Post-processing level after separation.
 
-        6. Bỏ qua phần âm thanh:
-            - `--skip_seconds` (mặc định: `False`): Có bỏ qua giây âm thanh nào không.
-            - `--skip_start_audios` (mặc định: `0`): Thời gian (giây) cần bỏ qua ở đầu audio.
-            - `--skip_end_audios` (mặc định: `0`): Thời gian (giây) cần bỏ qua ở cuối audio.
+        5. Other audio processing configuration:
+            - `--enable_tta` (default: `False`): Enhanced inference.
+            - `--enable_denoise` (default: `False`): Noise reduction.
+            - `--high_end_process` (default: `False`): High-frequency processing.
+            - `--enable_post_process` (default: `False`): Post-processing.
+
+        6. Skip audio sections:
+            - `--skip_seconds` (default: `False`): Skip audio seconds.
+            - `--skip_start_audios` (default: `0`): Time (seconds) to skip at audio start.
+            - `--skip_end_audios` (default: `0`): Time (seconds) to skip at audio end.
     """)
     quit()
 elif argv_is_allows[11] in argv:
-    print("""Các tham số của --create_index:
-        1. Thông tin mô hình:
-            - `--model_name` (bắt buộc): Tên mô hình.
-            - `--rvc_version` (mặc định: `v2`): Phiên bản (`v1`, `v2`).
-            - `--index_algorithm` (mặc định: `Auto`): Thuật toán index sử dụng (`Auto`, `Faiss`, `KMeans`).
+    print("""Parameters for --create_index:
+        1. Model information:
+            - `--model_name` (required): Model name.
+            - `--rvc_version` (default: `v2`): Version (`v1`, `v2`).
+            - `--index_algorithm` (default: `Auto`): Index algorithm to use (`Auto`, `Faiss`, `KMeans`).
     """)
     quit()
 elif argv_is_allows[12] in argv:
-    print("""Các tham số của --extract:
-        1. Thông tin mô hình:
-            - `--model_name` (bắt buộc): Tên mô hình.
-            - `--rvc_version` (mặc định: `v2`): Phiên bản RVC (`v1`, `v2`).
+    print("""Parameters for --extract:
+        1. Model information:
+            - `--model_name` (required): Model name.
+            - `--rvc_version` (default: `v2`): RVC version (`v1`, `v2`).
 
-        2. Cấu hình F0:
-            - `--f0_method` (mặc định: `rmvpe`): Phương pháp dự đoán F0 (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
-            - `--f0_onnx` (mặc định: `False`): Có sử dụng phiên bản ONNX của F0 hay không.
-            - `--pitch_guidance` (mặc định: `True`): Có sử dụng hướng dẫn cao độ hay không.
-            - `--f0_autotune` (mặc định: `False`): Có tự động điều chỉnh F0 hay không.
-            - `--f0_autotune_strength` (mặc định: `1`): Cường độ hiệu chỉnh tự động F0.
-            - `--alpha` (mặc định: `0.5`): Ngưỡng trộn cao độ khi ước tính cao độ hybrid.
+        2. F0 configuration:
+            - `--f0_method` (default: `rmvpe`): F0 prediction method (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
+            - `--f0_onnx` (default: `False`): Use ONNX version of F0.
+            - `--pitch_guidance` (default: `True`): Use pitch guidance.
+            - `--f0_autotune` (default: `False`): Enable F0 autotune.
+            - `--f0_autotune_strength` (default: `1`): Strength of F0 autotune correction.
+            - `--alpha` (default: `0.5`): Pitch blending threshold for hybrid pitch estimation.
 
-        3. Cấu hình xử lí:
-            - `--hop_length` (mặc định: `128`): Độ dài bước nhảy trong quá trình xử lí.
-            - `--cpu_cores` (mặc định: `2`): Số lượng luồng CPU sử dụng.
-            - `--gpu` (mặc định: `-`): Chỉ định GPU sử dụng (ví dụ: `0` cho GPU đầu tiên, `-` để tắt GPU).
-            - `--sample_rate` (bắt buộc): Tần số lấy mẫu của âm thanh đầu vào.
+        3. Processing configuration:
+            - `--hop_length` (default: `128`): Hop length during processing.
+            - `--cpu_cores` (default: `2`): Number of CPU threads to use.
+            - `--gpu` (default: `-`): Specify GPU to use (e.g., `0` for first GPU, `-` to disable GPU).
+            - `--sample_rate` (required): Input audio sample rate.
 
-        4. Cấu hình nhúng:
-            - `--embedder_model` (mặc định: `hubert_base`): Tên mô hình nhúng.
-            - `--embedders_mode` (mặc định: `fairseq`): Chế độ nhúng (`fairseq`, `transformers`, `onnx`, `whisper`).
-          
-        4. RMS:
-            - `--rms_extract` (mặc định: False): Trích xuất thêm năng lượng rms.
+        4. Embedding configuration:
+            - `--embedder_model` (default: `hubert_base`): Embedding model name.
+            - `--embedders_mode` (default: `fairseq`): Embedding mode (`fairseq`, `transformers`, `onnx`, `whisper`).
+
+        5. RMS:
+            - `--rms_extract` (default: False): Also extract RMS energy.
     """)
     quit()
 elif argv_is_allows[13] in argv:
-    print("""Các tham số của --preprocess:
-        1. Thông tin mô hình:
-            - `--model_name` (bắt buộc): Tên mô hình.
+    print("""Parameters for --preprocess:
+        1. Model information:
+            - `--model_name` (required): Model name.
 
-        2. Cấu hình dữ liệu:
-            - `--dataset_path` (mặc định: `./dataset`): Đường dẫn thư mục chứa tệp dữ liệu.
-            - `--sample_rate` (bắt buộc): Tần số lấy mẫu của dữ liệu âm thanh.
+        2. Data configuration:
+            - `--dataset_path` (default: `./dataset`): Path to folder containing data files.
+            - `--sample_rate` (required): Audio data sample rate.
 
-        3. Cấu hình xử lí:
-            - `--cpu_cores` (mặc định: `2`): Số lượng luồng CPU sử dụng.
-            - `--cut_preprocess` (mặc định: `Automatic`): Cách cắt dữ liệu tiền xử lí (`Automatic`, `Simple`, `Skip`).
-            - `--process_effects` (mặc định: `False`): Có áp dụng tiền xử lí hay không.
-            - `--clean_dataset` (mặc định: `False`): Có làm sạch tệp dữ liệu hay không.
-            - `--clean_strength` (mặc định: `0.7`): Độ mạnh của quá trình làm sạch dữ liệu.
-        
-        4. Cấu hình khác:
-            - `--chunk_len` (mặc định: `3.0`): Độ dài của đoạn âm thanh cho phương pháp 'Simple'.
-            - `--overlap_len` (mặc định: `0.3`): Độ dài của phần chồng chéo giữa các lát cắt đối với phương pháp 'Simple'.
-            - `--normalization_mode` (mặc định: `none`): Có xử lí chuẩn hóa âm thanh không (`none`, `pre`, `post`)
+        3. Processing configuration:
+            - `--cpu_cores` (default: `2`): Number of CPU threads to use.
+            - `--cut_preprocess` (default: `Automatic`): Preprocessing cut method (`Automatic`, `Simple`, `Skip`).
+            - `--process_effects` (default: `False`): Apply preprocessing.
+            - `--clean_dataset` (default: `False`): Clean data files.
+            - `--clean_strength` (default: `0.7`): Data cleaning strength.
+
+        4. Other configuration:
+            - `--chunk_len` (default: `3.0`): Audio chunk length for 'Simple' method.
+            - `--overlap_len` (default: `0.3`): Overlap length between slices for 'Simple' method.
+            - `--normalization_mode` (default: `none`): Audio normalization processing (`none`, `pre`, `post`)
     """)
     quit()
 elif argv_is_allows[14] in argv:
-    print("""Các tham số của --separate_music:
-        1. Cấu hình đầu vào, đầu ra:
-            - `--input_path` (bắt buộc): Đường dẫn tệp âm thanh đầu vào.
-            - `--output_dirs` (mặc định: `./audios`): Thư mục lưu tệp đầu ra.
-            - `--export_format` (mặc định: `wav`): Định dạng xuất tệp (`wav`, `mp3`,...).
-            - `--sample_rate` (mặc định: `44100`): Tần số lấy mẫu của âm thanh đầu ra.
+    print("""Parameters for --separate_music:
+        1. Input/Output configuration:
+            - `--input_path` (required): Path to input audio file.
+            - `--output_dirs` (default: `./audios`): Output file save folder.
+            - `--export_format` (default: `wav`): Export file format (`wav`, `mp3`,...).
+            - `--sample_rate` (default: `44100`): Output audio sample rate.
 
-        2. Cấu hình mô hình:
-            - `--model_name` (mặc định: `MDXNET_Main`): Mô hình tách nhạc ('Main_340', 'Main_390', 'Main_406', 'Main_427', 'Main_438', 'Inst_full_292', 'Inst_HQ_1', 'Inst_HQ_2', 'Inst_HQ_3', 'Inst_HQ_4', 'Inst_HQ_5', 'Kim_Vocal_1', 'Kim_Vocal_2', 'Kim_Inst', 'Inst_187_beta', 'Inst_82_beta', 'Inst_90_beta', 'Voc_FT', 'Crowd_HQ', 'MDXNET_9482', 'Inst_1', 'Inst_2', 'Inst_3', 'MDXNET_1_9703', 'MDXNET_2_9682', 'MDXNET_3_9662', 'Inst_Main', 'MDXNET_Main', 'HT-Tuned', 'HT-Normal', 'HD_MMI', 'HT_6S', 'HP-1', 'HP-2', 'HP-Vocal-1', 'HP-Vocal-2', 'HP2-1', 'HP2-2', 'HP2-3', 'SP-2B-1', 'SP-2B-2', 'SP-3B-1', 'SP-4B-1', 'SP-4B-2', 'SP-MID-1', 'SP-MID-2').
-            - `--karaoke_model` (mặc định: `MDX-Version-1`): Mô hình tách nhạc ('MDX-Version-1', 'MDX-Version-2', 'VR-Version-1', 'VR-Version-2').
-            - `--reverb_model` (mặc định: `MDX-Reverb`): Mô hình tách nhạc ("MDX-Reverb", 'VR-Reverb', 'Echo-Aggressive', 'Echo-Normal').
-            - `--denoise_model` (mặc định: `Normal`): Mô hình tách nhạc ('Lite', 'Normal').
+        2. Model configuration:
+            - `--model_name` (default: `MDXNET_Main`): Separation model ('Main_340', 'Main_390', 'Main_406', 'Main_427', 'Main_438', 'Inst_full_292', 'Inst_HQ_1', 'Inst_HQ_2', 'Inst_HQ_3', 'Inst_HQ_4', 'Inst_HQ_5', 'Kim_Vocal_1', 'Kim_Vocal_2', 'Kim_Inst', 'Inst_187_beta', 'Inst_82_beta', 'Inst_90_beta', 'Voc_FT', 'Crowd_HQ', 'MDXNET_9482', 'Inst_1', 'Inst_2', 'Inst_3', 'MDXNET_1_9703', 'MDXNET_2_9682', 'MDXNET_3_9662', 'Inst_Main', 'MDXNET_Main', 'HT-Tuned', 'HT-Normal', 'HD_MMI', 'HT_6S', 'HP-1', 'HP-2', 'HP-Vocal-1', 'HP-Vocal-2', 'HP2-1', 'HP2-2', 'HP2-3', 'SP-2B-1', 'SP-2B-2', 'SP-3B-1', 'SP-4B-1', 'SP-4B-2', 'SP-MID-1', 'SP-MID-2').
+            - `--karaoke_model` (default: `MDX-Version-1`): Separation model ('MDX-Version-1', 'MDX-Version-2', 'VR-Version-1', 'VR-Version-2').
+            - `--reverb_model` (default: `MDX-Reverb`): Separation model ("MDX-Reverb", 'VR-Reverb', 'Echo-Aggressive', 'Echo-Normal').
+            - `--denoise_model` (default: `Normal`): Separation model ('Lite', 'Normal').
 
-        3. Cấu hình xử lí âm thanh:
-            - `--shifts` (mặc định: `2`): Số lượng dự đoán.
-            - `--batch_size` (mặc định: `1`): Kích thước lô.
-            - `--overlap` (mặc định: `0.25`): Mức độ chồng lấn giữa các đoạn.
-            - `--aggression` (mặc định: `5`): Cường độ chiết xuất thân chính.
-            - `--hop_length` (mặc định: `1024`): Bước nhảy MDX khi xử lí.
-            - `--window_size` (mặc định: `512`): Kích thước cửa sổ.
-            - `--segments_size` (mặc định: `256`): Kích thước phân đoạn âm thanh.
-            - `--post_process_threshold` (mặc định: `0.2`): Mức độ xử lí hậu kỳ sau khi tách nhạc.
+        3. Audio processing configuration:
+            - `--shifts` (default: `2`): Number of predictions.
+            - `--batch_size` (default: `1`): Batch size.
+            - `--overlap` (default: `0.25`): Overlap between segments.
+            - `--aggression` (default: `5`): Intensity of main vocal extraction.
+            - `--hop_length` (default: `1024`): MDX hop length during processing.
+            - `--window_size` (default: `512`): Window size.
+            - `--segments_size` (default: `256`): Audio segment size.
+            - `--post_process_threshold` (default: `0.2`): Post-processing level after separation.
 
-        4. Cấu hình xử lí âm thanh khác:
-            - `--enable_tta` (mặc định: `False`): Tăng cường suy luận.
-            - `--enable_denoise` (mặc định: `False`): Khữ tách nhạc.
-            - `--high_end_process` (mặc định: `False`): Xử lí dải cao.
-            - `--enable_post_process` (mặc định: `False`): Hậu xử lí.
-            - `--separate_backing` (mặc định: `False`): Tách bè giọng.
-            - `--separate_reverb` (mặc định: `False`): Tách vang giọng.
+        4. Other audio processing configuration:
+            - `--enable_tta` (default: `False`): Enhanced inference.
+            - `--enable_denoise` (default: `False`): Noise reduction.
+            - `--high_end_process` (default: `False`): High-frequency processing.
+            - `--enable_post_process` (default: `False`): Post-processing.
+            - `--separate_backing` (default: `False`): Separate backing vocals.
+            - `--separate_reverb` (default: `False`): Separate vocal reverb.
     """)
     quit()
 elif argv_is_allows[15] in argv:
-    print("""Các tham số của --train:
-        1. Cấu hình mô hình:
-            - `--model_name` (bắt buộc): Tên mô hình.
-            - `--rvc_version` (mặc định: `v2`): Phiên bản RVC (`v1`, `v2`).
-            - `--model_author` (tùy chọn): Tác giả của mô hình.
+    print("""Parameters for --train:
+        1. Model configuration:
+            - `--model_name` (required): Model name.
+            - `--rvc_version` (default: `v2`): RVC version (`v1`, `v2`).
+            - `--model_author` (optional): Model author.
 
-        2. Cấu hình lưu:
-            - `--save_every_epoch` (bắt buộc): Số kỷ nguyên giữa mỗi lần lưu.
-            - `--save_only_latest` (mặc định: `True`): Chỉ lưu điểm mới nhất.
-            - `--save_every_weights` (mặc định: `True`): Lưu tất cả trọng số của mô hình.
+        2. Save configuration:
+            - `--save_every_epoch` (required): Number of epochs between each save.
+            - `--save_only_latest` (default: `True`): Save only the latest checkpoint.
+            - `--save_every_weights` (default: `True`): Save all model weights.
 
-        3. Cấu hình huấn luyện:
-            - `--total_epoch` (mặc định: `300`): Tổng số kỷ nguyên huấn luyện.
-            - `--batch_size` (mặc định: `8`): Kích thước lô trong quá trình huấn luyện.
+        3. Training configuration:
+            - `--total_epoch` (default: `300`): Total training epochs.
+            - `--batch_size` (default: `8`): Batch size during training.
 
-        4. Cấu hình thiết bị:
-            - `--gpu` (mặc định: `0`): Chỉ định GPU để sử dụng (số hoặc `-` nếu không dùng GPU).
-            - `--cache_data_in_gpu` (mặc định: `False`): Lưu dữ liệu vào GPU để tăng tốc.
+        4. Device configuration:
+            - `--gpu` (default: `0`): Specify GPU to use (number or `-` if not using GPU).
+            - `--cache_data_in_gpu` (default: `False`): Cache data in GPU for speedup.
 
-        5. Cấu hình huấn luyện nâng cao:
-            - `--pitch_guidance` (mặc định: `True`): Sử dụng hướng dẫn cao độ.
-            - `--g_pretrained_path` (mặc định: ``): Đường dẫn đến trọng số G đã huấn luyện trước.
-            - `--d_pretrained_path` (mặc định: ``): Đường dẫn đến trọng số D đã huấn luyện trước.
-            - `--vocoder` (mặc định: `Default`): Bộ mã hóa được sử dụng (`Default`, `MRF-HiFi-GAN`, `RefineGAN`).
-            - `--energy_use` (mặc định: `False`): Sử dụng năng lượng rms.
+        5. Advanced training configuration:
+            - `--pitch_guidance` (default: `True`): Use pitch guidance.
+            - `--g_pretrained_path` (default: ``): Path to pre-trained G weights.
+            - `--d_pretrained_path` (default: ``): Path to pre-trained D weights.
+            - `--vocoder` (default: `Default`): Vocoder to use (`Default`, `MRF-HiFi-GAN`, `RefineGAN`).
+            - `--energy_use` (default: `False`): Use RMS energy.
 
-        6. Phát hiện huấn luyện quá mức:
-            - `--overtraining_detector` (mặc định: `False`): Bật/tắt chế độ phát hiện huấn luyện quá mức.
-            - `--overtraining_threshold` (mặc định: `50`): Ngưỡng để xác định huấn luyện quá mức.
+        6. Over-training detection:
+            - `--overtraining_detector` (default: `False`): Enable/disable over-training detection.
+            - `--overtraining_threshold` (default: `50`): Threshold for determining over-training.
 
-        7. Xử lí dữ liệu:
-            - `--cleanup` (mặc định: `False`): Dọn dẹp tệp huấn luyện cũ để tiến hành huấn luyện lại từ đầu.
+        7. Data processing:
+            - `--cleanup` (default: `False`): Clean up old training files to retrain from scratch.
 
-        8. Tối ưu:
-            - `--checkpointing` (mặc định: `False`): Bật/tắt checkpointing để tiết kiệm RAM.
-            - `--deterministic` (mặc định: `False`): Khi bật sẽ sử dụng các thuật toán có tính xác định cao, đảm bảo rằng mỗi lần chạy cùng một dữ liệu đầu vào sẽ cho kết quả giống nhau.
-            - `--benchmark` (mặc định: `False`): Khi bật sẽ thử nghiệm và chọn thuật toán tối ưu nhất cho phần cứng và kích thước cụ thể.
-            - `--optimizer` (mặc định: `AdamW`): Trình tối ưu hóa được sử dụng (`AdamW`, `RAdam`, `AnyPrecisionAdamW`).
-            - `--multiscale_mel_loss` (mặc định: `False`): So sánh phổ Mel của âm thanh thật và âm thanh giả ở nhiều thang độ khác nhau. Giúp mô hình học được chi tiết âm sắc, độ sáng và cấu trúc tần số tốt hơn, từ đó cải thiện chất lượng và độ tự nhiên của giọng nói đầu ra.
-          
-        9. Bộ tham chiếu:
-            - `--use_custom_reference` (mặc định: `False`): Có tùy chỉnh bộ tham chiếu hay không.
-            - `--reference_path` (mặc định: `False`): Đường dẫn đến bộ tham chiếu.
+        8. Optimization:
+            - `--checkpointing` (default: `False`): Enable/disable checkpointing to save RAM.
+            - `--deterministic` (default: `False`): When enabled, uses highly deterministic algorithms, ensuring the same input yields the same result each run.
+            - `--benchmark` (default: `False`): When enabled, tests and selects the most optimal algorithm for specific hardware and size.
+            - `--optimizer` (default: `AdamW`): Optimizer to use (`AdamW`, `RAdam`, `AnyPrecisionAdamW`).
+            - `--multiscale_mel_loss` (default: `False`): Compare Mel spectrograms of real and fake audio at multiple scales. Helps model learn better timbre details, brightness, and frequency structure, improving output voice quality and naturalness.
+
+        9. Reference set:
+            - `--use_custom_reference` (default: `False`): Use custom reference set.
+            - `--reference_path` (default: `False`): Path to reference set.
     """)
     quit()
 elif argv_is_allows[18] in argv:
-    print("""Các tham số của --create_reference:
-        1. Đường dẫn tệp:
-            - `--audio_path` (bắt buộc): Đường dẫn tệp âm thanh đầu vào.
-            - `--reference_name` (mặc định: `reference`): Đường dẫn lưu bộ tham chiếu đầu ra.
-          
-        2. Cấu hình bộ tham chiếu:
-            - `--pitch_guidance` (mặc định: `True`): Sử dụng hướng dẫn cao độ.
-            - `--energy_use` (mặc định: `False`): Sử dụng năng lượng rms.
-            - `--version` (mặc định: `v2`): Phiên bản RVC (`v1`, `v2`).
+    print("""Parameters for --create_reference:
+        1. File paths:
+            - `--audio_path` (required): Path to input audio file.
+            - `--reference_name` (default: `reference`): Output reference set save path.
 
-        3. Cấu hình nhúng:
-            - `--embedder_model` (mặc định: `hubert_base`): Tên mô hình nhúng.
-            - `--embedders_mode` (mặc định: `fairseq`): Chế độ nhúng (`fairseq`, `transformers`, `onnx`, `whisper`).
-        
-        4. Cấu hình F0:
-            - `--f0_method` (mặc định: `rmvpe`): Phương pháp dự đoán F0 (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
-            - `--f0_onnx` (mặc định: `False`): Có sử dụng phiên bản ONNX của F0 hay không.
-            - `--f0_up_key` (mặc định: `0`): Điều chỉnh cao độ.
-            - `--filter_radius` (mặc định: `3`): Độ mượt của đường F0.
-            - `--f0_autotune` (mặc định: `False`): Có tự động điều chỉnh F0 hay không.
-            - `--f0_autotune_strength` (mặc định: `1`): Cường độ hiệu chỉnh tự động F0.
-            - `--f0_file` (mặc định: ``): Đường dẫn tệp F0 có sẵn.
-            - `--proposal_pitch` (mặc định: `False`): Đề xuất cao độ thay vì điều chỉnh thủ công.
-            - `--proposal_pitch_threshold` (mặc định: `0.0`): Ngưỡng tần số ước tính cao độ.
-            - `--alpha` (mặc định: `0.5`): Ngưỡng trộn cao độ khi ước tính cao độ hybrid.
+        2. Reference set configuration:
+            - `--pitch_guidance` (default: `True`): Use pitch guidance.
+            - `--energy_use` (default: `False`): Use RMS energy.
+            - `--version` (default: `v2`): RVC version (`v1`, `v2`).
+
+        3. Embedding configuration:
+            - `--embedder_model` (default: `hubert_base`): Embedding model name.
+            - `--embedders_mode` (default: `fairseq`): Embedding mode (`fairseq`, `transformers`, `onnx`, `whisper`).
+
+        4. F0 configuration:
+            - `--f0_method` (default: `rmvpe`): F0 prediction method (`pm`, `dio`, `mangio-crepe-tiny`, `mangio-crepe-small`, `mangio-crepe-medium`, `mangio-crepe-large`, `mangio-crepe-full`, `crepe-tiny`, `crepe-small`, `crepe-medium`, `crepe-large`, `crepe-full`, `fcpe`, `fcpe-legacy`, `rmvpe`, `rmvpe-legacy`, `harvest`, `yin`, `pyin`, `swipe`).
+            - `--f0_onnx` (default: `False`): Use ONNX version of F0.
+            - `--f0_up_key` (default: `0`): Adjust pitch.
+            - `--filter_radius` (default: `3`): Smoothness of the F0 contour.
+            - `--f0_autotune` (default: `False`): Enable F0 autotune.
+            - `--f0_autotune_strength` (default: `1`): Strength of F0 autotune correction.
+            - `--f0_file` (default: ``): Path to pre-existing F0 file.
+            - `--proposal_pitch` (default: `False`): Propose pitch instead of manual adjustment.
+            - `--proposal_pitch_threshold` (default: `0.0`): Threshold for pitch frequency estimation.
+            - `--alpha` (default: `0.5`): Pitch blending threshold for hybrid pitch estimation.
     """)
     quit()
 elif argv_is_allows[16] in argv:
-    print("""Sử dụng:
-        1. `--help_audio_effects`: Trợ giúp về phần thêm hiệu ứng âm thanh.
-        2. `--help_convert`: Trợ giúp về chuyển đổi âm thanh.
-        3. `--help_create_dataset`: Trợ giúp về tạo dữ liệu huấn luyện.
-        4. `--help_create_index`: Trợ giúp về tạo chỉ mục.
-        5. `--help_extract`: Trợ giúp về trích xuất dữ liệu huấn luyện.
-        6. `--help_preprocess`: Trợ giúp về xử lí trước dữ liệu.
-        7. `--help_separate_music`: Trợ giúp về tách nhạc.
-        8. `--help_train`: Trợ giúp về huấn luyện mô hình.
-        9. `--help_create_reference`: Trợ giúp về tạo bộ tham chiếu.
+    print("""Usage:
+        1. `--help_audio_effects`: Help for adding audio effects.
+        2. `--help_convert`: Help for audio conversion.
+        3. `--help_create_dataset`: Help for creating training data.
+        4. `--help_create_index`: Help for creating index.
+        5. `--help_extract`: Help for extracting training data.
+        6. `--help_preprocess`: Help for preprocessing data.
+        7. `--help_separate_music`: Help for music separation.
+        8. `--help_train`: Help for model training.
+        9. `--help_create_reference`: Help for creating reference set.
     """)
     quit()
 
