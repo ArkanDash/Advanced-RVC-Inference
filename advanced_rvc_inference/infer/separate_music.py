@@ -17,7 +17,7 @@ def parse_arguments():
     parser.add_argument("--input_path", type=str, required=True)
     parser.add_argument("--output_dirs", type=str, default="./audios")
     parser.add_argument("--export_format", type=str, default="wav")
-    parser.add_argument("--model_name", type=str, default="MDXNET_advanced_rvc_inference")
+    parser.add_argument("--model_name", type=str, default="MDXNET_main")
     parser.add_argument("--karaoke_model", type=str, default="MDX-Version-1")
     parser.add_argument("--reverb_model", type=str, default="MDX-Reverb")
     parser.add_argument("--denoise_model", type=str, default="Normal")
@@ -39,7 +39,7 @@ def parse_arguments():
 
     return parser.parse_args()
 
-def advanced_rvc_inference():
+def main():
     args = parse_arguments()
     input_path, output_dirs, export_format, model_name, karaoke_model, reverb_model, denoise_model, sample_rate, shifts, batch_size, overlap, aggression, hop_length, window_size, segments_size, post_process_threshold, enable_tta, enable_denoise, high_end_process, enable_post_process, separate_backing, separate_reverb = args.input_path, args.output_dirs, args.export_format, args.model_name, args.karaoke_model, args.reverb_model, args.denoise_model, args.sample_rate, args.shifts, args.batch_size, args.overlap, args.aggression, args.hop_length, args.window_size, args.segments_size, args.post_process_threshold, args.enable_tta, args.enable_denoise, args.high_end_process, args.enable_post_process, args.separate_backing, args.separate_reverb
 
@@ -72,7 +72,7 @@ def separate(
     input_path,
     output_dirs,
     export_format="wav", 
-    model_name="MDXNET_advanced_rvc_inference", 
+    model_name="MDXNET_main", 
     karaoke_model="MDX-Version-1",
     reverb_model="MDX-Reverb",
     denoise_model="Normal",
@@ -195,7 +195,7 @@ def _separate(
     separate_backing=False,
     separate_reverb=False
 ):
-    advanced_rvc_inference_vocals, backing_vocals = None, None
+    main_vocals, backing_vocals = None, None
 
     filename, _ = os.path.splitext(os.path.basename(input_path))
     output_dirs = os.path.join(output_dirs, filename)
@@ -204,7 +204,7 @@ def _separate(
     clean_file(output_dirs, export_format)
 
     if model_name in list(demucs_models.keys()):
-        original_vocals, instruments = demucs_advanced_rvc_inference(
+        original_vocals, instruments = demucs_main(
             input_path,
             output_dirs,
             model_name,
@@ -215,7 +215,7 @@ def _separate(
             sample_rate
         )
     elif model_name in list(vr_models.keys()):
-        original_vocals, instruments = vr_advanced_rvc_inference(
+        original_vocals, instruments = vr_main(
             input_path,
             output_dirs,
             vr_models.get(model_name, model_name),
@@ -232,7 +232,7 @@ def _separate(
             sample_rate,
         )
     else:
-        original_vocals, instruments = mdx_advanced_rvc_inference(
+        original_vocals, instruments = mdx_main(
             input_path,
             output_dirs,
             mdx_models.get(model_name, model_name),
@@ -247,7 +247,7 @@ def _separate(
     
     if separate_backing:
         if karaoke_model.startswith("MDX"):
-            advanced_rvc_inference_vocals, backing_vocals = mdx_advanced_rvc_inference(
+            main_vocals, backing_vocals = mdx_main(
                 original_vocals,
                 output_dirs,
                 karaoke_models.get(karaoke_model, karaoke_model),
@@ -261,7 +261,7 @@ def _separate(
                 mode="karaoke"
             )
         else:
-            advanced_rvc_inference_vocals, backing_vocals = vr_advanced_rvc_inference(
+            main_vocals, backing_vocals = vr_main(
                 original_vocals,
                 output_dirs,
                 karaoke_models.get(karaoke_model, karaoke_model),
@@ -281,11 +281,11 @@ def _separate(
 
     if separate_reverb:
         dereverb = [original_vocals]
-        if separate_backing: dereverb.append(advanced_rvc_inference_vocals)
+        if separate_backing: dereverb.append(main_vocals)
 
         for audio in dereverb:
             if karaoke_model.startswith("MDX"):
-                _, no_reverb_vocals = mdx_advanced_rvc_inference(
+                _, no_reverb_vocals = mdx_main(
                     audio,
                     output_dirs,
                     reverb_models.get(reverb_model, reverb_model),
@@ -299,7 +299,7 @@ def _separate(
                     mode="reverb"
                 )
             else:
-                _, no_reverb_vocals = vr_advanced_rvc_inference(
+                _, no_reverb_vocals = vr_main(
                     audio,
                     output_dirs,
                     reverb_models.get(reverb_model, reverb_model),
@@ -318,11 +318,11 @@ def _separate(
                 )
             
             if "Original_Vocals" in os.path.basename(no_reverb_vocals): original_vocals = no_reverb_vocals
-            else: advanced_rvc_inference_vocals = no_reverb_vocals
+            else: main_vocals = no_reverb_vocals
     
-    return original_vocals, instruments, advanced_rvc_inference_vocals, backing_vocals
+    return original_vocals, instruments, main_vocals, backing_vocals
 
-def vr_advanced_rvc_inference(
+def vr_main(
     input_path,
     output_dirs,
     model_name,
@@ -343,7 +343,7 @@ def vr_advanced_rvc_inference(
 
     logger.info(f"{translations['separator_process_2']}...")
 
-    output_list = separate_advanced_rvc_inference(
+    output_list = separate_main(
         audio_file=input_path, 
         model_filename=model_name, 
         export_format=export_format, 
@@ -363,7 +363,7 @@ def vr_advanced_rvc_inference(
         for audio in output_list:
             audio_path = os.path.join(output_dirs, audio)
 
-            denoise_file = separate_advanced_rvc_inference(
+            denoise_file = separate_main(
                 audio_file=audio_path, 
                 model_filename=denoise_models.get(denoise_model, denoise_model), 
                 export_format=export_format, 
@@ -393,7 +393,7 @@ def vr_advanced_rvc_inference(
     logger.info(translations["separator_success_2"])
     return process_file(denoise_list if enable_denoise else output_list, output_dirs, export_format, mode)
 
-def demucs_advanced_rvc_inference(
+def demucs_main(
     input_path,
     output_dirs,
     model_name,
@@ -407,7 +407,7 @@ def demucs_advanced_rvc_inference(
     
     logger.info(f"{translations['separator_process_2']}...")
 
-    output_list = separate_advanced_rvc_inference(
+    output_list = separate_main(
         audio_file=input_path, 
         output_dir=output_dirs, 
         model_filename=demucs_models.get(model_name, model_name), 
@@ -421,7 +421,7 @@ def demucs_advanced_rvc_inference(
     logger.info(translations["separator_success_2"])
     return process_file(output_list, output_dirs, export_format, mode="4stem")
 
-def mdx_advanced_rvc_inference(
+def mdx_main(
     input_path,
     output_dirs,
     model_name,
@@ -438,7 +438,7 @@ def mdx_advanced_rvc_inference(
 
     logger.info(f"{translations['separator_process_2']}...")
 
-    output_list = separate_advanced_rvc_inference(
+    output_list = separate_main(
         audio_file=input_path, 
         model_filename=model_name, 
         export_format=export_format, 
@@ -458,7 +458,7 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
     demucs_inst = []
 
     reverb_audio, no_reverb_audio = None, None
-    advanced_rvc_inference_audio, backing_audio = os.path.join(output_dirs, f"advanced_rvc_inference_Vocals.{export_format}"), os.path.join(output_dirs, f"Backing_Vocals.{export_format}")
+    main_audio, backing_audio = os.path.join(output_dirs, f"main_Vocals.{export_format}"), os.path.join(output_dirs, f"Backing_Vocals.{export_format}")
     original_audio, instruments_audio = os.path.join(output_dirs, f"Original_Vocals.{export_format}"), os.path.join(output_dirs, f"Instruments.{export_format}")
 
     for file in input_list:
@@ -481,10 +481,10 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
             elif "_(No Reverb)_" in file or "_(No Echo)_" in file: os.rename(file_path, no_reverb_audio)
         elif mode == "karaoke":
             if "_(Instrumental)_" in file: os.rename(file_path, backing_audio)
-            elif "_(Vocals)_" in file: os.rename(file_path, advanced_rvc_inference_audio)
+            elif "_(Vocals)_" in file: os.rename(file_path, main_audio)
 
     if mode == "reverb": return reverb_audio, no_reverb_audio
-    if mode == "karaoke": return advanced_rvc_inference_audio, backing_audio 
+    if mode == "karaoke": return main_audio, backing_audio 
 
     if mode == "4stem":
         demucs_audio = pydub_load(demucs_inst[0])
@@ -512,18 +512,18 @@ def clean_file(output_dirs, export_format):
         "Original_Vocals.", 
         "Original_Vocals_Reverb.",
         "Original_Vocals_No_Reverb.", 
-        "advanced_rvc_inference_Vocals.",
-        "advanced_rvc_inference_Vocals_Reverb.", 
-        "advanced_rvc_inference_Vocals_No_Reverb.",
+        "main_Vocals.",
+        "main_Vocals_Reverb.", 
+        "main_Vocals_No_Reverb.",
         "Instruments.",
         "Backing_Vocals."
     ]:
         file_path = os.path.join(output_dirs, f + export_format)
         if os.path.exists(file_path): os.remove(file_path)
 
-def separate_advanced_rvc_inference(
+def separate_main(
     audio_file=None, 
-    model_filename="UVR-MDX-NET_advanced_rvc_inference_340.onnx", 
+    model_filename="UVR-MDX-NET_main_340.onnx", 
     export_format="wav", 
     output_dir=".", 
     segment_size=256, 
@@ -610,4 +610,4 @@ def separate_advanced_rvc_inference(
 
         return separator.separate(audio_file)
     
-if __name__ == "__advanced_rvc_inference__": advanced_rvc_inference()
+if __name__ == "__main__": main()
