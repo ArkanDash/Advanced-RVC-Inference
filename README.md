@@ -132,4 +132,9 @@ For questions and discussions, join our community:
 
 
 
+# Credits
+
+
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) by [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) | base RVC |
+
 
