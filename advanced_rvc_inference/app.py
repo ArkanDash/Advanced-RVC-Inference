@@ -487,7 +487,7 @@ with gr.Blocks(
                     show_error=configs.get("app_show_error", False), 
                     inbrowser="--open" in sys.argv, 
                     share=share,
-                    ssr=True,
+                    ssr_mode=True,
                     prevent_thread_lock=True,
                     allowed_paths=allow_disk,
                 )
