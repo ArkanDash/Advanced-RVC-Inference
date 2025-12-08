@@ -93,7 +93,7 @@ def separate(
     separate_reverb=False
 ):
     start_time = time.time()
-    pid_path = os.path.join("assets", "separate_pid.txt")
+    pid_path = os.path.join("advanced_rvc_inference", "assets", "separate_pid.txt")
 
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
