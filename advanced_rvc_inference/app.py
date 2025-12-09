@@ -1,6 +1,5 @@
-import os
-import io
-import ssl
+import os, io
+#import ssl
 import sys
 import time
 import codecs
@@ -515,10 +514,13 @@ with gr.Blocks(
                     logger.info(translations["stop_rpc"])
                     pipe.close()
 
-        logger.info(f"{translations['running_local_url']}: {server_name}:{port}")
         
         logger.info(f"{translations['gradio_start']}: {(time.time() - start_time):.2f}s")
 
+        print(f"{server_name}:{port}")
         if share: print(f"{share_url}")
         while 1:
             time.sleep(5)
+
+
+#endcode
