@@ -104,19 +104,19 @@ def convert_audio(clean, autotune, use_audio, use_original, convert_backing, not
             
             input_path = original_vocal
         else:
-            advanced_rvc_inference_vocal = get_audio_file('advanced_rvc_inference_Vocals_No_Reverb.')
+            main_vocal = get_audio_file('main_Vocals_No_Reverb.')
             backing_vocal = get_audio_file('Backing_Vocals.')
 
-            if advanced_rvc_inference_vocal == translations["notfound"]: advanced_rvc_inference_vocal = get_audio_file('advanced_rvc_inference_Vocals.')
-            if advanced_rvc_inference_vocal == translations["notfound"]: 
-                gr_warning(translations["not_found_advanced_rvc_inference_vocal"])
+            if main_vocal == translations["notfound"]: main_vocal = get_audio_file('main_Vocals.')
+            if main_vocal == translations["notfound"]: 
+                gr_warning(translations["not_found_main_vocal"])
                 return return_none
             
             if not not_merge_backing and backing_vocal == translations["notfound"]: 
                 gr_warning(translations["not_found_backing_vocal"])
                 return return_none
             
-            input_path = advanced_rvc_inference_vocal
+            input_path = main_vocal
             backing_path = backing_vocal
 
         gr_info(translations["convert_vocal"])
