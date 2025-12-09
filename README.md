@@ -1,6 +1,7 @@
-<h1 align="center">   
-   
-   # Advanced RVC Inference
+  
+<h1 align="center"><b>Advanced RVC Inferenceb></h1>
+<div align="center">  
+
 
 Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter, and the added efficiency of batch inference.
 
@@ -144,6 +145,7 @@ For questions and discussions, join our community:
 
 
 | [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) by [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) | base RVC |
+
 
 
 
