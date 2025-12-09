@@ -86,7 +86,7 @@ def separate_music(
         ), 
         os.path.join(
             output_dirs, 
-            f"advanced_rvc_inference_Vocals_No_Reverb.{export_format}" if separate_reverb else f"advanced_rvc_inference_Vocals.{export_format}"
+            f"main_Vocals_No_Reverb.{export_format}" if separate_reverb else f"main_Vocals.{export_format}"
         ) if separate_backing else None,
         os.path.join(
             output_dirs, 
