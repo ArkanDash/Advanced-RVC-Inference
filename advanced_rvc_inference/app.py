@@ -21,7 +21,7 @@ from advanced_rvc_inference.variables import logger, config, translations, theme
 #ssl._create_default_https_context = ssl._create_unverified_context
 
 warnings.filterwarnings("ignore")
-for l in ["httpx", "gradio", "uvicorn", "httpcore", "urllib3"]:
+for l in ["httpx", "uvicorn", "httpcore", "urllib3"]:
     logging.getLogger(l).setLevel(logging.ERROR)
 
 js_code = """
