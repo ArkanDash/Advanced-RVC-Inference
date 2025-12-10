@@ -582,7 +582,7 @@
     "server_name": "0.0.0.0",
     "app_show_error": true,
     "delete_exists_file": false,
-    "convert_path": "advanced_rvc_inference/infer/conversion/convert.py",
+    "convert_path": "advanced_rvc_inference/rvc/infer/conversion/convert.py",
     "separate_path": "advanced_rvc_inference/infer/separate_music.py",
     "create_dataset_path": "advanced_rvc_inference/infer/train/create_dataset.py",
     "preprocess_path": "advanced_rvc_inference/infer/train/preprocess/preprocess.py",
