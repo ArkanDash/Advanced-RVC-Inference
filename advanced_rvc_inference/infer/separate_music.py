@@ -1,613 +1,243 @@
-import os
-import sys
-import time
 import argparse
+import time
+import librosa
+from tqdm import tqdm
+import sys
+import os
+import glob
+import torch
+import numpy as np
+import soundfile as sf
+import torch.nn as nn
 
-sys.path.append(os.getcwd())
+# Using the embedded version of Python can also correctly import the utils module.
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+from utils import demix, get_model_from_config
 
-from advanced_rvc_inference.library.utils import pydub_load
-from advanced_rvc_inference.library.uvr5_lib.separator import Separator
-from advanced_rvc_inference.variables import config, logger, translations, vr_models, demucs_models, mdx_models, karaoke_models, reverb_models, denoise_models
-from distutils.util import strtobool
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
-def parse_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--separate_music", action='store_true')
-    parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--output_dirs", type=str, default="./advanced_rvc_inference/assets/audios")
-    parser.add_argument("--export_format", type=str, default="wav")
-    parser.add_argument("--model_name", type=str, default="MDXNET_main")
-    parser.add_argument("--karaoke_model", type=str, default="MDX-Version-1")
-    parser.add_argument("--reverb_model", type=str, default="MDX-Reverb")
-    parser.add_argument("--denoise_model", type=str, default="Normal")
-    parser.add_argument("--sample_rate", type=int, default=44100)
-    parser.add_argument("--shifts", type=int, default=2)
-    parser.add_argument("--batch_size", type=int, default=1)
-    parser.add_argument("--overlap", type=float, default=0.25)
-    parser.add_argument("--aggression", type=int, default=5)
-    parser.add_argument("--hop_length", type=int, default=1024)
-    parser.add_argument("--window_size", type=int, default=512)
-    parser.add_argument("--segments_size", type=int, default=256)
-    parser.add_argument("--post_process_threshold", type=float, default=0.2)
-    parser.add_argument("--enable_tta", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--enable_denoise", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--high_end_process", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--enable_post_process", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--separate_backing", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--separate_reverb", type=lambda x: bool(strtobool(x)), default=False)
+class Args:
+    def __init__(
+        self,
+        input_file,
+        store_dir,
+        model_type,
+        extract_instrumental,
+        disable_detailed_pbar,
+        flac_file,
+        pcm_type,
+        use_tta,
+    ):
+        self.input_file = input_file
+        self.model_type = model_type
+        self.store_dir = store_dir
+        self.extract_instrumental = extract_instrumental
+        self.disable_detailed_pbar = disable_detailed_pbar
+        self.flac_file = flac_file
+        self.pcm_type = pcm_type
+        self.use_tta = use_tta
 
-    return parser.parse_args()
 
-def main():
-    args = parse_arguments()
-    input_path, output_dirs, export_format, model_name, karaoke_model, reverb_model, denoise_model, sample_rate, shifts, batch_size, overlap, aggression, hop_length, window_size, segments_size, post_process_threshold, enable_tta, enable_denoise, high_end_process, enable_post_process, separate_backing, separate_reverb = args.input_path, args.output_dirs, args.export_format, args.model_name, args.karaoke_model, args.reverb_model, args.denoise_model, args.sample_rate, args.shifts, args.batch_size, args.overlap, args.aggression, args.hop_length, args.window_size, args.segments_size, args.post_process_threshold, args.enable_tta, args.enable_denoise, args.high_end_process, args.enable_post_process, args.separate_backing, args.separate_reverb
-
-    separate(
-        input_path,
-        output_dirs,
-        export_format, 
-        model_name, 
-        karaoke_model,
-        reverb_model,
-        denoise_model,
-        sample_rate,
-        shifts, 
-        batch_size, 
-        overlap, 
-        aggression,
-        hop_length, 
-        window_size,
-        segments_size, 
-        post_process_threshold,
-        enable_tta,
-        enable_denoise, 
-        high_end_process,
-        enable_post_process,
-        separate_backing,
-        separate_reverb
-    )
-
-def separate(
-    input_path,
-    output_dirs,
-    export_format="wav", 
-    model_name="MDXNET_main", 
-    karaoke_model="MDX-Version-1",
-    reverb_model="MDX-Reverb",
-    denoise_model="Normal",
-    sample_rate=44100,
-    shifts=2, 
-    batch_size=1, 
-    overlap=0.25, 
-    aggression=5,
-    hop_length=1024, 
-    window_size=512,
-    segments_size=256, 
-    post_process_threshold=0.2,
-    enable_tta=False,
-    enable_denoise=False, 
-    high_end_process=False,
-    enable_post_process=False,
-    separate_backing=False,
-    separate_reverb=False
-):
+def run_file(model, args, config, device, verbose=False):
     start_time = time.time()
-    pid_path = os.path.join("advanced_rvc_inference", "assets", "separate_pid.txt")
+    model.eval()
 
-    with open(pid_path, "w") as pid_file:
-        pid_file.write(str(os.getpid()))
+    if not os.path.isfile(args.input_file):
+        print("File not found: {}".format(args.input_file))
+        return
 
+    instruments = config.training.instruments.copy()
+    if config.training.target_instrument is not None:
+        instruments = [config.training.target_instrument]
+
+    if not os.path.isdir(args.store_dir):
+        os.mkdir(args.store_dir)
+
+    print("Starting processing track: ", args.input_file)
     try:
-        input_path = input_path.strip(" ").strip('"').strip("\n").strip('"').strip(" ")
-        output_dirs = os.path.dirname(output_dirs) or output_dirs
-
-        log_data = {
-            translations['audio_path']: input_path, 
-            translations['output_path']: output_dirs, 
-            translations['export_format']: export_format, 
-            translations['shift']: shifts, 
-            translations['segments_size']: segments_size, 
-            translations['overlap']: overlap, 
-            translations['modelname']: model_name, 
-            translations['denoise_mdx']: enable_denoise, 
-            translations['hop_length']: hop_length, 
-            translations['batch_size']: batch_size, 
-            translations['sr']: sample_rate,
-            translations['separator_backing']: separate_backing,
-            translations['dereveb_audio']: separate_reverb,
-            translations['aggression']: aggression,
-            translations['window_size']: window_size,
-            translations['post_process_threshold']: post_process_threshold,
-            translations['enable_tta']: enable_tta,
-            translations['high_end_process']: high_end_process,
-            translations['enable_post_process']: enable_post_process
-        }
-
-        if separate_backing: log_data[translations['backing_model_ver']] = karaoke_model
-        if separate_reverb: log_data[translations['dereveb_model']] = reverb_model
-        if enable_denoise and model_name in list(vr_models.keys()): log_data["Denoise Model"] = denoise_model
-
-        for key, value in log_data.items():
-            logger.debug(f"{key}: {value}")
-
-        output_files = []
-        files = [os.path.join(input_path, f) for f in os.listdir(input_path)] if os.path.isdir(input_path) else [input_path]
-
-        for file in files:
-            if os.path.isfile(file):
-                output_files.append(_separate(
-                    input_path,
-                    output_dirs,
-                    model_name, 
-                    karaoke_model,
-                    reverb_model,
-                    denoise_model,
-                    export_format, 
-                    sample_rate,
-                    shifts, 
-                    batch_size, 
-                    overlap, 
-                    aggression,
-                    hop_length, 
-                    window_size,
-                    segments_size, 
-                    post_process_threshold,
-                    enable_tta,
-                    enable_denoise, 
-                    high_end_process,
-                    enable_post_process,
-                    separate_backing,
-                    separate_reverb
-                ))
+        mix, sr = librosa.load(args.input_file, sr=44100, mono=False)
     except Exception as e:
-        logger.error(f"{translations['separator_error']}: {e}")
-        import traceback
-        logger.debug(traceback.format_exc())
+        print("Cannot read track: {}".format(args.input_file))
+        print("Error message: {}".format(str(e)))
+        return
 
-    if os.path.exists(pid_path): os.remove(pid_path)
-    elapsed_time = time.time() - start_time
+    # Convert mono to stereo if needed
+    if len(mix.shape) == 1:
+        mix = np.stack([mix, mix], axis=0)
 
-    logger.info(translations["separator_success"].format(elapsed_time=f"{elapsed_time:.2f}"))
-    return output_files
+    mix_orig = mix.copy()
+    if "normalize" in config.inference:
+        if config.inference["normalize"] is True:
+            mono = mix.mean(0)
+            mean = mono.mean()
+            std = mono.std()
+            mix = (mix - mean) / std
 
-def _separate(
-    input_path,
-    output_dirs,
-    model_name, 
-    karaoke_model="MDX-Version-1",
-    reverb_model="MDX-Reverb",
-    denoise_model="Normal",
-    export_format="wav", 
-    sample_rate=44100,
-    shifts=2, 
-    batch_size=1, 
-    overlap=0.25, 
-    aggression=5,
-    hop_length=1024, 
-    window_size=512,
-    segments_size=256, 
-    post_process_threshold=0.2,
-    enable_tta=False,
-    enable_denoise=False, 
-    high_end_process=False,
-    enable_post_process=False,
-    separate_backing=False,
-    separate_reverb=False
-):
-    main_vocals, backing_vocals = None, None
-
-    filename, _ = os.path.splitext(os.path.basename(input_path))
-    output_dirs = os.path.join(output_dirs, filename)
-
-    os.makedirs(output_dirs, exist_ok=True)
-    clean_file(output_dirs, export_format)
-
-    if model_name in list(demucs_models.keys()):
-        original_vocals, instruments = demucs_main(
-            input_path,
-            output_dirs,
-            model_name,
-            export_format,
-            segments_size,
-            overlap,
-            shifts,
-            sample_rate
-        )
-    elif model_name in list(vr_models.keys()):
-        original_vocals, instruments = vr_main(
-            input_path,
-            output_dirs,
-            vr_models.get(model_name, model_name),
-            export_format,
-            batch_size,
-            window_size, 
-            aggression, 
-            enable_denoise,
-            denoise_model,
-            enable_tta, 
-            enable_post_process,
-            post_process_threshold, 
-            high_end_process,
-            sample_rate,
-        )
+    if args.use_tta:
+        # orig, channel inverse, polarity inverse
+        track_proc_list = [mix.copy(), mix[::-1].copy(), -1.0 * mix.copy()]
     else:
-        original_vocals, instruments = mdx_main(
-            input_path,
-            output_dirs,
-            mdx_models.get(model_name, model_name),
-            export_format,
-            segments_size,
-            overlap,
-            enable_denoise,
-            hop_length,
-            batch_size,
-            sample_rate,
+        track_proc_list = [mix.copy()]
+
+    full_result = []
+    for mix in track_proc_list:
+        waveforms = demix(
+            config, model, mix, device, pbar=verbose, model_type=args.model_type
         )
-    
-    if separate_backing:
-        if karaoke_model.startswith("MDX"):
-            main_vocals, backing_vocals = mdx_main(
-                original_vocals,
-                output_dirs,
-                karaoke_models.get(karaoke_model, karaoke_model),
-                export_format,
-                segments_size,
-                overlap,
-                enable_denoise,
-                hop_length,
-                batch_size,
-                sample_rate,
-                mode="karaoke"
-            )
-        else:
-            main_vocals, backing_vocals = vr_main(
-                original_vocals,
-                output_dirs,
-                karaoke_models.get(karaoke_model, karaoke_model),
-                export_format,
-                batch_size,
-                window_size, 
-                aggression, 
-                enable_denoise,
-                denoise_model,
-                enable_tta, 
-                enable_post_process,
-                post_process_threshold, 
-                high_end_process,
-                sample_rate,
-                mode="karaoke"
-            )
+        full_result.append(waveforms)
 
-    if separate_reverb:
-        dereverb = [original_vocals]
-        if separate_backing: dereverb.append(main_vocals)
-
-        for audio in dereverb:
-            if karaoke_model.startswith("MDX"):
-                _, no_reverb_vocals = mdx_main(
-                    audio,
-                    output_dirs,
-                    reverb_models.get(reverb_model, reverb_model),
-                    export_format,
-                    segments_size,
-                    overlap,
-                    enable_denoise,
-                    hop_length,
-                    batch_size,
-                    sample_rate,
-                    mode="reverb"
-                )
+    # Average all values in single dict
+    waveforms = full_result[0]
+    for i in range(1, len(full_result)):
+        d = full_result[i]
+        for el in d:
+            if i == 2:
+                waveforms[el] += -1.0 * d[el]
+            elif i == 1:
+                waveforms[el] += d[el][::-1].copy()
             else:
-                _, no_reverb_vocals = vr_main(
-                    audio,
-                    output_dirs,
-                    reverb_models.get(reverb_model, reverb_model),
-                    export_format,
-                    batch_size,
-                    window_size, 
-                    aggression, 
-                    enable_denoise,
-                    denoise_model,
-                    enable_tta, 
-                    enable_post_process,
-                    post_process_threshold, 
-                    high_end_process,
-                    sample_rate,
-                    mode="reverb"
-                )
-            
-            if "Original_Vocals" in os.path.basename(no_reverb_vocals): original_vocals = no_reverb_vocals
-            else: main_vocals = no_reverb_vocals
-    
-    return original_vocals, instruments, main_vocals, backing_vocals
+                waveforms[el] += d[el]
+    for el in waveforms:
+        waveforms[el] = waveforms[el] / len(full_result)
 
-def vr_main(
-    input_path,
-    output_dirs,
-    model_name,
-    export_format="wav",
-    batch_size=1, 
-    window_size=512, 
-    aggression=5, 
-    enable_denoise=False,
-    denoise_model="Normal",
-    enable_tta=False, 
-    enable_post_process=False, 
-    post_process_threshold=0.2, 
-    high_end_process=False,
-    sample_rate=44100,
-    mode="original"
-):
-    exists_file(input_path, output_dirs)
+    # Create a new `instr` in instruments list, 'instrumental'
+    if args.extract_instrumental:
+        instr = "vocals" if "vocals" in instruments else instruments[0]
+        instruments.append("instrumental")
+        # Output "instrumental", which is an inverse of 'vocals' or the first stem in list if 'vocals' absent
+        waveforms["instrumental"] = mix_orig - waveforms[instr]
 
-    logger.info(f"{translations['separator_process_2']}...")
+    for instr in instruments:
+        estimates = waveforms[instr].T
+        if "normalize" in config.inference:
+            if config.inference["normalize"] is True:
+                estimates = estimates * std + mean
+        file_name, _ = os.path.splitext(os.path.basename(args.input_file))
+        if args.flac_file:
+            output_file = os.path.join(args.store_dir, f"{file_name}_{instr}.flac")
+            subtype = "PCM_16" if args.pcm_type == "PCM_16" else "PCM_24"
+            sf.write(output_file, estimates, sr, subtype=subtype)
+        else:
+            output_file = os.path.join(args.store_dir, f"{file_name}_{instr}.wav")
+            sf.write(output_file, estimates, sr, subtype="FLOAT")
 
-    output_list = separate_main(
-        audio_file=input_path, 
-        model_filename=model_name, 
-        export_format=export_format, 
-        output_dir=output_dirs, 
-        batch_size=batch_size,
-        window_size=window_size,
-        aggression=aggression,
-        enable_tta=enable_tta,
-        enable_post_process=enable_post_process,
-        post_process_threshold=post_process_threshold,
-        high_end_process=high_end_process,
-        sample_rate=sample_rate
+    time.sleep(1)
+    print("Elapsed time: {:.2f} sec".format(time.time() - start_time))
+
+
+def proc_file(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--model_type",
+        type=str,
+        default="mdx23c",
+        help="One of bandit, bandit_v2, bs_roformer, htdemucs, mdx23c, mel_band_roformer, scnet, scnet_unofficial, segm_models, swin_upernet, torchseg",
     )
+    parser.add_argument("--config_path", type=str, help="path to config file")
+    parser.add_argument(
+        "--start_check_point",
+        type=str,
+        default="",
+        help="Initial checkpoint to valid weights",
+    )
+    parser.add_argument(
+        "--input_file", type=str, help="folder with mixtures to process"
+    )
+    parser.add_argument(
+        "--store_dir", default="", type=str, help="path to store results as wav file"
+    )
+    parser.add_argument(
+        "--device_ids", nargs="+", type=int, default=0, help="list of gpu ids"
+    )
+    parser.add_argument(
+        "--extract_instrumental",
+        action="store_true",
+        help="invert vocals to get instrumental if provided",
+    )
+    parser.add_argument(
+        "--disable_detailed_pbar",
+        action="store_true",
+        help="disable detailed progress bar",
+    )
+    parser.add_argument(
+        "--force_cpu",
+        action="store_true",
+        help="Force the use of CPU even if CUDA is available",
+    )
+    parser.add_argument(
+        "--flac_file", action="store_true", help="Output flac file instead of wav"
+    )
+    parser.add_argument(
+        "--pcm_type",
+        type=str,
+        choices=["PCM_16", "PCM_24"],
+        default="PCM_24",
+        help="PCM type for FLAC files (PCM_16 or PCM_24)",
+    )
+    parser.add_argument(
+        "--use_tta",
+        action="store_true",
+        help="Flag adds test time augmentation during inference (polarity and channel inverse). While this triples the runtime, it reduces noise and slightly improves prediction quality.",
+    )
+    if args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(args)
 
-    if enable_denoise:
-        denoise_list = []
-        for audio in output_list:
-            audio_path = os.path.join(output_dirs, audio)
+    device = "cpu"
+    if args.force_cpu:
+        device = "cpu"
+    elif torch.cuda.is_available():
+        print("CUDA is available, use --force_cpu to disable it.")
+        device = "cuda"
+        device = (
+            f"cuda:{args.device_ids[0]}"
+            if type(args.device_ids) == list
+            else f"cuda:{args.device_ids}"
+        )
+    elif torch.backends.mps.is_available():
+        device = "mps"
 
-            denoise_file = separate_main(
-                audio_file=audio_path, 
-                model_filename=denoise_models.get(denoise_model, denoise_model), 
-                export_format=export_format, 
-                output_dir=output_dirs, 
-                batch_size=batch_size,
-                window_size=window_size,
-                aggression=aggression,
-                enable_tta=enable_tta,
-                enable_post_process=enable_post_process,
-                post_process_threshold=post_process_threshold,
-                high_end_process=high_end_process,
-                sample_rate=sample_rate
+    print("Using device: ", device)
+
+    model_load_start_time = time.time()
+    torch.backends.cudnn.benchmark = True
+
+    model, config = get_model_from_config(args.model_type, args.config_path)
+    if args.start_check_point != "":
+        print("Start from checkpoint: {}".format(args.start_check_point))
+        if args.model_type == "htdemucs":
+            state_dict = torch.load(
+                args.start_check_point, map_location=device, weights_only=False
             )
+            # Fix for htdemucs pretrained models
+            if "state" in state_dict:
+                state_dict = state_dict["state"]
+        else:
+            state_dict = torch.load(
+                args.start_check_point, map_location=device, weights_only=True
+            )
+        model.load_state_dict(state_dict)
+    print("Instruments: {}".format(config.training.instruments))
 
-            if os.path.exists(audio_path): os.remove(audio_path)
+    # in case multiple CUDA GPUs are used and --device_ids arg is passed
+    if (
+        type(args.device_ids) == list
+        and len(args.device_ids) > 1
+        and not args.force_cpu
+    ):
+        model = nn.DataParallel(model, device_ids=args.device_ids)
 
-            for file in denoise_file:
-                file_path = os.path.join(output_dirs, file)
+    model = model.to(device)
 
-                if "_(Noise)_" in file and os.path.exists(file_path): os.remove(file_path)
-                elif "_(No Noise)_" in file: 
-                    filename = "".join([file.split("_(No Noise)_")[0], ".", export_format])
-                    os.rename(file_path, os.path.join(output_dirs, filename))
+    print("Model load time: {:.2f} sec".format(time.time() - model_load_start_time))
 
-                    denoise_list.append(filename)
+    run_file(model, args, config, device, verbose=True)
 
-    logger.info(translations["separator_success_2"])
-    return process_file(denoise_list if enable_denoise else output_list, output_dirs, export_format, mode)
 
-def demucs_main(
-    input_path,
-    output_dirs,
-    model_name,
-    export_format="wav",
-    segments_size=256,
-    overlap=0.25,
-    shifts=2,
-    sample_rate=44100
-):
-    exists_file(input_path, output_dirs)
-    
-    logger.info(f"{translations['separator_process_2']}...")
-
-    output_list = separate_main(
-        audio_file=input_path, 
-        output_dir=output_dirs, 
-        model_filename=demucs_models.get(model_name, model_name), 
-        export_format=export_format, 
-        segment_size=(segments_size / 2), 
-        overlap=overlap, 
-        shifts=shifts, 
-        sample_rate=sample_rate
-    )
-
-    logger.info(translations["separator_success_2"])
-    return process_file(output_list, output_dirs, export_format, mode="4stem")
-
-def mdx_main(
-    input_path,
-    output_dirs,
-    model_name,
-    export_format="wav",
-    segments_size=256,
-    overlap=0.25,
-    enable_denoise=False,
-    hop_length=1024,
-    batch_size=1,
-    sample_rate=44100,
-    mode="original"
-):
-    exists_file(input_path, output_dirs)
-
-    logger.info(f"{translations['separator_process_2']}...")
-
-    output_list = separate_main(
-        audio_file=input_path, 
-        model_filename=model_name, 
-        export_format=export_format, 
-        output_dir=output_dirs, 
-        segment_size=segments_size, 
-        overlap=overlap, 
-        batch_size=batch_size, 
-        hop_length=hop_length, 
-        enable_denoise=enable_denoise, 
-        sample_rate=sample_rate
-    )
-
-    logger.info(translations["separator_success_2"])
-    return process_file(output_list, output_dirs, export_format, mode)
-
-def process_file(input_list, output_dirs, export_format="wav", mode="original"):
-    demucs_inst = []
-
-    reverb_audio, no_reverb_audio = None, None
-    main_audio, backing_audio = os.path.join(output_dirs, f"main_Vocals.{export_format}"), os.path.join(output_dirs, f"Backing_Vocals.{export_format}")
-    original_audio, instruments_audio = os.path.join(output_dirs, f"Original_Vocals.{export_format}"), os.path.join(output_dirs, f"Instruments.{export_format}")
-
-    for file in input_list:
-        file_path = os.path.join(output_dirs, file)
-        if not os.path.exists(file_path): logger.warning(translations["not_found"].format(name=file_path))
-
-        if mode == "original":
-            if "_(Instrumental)_" in file: os.rename(file_path, instruments_audio)
-            elif "_(Vocals)_" in file: os.rename(file_path, original_audio)
-        elif mode == "4stem":
-            if "_(Vocals)_" in file: os.rename(file_path, original_audio)
-            elif "_(Drums)_" in file or "_(Bass)_" in file or "_(Other)_" in file: demucs_inst.append(file_path)
-        elif mode == "reverb":
-            filename = file.split("_(")[0]
-
-            reverb_audio = os.path.join(output_dirs, "".join([filename, "_Reverb.", export_format]))
-            no_reverb_audio = os.path.join(output_dirs, "".join([filename, "_No_Reverb.", export_format]))
-
-            if "_(Reverb)_" in file or "_(Echo)_" in file: os.rename(file_path, reverb_audio)
-            elif "_(No Reverb)_" in file or "_(No Echo)_" in file: os.rename(file_path, no_reverb_audio)
-        elif mode == "karaoke":
-            if "_(Instrumental)_" in file: os.rename(file_path, backing_audio)
-            elif "_(Vocals)_" in file: os.rename(file_path, main_audio)
-
-    if mode == "reverb": return reverb_audio, no_reverb_audio
-    if mode == "karaoke": return main_audio, backing_audio 
-
-    if mode == "4stem":
-        demucs_audio = pydub_load(demucs_inst[0])
-        for file in demucs_inst[1:]:
-            demucs_audio = demucs_audio.overlay(pydub_load(file))
-
-        demucs_audio.export(instruments_audio, format=export_format)
-
-        for f in demucs_inst:
-            if os.path.exists(f): os.remove(f)
-
-    return original_audio, instruments_audio
-
-def exists_file(input_path, output_dirs):
-    if not os.path.exists(input_path): 
-        logger.warning(translations["input_not_valid"])
-        sys.exit(1)
-    
-    if not os.path.exists(output_dirs): 
-        logger.warning(translations["output_not_valid"])
-        sys.exit(1)
-
-def clean_file(output_dirs, export_format):
-    for f in [
-        "Original_Vocals.", 
-        "Original_Vocals_Reverb.",
-        "Original_Vocals_No_Reverb.", 
-        "main_Vocals.",
-        "main_Vocals_Reverb.", 
-        "main_Vocals_No_Reverb.",
-        "Instruments.",
-        "Backing_Vocals."
-    ]:
-        file_path = os.path.join(output_dirs, f + export_format)
-        if os.path.exists(file_path): os.remove(file_path)
-
-def separate_main(
-    audio_file=None, 
-    model_filename="UVR-MDX-NET_main_340.onnx", 
-    export_format="wav", 
-    output_dir=".", 
-    segment_size=256, 
-    overlap=0.25, 
-    batch_size=1, 
-    hop_length=1024, 
-    enable_denoise=False, 
-    shifts=2, 
-    window_size=512,
-    aggression=5,
-    enable_tta=False,
-    enable_post_process=False,
-    post_process_threshold=0.2,
-    high_end_process=False,
-    sample_rate=44100
-):
-    try:
-        separator = Separator(
-            logger=logger, 
-            output_dir=output_dir, 
-            output_format=export_format, 
-            output_bitrate=None, 
-            normalization_threshold=0.9, 
-            sample_rate=sample_rate, 
-            mdx_params={
-                "hop_length": hop_length, 
-                "segment_size": segment_size, 
-                "overlap": overlap, 
-                "batch_size": batch_size, 
-                "enable_denoise": enable_denoise
-            }, 
-            demucs_params={
-                "segment_size": segment_size, 
-                "shifts": shifts, 
-                "overlap": overlap, 
-                "segments_enabled": config.configs.get("demucs_segments_enable", True)
-            },
-            vr_params={
-                "batch_size": batch_size, 
-                "window_size": window_size, 
-                "aggression": aggression, 
-                "enable_tta": enable_tta, 
-                "enable_post_process": enable_post_process, 
-                "post_process_threshold": post_process_threshold, 
-                "high_end_process": high_end_process
-            }
-        )
-        separator.load_model(model_filename=model_filename)
-
-        return separator.separate(audio_file)
-    except:
-        logger.debug(translations["default_setting"])
-        separator = Separator(
-            logger=logger, 
-            output_dir=output_dir, 
-            output_format=export_format, 
-            output_bitrate=None, 
-            normalization_threshold=0.9, 
-            sample_rate=44100, 
-            mdx_params={
-                "hop_length": 1024, 
-                "segment_size": 256, 
-                "overlap": 0.25, 
-                "batch_size": 1, 
-                "enable_denoise": enable_denoise
-            }, 
-            demucs_params={
-                "segment_size": 128, 
-                "shifts": 2, 
-                "overlap": 0.25, 
-                "segments_enabled": config.configs.get("demucs_segments_enable", True)
-            },
-            vr_params={
-                "batch_size": 1, 
-                "window_size": 512, 
-                "aggression": 5, 
-                "enable_tta": False, 
-                "enable_post_process": False, 
-                "post_process_threshold": 0.2, 
-                "high_end_process": False
-            }
-        )
-        separator.load_model(model_filename=model_filename)
-
-        return separator.separate(audio_file)
-    
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    proc_file(None)
