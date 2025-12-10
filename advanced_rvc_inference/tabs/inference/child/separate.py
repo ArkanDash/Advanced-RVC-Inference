@@ -57,7 +57,7 @@ def separate_tab():
                 export_format = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                 input_audio = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, allow_custom_value=True, interactive=True)
                 refresh_audio = gr.Button(translations["refresh"])
-                output_dirs = gr.Textbox(label=translations["output_folder"], value="audios", placeholder="audios", info=translations["output_folder_info"], interactive=True)
+                output_dirs = gr.Textbox(label=translations["output_folder"], value="advanced_rvc_inference/assets/audios", placeholder="audios", info=translations["output_folder_info"], interactive=True)
             audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
     with gr.Row():
         gr.Markdown(translations["output_separator"])
