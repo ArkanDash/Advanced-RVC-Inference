@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.variables import translations, configs
 from advanced_rvc_inference.tabs.inference.child.convert import convert_tab
-#rom advanced_rvc_inference.tabs.inference.child.separate import separate_tab
+rom advanced_rvc_inference.tabs.inference.child.separate import separate_tab
 from advanced_rvc_inference.tabs.inference.child.convert_tts import convert_tts_tab
 from advanced_rvc_inference.tabs.inference.child.convert_with_whisper import convert_with_whisper_tab
 
