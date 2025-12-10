@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.variables import translations, configs
 from advanced_rvc_inference.tabs.inference.child.convert import convert_tab
-from advanced_rvc_inference.tabs.inference.child.separate import separate_tab
+#from advanced_rvc_inference.tabs.inference.child.separate import separate_tab
 from advanced_rvc_inference.tabs.inference.child.convert_tts import convert_tts_tab
 from advanced_rvc_inference.tabs.inference.child.convert_with_whisper import convert_with_whisper_tab
 
@@ -16,9 +16,9 @@ def inference_tab():
         with gr.TabItem(translations["convert_audio"], visible=configs.get("convert_tab", True)):
             gr.Markdown(f"## {translations['convert_audio']}")
             convert_tab()
-        with gr.TabItem(translations["separator_tab"], visible=configs.get("separator_tab", True)):
-            gr.Markdown(f"## {translations['separator_tab']}")
-            separate_tab()    
+        #with gr.TabItem(translations["separator_tab"], visible=configs.get("separator_tab", True)):
+        #    gr.Markdown(f"## {translations['separator_tab']}")
+        #    separate_tab()    
 
         with gr.TabItem(translations["convert_with_whisper"], visible=configs.get("convert_with_whisper", True)):
             gr.Markdown(f"## {translations['convert_with_whisper']}")
