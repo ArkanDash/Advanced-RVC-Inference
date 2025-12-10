@@ -9,13 +9,13 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import pydub_load
 from advanced_rvc_inference.library.uvr5_lib.separator import Separator
-from advanced_rvc_inference.app.variables import config, logger, translations, vr_models, demucs_models, mdx_models, karaoke_models, reverb_models, denoise_models
+from advanced_rvc_inference.variables import config, logger, translations, vr_models, demucs_models, mdx_models, karaoke_models, reverb_models, denoise_models
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--separate_music", action='store_true')
     parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--output_dirs", type=str, default="./audios")
+    parser.add_argument("--output_dirs", type=str, default="./advanced_rvc_inference/audios")
     parser.add_argument("--export_format", type=str, default="wav")
     parser.add_argument("--model_name", type=str, default="MDXNET_Main")
     parser.add_argument("--karaoke_model", type=str, default="MDX-Version-1")
