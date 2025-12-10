@@ -32,16 +32,16 @@ class Synthesizer(torch.nn.Module):
 
         if use_f0:
             if vocoder == "RefineGAN": 
-                from main.library.generators.refinegan import RefineGANGenerator
+                from advanced_rvc_inference.library.generators.refinegan import RefineGANGenerator
                 self.dec = RefineGANGenerator(sample_rate=sr, upsample_rates=upsample_rates, num_mels=inter_channels, checkpointing=checkpointing)
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
-                from main.library.generators.mrf_hifigan import HiFiGANMRFGenerator
+                from advanced_rvc_inference.library.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
             else: 
-                from main.library.generators.nsf_hifigan import HiFiGANNRFGenerator
+                from advanced_rvc_inference.library.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
         else: 
-            from main.library.generators.hifigan import HiFiGANGenerator
+            from advanced_rvc_inference.library.generators.hifigan import HiFiGANGenerator
             self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
 
         self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)
