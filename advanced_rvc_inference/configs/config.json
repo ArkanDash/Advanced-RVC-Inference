@@ -609,7 +609,7 @@
     "pretrained_v2_path": "advanced_rvc_inference/assets/models/pretrained_v2",
     "speaker_diarization_path": "advanced_rvc_inference/assets/models/speaker_diarization",
     "uvr5_path": "advanced_rvc_inference/assets/models/uvr5",
-    "audios_path": "advanced_rvc_inference/audios",
+    "audios_path": "advanced_rvc_inference/assets/audios",
     "reference_path": "advanced_rvc_inference/assets/logs/reference",
     "demucs_segments_enable": true,
     "demucs_cpu_mode": false,
