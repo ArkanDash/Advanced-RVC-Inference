@@ -144,7 +144,7 @@ def run_convert_script(
     cvt = VoiceConverter(pth_path, 0)
     start_time = time.time()
 
-    pid_path = os.path.join("assets", "convert_pid.txt")
+    pid_path = os.path.join("advanced_rvc_inference", "assets", "convert_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
 
@@ -347,7 +347,7 @@ class VoiceConverter:
     def setup(self):
         if self.cpt is not None:
             if self.loaded_model.endswith(".pth"):
-                from main.library.algorithm.synthesizers import Synthesizer
+                from advanced_rvc_inference.library.algorithm.synthesizers import Synthesizer
 
                 self.tgt_sr = self.cpt["config"][-1]
                 self.cpt["config"][-3] = self.cpt["weight"]["emb_g.weight"].shape[0]
