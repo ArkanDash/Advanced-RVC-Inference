@@ -9,7 +9,7 @@ from pydub import AudioSegment
 
 sys.path.append(os.getcwd())
 
-from main.library.uvr5_lib.spec_utils import normalize
+from advanced_rvc_inference.library.uvr5_lib.spec_utils import normalize
 
 class CommonSeparator:
     VOCAL_STEM = "Vocals"

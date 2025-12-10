@@ -7,7 +7,7 @@ import concurrent.futures
 
 sys.path.append(os.getcwd())
 
-from main.library.uvr5_lib.demucs.utils import center_trim
+from advanced_rvc_inference.library.uvr5_lib.demucs.utils import center_trim
 
 class DummyPoolExecutor:
     class DummyResult:

@@ -7,7 +7,7 @@ import functools
 
 sys.path.append(os.getcwd())
 
-from main.app.variables import translations
+from advanced_rvc_inference.variables import translations
 
 def load_model(path_or_package, strict=False):
     if isinstance(path_or_package, dict): package = path_or_package

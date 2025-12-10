@@ -4,8 +4,8 @@ import subprocess
 
 sys.path.append(os.getcwd())
 
-from main.app.core.ui import gr_info, gr_warning
-from main.app.variables import python, translations, configs
+from advanced_rvc_inference.core.ui import gr_info, gr_warning
+from advanced_rvc_inference.variables import python, translations, configs
 
 def separate_music(
     input_path,

@@ -15,6 +15,7 @@ from advanced_rvc_inference.tabs.extra.extra import extra_tab
 from advanced_rvc_inference.tabs.training.training import training_tab
 from advanced_rvc_inference.tabs.downloads.downloads import download_tab
 from advanced_rvc_inference.tabs.inference.inference import inference_tab
+from advanced_rvc_inference.tabs.full_inference_tab import full_inference_tab
 from advanced_rvc_inference.configs.rpc import connect_discord_ipc, send_discord_rpc
 from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
 
@@ -446,6 +447,9 @@ with gr.Blocks(
 
     with gr.Tabs():      
         inference_tab()
+        
+        # RVC X UVR Full Inference Tab
+        full_inference_tab()
 
         if client_mode:
             from advanced_rvc_inference.tabs.realtime.realtime_client import realtime_client_tab

@@ -14,7 +14,7 @@ from scipy.signal import correlate, hilbert
 
 sys.path.append(os.getcwd())
 
-from main.app.variables import translations, logger
+from advanced_rvc_inference.variables import translations, logger
 
 OPERATING_SYSTEM = platform.system()
 SYSTEM_ARCH = platform.platform()

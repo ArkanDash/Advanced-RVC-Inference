@@ -10,8 +10,8 @@ from torch.nn import functional as F
 
 sys.path.append(os.getcwd())
 
-from main.library.uvr5_lib.demucs.states import capture_init
-from main.library.uvr5_lib.demucs.demucs import DConv, rescale_module
+from advanced_rvc_inference.library.uvr5_lib.demucs.states import capture_init
+from advanced_rvc_inference.library.uvr5_lib.demucs.demucs import DConv, rescale_module
 
 def spectro(x, n_fft=512, hop_length=None, pad=0):
     *other, length = x.shape

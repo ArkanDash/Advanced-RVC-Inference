@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from main.library.uvr5_lib import spec_utils
+from advanced_rvc_inference.library.uvr5_lib import spec_utils
 
 class Conv2DBNActiv(nn.Module):
     def __init__(self, nin, nout, ksize=3, stride=1, pad=1, dilation=1, activ=nn.ReLU):

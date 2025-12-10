@@ -14,10 +14,10 @@ from importlib import import_module
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from main.library.utils import clear_gpu_cache
-from main.library.backends import directml, opencl
-from main.tools.huggingface import HF_download_file
-from main.app.variables import config, translations
+from advanced_rvc_inference.library.utils import clear_gpu_cache
+from advanced_rvc_inference.library.backends import directml, opencl
+from advanced_rvc_inference.tools.huggingface import HF_download_file
+from advanced_rvc_inference.variables import config, translations
 
 warnings.filterwarnings("ignore")
 

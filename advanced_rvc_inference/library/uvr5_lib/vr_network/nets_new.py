@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 sys.path.append(os.getcwd())
 
-from main.library.uvr5_lib.vr_network import layers_new as layers
+from advanced_rvc_inference.library.uvr5_lib.vr_network import layers_new as layers
 
 class BaseNet(nn.Module):
     def __init__(self, nin, nout, nin_lstm, nout_lstm, dilations=((4, 2), (8, 4), (12, 6))):
