@@ -17,9 +17,9 @@ warnings.filterwarnings("ignore")
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.ui import replace_export_format
-from advanced_rvc_inference.rvc.infer.conversion.pipeline import Pipeline
+from advanced_rvc_inference.infer.rvc.conversion.pipeline import Pipeline
 from advanced_rvc_inference.variables import config, logger, translations
-from advanced_rvc_inference.rvc.infer.conversion.audio_processing import preprocess, postprocess
+from advanced_rvc_inference.infer.rvc.conversion.audio_processing import preprocess, postprocess
 from advanced_rvc_inference.library.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
 
 for l in ["torch", "faiss", "omegaconf", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "transformers", "matplotlib"]:
