@@ -2,14 +2,16 @@ import os
 import sys
 import time
 import argparse
-
-from distutils.util import strtobool
-
-sys.path.append(os.getcwd())
-
 from advanced_rvc_inference.library.utils import pydub_load
 from advanced_rvc_inference.library.uvr5_lib.separator import Separator
 from advanced_rvc_inference.variables import config, logger, translations, vr_models, demucs_models, mdx_models, karaoke_models, reverb_models, denoise_models
+from distutils.util import strtobool
+
+
+# Using the embedded version of Python can also correctly import the utils module.
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(current_dir)
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
