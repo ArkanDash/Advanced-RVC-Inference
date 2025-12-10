@@ -3,9 +3,7 @@ import sys
 import time
 import argparse
 
-# Using the embedded version of Python can also correctly import the utils module.
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(current_dir)
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import pydub_load
 from advanced_rvc_inference.library.uvr5_lib.separator import Separator
