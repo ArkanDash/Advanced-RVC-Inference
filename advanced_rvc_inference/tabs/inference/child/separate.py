@@ -5,29 +5,29 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.downloads import download_url
-from advanced_rvc_inference.core.separate import separate_music
-from advanced_rvc_inference.core.ui import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
-from advanced_rvc_inference.variables import translations, uvr_model, karaoke_models, reverb_models, vr_models, denoise_models, mdx_models, paths_for_files, sample_rate_choice, configs, file_types, export_format_choices
+from main.app.core.downloads import download_url
+from main.app.core.separate import separate_music
+from main.app.core.ui import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
+from main.app.variables import translations, uvr_model, karaoke_models, reverb_models, vr_models, denoise_models, mdx_models, paths_for_files, sample_rate_choice, configs, file_types, export_format_choices
 
 def separate_tab():
     with gr.Row(): 
         gr.Markdown(translations["4_part"])
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                enable_denoise = gr.Checkbox(label=translations["denoise_mdx"], value=False, interactive=True)
-                separate_backing = gr.Checkbox(label=translations["separator_backing"], value=False, interactive=True)
-                separate_reverb = gr.Checkbox(label=translations["dereveb_audio"], value=False, interactive=True)
-            with gr.Row():
-                enable_tta = gr.Checkbox(label=translations["enable_tta"], value=False, interactive=False)
-                high_end_process = gr.Checkbox(label=translations["high_end_process"], value=False, interactive=False)
-                enable_post_process = gr.Checkbox(label=translations["enable_post_process"], value=False, interactive=False)
-            with gr.Row():
-                model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
-                karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0], choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
-                reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
-            denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
+            with gr.Group():
+                with gr.Row():
+                    enable_denoise = gr.Checkbox(label=translations["denoise_mdx"], value=False, interactive=False)
+                    separate_backing = gr.Checkbox(label=translations["separator_backing"], value=False, interactive=True)
+                    separate_reverb = gr.Checkbox(label=translations["dereveb_audio"], value=False, interactive=True)
+                    enable_tta = gr.Checkbox(label=translations["enable_tta"], value=False, interactive=False)
+                    high_end_process = gr.Checkbox(label=translations["high_end_process"], value=False, interactive=False)
+                    enable_post_process = gr.Checkbox(label=translations["enable_post_process"], value=False, interactive=False)
+                with gr.Row():
+                    model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
+                    karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0], choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
+                    reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
+                    denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
     with gr.Row():
         with gr.Column():
             separate_button = gr.Button(translations["separator_tab"], variant="primary")
@@ -57,7 +57,7 @@ def separate_tab():
                 export_format = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                 input_audio = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, allow_custom_value=True, interactive=True)
                 refresh_audio = gr.Button(translations["refresh"])
-                output_dirs = gr.Textbox(label=translations["output_folder"], value="advanced_rvc_inference/assets/audios", placeholder="audios", info=translations["output_folder_info"], interactive=True)
+                output_dirs = gr.Textbox(label=translations["output_folder"], value="audios", placeholder="audios", info=translations["output_folder_info"], interactive=True)
             audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
     with gr.Row():
         gr.Markdown(translations["output_separator"])

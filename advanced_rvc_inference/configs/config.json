@@ -95,27 +95,73 @@
         "Dagfinn1962/standard",
         "default"
     ],
-    "models_vocals": {
-        "Mel Roformer by KimberleyJSN": "Mel-Roformer by KimberleyJSN",
-        "BS Roformer by ViperX": "BS-Roformer by ViperX",
-        "MDX23C": "MDX23C"
-
+    "mdx_models": {
+        "Main_340": "UVR-MDX-NET_Main_340.onnx",
+        "Main_390": "UVR-MDX-NET_Main_390.onnx",
+        "Main_406": "UVR-MDX-NET_Main_406.onnx",
+        "Main_427": "UVR-MDX-NET_Main_427.onnx",
+        "Main_438": "UVR-MDX-NET_Main_438.onnx",
+        "Inst_full_292": "UVR-MDX-NET-Inst_full_292.onnx",
+        "Inst_HQ_1": "UVR-MDX-NET-Inst_HQ_1.onnx",
+        "Inst_HQ_2": "UVR-MDX-NET-Inst_HQ_2.onnx",
+        "Inst_HQ_3": "UVR-MDX-NET-Inst_HQ_3.onnx",
+        "Inst_HQ_4": "UVR-MDX-NET-Inst_HQ_4.onnx",
+        "Inst_HQ_5": "UVR-MDX-NET-Inst_HQ_5.onnx",
+        "Kim_Vocal_1": "Kim_Vocal_1.onnx",
+        "Kim_Vocal_2": "Kim_Vocal_2.onnx",
+        "Kim_Inst": "Kim_Inst.onnx",
+        "Inst_187_beta": "UVR-MDX-NET_Inst_187_beta.onnx",
+        "Inst_82_beta": "UVR-MDX-NET_Inst_82_beta.onnx",
+        "Inst_90_beta": "UVR-MDX-NET_Inst_90_beta.onnx",
+        "Voc_FT": "UVR-MDX-NET-Voc_FT.onnx",
+        "Crowd_HQ": "UVR-MDX-NET_Crowd_HQ_1.onnx",
+        "MDXNET_9482": "UVR_MDXNET_9482.onnx",
+        "Inst_1": "UVR-MDX-NET-Inst_1.onnx",
+        "Inst_2": "UVR-MDX-NET-Inst_2.onnx",
+        "Inst_3": "UVR-MDX-NET-Inst_3.onnx",
+        "MDXNET_1_9703": "UVR_MDXNET_1_9703.onnx",
+        "MDXNET_2_9682": "UVR_MDXNET_2_9682.onnx",
+        "MDXNET_3_9662": "UVR_MDXNET_3_9662.onnx",
+        "Inst_Main": "UVR-MDX-NET-Inst_Main.onnx",
+        "MDXNET_Main": "UVR_MDXNET_Main.onnx"
     },
-
+    "demucs_models": {
+        "HT-Tuned": "htdemucs_ft.yaml",
+        "HT-Normal": "htdemucs.yaml",
+        "HD_MMI": "hdemucs_mmi.yaml",
+        "HT_6S": "htdemucs_6s.yaml"
+    },
+    "vr_models": {
+        "HP-1": "1_HP-UVR.pth",
+        "HP-2": "2_HP-UVR.pth",
+        "HP-Vocal-1": "3_HP-Vocal-UVR.pth",
+        "HP-Vocal-2": "4_HP-Vocal-UVR.pth",
+        "HP2-1": "7_HP2-UVR.pth",
+        "HP2-2": "8_HP2-UVR.pth",
+        "HP2-3": "9_HP2-UVR.pth",
+        "SP-2B-1": "10_SP-UVR-2B-32000-1.pth",
+        "SP-2B-2": "11_SP-UVR-2B-32000-2.pth",
+        "SP-3B-1": "12_SP-UVR-3B-44100.pth",
+        "SP-4B-1": "13_SP-UVR-4B-44100-1.pth",
+        "SP-4B-2": "14_SP-UVR-4B-44100-2.pth",
+        "SP-MID-1": "15_SP-UVR-MID-44100-1.pth",
+        "SP-MID-2": "16_SP-UVR-MID-44100-2.pth"
+    },
     "karaoke_models": {
-        "Mel Roformer Karaoke": "Mel-Roformer Karaoke by aufr33 and viperx",
-        "UVR BVE": "UVR-BVE",
+        "MDX-Version-1": "UVR_MDXNET_KARA.onnx",
+        "MDX-Version-2": "UVR_MDXNET_KARA_2.onnx",
+        "VR-Version-1": "5_HP-Karaoke-UVR.pth",
+        "VR-Version-2": "6_HP-Karaoke-UVR.pth"
     },
     "reverb_models": {
-        "Mel-Roformer Dereverb": "Mel-Roformer Dereverb by aufr33"     
-        "UVR DeReverb": "UVR DeReverb"
-        
-        
+        "MDX-Reverb": "Reverb_HQ_By_FoxJoy.onnx",
+        "VR-Reverb": "UVR-DeEcho-DeReverb.pth",
+        "Echo-Aggressive": "UVR-De-Echo-Aggressive.pth",
+        "Echo-Normal": "UVR-De-Echo-Normal.pth"
     },
     "denoise_models": {
-        "Mel Roformer Denoise Normal": "Mel-Roformer Denoise Normal by aufr33",
-        "Mel Roformer Denoise Aggressive": "Mel-Roformer Denoise Aggressive by aufr33"
-        "UVR Denoise": "UVR Denoise"
+        "Lite": "UVR-DeNoise-Lite.pth",
+        "Normal": "UVR-DeNoise.pth"
     },
     "edge_tts": [
         "af-ZA-AdriNeural",
