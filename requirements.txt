@@ -30,8 +30,6 @@ pydub>=0.25.1
 praat-parselmouth
 soundfile>=0.13.0
 pedalboard
-git+https://github.com/BF667/UVRC.git
-audio-separator[gpu]
 
 # Data processing and calculation
 numpy>=1.25.2,<2.0.0
@@ -64,6 +62,7 @@ pycryptodome>=3.9.6,<4.0.0
 # Realtime and VAD
 sounddevice>=0.5.2
 webrtcvad-wheels>=2.0.14
+
 
 
 
