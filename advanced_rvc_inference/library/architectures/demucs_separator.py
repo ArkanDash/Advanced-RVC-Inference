@@ -16,7 +16,7 @@ from advanced_rvc_inference.library.uvr5_lib import spec_utils, common_separator
 from advanced_rvc_inference.library.uvr5_lib.demucs import hdemucs, states, apply
 
 warnings.filterwarnings("ignore")
-sys.path.insert(0, os.path.join(os.getcwd(), "main", "library", "uvr5_lib"))
+sys.path.insert(0, os.path.join(os.getcwd(), "advanced_rvc_inference", "library", "uvr5_lib"))
 
 DEMUCS_4_SOURCE_MAPPER = {
     common_separator.CommonSeparator.BASS_STEM: 0, 
