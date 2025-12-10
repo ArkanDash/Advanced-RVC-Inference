@@ -137,7 +137,7 @@ class Pipeline:
 
         if pitch_guidance:
             if not hasattr(self, "f0_generator"): 
-                from main.library.predictors.Generator import Generator
+                from advanced_rvc_inference.library.predictors.Generator import Generator
                 self.f0_generator = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, del_onnx)
 
             pitch, pitchf = self.f0_generator.calculator(self.x_pad, f0_method, audio_pad, f0_up_key, p_len, filter_radius, f0_autotune, f0_autotune_strength, manual_f0=inp_f0, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold)
@@ -148,7 +148,7 @@ class Pipeline:
 
         if energy_use:
             if not hasattr(self, "rms_extract"): 
-                from main.inference.extracting.rms import RMSEnergyExtractor
+                from advanced_rvc_inference.infer.extracting.rms import RMSEnergyExtractor
                 self.rms_extract = RMSEnergyExtractor(frame_length=2048, hop_length=self.window, center=True, pad_mode = "reflect").to(self.device).eval()
 
             energy = self.rms_extract(torch.from_numpy(audio_pad).to(self.device).unsqueeze(0))[:p_len].to(self.device).float()
