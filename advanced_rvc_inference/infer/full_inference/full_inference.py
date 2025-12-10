@@ -32,12 +32,10 @@ from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error
 
 # Import RVC modules
 try:
-    from advanced_rvc_inference.infer.rvc.pipeline import RVCInferencePipeline
-    from advanced_rvc_inference.infer.rvc.convert import rvc_convert
-    from advanced_rvc_inference.infer.rvc.audio_processing import load_audio
+    from advanced_rvc_inference.infer.rvc.convert import VoiceConverter
 except ImportError as e:
     print(f"Warning: Could not import RVC modules: {e}")
-    RVCInferencePipeline = None
+    VoiceConverter = None
 
 # Import UVR modules
 try:
@@ -65,16 +63,17 @@ class FullInferencePipeline:
         os.makedirs(self.uvr_models_dir, exist_ok=True)
         
         # Initialize UVR separator
+        from advanced_rvc_inference.variables import logger
         if Separator:
-            self.uvr_separator = Separator()
+            self.uvr_separator = Separator(logger)
         else:
             self.uvr_separator = None
             
-        # Initialize RVC pipeline
-        if RVCInferencePipeline:
-            self.rvc_pipeline = RVCInferencePipeline()
+        # Initialize RVC converter
+        if VoiceConverter:
+            self.rvc_converter = VoiceConverter
         else:
-            self.rvc_pipeline = None
+            self.rvc_converter = None
     
     def get_video_id(self, url: str) -> Optional[str]:
         """Extract video ID from YouTube URL."""
@@ -168,7 +167,7 @@ class FullInferencePipeline:
                          index_rate: float = 0.5, filter_radius: int = 3,
                          rms_mix_rate: float = 0.25, f0_method: str = "rmvpe") -> str:
         """Convert voice using RVC."""
-        if not self.rvc_pipeline:
+        if not self.rvc_converter:
             # Fallback: if RVC not available, just copy the file
             shutil.copy2(vocals_path, output_path)
             return output_path
@@ -188,17 +187,29 @@ class FullInferencePipeline:
                 else:
                     raise FileNotFoundError(f"No RVC model found for {model_name}")
             
-            # Use RVC conversion
-            converted_path = self.rvc_pipeline.convert(
-                input_path=vocals_path,
-                output_path=output_path,
+            # Initialize RVC converter for this conversion
+            vc = self.rvc_converter(
                 model_path=model_path,
+                sid=0
+            )
+            
+            converted_path = vc.convert_audio(
+                vocals_path,
+                output_path,
                 index_path=index_path if os.path.exists(index_path) else "",
-                pitch_change=pitch_change,
+                embedder_model="hubert_base",
+                pitch=pitch_change,
+                f0_method=f0_method,
                 index_rate=index_rate,
-                filter_radius=filter_radius,
                 rms_mix_rate=rms_mix_rate,
-                f0_method=f0_method
+                protect=0.33,
+                hop_length=512,
+                f0_autotune=False,
+                f0_autotune_strength=1.0,
+                filter_radius=filter_radius,
+                clean_audio=True,
+                clean_strength=0.7,
+                export_format="wav"
             )
             
             return converted_path if converted_path else output_path
