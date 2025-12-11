@@ -29,6 +29,7 @@ def download_url(url):
         warnings.filterwarnings("ignore")
         ydl_opts = {
             "format": "bestaudio/best", 
+            "cookies": "advanced_rvc_inference/assets/config.txt",
             "postprocessors": [{
                 "key": "FFmpegExtractAudio", 
                 "preferredcodec": "wav", 
