@@ -265,7 +265,7 @@ def log_mel_spectrogram(audio, n_mels = 80, padding = 0, device = None):
 
     if not torch.is_tensor(audio):
         if isinstance(audio, str): 
-            from main.library.utils import load_audio
+            from advanced_rvc_inference.library.utils import load_audio
             audio = load_audio(audio, sample_rate=SAMPLE_RATE).astype(np.float32)
         audio = torch.from_numpy(audio)
 
@@ -274,7 +274,7 @@ def log_mel_spectrogram(audio, n_mels = 80, padding = 0, device = None):
 
     if str(audio.device).startswith(("ocl", "privateuseone")):
         if stft is None: 
-            from main.library.backends.utils import STFT
+            from advanced_rvc_inference.library.backends.utils import STFT
             stft = STFT(N_FFT, HOP_LENGTH, N_FFT).to(audio.device)
         fft = stft.transform(audio.unsqueeze(0), eps=1e-9).squeeze(0)
     else:
