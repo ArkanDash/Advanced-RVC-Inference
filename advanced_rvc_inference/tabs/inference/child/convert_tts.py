@@ -15,11 +15,11 @@ from advanced_rvc_inference.variables import translations, sample_rate_choice, m
 
 
 def convert_tts_tab():
+    gr.Markdown(translations["convert_text_markdown_2"])
+     
     with gr.Row():
-        gr.Markdown(translations["convert_text_markdown_2"])
-    
-    model_pth0 = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
-    model_index0 = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
+        model_pth0 = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
+        model_index0 = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
     
     with gr.Row():
         refresh1 = gr.Button(translations["refresh"])
