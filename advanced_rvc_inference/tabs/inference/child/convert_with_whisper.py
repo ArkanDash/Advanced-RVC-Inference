@@ -9,9 +9,10 @@ from advanced_rvc_inference.core.inference import convert_with_whisper
 from advanced_rvc_inference.core.ui import visible, change_audios_choices, unlock_f0, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move
 from advanced_rvc_inference.variables import translations, paths_for_files, sample_rate_choice, model_name, index_path, method_f0, embedders_mode, embedders_model, configs, file_types, export_format_choices, whisper_model, hybrid_f0_method, f0_file  # Added f0_file here
 
-def convert_with_whisper_tab():
+def convert_with_whisper_tab():    
+    gr.Markdown(translations["convert_with_whisper_info"])
+    
     with gr.Row():
-        gr.Markdown(translations["convert_with_whisper_info"])
         model_pth2 = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
         model_index2 = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
     
@@ -32,7 +33,7 @@ def convert_with_whisper_tab():
                 with gr.Column():
                     export_format2 = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                     input_audio1 = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, info=translations["provide_audio"], allow_custom_value=True, interactive=True)
-                    output_audio2 = gr.Textbox(label=translations["output_path"], value="audios/output.wav", placeholder="audios/output.wav", info=translations["output_path_info"], interactive=True)
+                    output_audio2 = gr.Textbox(label=translations["output_path"], value="advanced_rvc_inference/assets/audios/rvc/output.wav", placeholder="audios/output.wav", info=translations["output_path_info"], interactive=True)
                 with gr.Column():
                     refresh4 = gr.Button(translations["refresh"])
                 with gr.Row():
