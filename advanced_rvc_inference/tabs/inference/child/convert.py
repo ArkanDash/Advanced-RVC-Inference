@@ -11,8 +11,7 @@ from advanced_rvc_inference.variables import translations, paths_for_files, samp
 from advanced_rvc_inference.core.ui import visible, valueFalse_interactive, change_audios_choices, change_f0_choices, unlock_f0, change_preset_choices, change_backing_choices, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move
 
 def convert_tab():
-    with gr.Row():
-        gr.Markdown(translations["convert_info"])
+    gr.Markdown(translations["convert_info"])
     with gr.Row():
         model_pth = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
         model_index = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
@@ -39,7 +38,7 @@ def convert_tab():
                 with gr.Column():
                     export_format = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                     input_audio0 = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, info=translations["provide_audio"], allow_custom_value=True, interactive=True)
-                    output_audio = gr.Textbox(label=translations["output_path"], value="audios/output.wav", placeholder="audios/output.wav", info=translations["output_path_info"], interactive=True)
+                    output_audio = gr.Textbox(label=translations["output_path"], value="advanced_rvc_inference/assets/audios/rvc/output.wav", placeholder="audios/output.wav", info=translations["output_path_info"], interactive=True)
                 with gr.Column():
                     refresh0 = gr.Button(translations["refresh"])
             with gr.Accordion(translations["setting"], open=False):
