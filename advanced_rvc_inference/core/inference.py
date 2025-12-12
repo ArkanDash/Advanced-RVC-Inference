@@ -13,6 +13,40 @@ sys.path.append(os.getcwd())
 from advanced_rvc_inference.variables import logger, config, configs, translations, python
 from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, process_output, replace_export_format
 
+def search_separated_audio_folders():
+    """Search for folders containing separated audio files."""
+    if config.debug_mode:
+        # Debug mode: look in a specific test location
+        search_path = "advanced_rvc_inference/assets/audios/uvr"
+    else:
+        # Production mode: look in the configured audio path
+        search_path = configs["audios_path"]
+    
+    # Check if the search path exists
+    if not os.path.exists(search_path):
+        gr_warning(f"Search path does not exist: {search_path}")
+        return []
+    
+    # Get all directories in the search path
+    all_dirs = [f for f in os.listdir(search_path) 
+                if os.path.isdir(os.path.join(search_path, f))]
+    
+    # Filter directories that contain audio files
+    valid_dirs = []
+    for dir_name in all_dirs:
+        dir_path = os.path.join(search_path, dir_name)
+        
+        # Check if directory contains any audio files
+        audio_files = [file for file in os.listdir(dir_path) 
+                      if file.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".opus", 
+                                               ".m4a", ".mp4", ".aac", ".alac", ".wma", 
+                                               ".aiff", ".webm", ".ac3"))]
+        
+        if audio_files:
+            valid_dirs.append(dir_name)
+    
+    return valid_dirs
+
 def convert(pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0_method, input_path, output_path, pth_path, index_path, f0_autotune, clean_audio, clean_strength, export_format, embedder_model, resample_sr, split_audio, f0_autotune_strength, checkpointing, f0_onnx, embedders_mode, formant_shifting, formant_qfrency, formant_timbre, f0_file, proposal_pitch, proposal_pitch_threshold, audio_processing=False, alpha=0.5):    
     subprocess.run([
         python, 
@@ -209,7 +243,9 @@ def convert_audio(clean, autotune, use_audio, use_original, convert_backing, not
 def convert_selection(clean, autotune, use_audio, use_original, convert_backing, not_merge_backing, merge_instrument, pitch, clean_strength, model, index, index_rate, input, output, format, method, hybrid_method, hop_length, embedders, custom_embedders, resample_sr, filter_radius, rms_mix_rate, protect, split_audio, f0_autotune_strength, checkpointing, onnx_f0_mode, formant_shifting, formant_qfrency, formant_timbre, f0_file, embedders_mode, proposal_pitch, proposal_pitch_threshold, audio_processing=False, alpha=0.5):
     if use_audio:
         gr_info(translations["search_separate"])
-        choice = [f for f in os.listdir(configs["audios_path"]) if os.path.isdir(os.path.join(configs["audios_path"], f))] if config.debug_mode else [f for f in os.listdir(configs["audios_path"]) if os.path.isdir(os.path.join(configs["audios_path"], f)) and any(file.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4", ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3")) for file in os.listdir(os.path.join(configs["audios_path"], f)))]
+        
+        # Use the separated search function
+        choice = search_separated_audio_folders()
 
         gr_info(translations["found_choice"].format(choice=len(choice)))
 
