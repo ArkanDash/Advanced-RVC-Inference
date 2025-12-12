@@ -62,8 +62,3 @@ pycryptodome>=3.9.6,<4.0.0
 # Realtime and VAD
 sounddevice>=0.5.2
 webrtcvad-wheels>=2.0.14
-
-
-
-
-
