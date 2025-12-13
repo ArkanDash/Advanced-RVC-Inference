@@ -25,7 +25,7 @@ class HPARMVPE:
     def __init__(
         self, 
         model_path: str, 
-        device: str | torch.device = "cpu", 
+        device = "cpu",  # Changed from str | torch.device to just device for compatibility
         is_half: bool = False, 
         # onnx: bool = False, 
         providers = ["CPUExecutionProvider"], 
@@ -47,7 +47,11 @@ class HPARMVPE:
             from src.model import E2E0
 
             model = E2E0(n_gru, in_channels, en_out_channels)
-            model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+            # Made weights_only conditional based on PyTorch version
+            try:
+                model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+            except TypeError:
+                model.load_state_dict(torch.load(model_path, map_location="cpu"))
             model.eval()
             model = model.to(device).eval()
             self.model = model.half() if is_half else model.float()
@@ -87,12 +91,14 @@ class HPARMVPE:
                 # mel_chunk = F.pad(mel_chunk, (320, 320), mode="reflect")
                 # print(' after padding', mel_chunk.shape)
                 if self.onnx:
-                    out_chunk = torch.as_tensor(self.model.run(
+                    # Fixed numpy to torch tensor conversion for compatibility
+                    onnx_output = self.model.run(
                         [self.model.get_outputs()[0].name], 
                         {
                             self.model.get_inputs()[0].name: mel_chunk.cpu().numpy().astype(np.float32)
                         }
-                    )[0], device=self.device)
+                    )[0]
+                    out_chunk = torch.from_numpy(onnx_output).to(self.device)
                 else: 
                     out_chunk = self.model(
                         mel_chunk.half() if self.is_half else mel_chunk.float()
@@ -131,7 +137,9 @@ class HPARMVPE:
         mel = self.mel_extractor(audio, center=True)
         del audio
         with torch.no_grad():
-            torch.cuda.empty_cache()
+            # Added CUDA availability check
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         hidden = self.mel2hidden(mel)
         hidden = hidden.squeeze(0).cpu().numpy()
         f0 = self.decode(hidden, thred=thred)
@@ -177,7 +185,8 @@ class HPARMVPE:
         weight_sum = np.sum(todo_salience, 1)
         devided = product_sum / weight_sum
         maxx = np.max(salience, axis=1)
-        devided[maxx <= thred] = 0
+        # Fixed boolean indexing for numpy 1.25.2 compatibility
+        devided = np.where(maxx <= thred, 0, devided)
         return devided
     
 if __name__ == "__main__":
