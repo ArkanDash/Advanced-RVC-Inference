@@ -22,7 +22,7 @@ def singleton(cls):
 @singleton
 class Config:
     def __init__(self):
-        self.configs_path = os.path.join(os.getcwd(), "configs", "config.json")
+        self.configs_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", "config.json")
         self.configs = json.load(open(self.configs_path, "r"))
 
         self.cpu_mode = self.configs.get("cpu_mode", False)
@@ -76,7 +76,7 @@ class Config:
 
         for config_file in version_config_paths:
             try:
-                with open(os.path.join(os.getcwd(), "configs", config_file), "r") as f:
+                with open(os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", config_file), "r") as f:
                     configs[config_file] = json.load(f)
             except json.JSONDecodeError:
                 print(self.translations["empty_json"].format(file=config_file))
