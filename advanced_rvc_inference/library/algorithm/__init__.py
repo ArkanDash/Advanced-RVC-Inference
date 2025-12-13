@@ -1,1 +1,1 @@
-
+"""Package initialization for library.algorithm module."""

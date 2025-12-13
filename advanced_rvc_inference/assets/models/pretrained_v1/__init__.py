@@ -1,0 +1,1 @@
+"""Package initialization for assets.models.pretrained_v1 module."""
