@@ -3,6 +3,10 @@ import sys
 import numpy as np
 import torch
 import torch.nn.functional as F
+import warnings
+
+# Suppress numpy warnings about dtype size changes
+warnings.filterwarnings("ignore", message="numpy.dtype size changed*")
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -38,23 +42,31 @@ class HPARMVPE:
         self.onnx = model_path.endswith(".onnx") # onnx
 
         if self.onnx:
-            import onnxruntime as ort
-
-            sess_options = ort.SessionOptions()
-            sess_options.log_severity_level = 3
-            self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
-        else:
-            from src.model import E2E0
-
-            model = E2E0(n_gru, in_channels, en_out_channels)
-            # Made weights_only conditional based on PyTorch version
             try:
-                model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
-            except TypeError:
-                model.load_state_dict(torch.load(model_path, map_location="cpu"))
-            model.eval()
-            model = model.to(device).eval()
-            self.model = model.half() if is_half else model.float()
+                import onnxruntime as ort
+                sess_options = ort.SessionOptions()
+                sess_options.log_severity_level = 3
+                self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
+            except Exception as e:
+                print(f"Error loading ONNX model: {e}")
+                print("Falling back to PyTorch model if available...")
+                self.onnx = False
+        
+        if not self.onnx:
+            try:
+                from src.model import E2E0
+                model = E2E0(n_gru, in_channels, en_out_channels)
+                # Made weights_only conditional based on PyTorch version
+                try:
+                    model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+                except TypeError:
+                    model.load_state_dict(torch.load(model_path, map_location="cpu"))
+                model.eval()
+                model = model.to(device).eval()
+                self.model = model.half() if is_half else model.float()
+            except Exception as e:
+                print(f"Error loading PyTorch model: {e}")
+                raise
 
         self.device = device
         self.is_half = is_half
@@ -91,14 +103,18 @@ class HPARMVPE:
                 # mel_chunk = F.pad(mel_chunk, (320, 320), mode="reflect")
                 # print(' after padding', mel_chunk.shape)
                 if self.onnx:
-                    # Fixed numpy to torch tensor conversion for compatibility
-                    onnx_output = self.model.run(
-                        [self.model.get_outputs()[0].name], 
-                        {
-                            self.model.get_inputs()[0].name: mel_chunk.cpu().numpy().astype(np.float32)
-                        }
-                    )[0]
-                    out_chunk = torch.from_numpy(onnx_output).to(self.device)
+                    try:
+                        # Fixed numpy to torch tensor conversion for compatibility
+                        onnx_output = self.model.run(
+                            [self.model.get_outputs()[0].name], 
+                            {
+                                self.model.get_inputs()[0].name: mel_chunk.cpu().numpy().astype(np.float32)
+                            }
+                        )[0]
+                        out_chunk = torch.from_numpy(onnx_output).to(self.device)
+                    except Exception as e:
+                        print(f"Error in ONNX inference: {e}")
+                        raise
                 else: 
                     out_chunk = self.model(
                         mel_chunk.half() if self.is_half else mel_chunk.float()
