@@ -18,6 +18,13 @@ def realtime_tab():
             gr.Markdown(translations["realtime_markdown_2"])
         with gr.Row():
             status = gr.Label(label=translations["realtime_latency"], value=translations["realtime_not_startup"])
+            
+        with gr.Row():
+            model_pth = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
+            model_index = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
+            with gr.Row():
+                model_refresh = gr.Button(translations["refresh"])
+        
         with gr.Row():
             monitor = gr.Checkbox(label=translations["monitor"], value=False, interactive=True)
             exclusive_mode = gr.Checkbox(label=translations["exclusive_mode"], value=False, interactive=True)
@@ -48,11 +55,6 @@ def realtime_tab():
         with gr.Row():
             with gr.Column():
                 with gr.Accordion(translations["model_accordion"], open=True):
-                    with gr.Row():
-                        model_pth = gr.Dropdown(label=translations["model_name"], choices=model_name, value=model_name[0] if len(model_name) >= 1 else "", interactive=True, allow_custom_value=True)
-                        model_index = gr.Dropdown(label=translations["index_path"], choices=index_path, value=index_path[0] if len(index_path) >= 1 else "", interactive=True, allow_custom_value=True)
-                    with gr.Row():
-                        model_refresh = gr.Button(translations["refresh"])
                     with gr.Row():
                         index_strength = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=model_index.value != "")
             with gr.Column():
