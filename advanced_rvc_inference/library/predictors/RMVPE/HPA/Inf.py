@@ -185,25 +185,45 @@ class HPARMVPE:
             salience (np.ndarray): Salience values.
             thred (float, optional): Threshold for salience. Defaults to 0.05.
         """
+        # Get the index of maximum salience for each frame
         center = np.argmax(salience, axis=1)
+        
+        # Pad the salience array with 4 zeros on both sides along the second axis
         salience = np.pad(salience, ((0, 0), (4, 4)))
+        
+        # Adjust center indices for padding
         center += 4
-        todo_salience = []
-        todo_cents_mapping = []
+        
+        # Calculate start and end indices for slicing
         starts = center - 4
         ends = center + 5
-        for idx in range(salience.shape[0]):
-            todo_salience.append(salience[:, starts[idx] : ends[idx]][idx])
-            todo_cents_mapping.append(self.cents_mapping[starts[idx] : ends[idx]])
-        todo_salience = np.array(todo_salience)
-        todo_cents_mapping = np.array(todo_cents_mapping)
-        product_sum = np.sum(todo_salience * todo_cents_mapping, 1)
-        weight_sum = np.sum(todo_salience, 1)
-        devided = product_sum / weight_sum
+        
+        # Prepare arrays for weighted average calculation
+        n_frames = salience.shape[0]
+        todo_salience = np.zeros((n_frames, 9))
+        todo_cents_mapping = np.zeros((n_frames, 9))
+        
+        # Extract slices for each frame
+        for idx in range(n_frames):
+            start_idx = starts[idx]
+            end_idx = ends[idx]
+            todo_salience[idx] = salience[idx, start_idx:end_idx]
+            todo_cents_mapping[idx] = self.cents_mapping[start_idx:end_idx]
+        
+        # Calculate weighted average
+        product_sum = np.sum(todo_salience * todo_cents_mapping, axis=1)
+        weight_sum = np.sum(todo_salience, axis=1)
+        
+        # Avoid division by zero
+        divided = np.zeros_like(product_sum)
+        non_zero_mask = weight_sum > 0
+        divided[non_zero_mask] = product_sum[non_zero_mask] / weight_sum[non_zero_mask]
+        
+        # Apply threshold
         maxx = np.max(salience, axis=1)
-        # Fixed boolean indexing for numpy 1.25.2 compatibility
-        devided = np.where(maxx <= thred, 0, devided)
-        return devided
+        divided[maxx <= thred] = 0
+        
+        return divided
     
 if __name__ == "__main__":
     import librosa
