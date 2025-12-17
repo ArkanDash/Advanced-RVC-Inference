@@ -613,6 +613,5 @@
     "pretrain_verify_shape": true,
     "pretrain_strict": true,
     "cpu_mode": false,
-    "brain": false,
-    "discord_presence": true
+    "brain": false
 }
