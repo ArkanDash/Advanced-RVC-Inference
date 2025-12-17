@@ -213,7 +213,7 @@ def create_dataset(
             ]
 
         if clean_dataset: 
-            from main.tools.noisereduce import TorchGate
+            from advanced_rvc_inference.tools.noisereduce import TorchGate
             tg = TorchGate(sr, prop_decrease=clean_strength).to(config.device)
         
         for audio in audio_path:
