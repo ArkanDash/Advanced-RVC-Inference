@@ -212,21 +212,25 @@ def create_dataset(
                 for audio in audio_path
             ]
 
+        # Initialize TorchGate here using the target sample_rate
+        tg = None
         if clean_dataset: 
             from advanced_rvc_inference.tools.noisereduce import TorchGate
-            tg = TorchGate(sr, prop_decrease=clean_strength).to(config.device)
+            tg = TorchGate(sample_rate, prop_decrease=clean_strength).to(config.device)
         
         for audio in audio_path:
             data, sr = read_file(audio)
 
             if len(data.shape) > 1: data = librosa.to_mono(data.T)
             if sr != sample_rate: data = librosa.resample(data, orig_sr=sr, target_sr=sample_rate, res_type="soxr_vhq")
-            if clean_dataset: data = tg(torch.from_numpy(data).unsqueeze(0).to(config.device).float()).squeeze(0).cpu().detach().numpy()
+            if clean_dataset and tg is not None: 
+                data = tg(torch.from_numpy(data).unsqueeze(0).to(config.device).float()).squeeze(0).cpu().detach().numpy()
 
-            sf.write(audio, data, sr)
+            sf.write(audio, data, sample_rate if sr != sample_rate else sr)
             output_path = os.path.join(output_dirs, os.path.basename(audio))
 
             if os.path.exists(output_path): os.remove(output_path)
+            os.makedirs(output_dirs, exist_ok=True)
             shutil.move(audio, output_path)
 
         if os.path.exists(dataset_temp): shutil.rmtree(dataset_temp, ignore_errors=True)
