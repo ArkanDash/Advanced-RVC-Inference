@@ -142,15 +142,16 @@ For questions and discussions, join our community:
 
 # Credits
 
-
-* [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) by [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/)
-
-* [Applio](https://github.com/IAHispano/Applio) by [IAHispano](https://github.com/IAHispano)
+| Repo | Owner |  
+| ----------- | ---- |  
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) |
+| [Applio](https://github.com/IAHispano/Applio)  | [IAHispano](https://github.com/IAHispano) |
 
 
 
 # Special Thanks To
 
 * [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) - as helper of this project
+
 
 
