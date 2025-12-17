@@ -147,7 +147,7 @@ def create_dataset(
     start_time = time.time()
     inputs_data = input_data.replace(", ", ",").split(",")
 
-    pid_path = os.path.join("assets", "create_dataset_pid.txt")
+    pid_path = os.path.join("advanced_rvc_inference", "assets", "create_dataset_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
 
