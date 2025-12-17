@@ -25,7 +25,7 @@ def create_dataset_tab():
             enable_denoise = gr.Checkbox(label=translations["denoise_mdx"], value=False, interactive=False)
     with gr.Row():
         dataset_url = gr.Textbox(label=translations["url_audio"], info=translations["create_dataset_url"], value="", placeholder="https://www.youtube.com/...", interactive=True, scale=5)
-        output_dataset = gr.Textbox(label=translations["output_data"], info=translations["output_data_info"], value="dataset", placeholder="dataset", interactive=True)
+        output_dataset = gr.Textbox(label=translations["output_data"], info=translations["output_data_info"], value="advanced_rvc_inference/assets/dataset", placeholder="dataset", interactive=True)
     with gr.Row():
         create_dataset_button = gr.Button(translations["createdataset"], variant="primary", scale=2, min_width=4000)
     with gr.Row(visible=False) as row_2:
