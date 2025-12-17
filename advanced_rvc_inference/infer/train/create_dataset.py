@@ -20,12 +20,13 @@ from advanced_rvc_inference.variables import config, logger, translations
 from advanced_rvc_inference.infer.separate_music import _separate, vr_models
 
 dataset_temp = "dataset_temp"
+DATASET_DIR = os.path.join("advanced_rvc_inference", "assets", "dataset")
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--create_dataset", action='store_true')
     parser.add_argument("--input_data", type=str, required=True)
-    parser.add_argument("--output_dirs", type=str, default="./dataset")
+    parser.add_argument("--output_dirs", type=str, default=DATASET_DIR)
     parser.add_argument("--skip_seconds", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--skip_start_audios", type=str, default="0")
     parser.add_argument("--skip_end_audios", type=str, default="0")
@@ -111,6 +112,10 @@ def create_dataset(
     clean_dataset=False,
     clean_strength=0.7
 ):
+    # Ensure output directory is the dataset directory
+    if output_dirs == DATASET_DIR or output_dirs == "./dataset":
+        output_dirs = DATASET_DIR
+    
     log_data = {
         translations['audio_path']: input_data, 
         translations['output_path']: output_dirs, 
@@ -152,6 +157,9 @@ def create_dataset(
         pid_file.write(str(os.getpid()))
 
     try:
+        # Create dataset directory if it doesn't exist
+        os.makedirs(output_dirs, exist_ok=True)
+        
         if os.path.exists(dataset_temp): shutil.rmtree(dataset_temp, ignore_errors=True)
         else: os.makedirs(dataset_temp, exist_ok=True)
 
@@ -230,7 +238,6 @@ def create_dataset(
             output_path = os.path.join(output_dirs, os.path.basename(audio))
 
             if os.path.exists(output_path): os.remove(output_path)
-            os.makedirs(output_dirs, exist_ok=True)
             shutil.move(audio, output_path)
 
         if os.path.exists(dataset_temp): shutil.rmtree(dataset_temp, ignore_errors=True)
