@@ -15,7 +15,6 @@ from advanced_rvc_inference.tabs.extra.extra import extra_tab
 from advanced_rvc_inference.tabs.training.training import training_tab
 from advanced_rvc_inference.tabs.downloads.downloads import download_tab
 from advanced_rvc_inference.tabs.inference.inference import inference_tab
-from advanced_rvc_inference.configs.rpc import connect_discord_ipc, send_discord_rpc
 from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
 from advanced_rvc_inference.mainjs import js_code
 #ssl._create_default_https_context = ssl._create_unverified_context
@@ -92,15 +91,7 @@ with gr.Blocks(
             gradio_app.mount("/api", fastapi_app)
         
         sys.stdout = original_stdout
-        if configs.get("discord_presence", True):
-            pipe = connect_discord_ipc()
-            if pipe:
-                try:
-                    logger.info(translations["start_rpc"])
-                    send_discord_rpc(pipe)
-                except KeyboardInterrupt:
-                    logger.info(translations["stop_rpc"])
-                    pipe.close()
+      
         
         logger.info(f"{translations['gradio_start']}: {(time.time() - start_time):.2f}s")
 
