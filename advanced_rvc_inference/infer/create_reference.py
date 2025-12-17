@@ -39,10 +39,9 @@ def parse_arguments():
     parser.add_argument("--proposal_pitch", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--proposal_pitch_threshold", type=float, default=255.0)
     parser.add_argument("--alpha", type=float, default=0.5)
-
     return parser.parse_args()
 
-def advanced_rvc_inference():
+def main():
     args = parse_arguments()
     audio_path, reference_name, pitch_guidance, use_energy, version, embedder_model, embedders_mode, f0_method, f0_onnx, f0_up_key, filter_radius, f0_autotune, f0_autotune_strength, proposal_pitch, proposal_pitch_threshold, alpha = args.audio_path, args.reference_name, args.pitch_guidance, args.use_energy, args.version, args.embedder_model, args.embedders_mode, args.f0_method, args.f0_onnx, args.f0_up_key, args.filter_radius, args.f0_autotune, args.f0_autotune_strength, args.proposal_pitch, args.proposal_pitch_threshold, args.alpha
 
@@ -160,7 +159,7 @@ def create_reference(
         pbar.update(1)
 
         if use_energy:
-            from advanced_rvc_inference.inferextracting.rms import RMSEnergyExtractor
+            from advanced_rvc_inference.infer.extracting.rms import RMSEnergyExtractor
             rms = RMSEnergyExtractor(frame_length=FRAME_LENGTH, hop_length=HOP_SIZE, center=True, pad_mode="reflect").to(device).eval()
 
             with torch.no_grad():
@@ -172,4 +171,4 @@ def create_reference(
 
     logger.info(translations["create_reference_success"].format(elapsed_time=f"{(time.time() - start_time):.2f}"))
 
-if __name__ == "__advanced_rvc_inference__": advanced_rvc_inference()
+if __name__ == "__main__": main()
