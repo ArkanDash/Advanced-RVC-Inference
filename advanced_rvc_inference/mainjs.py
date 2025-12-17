@@ -1,3 +1,6 @@
+from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
+
+
 js_code = """
 () => {
     window._activeStream = null;
