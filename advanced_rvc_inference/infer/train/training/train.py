@@ -57,6 +57,44 @@ from advanced_rvc_inference.variables import configs as main_configs
 warnings.filterwarnings("ignore")
 logging.getLogger("torch").setLevel(logging.ERROR)
 
+# Add the custom HTML progress bar function
+def html_progress_bar(value, total, prefix="", label="", width=300):
+    # docstyle-ignore
+    return f"""
+    <div>
+      {prefix}
+      <progress value='{value}' max='{total}' style='width:{width}px; height:20px; vertical-align: middle;'></progress>
+      {label}
+    </div>
+    """
+
+# Create a custom tqdm class that uses the HTML progress bar
+class HTMLtqdm(tqdm):
+    def __init__(self, *args, **kwargs):
+        # Set default values for HTML progress bar
+        self.prefix = kwargs.pop('prefix', '')
+        self.label = kwargs.pop('label', '')
+        self.width = kwargs.pop('width', 300)
+        super().__init__(*args, **kwargs)
+        # Disable the default bar
+        self.bar_format = ''
+        self.ncols = 0
+        self.disable = False
+
+    def display(self, msg=None, pos=None):
+        if not self.disable:
+            # Use the HTML progress bar function
+            html_bar = html_progress_bar(
+                value=self.n, 
+                total=self.total, 
+                prefix=self.prefix, 
+                label=self.label,
+                width=self.width
+            )
+            # Write the HTML progress bar to the console
+            self.fp.write('\r' + html_bar)
+            self.fp.flush()
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", action='store_true')
@@ -255,7 +293,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 
     writer_eval = SummaryWriter(log_dir=os.path.join(experiment_dir, "eval")) if rank == 0 else None
 
-    from main.inference.training.data_utils import (
+    from advanced_rvc_inference.infer.train.data_utils import (
         DistributedBucketSampler,
         TextAudioCollate,
         TextAudioLoader
@@ -268,8 +306,8 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         logger.warning(translations["not_enough_data"])
         sys.exit(1)
 
-    from main.library.algorithm.synthesizers import Synthesizer
-    from main.library.algorithm.discriminators import MultiPeriodDiscriminator
+    from advanced_rvc_inference.library.algorithm.synthesizers import Synthesizer
+    from advanced_rvc_inference.library.algorithm.discriminators import MultiPeriodDiscriminator
 
     net_g, net_d = (
         Synthesizer(
@@ -292,7 +330,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     net_g, net_d = (net_g.cuda(device_id), net_d.cuda(device_id)) if torch.cuda.is_available() else (net_g.to(device), net_d.to(device))
 
     if optimizer_choice == "AnyPrecisionAdamW" and main_config.brain:
-        from main.inference.training.anyprecision_optimizer import AnyPrecisionAdamW
+        from advanced_rvc_inference.infer.train.anyprecision_optimizer import AnyPrecisionAdamW
         optimizer_optim = AnyPrecisionAdamW
     elif optimizer_choice == "RAdam":
         optimizer_optim = torch.optim.RAdam
@@ -404,7 +442,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     autocast_dtype = torch.float32 if not autocast_enabled else (torch.bfloat16 if main_config.brain else torch.float16)
     autocasts = autocast(device.type, enabled=autocast_enabled, dtype=autocast_dtype) if not device.type.startswith("ocl") else nullcontext()
     
-    with tqdm(total=len(train_loader), leave=False) as pbar:
+    # Use the custom HTMLtqdm instead of regular tqdm
+    with HTMLtqdm(
+        total=len(train_loader), 
+        leave=False,
+        prefix=f"Epoch {epoch}/{total_epoch}",
+        label=f"Batch: 0/{len(train_loader)}",
+        width=300
+    ) as pbar:
         for batch_idx, info in data_iterator:
             if device.type == "cuda" and not cache_data_in_gpu: info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]  
             elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
@@ -523,6 +568,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                     scalars=scalar_dict
                 )
 
+            # Update the progress bar with current batch information
+            pbar.label = f"Batch: {batch_idx+1}/{len(train_loader)}"
             pbar.update(1)
 
     with torch.no_grad():
