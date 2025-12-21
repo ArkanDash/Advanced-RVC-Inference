@@ -57,44 +57,6 @@ from advanced_rvc_inference.variables import configs as main_configs
 warnings.filterwarnings("ignore")
 logging.getLogger("torch").setLevel(logging.ERROR)
 
-# Add the custom HTML progress bar function
-def html_progress_bar(value, total, prefix="", label="", width=300):
-    # docstyle-ignore
-    return f"""
-    <div>
-      {prefix}
-      <progress value='{value}' max='{total}' style='width:{width}px; height:20px; vertical-align: middle;'></progress>
-      {label}
-    </div>
-    """
-
-# Create a custom tqdm class that uses the HTML progress bar
-class HTMLtqdm(tqdm):
-    def __init__(self, *args, **kwargs):
-        # Set default values for HTML progress bar
-        self.prefix = kwargs.pop('prefix', '')
-        self.label = kwargs.pop('label', '')
-        self.width = kwargs.pop('width', 300)
-        super().__init__(*args, **kwargs)
-        # Disable the default bar
-        self.bar_format = ''
-        self.ncols = 0
-        self.disable = False
-
-    def display(self, msg=None, pos=None):
-        if not self.disable:
-            # Use the HTML progress bar function
-            html_bar = html_progress_bar(
-                value=self.n, 
-                total=self.total, 
-                prefix=self.prefix, 
-                label=self.label,
-                width=self.width
-            )
-            # Write the HTML progress bar to the console
-            self.fp.write('\r' + html_bar)
-            self.fp.flush()
-
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", action='store_true')
@@ -442,14 +404,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     autocast_dtype = torch.float32 if not autocast_enabled else (torch.bfloat16 if main_config.brain else torch.float16)
     autocasts = autocast(device.type, enabled=autocast_enabled, dtype=autocast_dtype) if not device.type.startswith("ocl") else nullcontext()
     
-    # Use the custom HTMLtqdm instead of regular tqdm
-    with HTMLtqdm(
-        total=len(train_loader), 
-        leave=False,
-        prefix=f"Epoch {epoch}/{total_epoch}",
-        label=f"Batch: 0/{len(train_loader)}",
-        width=300
-    ) as pbar:
+    # Calculate total steps for this epoch
+    total_steps = len(train_loader)
+    
+    # Use the new tqdm style with improved formatting
+    with tqdm(total=total_steps, desc=f"Epoch {epoch}/{total_epoch}", 
+              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
+              postfix=f", Loss: -") as pbar:
+        
         for batch_idx, info in data_iterator:
             if device.type == "cuda" and not cache_data_in_gpu: info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]  
             elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
@@ -568,8 +530,17 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                     scalars=scalar_dict
                 )
 
-            # Update the progress bar with current batch information
-            pbar.label = f"Batch: {batch_idx+1}/{len(train_loader)}"
+            # Update progress bar with current loss information
+            current_progress = batch_idx + 1
+            current_epoch_progress = epoch - 1 + (current_progress / total_steps)
+            
+            # Format the postfix with loss information
+            loss_str = f"Loss: {loss_gen_all.item():.4f}"
+            epoch_str = f"Epoch: {current_epoch_progress:.2f}/{total_epoch}"
+            step_str = f"Step: {global_step}"
+            
+            # Combine all information in postfix
+            pbar.set_postfix_str(f"{loss_str}, {epoch_str}, {step_str}")
             pbar.update(1)
 
     with torch.no_grad():
