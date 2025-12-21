@@ -88,7 +88,7 @@ def training_model_tab():
                         not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
                         custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
                     with gr.Column():
-                        dataset_path = gr.Textbox(label=translations["dataset_folder"], value="dataset", interactive=True, visible=custom_dataset.value)
+                        dataset_path = gr.Textbox(label=translations["dataset_folder"], value="advanced_rvc_inference/assets/dataset", interactive=True, visible=custom_dataset.value)
                     with gr.Column():
                         with gr.Row(visible=False) as simple_option:
                             chunk_len = gr.Slider(minimum=0.5, maximum=5.0, value=3.0, step=0.1, label=translations["chunk_length"], info=translations["chunk_length_info"], interactive=True)
