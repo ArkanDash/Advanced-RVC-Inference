@@ -1,11 +1,5 @@
-import os, io
-#import ssl
-import sys
-import time
-import codecs
-import logging
-import warnings
-
+import os, io, ssl, sys
+import time, codecs, logging, warnings
 import gradio as gr
 
 sys.path.append(os.getcwd())
@@ -17,10 +11,10 @@ from advanced_rvc_inference.tabs.downloads.downloads import download_tab
 from advanced_rvc_inference.tabs.inference.inference import inference_tab
 from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
 from advanced_rvc_inference.mainjs import js_code
-#ssl._create_default_https_context = ssl._create_unverified_context
+ssl._create_default_https_context = ssl._create_unverified_context
 
 warnings.filterwarnings("ignore")
-for l in ["httpx", "uvicorn", "httpcore", "urllib3"]:
+for l in ["httpx", "gradio", "uvicorn", "httpcore", "urllib3"]:
     logging.getLogger(l).setLevel(logging.ERROR)
 
 
@@ -95,8 +89,8 @@ with gr.Blocks(
         
         logger.info(f"{translations['gradio_start']}: {(time.time() - start_time):.2f}s")
 
-        print(f"{server_name}:{port}")
-        if share: print(f"{share_url}")
+        print(f"* Run On: {server_name}:{port}")
+        if share: print(f"* Run On Public URL: {share_url}")
         while 1:
             time.sleep(5)
 
