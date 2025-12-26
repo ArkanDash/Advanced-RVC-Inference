@@ -31,7 +31,7 @@ def separate_music(
     separate_backing,
     separate_reverb
 ):
-    output_dirs = os.path.dirname(output_dirs) or output_dirs
+    output_dirs = os.path.dirname("advanced_rvc_inference/assets/audios/uvr") # fix 
 
     if not input_path or not os.path.exists(input_path) or os.path.isdir(input_path): 
         gr_warning(translations["input_not_valid"])
@@ -73,7 +73,7 @@ def separate_music(
     gr_info(translations["success"])
 
     filename, _ = os.path.splitext(os.path.basename(input_path))
-    output_dirs = os.path.join(output_dirs, filename)
+    output_dirs = os.path.join(output_dirs)
 
     return [
         os.path.join(
