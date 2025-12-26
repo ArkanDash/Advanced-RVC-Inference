@@ -1,5 +1,4 @@
-import os
-import sys
+import os, sys
 import subprocess
 
 sys.path.append(os.getcwd())
@@ -40,8 +39,6 @@ def separate_music(
     if not os.path.exists(output_dirs): 
         gr_warning(translations["output_not_valid"])
         return [None]*4
-
-    if not os.path.exists(output_dirs): os.makedirs(output_dirs)
     gr_info(translations["start"].format(start=translations["separator_music"]))
 
     subprocess.run([
@@ -71,8 +68,6 @@ def separate_music(
     ])
 
     gr_info(translations["success"])
-
-    filename, _ = os.path.splitext(os.path.basename(input_path))
     output_dirs = os.path.join(output_dirs)
 
     return [
