@@ -11,15 +11,21 @@ from advanced_rvc_inference.variables import translations
 from advanced_rvc_inference.infer.training.mel_processing import spectrogram_torch
 from advanced_rvc_inference.infer.training.utils import load_filepaths_and_text, load_wav_to_torch
 
+
+
 class TextAudioLoader(tdata.Dataset):
-    def __init__(self, hparams, pitch_guidance=True, energy=False):
+    def __init__(
+        self, 
+        hparams, 
+        pitch_guidance=True, 
+        energy=False
+    ):
         self.audiopaths_and_text = load_filepaths_and_text(hparams.training_files)
         self.max_wav_value = hparams.max_wav_value
         self.sample_rate = hparams.sample_rate
         self.filter_length = hparams.filter_length
         self.hop_length = hparams.hop_length
         self.win_length = hparams.win_length
-        self.sample_rate = hparams.sample_rate
         self.min_text_len = getattr(hparams, "min_text_len", 1)
         self.max_text_len = getattr(hparams, "max_text_len", 5000)
         self.pitch_guidance = pitch_guidance
@@ -49,32 +55,13 @@ class TextAudioLoader(tdata.Dataset):
         return sid
 
     def get_audio_text_pair(self, audiopath_and_text):
-        if self.energy:
-            if self.pitch_guidance:
-                phone, pitch, pitchf, energy = self.get_labels(audiopath_and_text[1], audiopath_and_text[2], audiopath_and_text[3], audiopath_and_text[4])
-                spec, wav = self.get_audio(audiopath_and_text[0])
-                dv = self.get_sid(audiopath_and_text[5])
-            else:
-                phone, _, _, energy = self.get_labels(audiopath_and_text[1], energy=audiopath_and_text[2])
-                spec, wav = self.get_audio(audiopath_and_text[0])
-                dv = self.get_sid(audiopath_and_text[3])
-        else:
-            if self.pitch_guidance:       
-                phone, _, _, _ = self.get_labels(audiopath_and_text[1])
-                spec, wav = self.get_audio(audiopath_and_text[0])
-                dv = self.get_sid(audiopath_and_text[2])
-            else:
-                phone, pitch, pitchf, _ = self.get_labels(audiopath_and_text[1], audiopath_and_text[2], audiopath_and_text[3])
-                spec, wav = self.get_audio(audiopath_and_text[0])
-                dv = self.get_sid(audiopath_and_text[4])
-
         extra = audiopath_and_text[2:]
-        pitch = pitchf = energy = sid = None
+        pitch, pitchf, energy, sid = None, None, None, None
 
         if self.pitch_guidance and self.energy: pitch, pitchf, energy, sid = extra
         elif self.pitch_guidance: pitch, pitchf, sid = extra
         elif self.energy: energy, sid = extra
-        else: pitch, pitchf, sid = extra
+        else: sid = extra[0]
 
         spec, wav = self.get_audio(audiopath_and_text[0])
         dv = self.get_sid(sid)
@@ -92,7 +79,9 @@ class TextAudioLoader(tdata.Dataset):
         if len_phone != len_spec:
             len_min = min(len_phone, len_spec)
             len_wav = len_min * self.hop_length
+
             spec, wav, phone = spec[:, :len_min], wav[:, :len_wav], phone[:len_min, :]
+
             if self.pitch_guidance: pitch, pitchf = pitch[:len_min], pitchf[:len_min]
             if self.energy: energy = energy[:len_min]
 
@@ -115,7 +104,8 @@ class TextAudioLoader(tdata.Dataset):
 
     def get_audio(self, filename):
         audio, sample_rate = load_wav_to_torch(filename)
-        if sample_rate != self.sample_rate: raise ValueError(translations["sr_does_not_match"].format(sample_rate=sample_rate, sample_rate2=self.sample_rate))
+        if sample_rate != self.sample_rate: 
+            raise ValueError(translations["sr_does_not_match"].format(sample_rate=sample_rate, sample_rate2=self.sample_rate))
 
         audio_norm = audio.unsqueeze(0)
         spec_filename = filename.replace(".wav", ".spec.pt")
@@ -124,10 +114,24 @@ class TextAudioLoader(tdata.Dataset):
             try:
                 spec = torch.load(spec_filename, weights_only=True)
             except Exception:
-                spec = spectrogram_torch(audio_norm, self.filter_length, self.hop_length, self.win_length, center=False).squeeze(0)
+                spec = spectrogram_torch(
+                    audio_norm, 
+                    self.filter_length, 
+                    self.hop_length, 
+                    self.win_length, 
+                    center=False
+                ).squeeze(0)
+
                 torch.save(spec, spec_filename, _use_new_zipfile_serialization=False)
         else:
-            spec = spectrogram_torch(audio_norm, self.filter_length, self.hop_length, self.win_length, center=False).squeeze(0)
+            spec = spectrogram_torch(
+                audio_norm, 
+                self.filter_length, 
+                self.hop_length, 
+                self.win_length, 
+                center=False
+            ).squeeze(0)
+
             torch.save(spec, spec_filename, _use_new_zipfile_serialization=False)
 
         return spec, audio_norm
@@ -200,8 +204,21 @@ class TextAudioCollate:
         return tuple(outputs)
 
 class DistributedBucketSampler(tdata.distributed.DistributedSampler):
-    def __init__(self, dataset, batch_size, boundaries, num_replicas=None, rank=None, shuffle=True):
-        super().__init__(dataset, num_replicas=num_replicas, rank=rank, shuffle=shuffle)
+    def __init__(
+        self, 
+        dataset, 
+        batch_size, 
+        boundaries, 
+        num_replicas=None, 
+        rank=None, 
+        shuffle=True
+    ):
+        super().__init__(
+            dataset, 
+            num_replicas=num_replicas, 
+            rank=rank, 
+            shuffle=shuffle
+        )
         self.lengths = dataset.lengths
         self.batch_size = batch_size
         self.boundaries = boundaries
@@ -226,7 +243,10 @@ class DistributedBucketSampler(tdata.distributed.DistributedSampler):
         for i in range(len(buckets)):
             len_bucket = len(buckets[i])
             total_batch_size = self.num_replicas * self.batch_size
-            num_samples_per_bucket.append(len_bucket + ((total_batch_size - (len_bucket % total_batch_size)) % total_batch_size))
+
+            num_samples_per_bucket.append(
+                len_bucket + ((total_batch_size - (len_bucket % total_batch_size)) % total_batch_size)
+            )
 
         return buckets, num_samples_per_bucket
 
@@ -246,8 +266,11 @@ class DistributedBucketSampler(tdata.distributed.DistributedSampler):
             bucket = self.buckets[i]
             len_bucket = len(bucket)
             ids_bucket = indices[i]
+
             rem = self.num_samples_per_bucket[i] - len_bucket
-            ids_bucket = (ids_bucket + ids_bucket * (rem // len_bucket) + ids_bucket[: (rem % len_bucket)])[self.rank :: self.num_replicas]
+            ids_bucket = (
+                ids_bucket + ids_bucket * (rem // len_bucket) + ids_bucket[: (rem % len_bucket)]
+            )[self.rank :: self.num_replicas]
 
             for j in range(len(ids_bucket) // self.batch_size):
                 batches.append([bucket[idx] for idx in ids_bucket[j * self.batch_size : (j + 1) * self.batch_size]])
