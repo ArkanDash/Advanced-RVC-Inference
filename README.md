@@ -1,171 +1,273 @@
-<h1 align="center"><b> Advanced RVC Inference </h1>
-<div align="center">  
+<div align="center">
 
+# Advanced RVC Inference
 
-Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter, and the added efficiency of batch inference.
+**A modular Retrieval-based Voice Conversion framework with Gradio UI, training capabilities, and audio processing tools**
 
-
-
-[Colab UI](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
+[![PyPI Version](https://img.shields.io/pypi/v/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
+[![Python Versions](https://img.shields.io/pypi/pythonversions/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
+[![License](https://img.shields.io/pypi/l/advanced-rvc-inference.svg)](https://opensource.org/licenses/MIT/)
+[![Downloads](https://img.shields.io/pypi/dm/advanced-rvc-inference.svg)](https://pepy.tech/project/advanced-rvc-inference)
 
 </div>
 
 ## Features
 
-- Voice conversion with multiple pitch extraction methods
-- Model training capabilities
-- Text-to-speech integration
-- Audio separation tools
-- Web UI interface with Gradio
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Quick Start Guide](#quick-start-guide)
-- [Using the Web UI](#using-the-web-ui)
-- [Command Line Usage](#command-line-usage)
-- [Development Setup](#development-setup)
-- [API Reference](#api-reference)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
-- [Support](#support)
+- **Voice Conversion**: High-quality voice conversion with multiple pitch extraction methods
+- **Model Training**: Complete training pipeline for creating custom RVC models
+- **Real-time Processing**: Low-latency real-time voice conversion support
+- **Web UI**: Intuitive Gradio-based web interface
+- **CLI Support**: Command-line interface for scripting and automation
+- **API Access**: Python API for programmatic access
+- **Audio Separation**: Built-in tools for vocal/instrument separation
+- **Text-to-Speech**: Integration with edge-tts for TTS-based voice conversion
 
 ## Installation
 
+### Basic Installation
+
 ```bash
-# Clone the repository
+pip install advanced-rvc-inference
+```
+
+### With GPU Support
+
+For CUDA-enabled GPUs:
+
+```bash
+pip install advanced-rvc-inference[gpu]
+```
+
+### From Source
+
+```bash
 git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
 cd Advanced-RVC-Inference
-
-# Install in development mode
 pip install -e .
 ```
 
-## Quick Start Guide
+### Development Installation
 
+```bash
+pip install advanced-rvc-inference[dev]
+```
 
-1. **Launch the web interface**:
-   ```bash
-   python -m advanced_rvc_inference.app
-   ```
+## Quick Start
 
-2. Access the UI in your browser at the displayed URL (typically http://127.0.0.1:7860)
+### Web Interface
 
-## Using the Web UI
+Launch the Gradio web UI:
 
-The web interface provides an intuitive way to use all features:
+```bash
+rvc-gui
+# or
+python -m advanced_rvc_inference.gui
+```
 
-1. **Voice Conversion**: Upload your source audio and target model
-2. **Model Training**: Upload datasets and configure training parameters
-3. **Batch Processing**: Process multiple files simultaneously
-4. **Audio Analysis**: Analyze audio characteristics and quality
+The web interface will be available at `http://localhost:7860`
 
-### Web UI Features
+### Command Line Interface
 
-- **Real-time Preview**: Listen to results before saving
-- **Parameter Adjustment**: Fine-tune pitch, tone, and other parameters
-- **Progress Monitoring**: Track training and inference progress
-- **Model Management**: Organize and manage your voice models
+Run voice conversion from the command line:
 
+```bash
+rvc-cli infer --model path/to/model.pth --input audio.wav --output converted.wav --pitch 0
+```
 
+View help:
 
-## Development Setup
+```bash
+rvc-cli --help
+rvc-cli infer --help
+```
 
-### Prerequisites
+### Python API
 
-- Python 3.10 or higher
-- Git
-- [uv](https://github.com/astral-sh/uv) (optional but recommended)
+```python
+from advanced_rvc_inference import RVCInference
 
-### Development Workflow
+# Initialize the inference engine
+rvc = RVCInference(device="cuda:0")
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
-   cd Advanced-RVC-Inference
-   ```
+# Load a model
+rvc.load_model("path/to/model.pth")
 
-2. Install in development mode:
-   ```bash
-   pip install -e .
-   # or with uv:
-   uv pip install -e .
-   ```
+# Run inference
+audio = rvc.infer("input.wav", pitch_change=0, output_path="output.wav")
 
-3. Run the application:
-   ```bash
-   python -m advanced_rvc_inference.app
-   ```
+# Or use batch processing
+audio_files = rvc.infer_batch(
+    input_dir="input_folder",
+    output_dir="output_folder",
+    pitch_change=2,
+    format="wav"
+)
 
+# Cleanup
+rvc.unload_model()
+```
 
+## Command Reference
 
-### Performance Optimization
+### CLI Commands
 
-- **GPU Memory**: Monitor GPU usage and adjust batch sizes accordingly
-- **CPU Usage**: Use multiple CPU cores for preprocessing and feature extraction
-- **Disk Space**: Ensure sufficient space for models and temporary files
-- **Network**: Stable internet connection for model downloads
+| Command | Description |
+|---------|-------------|
+| `rvc-cli infer` | Run voice conversion inference |
+| `rvc-cli train` | Train RVC models (use web UI) |
+| `rvc-cli serve` | Launch the web interface |
+| `rvc-cli version` | Show version information |
+| `rvc-cli info` | Show system information |
+
+### Inference Options
+
+```bash
+rvc-cli infer \
+    --model MODEL.pth \
+    --input input.wav \
+    --output output.wav \
+    --pitch 0 \
+    --format wav \
+    --index INDEX.index
+```
+
+## Project Structure
+
+```
+advanced-rvc-inference/
+├── pyproject.toml          # Package configuration
+├── README.md               # This file
+├── LICENSE                 # MIT License
+├── MANIFEST.in             # Package manifest
+├── requirements.txt        # Legacy requirements file
+├── src/
+│   └── advanced_rvc_inference/
+│       ├── __init__.py     # Package entry point
+│       ├── __main__.py     # Module execution
+│       ├── _version.py     # Version information
+│       ├── api.py          # High-level Python API
+│       ├── cli.py          # Command-line interface
+│       ├── gui.py          # Gradio web UI
+│       ├── variables.py    # Global configuration
+│       ├── core/           # Core processing modules
+│       ├── tabs/           # UI tab components
+│       ├── library/        # ML libraries and utilities
+│       ├── infer/          # Inference engines
+│       ├── tools/          # Utility tools
+│       ├── configs/        # Configuration files
+│       └── assets/         # Resource files
+```
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ARVC_ASSETS_PATH` | Path to asset directory | Package assets folder |
+| `ARVC_CONFIGS_PATH` | Path to configs directory | Package configs folder |
+| `ARVC_WEIGHTS_PATH` | Path to model weights | assets/weights |
+| `ARVC_LOGS_PATH` | Path to logs directory | assets/logs |
+
+### Configuration File
+
+Configuration is managed through `advanced_rvc_inference/configs/config.json`:
+
+```json
+{
+    "device": "cuda:0",
+    "fp16": true,
+    "app_port": 7860,
+    "language": "vi-VN",
+    "theme": "NoCrypt/miku"
+}
+```
+
+## Dependencies
+
+### Core Dependencies
+
+- Python 3.10+
+- PyTorch 2.3.1+
+- torchaudio 2.3.1+
+- NumPy, SciPy
+- librosa (audio processing)
+- Gradio (web UI)
+
+### Optional Dependencies
+
+- onnxruntime-gpu (GPU inference acceleration)
+- faiss-gpu (vector similarity search)
+- tensorboard (training visualization)
+
+See `pyproject.toml` for the complete dependency list.
+
+## Documentation
+
+- [API Reference](https://github.com/ArkanDash/Advanced-RVC-Inference#api-reference)
+- [Usage Guide](https://github.com/ArkanDash/Advanced-RVC-Inference#usage)
+- [Contributing](CONTRIBUTING.md)
+
+## Troubleshooting
+
+### GPU Not Detected
+
+Ensure you have CUDA installed and PyTorch with CUDA support:
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+### Memory Issues
+
+Reduce batch size or use CPU mode:
+
+```python
+rvc = RVCInference(device="cpu")
+```
+
+### Import Errors
+
+Reinstall the package:
+
+```bash
+pip install --upgrade --force-reinstall advanced-rvc-inference
+```
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests to ensure everything works
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-### Code Standards
-- Use 4 spaces for indentation (not tabs)
-- Follow PEP 8 style guide
-- Write docstrings for public functions
-- Include type hints where appropriate
-- Add tests for new functionality
-
-
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## Terms of Use
+
+The use of the converted voice for the following purposes is prohibited:
+
+- Criticizing or attacking individuals
+- Advocating for or opposing specific political positions, religions, or ideologies
+- Publicly displaying strongly stimulating expressions without proper zoning
+- Selling of voice models and generated voice clips
+- Impersonation of the original owner of the voice with malicious intentions
+- Fraudulent purposes that lead to identity theft or fraudulent phone calls
+
+## Credits
+
+| Repository | Owner |
+|------------|-------|
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) |
+| [Applio](https://github.com/IAHispano/Applio) | [IAHispano](https://github.com/IAHispano) |
+
 ## Support
 
-If you encounter any issues, please open an issue on [GitHub](https://github.com/ArkanDash/Advanced-RVC-Inference/issues).
+For issues and feature requests, please use the [GitHub Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues) page.
 
-For questions and discussions, join our community:
-- [GitHub Discussions](https://github.com/ArkanDash/Advanced-RVC-Inference/discussions)
+---
 
+<div align="center">
 
-# Terms of Use
-The use of the converted voice for the following purposes is prohibited.
+**Made with by ArkanDash**
 
-* Criticizing or attacking individuals.
-
-* Advocating for or opposing specific political positions, religions, or ideologies.
-
-* Publicly displaying strongly stimulating expressions without proper zoning.
-
-* Selling of voice models and generated voice clips.
-
-* Impersonation of the original owner of the voice with malicious intentions to harm/hurt others.
-
-* Fraudulent purposes that lead to identity theft or fraudulent phone calls.
-
-# Credits
-
-| Repo | Owner |  
-| ----------- | ---- |  
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) |
-| [Applio](https://github.com/IAHispano/Applio)  | [IAHispano](https://github.com/IAHispano) |
-
-
-
-# Special Thanks To
-
-* [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) - as helper of this project
-
-
-
-
+</div>

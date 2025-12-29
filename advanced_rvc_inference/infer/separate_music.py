@@ -15,7 +15,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--separate_music", action='store_true')
     parser.add_argument("--input_path", type=str, required=True)
-    parser.add_argument("--output_dirs", type=str, default="./advanced_rvc_inference/assets/audios")
+    parser.add_argument("--output_dirs", type=str, default="advanced_rvc_inference/assets/audios/uvr")
     parser.add_argument("--export_format", type=str, default="wav")
     parser.add_argument("--model_name", type=str, default="MDXNET_Main")
     parser.add_argument("--karaoke_model", type=str, default="MDX-Version-1")

@@ -30,8 +30,8 @@ def separate_music(
     separate_backing,
     separate_reverb
 ):
-    # Force output to the specific directory
-    output_dirs = os.path.join("advanced_rvc_inference", "assets", "audios", "uvr")
+    # Force output to the specific UVR directory
+    output_dirs = configs.get("uvr_path", os.path.join("advanced_rvc_inference", "assets", "audios", "uvr"))
     
     # Ensure the directory exists
     os.makedirs(output_dirs, exist_ok=True)

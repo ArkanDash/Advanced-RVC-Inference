@@ -4,25 +4,31 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "advanced-rvc-inference"
-version = "0.1.0"
-description = "Advanced RVC Inference - A state-of-the-art web UI for rapid and effortless inference."
+version = "2.0.0"
+description = "Advanced RVC Inference - A modular Retrieval-based Voice Conversion framework with Gradio UI, training capabilities, and audio processing tools"
 readme = "README.md"
-requires-python = ">=3.9,<3.14"
+requires-python = ">=3.10,<3.14"
 license = {file = "LICENSE"}
 authors = [
-    {name = "ArkanDash"}
+    {name = "ArkanDash", email = "arkandash@example.com"}
+]
+keywords = [
+    "voice-conversion", "rvc", "audio", "machine-learning",
+    "deep-learning", "gradio", "inference", "training"
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
     "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
     # Platform-specific requirements
@@ -31,7 +37,7 @@ dependencies = [
     "omegaconf>=2.0.6",
     "onnxruntime; sys_platform == 'darwin'",
     "onnxruntime-gpu; sys_platform != 'darwin'",
-    
+
     # Core dependencies
     "PyYAML>=6.0",
     "tiktoken",
@@ -42,69 +48,134 @@ dependencies = [
     "torchvision>=0.18.1",
     "torchaudio>=2.3.1",
     "torchcodec>=0.8.1",
-    
+
     # FAISS with version constraints
     "faiss-cpu==1.7.3; python_version < '3.12'",
     "faiss-cpu>=1.7.3; python_version >= '3.12'",
-    
+
     # Machine learning, NLP and deep learning
     "transformers>=4.49.0",
     "scikit-learn",
     "einops>=0.8.0",
-    
+
     # Pitch and sound processing
     "librosa>=0.10.2",
     "pydub>=0.25.1",
     "praat-parselmouth",
     "soundfile>=0.13.0",
     "pedalboard",
-    
+
     # Data processing and calculation
     "numpy>=1.25.2,<2.0.0",
     "numba>=0.57.0",
     "scipy>=1.15.0",
     "matplotlib>=3.7.2",
-    
+
     # Implementation and web framework
     "gradio>=5.23.3,<6.0.0",
     "requests>=2.32.3",
     "aiohttp",
     "pysrt",
-    
+
     # Utility section
     "yt-dlp",
     "edge-tts>=7.2.0",
     "ffmpy==0.3.1",
     "ffmpeg-python>=0.2.0",
     "beautifulsoup4",
-    
+
     # Tensorboard and ONNX
     "tensorboard",
     "onnx>=1.14",
     "onnxslim",
     "onnx2torch>=1.5.15",
-    
+
     # Cryptography section
     "pycryptodome>=3.9.6,<4.0.0",
-    
+
     # Realtime and VAD
     "sounddevice>=0.5.2",
     "webrtcvad-wheels>=2.0.14",
 ]
 
 [project.optional-dependencies]
+gpu = ["onnxruntime-gpu"]
+cpu = ["onnxruntime"]
 dev = [
-    "pytest",
-    "pytest-cov",
-    "black",
-    "flake8",
-    "mypy",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
 ]
+
+[project.scripts]
+rvc-cli = "advanced_rvc_inference.cli:main"
+rvc-gui = "advanced_rvc_inference.gui:launch"
 
 [project.urls]
 Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
-Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference"
+Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference.git"
 Issues = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
+Documentation = "https://github.com/ArkanDash/Advanced-RVC-Inference#readme"
 
-[project.scripts]
-advanced-rvc-inference = "advanced_rvc_inference.app:app"
+[tool.setuptools]
+packages = ["advanced_rvc_inference"]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.package-data]
+advanced_rvc_inference = [
+    "configs/*.json",
+    "configs/v1/*.json",
+    "configs/v2/*.json",
+    "assets/**/*",
+    "assets/audios/**/*",
+    "assets/binary/**/*",
+    "assets/dataset/**/*",
+    "assets/f0/**/*",
+    "assets/languages/**/*",
+    "assets/logs/**/*",
+    "assets/models/**/*",
+    "assets/presets/**/*",
+    "assets/weights/**/*",
+    "assets/zluda/**/*",
+]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+include = "\\.pyi?$"
+extend-exclude = """
+/(
+    \\.eggs
+    | \\.git
+    | \\.hg
+    | \\.mypy_cache
+    | \\.tox
+    | \\.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+)/
+"""
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip = [".venv", "venv"]
+known_first_party = ["advanced_rvc_inference"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
