@@ -898,9 +898,6 @@
 # Claude Agent SDK debug files
 **/.claude/debug/
 **/.claude/debug/**
-**/browser/
-**/tmp/
-**/workspace.json
 
 # ==============================================================================
 # NESTED GIT REPOSITORIES
