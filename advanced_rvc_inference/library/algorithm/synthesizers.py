@@ -37,6 +37,32 @@ class Synthesizer(torch.nn.Module):
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
                 from advanced_rvc_inference.library.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
+            elif vocoder in ["RingFormer", "RingFormer_v1", "RingFormer_v2"]:
+                from advanced_rvc_inference.library.algorithm.generators import RingFormerGenerator
+                self.dec = RingFormerGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr
+                )
+                print(f"    ██████  Vocoder: {vocoder}")
+            elif vocoder == "PCPH-GAN":
+                from advanced_rvc_inference.library.algorithm.generators import PCPH_GAN_Generator
+                self.dec = PCPH_GAN_Generator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr
+                )
+                print("    ██████  Vocoder: PCPH-GAN")
             else: 
                 from advanced_rvc_inference.library.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)

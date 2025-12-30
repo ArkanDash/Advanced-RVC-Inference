@@ -510,7 +510,7 @@
     "provide_folder": "Please provide a valid folder!",
     "empty_folder": "The data folder is empty!",
     "vocoder": "Vocoder",
-    "vocoder_info": "A vocoder analyzes and synthesizes human speech signals for voice transformation.\n\nDefault: This option is HiFi-GAN-NSF, compatible with all RVCs\n\nMRF-HiFi-GAN: Higher fidelity.\n\nRefineGAN: Superior sound quality.",
+    "vocoder_info": "A vocoder analyzes and synthesizes human speech signals for voice transformation.\n\nDefault: HiFi-GAN-NSF, compatible with all RVCs\n\nMRF-HiFi-GAN: Higher fidelity vocoder using multi-receptive field fusion.\n\nRefineGAN: Superior sound quality with refinement capabilities.\n\nRingFormer: Advanced neural vocoder with transformer architecture for high-quality synthesis.\n\nPCPH-GAN: Progressive cyclic pitch-harmonic GAN for natural and expressive voice synthesis.",
     "code_error": "Error: Received status code",
     "json_error": "Error: Unable to parse response.",
     "requests_error": "Request failed: {e}",
