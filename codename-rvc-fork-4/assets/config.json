@@ -1,0 +1,13 @@
+{
+    "theme": {
+        "file": "CodenameViolet.py",
+        "class": "CodenameViolet"
+    },
+    "lang": {
+        "override": true,
+        "selected_lang": "en_US"
+    },
+    "flask_server": false,
+    "version": "3.2.8",
+    "model_author": "None"
+}
