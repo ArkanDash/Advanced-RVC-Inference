@@ -268,6 +268,7 @@ if config.device in ["cpu", "mps", "ocl:0"] and configs.get("fp16", False):
 # Global state
 models = {}
 model_name = {}
+model_options = {}
 
 # F0 methods
 method_f0 = [
