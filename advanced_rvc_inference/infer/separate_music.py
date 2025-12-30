@@ -2,6 +2,7 @@ import os
 import sys
 import time
 import argparse
+import traceback
 
 from distutils.util import strtobool
 
@@ -160,9 +161,16 @@ def separate(
                     separate_backing,
                     separate_reverb
                 ))
+    except ModuleNotFoundError as e:
+        if "demucs" in str(e):
+            logger.error(f"{translations['separator_error']}: The 'demucs' module is not installed. "
+                        f"Please install it with: pip install demucs")
+            logger.debug(traceback.format_exc())
+        else:
+            logger.error(f"{translations['separator_error']}: {e}")
+            logger.debug(traceback.format_exc())
     except Exception as e:
         logger.error(f"{translations['separator_error']}: {e}")
-        import traceback
         logger.debug(traceback.format_exc())
 
     if os.path.exists(pid_path): os.remove(pid_path)

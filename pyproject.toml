@@ -96,6 +96,9 @@ dependencies = [
     # Realtime and VAD
     "sounddevice>=0.5.2",
     "webrtcvad-wheels>=2.0.14",
+    
+    # Demucs for music separation
+    "demucs>=4.0.0",
 ]
 
 [project.optional-dependencies]
