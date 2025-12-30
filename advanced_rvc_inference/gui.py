@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import logging
+import subprocess
 from pathlib import Path
 from typing import Optional
 
@@ -39,6 +40,50 @@ def get_version():
         return "2.0.0"
 
 
+def try_install_localtunnel():
+    """Try to install localtunnel for alternative tunneling."""
+    try:
+        import importlib.util
+        if importlib.util.find_spec("localtunnel") is None:
+            logger.info("Installing localtunnel for alternative tunneling...")
+            subprocess.run([sys.executable, "-m", "pip", "install", "localtunnel", "-q"],
+                          check=True, capture_output=True)
+            logger.info("localtunnel installed successfully")
+            return True
+    except Exception as e:
+        logger.debug(f"Failed to install localtunnel: {e}")
+    return False
+
+
+def launch_with_localtunnel(port: int = 7860, app=None):
+    """Launch with localtunnel as fallback."""
+    try:
+        import localtunnel
+        
+        # Start localtunnel
+        tunnel = localtunnel.Server(port=port)
+        
+        # Get the public URL
+        public_url = tunnel.url
+        
+        logger.info(f"LocalTunnel public URL: {public_url}")
+        
+        # Launch the app without share (localtunnel handles it)
+        if app:
+            app.launch(
+                server_name="0.0.0.0",
+                server_port=port,
+                share=False,
+                ssr_mode=True,
+                prevent_thread_lock=True,
+            )
+        
+        return public_url
+    except Exception as e:
+        logger.error(f"LocalTunnel failed: {e}")
+        return None
+
+
 def launch(
     share: bool = False,
     server_name: str = "0.0.0.0",
@@ -46,6 +91,7 @@ def launch(
     inbrowser: bool = False,
     show_error: bool = False,
     prevent_thread_lock: bool = True,
+    enable_localtunnel: bool = False,
 ):
     """
     Launch the Gradio web interface.
@@ -57,6 +103,7 @@ def launch(
         inbrowser: Whether to open the URL in a browser
         show_error: Whether to show errors in the UI
         prevent_thread_lock: Whether to prevent thread locking
+        enable_localtunnel: Whether to use localtunnel as fallback if gradio share fails
     """
     setup_environment()
 
@@ -132,27 +179,76 @@ def launch(
         server_name = configs.get("server_name", server_name)
         share = share or "--share" in sys.argv
 
-        # Launch the app
-        logger.info("Starting Gradio server...")
-
-        app.launch(
-            server_name=server_name,
-            server_port=port,
-            show_error=show_error,
-            inbrowser=inbrowser or "--open" in sys.argv,
-            share=share,
-            ssr_mode=True,
-            prevent_thread_lock=prevent_thread_lock,
-            allowed_paths=allow_disk,
-        )
-
-        # Log successful startup
-        startup_time = time.time() - start_time
-        logger.info(f"Server started in {startup_time:.2f}s")
-        logger.info(f"Access the UI at: http://{server_name}:{port}")
-
+        # Log share warning for Colab users
         if share:
-            logger.info("Public URL created - accessible via the share link")
+            logger.info("Attempting to create public share link...")
+            logger.info("Note: If share link fails, use local URL http://0.0.0.0:7860")
+            if enable_localtunnel:
+                logger.info("LocalTunnel fallback is enabled")
+
+        # Launch the app with retry logic for tunnel issues
+        gradio_url = None
+        share_failed = False
+
+        try:
+            logger.info("Starting Gradio server...")
+
+            app.launch(
+                server_name=server_name,
+                server_port=port,
+                show_error=show_error,
+                inbrowser=inbrowser or "--open" in sys.argv,
+                share=share,
+                ssr_mode=True,
+                prevent_thread_lock=prevent_thread_lock,
+                allowed_paths=allow_disk,
+            )
+
+            # Log successful startup
+            startup_time = time.time() - start_time
+            logger.info(f"Server started in {startup_time:.2f}s")
+
+            if share:
+                logger.info(f"Access the UI locally: http://{server_name}:{port}")
+
+        except Exception as tunnel_error:
+            share_failed = True
+            error_msg = str(tunnel_error).lower()
+
+            # Check if it's a tunnel-related error
+            if "tunnel" in error_msg or "share" in error_msg or "connection" in error_msg:
+                logger.warning("Gradio share link creation failed")
+                logger.info("Retrying with share=False (local access only)...")
+
+                # Try again without share
+                app.launch(
+                    server_name=server_name,
+                    server_port=port,
+                    show_error=show_error,
+                    inbrowser=False,
+                    share=False,
+                    ssr_mode=True,
+                    prevent_thread_lock=prevent_thread_lock,
+                    allowed_paths=allow_disk,
+                )
+
+                logger.warning("Share link disabled - using local access only")
+                logger.info(f"Access locally at: http://{server_name}:{port}")
+
+                if enable_localtunnel:
+                    logger.info("Attempting LocalTunnel as alternative...")
+                    try_install_localtunnel()
+                    launch_with_localtunnel(port, None)
+            else:
+                raise tunnel_error
+
+        # Final instructions
+        logger.info("=" * 60)
+        logger.info("Web UI is ready!")
+        logger.info(f"Local URL:  http://{server_name}:{port}")
+        if share and not share_failed:
+            logger.info("Public URL: (check above for share link)")
+        logger.info("=" * 60)
 
         return 0
 
@@ -169,6 +265,7 @@ def launch(
         return 1
     except Exception as e:
         logger.error(f"Failed to launch web interface: {e}")
+        logger.info("Try running with: rvc-gui --share=False")
         return 1
 
 
@@ -246,16 +343,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Launch Advanced RVC Inference GUI")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=7860, help="Port to bind to")
-    parser.add_argument("--share", action="store_true", help="Create public URL")
+    parser.add_argument("--share", action="store_true", help="Create public URL (may fail in some environments)")
+    parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
+    parser.add_argument("--localtunnel", action="store_true", help="Use localtunnel as fallback if share fails")
     parser.add_argument("--open", action="store_true", help="Open in browser")
 
     args = parser.parse_args()
 
     sys.exit(
         launch(
-            share=args.share,
+            share=args.share and not args.no_share,
             server_name=args.host,
             server_port=args.port,
             inbrowser=args.open,
+            enable_localtunnel=args.localtunnel,
         )
     )
