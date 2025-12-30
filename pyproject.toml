@@ -130,6 +130,8 @@ advanced_rvc_inference = [
     "configs/*.json",
     "configs/v1/*.json",
     "configs/v2/*.json",
+    "configs/pcph_gan/*.json",
+    "configs/ringformer_v2/*.json",
     "assets/**/*",
     "assets/audios/**/*",
     "assets/binary/**/*",
