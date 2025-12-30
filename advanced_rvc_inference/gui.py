@@ -10,6 +10,8 @@ import sys
 import time
 import logging
 import subprocess
+import signal
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -55,33 +57,25 @@ def try_install_localtunnel():
     return False
 
 
-def launch_with_localtunnel(port: int = 7860, app=None):
-    """Launch with localtunnel as fallback."""
+def _setup_signal_handlers():
+    """Setup signal handlers to prevent premature shutdown."""
+    def signal_handler(signum, frame):
+        logger.info(f"Received signal {signum}, keeping tunnel alive...")
+    
+    # Only setup handlers if not in main process
+    if sys.platform != 'win32':
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+
+
+def _keep_alive():
+    """Keep the process alive for tunnel maintenance."""
     try:
-        import localtunnel
-        
-        # Start localtunnel
-        tunnel = localtunnel.Server(port=port)
-        
-        # Get the public URL
-        public_url = tunnel.url
-        
-        logger.info(f"LocalTunnel public URL: {public_url}")
-        
-        # Launch the app without share (localtunnel handles it)
-        if app:
-            app.launch(
-                server_name="0.0.0.0",
-                server_port=port,
-                share=False,
-                ssr_mode=True,
-                prevent_thread_lock=True,
-            )
-        
-        return public_url
-    except Exception as e:
-        logger.error(f"LocalTunnel failed: {e}")
-        return None
+        while True:
+            time.sleep(60)
+            logger.debug("Tunnel keepalive check...")
+    except KeyboardInterrupt:
+        logger.info("Keepalive loop interrupted")
 
 
 def launch(
@@ -92,6 +86,7 @@ def launch(
     show_error: bool = False,
     prevent_thread_lock: bool = True,
     enable_localtunnel: bool = False,
+    keep_alive: bool = True,
 ):
     """
     Launch the Gradio web interface.
@@ -104,8 +99,10 @@ def launch(
         show_error: Whether to show errors in the UI
         prevent_thread_lock: Whether to prevent thread locking
         enable_localtunnel: Whether to use localtunnel as fallback if gradio share fails
+        keep_alive: Whether to keep the tunnel alive (useful for Colab)
     """
     setup_environment()
+    _setup_signal_handlers()
 
     try:
         import gradio as gr
@@ -179,20 +176,13 @@ def launch(
         server_name = configs.get("server_name", server_name)
         share = share or "--share" in sys.argv
 
-        # Log share warning for Colab users
-        if share:
-            logger.info("Attempting to create public share link...")
-            logger.info("Note: If share link fails, use local URL http://0.0.0.0:7860")
-            if enable_localtunnel:
-                logger.info("LocalTunnel fallback is enabled")
+        # Launch the app
+        logger.info("Starting Gradio server...")
 
-        # Launch the app with retry logic for tunnel issues
         gradio_url = None
         share_failed = False
 
         try:
-            logger.info("Starting Gradio server...")
-
             app.launch(
                 server_name=server_name,
                 server_port=port,
@@ -207,9 +197,10 @@ def launch(
             # Log successful startup
             startup_time = time.time() - start_time
             logger.info(f"Server started in {startup_time:.2f}s")
+            logger.info(f"Access the UI at: http://{server_name}:{port}")
 
-            if share:
-                logger.info(f"Access the UI locally: http://{server_name}:{port}")
+            if share and app.share_url:
+                logger.info(f"Public URL: {app.share_url}")
 
         except Exception as tunnel_error:
             share_failed = True
@@ -238,17 +229,28 @@ def launch(
                 if enable_localtunnel:
                     logger.info("Attempting LocalTunnel as alternative...")
                     try_install_localtunnel()
-                    launch_with_localtunnel(port, None)
+                    # Launch localtunnel in background
+                    import threading
+                    def run_localtunnel():
+                        import subprocess
+                        import sys
+                        subprocess.run([
+                            sys.executable, "-m", "localtunnel", 
+                            "--port", str(port)
+                        ])
+                    tunnel_thread = threading.Thread(target=run_localtunnel, daemon=True)
+                    tunnel_thread.start()
+                    logger.info("LocalTunnel started in background")
             else:
                 raise tunnel_error
 
-        # Final instructions
-        logger.info("=" * 60)
-        logger.info("Web UI is ready!")
-        logger.info(f"Local URL:  http://{server_name}:{port}")
-        if share and not share_failed:
-            logger.info("Public URL: (check above for share link)")
-        logger.info("=" * 60)
+        # Keep tunnel alive in notebook environments (Colab, etc.)
+        if keep_alive and (share or enable_localtunnel):
+            logger.info("Keeping tunnel alive... (Press Ctrl+C to stop)")
+            try:
+                _keep_alive()
+            except KeyboardInterrupt:
+                logger.info("Shutting down...")
 
         return 0
 
@@ -347,6 +349,7 @@ if __name__ == "__main__":
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
     parser.add_argument("--localtunnel", action="store_true", help="Use localtunnel as fallback if share fails")
     parser.add_argument("--open", action="store_true", help="Open in browser")
+    parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
 
     args = parser.parse_args()
 
@@ -357,5 +360,6 @@ if __name__ == "__main__":
             server_port=args.port,
             inbrowser=args.open,
             enable_localtunnel=args.localtunnel,
+            keep_alive=args.keep_alive,
         )
     )
