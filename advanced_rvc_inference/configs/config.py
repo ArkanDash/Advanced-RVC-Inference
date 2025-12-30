@@ -4,9 +4,34 @@ import json
 import torch
 import onnxruntime
 
-sys.path.append(os.getcwd())
-
 from advanced_rvc_inference.library.backends import directml, opencl, zluda
+
+def get_package_dir():
+    """Get the package directory (where the installed package files are located)."""
+    # Get the directory where this config.py file is located
+    return os.path.dirname(os.path.abspath(__file__))
+
+def get_package_config_path(filename):
+    """Get the path to a config file within the installed package."""
+    package_dir = get_package_dir()
+    return os.path.join(package_dir, filename)
+
+def resolve_path(relative_path, fallback_path=None):
+    """
+    Resolve a relative path to an absolute path.
+    First tries the package directory, then falls back to cwd if provided.
+    """
+    package_dir = get_package_dir()
+    package_path = os.path.join(package_dir, "..", "..", relative_path)
+    package_path = os.path.normpath(package_path)
+    
+    if os.path.exists(package_path):
+        return package_path
+    
+    if fallback_path and os.path.exists(fallback_path):
+        return fallback_path
+    
+    return package_path
 
 version_config_paths = [os.path.join(version, size) for version in ["v1", "v2"] for size in ["32000.json", "40000.json", "48000.json"]]
 
@@ -22,12 +47,15 @@ def singleton(cls):
 @singleton
 class Config:
     def __init__(self):
-        self.configs_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", "config.json")
+        self.configs_path = get_package_config_path("config.json")
         self.configs = json.load(open(self.configs_path, "r"))
 
         self.cpu_mode = self.configs.get("cpu_mode", False)
         self.brain = self.configs.get("brain", False)
         self.debug_mode = self.configs.get("debug_mode", False)
+
+        # Resolve all paths from config.json to use package directory (before other methods that need paths)
+        self.resolve_config_paths()
 
         self.json_config = self.load_config_json()
         self.translations = self.multi_language()
@@ -58,6 +86,26 @@ class Config:
 
         return translations
     
+    def resolve_config_paths(self):
+        """Resolve all relative paths in config.json to absolute paths."""
+        package_dir = get_package_dir()
+        path_keys = [
+            "convert_path", "separate_path", "create_dataset_path", "preprocess_path",
+            "extract_path", "create_index_path", "train_path", "create_reference_path",
+            "csv_path", "weights_path", "logs_path", "binary_path", "f0_path",
+            "language_path", "presets_path", "embedders_path", "predictors_path",
+            "pretrained_custom_path", "pretrained_v1_path", "pretrained_v2_path",
+            "speaker_diarization_path", "uvr5_path", "audios_path", "uvr_path",
+            "reference_path"
+        ]
+        
+        for key in path_keys:
+            if key in self.configs:
+                relative_path = self.configs[key]
+                # Resolve relative to package directory
+                resolved = os.path.normpath(os.path.join(package_dir, "..", "..", relative_path))
+                self.configs[key] = resolved
+    
     def is_fp16(self):
         fp16 = self.configs.get("fp16", False)
 
@@ -73,10 +121,16 @@ class Config:
 
     def load_config_json(self):
         configs = {}
+        package_dir = os.path.dirname(os.path.abspath(__file__))
 
         for config_file in version_config_paths:
             try:
-                with open(os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", config_file), "r") as f:
+                config_path = os.path.join(package_dir, config_file)
+                # Fallback to cwd path if running from source
+                if not os.path.exists(config_path):
+                    config_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", config_file)
+                
+                with open(config_path, "r") as f:
                     configs[config_file] = json.load(f)
             except json.JSONDecodeError:
                 print(self.translations["empty_json"].format(file=config_file))
