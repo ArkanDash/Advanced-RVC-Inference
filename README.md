@@ -223,13 +223,6 @@ Reduce batch size or use CPU mode:
 rvc = RVCInference(device="cpu")
 ```
 
-### Import Errors
-
-Reinstall the package:
-
-```bash
-pip install --upgrade --force-reinstall advanced-rvc-inference
-```
 
 ## Contributing
 
