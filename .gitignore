@@ -900,6 +900,17 @@
 **/.claude/debug/**
 
 # ==============================================================================
+# PROJECT SPECIFIC
+# ==============================================================================
+# Add your project-specific ignores here
+# workspace/
+# data/
+# uploads/
+# downloads/
+
+# Project-specific directories
+tmp/
+# ==============================================================================
 # NESTED GIT REPOSITORIES
 # ==============================================================================
 # Temporarily renamed .git directories (used by WorkspaceGitManager)
