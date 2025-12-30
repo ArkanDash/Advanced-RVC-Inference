@@ -47,6 +47,13 @@ def _get_configs():
     return configs, config
 
 
+def _get_configs_only():
+    """Lazy load configs only."""
+    from advanced_rvc_inference.variables import configs
+
+    return configs
+
+
 def _get_ui_helpers():
     """Lazy load UI helper functions."""
     from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, process_output, replace_export_format
@@ -183,7 +190,7 @@ def convert(
         audio_processing: Whether to use audio processing
         alpha: Alpha value for mixing
     """
-    from advanced_rvc_inference.variables import python
+    from advanced_rvc_inference.variables import python, configs
 
     cmd = [
         python,
@@ -311,7 +318,7 @@ def convert_audio(
     Returns:
         Tuple of output values
     """
-    global configs
+    configs = _get_configs_only()
 
     translations = _get_translations()
     gr_warning_func, _, _, process_output_func, replace_export_format_func = _get_ui_helpers()
@@ -573,7 +580,7 @@ def convert_selection(
     Returns:
         Dictionary with UI update values
     """
-    global configs
+    configs = _get_configs_only()
 
     translations = _get_translations()
     gr_info_func = _get_ui_helpers()[0]
@@ -752,7 +759,7 @@ def convert_with_whisper(
     Returns:
         Path to output audio or None if failed
     """
-    global configs, config
+    configs, config = _get_configs()
 
     translations = _get_translations()
     gr_info_func = _get_ui_helpers()[0]
@@ -1061,7 +1068,7 @@ def convert_tts(
     Returns:
         Path to output audio or None if failed
     """
-    global configs
+    configs = _get_configs_only()
 
     translations = _get_translations()
     gr_warning_func = _get_ui_helpers()[1]
