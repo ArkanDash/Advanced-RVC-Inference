@@ -183,12 +183,44 @@ def launch(
         share_failed = False
 
         # Build allowed paths list - include package assets directory
-        from pathlib import Path
-        package_root = Path(__file__).parent.parent
-        assets_path = str(package_root / "assets")
+        def get_package_assets_path():
+            """Get assets directory path, handling both source and installed cases."""
+            # Try to get path from the package's assets module
+            try:
+                from advanced_rvc_inference.assets import ASSETS_PATH
+                return str(ASSETS_PATH)
+            except ImportError:
+                pass
+            
+            # Fallback: try to get path from this file's location
+            try:
+                from pathlib import Path
+                package_root = Path(__file__).parent.parent
+                assets_path = package_root / "assets"
+                if assets_path.exists():
+                    return str(assets_path)
+            except Exception:
+                pass
+            
+            # Last resort: try using importlib to find the package location
+            try:
+                import importlib.util
+                spec = importlib.util.find_spec("advanced_rvc_inference")
+                if spec and spec.origin:
+                    package_dir = Path(spec.origin).parent.parent
+                    assets_path = package_dir / "assets"
+                    if assets_path.exists():
+                        return str(assets_path)
+            except Exception:
+                pass
+            
+            return None
+
         allowed_paths_list = list(allow_disk) if allow_disk else []
-        if assets_path not in allowed_paths_list:
+        assets_path = get_package_assets_path()
+        if assets_path and assets_path not in allowed_paths_list:
             allowed_paths_list.append(assets_path)
+            logger.debug(f"Added package assets path to allowed_paths: {assets_path}")
         
         logger.debug(f"Allowed paths: {allowed_paths_list}")
 
