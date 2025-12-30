@@ -4,10 +4,7 @@
 
 **A modular Retrieval-based Voice Conversion framework with Gradio UI, training capabilities, and audio processing tools**
 
-[![PyPI Version](https://img.shields.io/pypi/v/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
-[![Python Versions](https://img.shields.io/pypi/pythonversions/advanced-rvc-inference.svg)](https://pypi.org/project/advanced-rvc-inference/)
-[![License](https://img.shields.io/pypi/l/advanced-rvc-inference.svg)](https://opensource.org/licenses/MIT/)
-[![Downloads](https://img.shields.io/pypi/dm/advanced-rvc-inference.svg)](https://pepy.tech/project/advanced-rvc-inference)
+
 
 </div>
 
