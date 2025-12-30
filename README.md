@@ -24,10 +24,16 @@
 
 ## Installation
 
-### Basic Installation
+### From PyPI (Recommended)
 
 ```bash
 pip install advanced-rvc-inference
+```
+
+### From GitHub (Latest Version)
+
+```bash
+pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
 ```
 
 ### With GPU Support
@@ -36,6 +42,8 @@ For CUDA-enabled GPUs:
 
 ```bash
 pip install advanced-rvc-inference[gpu]
+# or
+pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git#egg=advanced-rvc-inference[gpu]
 ```
 
 ### From Source
@@ -50,6 +58,8 @@ pip install -e .
 
 ```bash
 pip install advanced-rvc-inference[dev]
+# or
+pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git#egg=advanced-rvc-inference[dev]
 ```
 
 ## Quick Start
