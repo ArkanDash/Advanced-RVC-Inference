@@ -19,15 +19,7 @@
 - **Audio Separation**: Built-in tools for vocal/instrument separation
 - **Text-to-Speech**: Integration with edge-tts for TTS-based voice conversion
 
-## Installation
-
-### From PyPI (Recommended)
-
-```bash
-pip install advanced-rvc-inference
-```
-
-### From GitHub (Latest Version)
+## Installatio
 
 ```bash
 pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
@@ -38,8 +30,6 @@ pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
 For CUDA-enabled GPUs:
 
 ```bash
-pip install advanced-rvc-inference[gpu]
-# or
 pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git#egg=advanced-rvc-inference[gpu]
 ```
 
