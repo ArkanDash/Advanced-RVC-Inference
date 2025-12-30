@@ -8,6 +8,8 @@ recursive-include advanced_rvc_inference *.py
 include advanced_rvc_inference/configs/*.json
 include advanced_rvc_inference/configs/v1/*.json
 include advanced_rvc_inference/configs/v2/*.json
+include advanced_rvc_inference/configs/pcph_gan/*.json
+include advanced_rvc_inference/configs/ringformer_v2/*.json
 
 # Include asset directories
 recursive-include advanced_rvc_inference/assets *
