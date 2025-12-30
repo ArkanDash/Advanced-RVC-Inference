@@ -182,6 +182,16 @@ def launch(
         gradio_url = None
         share_failed = False
 
+        # Build allowed paths list - include package assets directory
+        from pathlib import Path
+        package_root = Path(__file__).parent.parent
+        assets_path = str(package_root / "assets")
+        allowed_paths_list = list(allow_disk) if allow_disk else []
+        if assets_path not in allowed_paths_list:
+            allowed_paths_list.append(assets_path)
+        
+        logger.debug(f"Allowed paths: {allowed_paths_list}")
+
         try:
             app.launch(
                 server_name=server_name,
@@ -191,7 +201,7 @@ def launch(
                 share=share,
                 ssr_mode=True,
                 prevent_thread_lock=prevent_thread_lock,
-                allowed_paths=allow_disk,
+                allowed_paths=allowed_paths_list,
             )
 
             # Log successful startup
@@ -220,7 +230,7 @@ def launch(
                     share=False,
                     ssr_mode=True,
                     prevent_thread_lock=prevent_thread_lock,
-                    allowed_paths=allow_disk,
+                    allowed_paths=allowed_paths_list,
                 )
 
                 logger.warning("Share link disabled - using local access only")
