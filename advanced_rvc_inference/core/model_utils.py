@@ -6,7 +6,7 @@ import datetime
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.ui import gr_info, gr_warning, gr_error
+from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
 
 def fushion_model_pth(name, pth_1, pth_2, ratio):

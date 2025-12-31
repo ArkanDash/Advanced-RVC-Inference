@@ -10,7 +10,7 @@ import tempfile
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
-from advanced_rvc_inference.rvc.ui import gr_info, gr_warning, gr_error
+from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error
 
 def synthesize_tts(prompt, voice, speed, output, pitch, google):
     if not google: 

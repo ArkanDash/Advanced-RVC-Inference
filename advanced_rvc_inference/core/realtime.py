@@ -5,7 +5,7 @@ import time
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
-from advanced_rvc_inference.rvc.ui import gr_info, gr_warning, audio_device
+from advanced_rvc_inference.core.ui import gr_info, gr_warning, audio_device
 
 running, callbacks, audio_manager = False, None, None
 

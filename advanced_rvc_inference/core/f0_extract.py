@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.ui import gr_info, gr_warning
+from advanced_rvc_inference.core.ui import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import config, translations, configs
 
 def f0_extract(audio, f0_method, f0_onnx):

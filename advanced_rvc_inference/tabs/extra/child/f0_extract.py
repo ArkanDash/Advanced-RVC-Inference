@@ -5,8 +5,8 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.f0_extract import f0_extract
-from advanced_rvc_inference.rvc.ui import change_audios_choices, unlock_f0, shutil_move
+from advanced_rvc_inference.core.f0_extract import f0_extract
+from advanced_rvc_inference.core.ui import change_audios_choices, unlock_f0, shutil_move
 from advanced_rvc_inference.utils.variables import translations, paths_for_files, method_f0, configs, file_types
 
 def f0_extract_tab():

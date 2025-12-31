@@ -123,7 +123,7 @@ with gr.Blocks(
                 sys.exit(1)
 
         if client_mode:
-            from advanced_rvc_inference.rvc.realtime_client import app as fastapi_app
+            from advanced_rvc_inference.core.realtime_client import app as fastapi_app
             gradio_app.mount("/api", fastapi_app)
         
         sys.stdout = original_stdout

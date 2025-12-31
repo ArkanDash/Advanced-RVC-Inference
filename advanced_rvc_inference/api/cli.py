@@ -102,7 +102,7 @@ def cmd_inference(args):
     logger.info("Starting inference...")
 
     try:
-        from advanced_rvc_inference.rvc.inference import convert
+        from advanced_rvc_inference.core.inference import convert
 
         # Validate inputs
         if not args.input or not Path(args.input).exists():
@@ -215,7 +215,7 @@ def cmd_realtime(args):
     logger.info("Starting real-time mode...")
 
     try:
-        from advanced_rvc_inference.rvc.realtime import realtime_tab
+        from advanced_rvc_inference.core.realtime import realtime_tab
 
         print("Real-time voice conversion is best performed through the web interface.")
         print("Run: rvc-gui")

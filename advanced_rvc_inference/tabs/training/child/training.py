@@ -5,10 +5,10 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.process import zip_file
-from advanced_rvc_inference.rvc.training import preprocess, extract, create_index, training
+from advanced_rvc_inference.core.process import zip_file
+from advanced_rvc_inference.core.training import preprocess, extract, create_index, training
 from advanced_rvc_inference.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
-from advanced_rvc_inference.rvc.ui import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
+from advanced_rvc_inference.core.ui import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
 
 def training_model_tab():
     with gr.Row():

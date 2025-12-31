@@ -5,8 +5,8 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.training import create_dataset
-from advanced_rvc_inference.rvc.ui import visible, valueFalse_interactive, create_dataset_change
+from advanced_rvc_inference.core.training import create_dataset
+from advanced_rvc_inference.core.ui import visible, valueFalse_interactive, create_dataset_change
 from advanced_rvc_inference.utils.variables import translations, sample_rate_choice, uvr_model, reverb_models, denoise_models, vr_models, mdx_models
 
 def create_dataset_tab():

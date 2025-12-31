@@ -102,7 +102,7 @@ class RVCModel:
         # Import heavy dependencies only when needed
         import torch
 
-        from advanced_rvc_inference.rvc.model_utils import load_model
+        from advanced_rvc_inference.core.model_utils import load_model
 
         self.model = load_model(self.model_path, device=self.device, half=self.half)
         logger.info(f"Loaded model: {self.model_path}")
@@ -235,7 +235,7 @@ class RVCInference:
             )
 
         # Run conversion
-        from advanced_rvc_inference.rvc.inference import convert
+        from advanced_rvc_inference.core.inference import convert
 
         convert(
             pitch=pitch_change,
@@ -298,7 +298,7 @@ class RVCInference:
         if self.model is None:
             raise ValueError("No model loaded. Call load_model() first.")
 
-        from advanced_rvc_inference.rvc.inference import convert
+        from advanced_rvc_inference.core.inference import convert
 
         convert(
             pitch=pitch_change,

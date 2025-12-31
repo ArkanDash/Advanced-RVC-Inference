@@ -6,7 +6,7 @@ from random import shuffle
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.ui import configs, config
+from advanced_rvc_inference.core.ui import configs, config
 from advanced_rvc_inference.extracting.embedding import create_mute_file
 
 def mute_file(embedders_mode, embedders_model, mute_base_path, rvc_version):

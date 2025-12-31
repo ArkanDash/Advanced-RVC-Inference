@@ -56,7 +56,7 @@ def _get_configs_only():
 
 def _get_ui_helpers():
     """Lazy load UI helper functions."""
-    from advanced_rvc_inference.rvc.ui import gr_info, gr_warning, gr_error, process_output, replace_export_format
+    from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, process_output, replace_export_format
 
     return gr_info, gr_warning, gr_error, process_output, replace_export_format
 

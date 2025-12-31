@@ -5,8 +5,8 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.training import create_reference
-from advanced_rvc_inference.rvc.ui import visible, change_audios_choices, unlock_f0, shutil_move, change_embedders_mode
+from advanced_rvc_inference.core.training import create_reference
+from advanced_rvc_inference.core.ui import visible, change_audios_choices, unlock_f0, shutil_move, change_embedders_mode
 from advanced_rvc_inference.utils.variables import translations, paths_for_files, method_f0, hybrid_f0_method, file_types, configs, embedders_model, embedders_mode
 
 def create_reference_tab():

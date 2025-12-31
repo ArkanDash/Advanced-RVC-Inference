@@ -5,9 +5,9 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.downloads import download_url
-from advanced_rvc_inference.rvc.separate import separate_music
-from advanced_rvc_inference.rvc.ui import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
+from advanced_rvc_inference.core.downloads import download_url
+from advanced_rvc_inference.core.separate import separate_music
+from advanced_rvc_inference.core.ui import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
 from advanced_rvc_inference.utils.variables import translations, uvr_model, karaoke_models, reverb_models, vr_models, denoise_models, mdx_models, paths_for_files, sample_rate_choice, configs, file_types, export_format_choices
 
 def separate_tab():

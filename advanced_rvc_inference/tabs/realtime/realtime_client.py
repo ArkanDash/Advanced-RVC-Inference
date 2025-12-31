@@ -6,7 +6,7 @@ import gradio as gr
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs, model_name, index_path, method_f0, embedders_mode, embedders_model
-from advanced_rvc_inference.rvc.ui import change_models_choices, get_index, index_strength_show, unlock_f0, hoplength_show, change_embedders_mode, visible, update_dropdowns_from_json, update_button_from_json
+from advanced_rvc_inference.core.ui import change_models_choices, get_index, index_strength_show, unlock_f0, hoplength_show, change_embedders_mode, visible, update_dropdowns_from_json, update_button_from_json
 
 def realtime_client_tab():
     with gr.TabItem(translations["realtime_client"], visible=configs.get("realtime_client_tab", True)):

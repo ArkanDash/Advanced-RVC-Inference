@@ -6,7 +6,7 @@ import subprocess
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.rvc.ui import gr_info
+from advanced_rvc_inference.core.ui import gr_info
 from advanced_rvc_inference.utils.variables import python, translations, configs_json
 
 def restart_app(app):

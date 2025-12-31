@@ -6,9 +6,9 @@ import gradio as gr
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs, models, model_options
-from advanced_rvc_inference.rvc.downloads import download_model, search_models, download_pretrained_model
-from advanced_rvc_inference.rvc.ui import change_download_choices, change_download_pretrained_choices, shutil_move
-from advanced_rvc_inference.rvc.process import fetch_pretrained_data, save_drop_model, update_sample_rate_dropdown
+from advanced_rvc_inference.core.downloads import download_model, search_models, download_pretrained_model
+from advanced_rvc_inference.core.ui import change_download_choices, change_download_pretrained_choices, shutil_move
+from advanced_rvc_inference.core.process import fetch_pretrained_data, save_drop_model, update_sample_rate_dropdown
 
 def download_tab():
     with gr.TabItem(translations["downloads"], visible=configs.get("downloads_tab", True)):
