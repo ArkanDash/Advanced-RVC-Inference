@@ -139,17 +139,17 @@ def launch(
                 f"<h1 style='text-align: center;'>Advanced RVC Inference v{get_version()}</h1>"
             )
 
-            from advanced_rvc_inference.tabs.inference.inference import inference_tab
-            from advanced_rvc_inference.tabs.realtime.realtime import realtime_tab
-            from advanced_rvc_inference.tabs.training.training import training_tab
-            from advanced_rvc_inference.tabs.downloads.downloads import download_tab
-            from advanced_rvc_inference.tabs.extra.extra import extra_tab
+            from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
+            from advanced_rvc_inference.app.tabs.realtime.realtime import realtime_tab
+            from advanced_rvc_inference.app.tabs.training.training import training_tab
+            from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
+            from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
             with gr.Tabs():
                 inference_tab()
 
                 if client_mode:
-                    from advanced_rvc_inference.tabs.realtime.realtime_client import (
+                    from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
                         realtime_client_tab,
                     )
 
@@ -347,17 +347,17 @@ def create_app():
         ) as app:
             gr.HTML("<h1 style='text-align: center;'>Advanced RVC Inference</h1>")
 
-            from advanced_rvc_inference.tabs.inference.inference import inference_tab
-            from advanced_rvc_inference.tabs.realtime.realtime import realtime_tab
-            from advanced_rvc_inference.tabs.training.training import training_tab
-            from advanced_rvc_inference.tabs.downloads.downloads import download_tab
-            from advanced_rvc_inference.tabs.extra.extra import extra_tab
+            from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
+            from advanced_rvc_inference.app.tabs.realtime.realtime import realtime_tab
+            from advanced_rvc_inference.app.tabs.training.training import training_tab
+            from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
+            from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
             with gr.Tabs():
                 inference_tab()
 
                 if client_mode:
-                    from advanced_rvc_inference.tabs.realtime.realtime_client import (
+                    from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
                         realtime_client_tab,
                     )
 

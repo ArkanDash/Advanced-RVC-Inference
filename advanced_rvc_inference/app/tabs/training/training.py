@@ -6,9 +6,9 @@ import gradio as gr
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
-from advanced_rvc_inference.tabs.training.child.training import training_model_tab
-from advanced_rvc_inference.tabs.training.child.create_dataset import create_dataset_tab
-from advanced_rvc_inference.tabs.training.child.create_reference import create_reference_tab
+from advanced_rvc_inference.app.tabs.training.child.training import training_model_tab
+from advanced_rvc_inference.app.tabs.training.child.create_dataset import create_dataset_tab
+from advanced_rvc_inference.app.tabs.training.child.create_reference import create_reference_tab
 
 def training_tab():
     with gr.TabItem(translations["training_model"], visible=configs.get("create_and_training_tab", True)):

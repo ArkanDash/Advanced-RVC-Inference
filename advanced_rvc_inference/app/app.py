@@ -6,10 +6,10 @@ from pathlib import Path
 sys.path.append(os.getcwd())
 start_time = time.time()
 
-from advanced_rvc_inference.tabs.extra.extra import extra_tab
-from advanced_rvc_inference.tabs.training.training import training_tab
-from advanced_rvc_inference.tabs.downloads.downloads import download_tab
-from advanced_rvc_inference.tabs.inference.inference import inference_tab
+from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
+from advanced_rvc_inference.app.tabs.training.training import training_tab
+from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
+from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
 from advanced_rvc_inference.utils.variables import logger, config, translations, theme, font, configs, language, allow_disk
 from advanced_rvc_inference.mainjs import js_code
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -75,10 +75,10 @@ with gr.Blocks(
 
 
         if client_mode:
-            from advanced_rvc_inference.tabs.realtime.realtime_client import realtime_client_tab
+            from advanced_rvc_inference.app.tabs.realtime.realtime_client import realtime_client_tab
             realtime_client_tab()
         else:
-            from advanced_rvc_inference.tabs.realtime.realtime import realtime_tab
+            from advanced_rvc_inference.app.tabs.realtime.realtime import realtime_tab
             realtime_tab()
 
         training_tab()
