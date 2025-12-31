@@ -470,7 +470,7 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
     original_audio, instruments_audio = os.path.join(output_dirs, f"Original_Vocals.{export_format}"), os.path.join(output_dirs, f"Instruments.{export_format}")
 
     for file in input_list:
-        file_path = os.path.join(output_dirs)
+        file_path = os.path.join(output_dirs, file)
         if not os.path.exists(file_path): logger.warning(translations["not_found"].format(name=file_path))
 
         if mode == "original":
