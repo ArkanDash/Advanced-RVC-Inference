@@ -102,7 +102,7 @@ def cmd_inference(args):
     logger.info("Starting inference...")
 
     try:
-        from advanced_rvc_inference.core.inference import convert
+        from advanced_rvc_inference.rvc.infer.inference import convert
 
         # Validate inputs
         if not args.input or not Path(args.input).exists():

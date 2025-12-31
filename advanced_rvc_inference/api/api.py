@@ -235,7 +235,7 @@ class RVCInference:
             )
 
         # Run conversion
-        from advanced_rvc_inference.core.inference import convert
+        from advanced_rvc_inference.rvc.infer.inference import convert
 
         convert(
             pitch=pitch_change,
@@ -298,7 +298,7 @@ class RVCInference:
         if self.model is None:
             raise ValueError("No model loaded. Call load_model() first.")
 
-        from advanced_rvc_inference.core.inference import convert
+        from advanced_rvc_inference.rvc.infer.inference import convert
 
         convert(
             pitch=pitch_change,

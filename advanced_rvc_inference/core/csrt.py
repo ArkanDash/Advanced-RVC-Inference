@@ -3,7 +3,7 @@ import sys
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.inference import whisper_process
+from advanced_rvc_inference.rvc.infer.inference import whisper_process
 from advanced_rvc_inference.uvr.architectures.utils import check_spk_diarization
 from advanced_rvc_inference.core.ui import gr_info, gr_warning, process_output
 from advanced_rvc_inference.utils.variables import config, translations, configs, logger

@@ -5,7 +5,7 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.inference import convert_with_whisper
+from advanced_rvc_inference.rvc.infer.inference import convert_with_whisper
 from advanced_rvc_inference.core.ui import visible, change_audios_choices, unlock_f0, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move
 from advanced_rvc_inference.utils.variables import translations, paths_for_files, sample_rate_choice, model_name, index_path, method_f0, embedders_mode, embedders_model, configs, file_types, export_format_choices, whisper_model, hybrid_f0_method, f0_file  # Added f0_file here
 

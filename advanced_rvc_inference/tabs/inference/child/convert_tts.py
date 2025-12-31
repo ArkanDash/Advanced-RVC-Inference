@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.tts import TTS
 from advanced_rvc_inference.core.process import process_input
-from advanced_rvc_inference.core.inference import convert_tts
+from advanced_rvc_inference.rvc.infer.inference import convert_tts
 from advanced_rvc_inference.core.utils import google_translate
 from advanced_rvc_inference.core.presets import save_presets, load_presets
 from advanced_rvc_inference.core.ui import visible, change_f0_choices, unlock_f0, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, change_tts_voice_choices, shutil_move, change_preset_choices
