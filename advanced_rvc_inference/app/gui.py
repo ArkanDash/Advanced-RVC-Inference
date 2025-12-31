@@ -333,7 +333,7 @@ def create_app():
             language,
             allow_disk,
         )
-        from advanced_rvc_inference.mainjs import js_code
+        from advanced_rvc_inference.app.mainjs import js_code
         import ssl
 
         ssl._create_default_https_context = ssl._create_unverified_context
