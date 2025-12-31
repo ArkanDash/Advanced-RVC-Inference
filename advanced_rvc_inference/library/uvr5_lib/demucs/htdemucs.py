@@ -13,7 +13,7 @@ from torch.nn import functional as F
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations
+from advanced_rvc_inference.utils.variables import translations
 from advanced_rvc_inference.library.uvr5_lib.demucs.states import capture_init
 from advanced_rvc_inference.library.uvr5_lib.demucs.demucs import rescale_module
 from advanced_rvc_inference.library.uvr5_lib.demucs.hdemucs import pad1d, spectro, ispectro, wiener, ScaledEmbedding, HEncLayer, MultiWrap, HDecLayer

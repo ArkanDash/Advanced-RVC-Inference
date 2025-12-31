@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.tools import huggingface
 from advanced_rvc_inference.library.backends import directml, opencl
-from advanced_rvc_inference.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
+from advanced_rvc_inference.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 for l in ["httpx", "httpcore"]:
     logging.getLogger(l).setLevel(logging.ERROR)

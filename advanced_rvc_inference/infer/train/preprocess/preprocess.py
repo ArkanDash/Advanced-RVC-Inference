@@ -19,7 +19,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import load_audio
 from advanced_rvc_inference.infer.train.preprocess.slicer2 import Slicer
-from advanced_rvc_inference.variables import config, logger, translations, configs
+from advanced_rvc_inference.utils.variables import config, logger, translations, configs
 
 for l in ["numba.core.byteflow", "numba.core.ssa", "numba.core.interpreter"]:
     logging.getLogger(l).setLevel(logging.ERROR)

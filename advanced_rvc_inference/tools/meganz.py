@@ -16,7 +16,7 @@ from Crypto.Util import Counter
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations
+from advanced_rvc_inference.utils.variables import translations
 
 def makebyte(x):
     return codecs.latin_1_encode(x)[0]

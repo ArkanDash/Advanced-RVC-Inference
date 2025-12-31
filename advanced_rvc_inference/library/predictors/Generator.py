@@ -15,7 +15,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.predictors.CREPE.filter import mean, median
 from advanced_rvc_inference.library.predictors.WORLD.SWIPE import swipe, stonemask
-from advanced_rvc_inference.variables import config, configs, logger, translations
+from advanced_rvc_inference.utils.variables import config, configs, logger, translations
 from advanced_rvc_inference.library.utils import autotune_f0, proposal_f0_up_key, circular_write
 
 @nb.jit(nopython=True)

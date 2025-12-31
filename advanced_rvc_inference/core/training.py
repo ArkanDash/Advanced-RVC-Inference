@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.tools import huggingface
 from advanced_rvc_inference.core.ui import gr_info, gr_warning
-from advanced_rvc_inference.variables import python, translations, configs
+from advanced_rvc_inference.utils.variables import python, translations, configs
 
 def if_done(done, p):
     while 1:

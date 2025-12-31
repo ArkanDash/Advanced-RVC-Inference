@@ -10,7 +10,7 @@ from queue import Queue
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import logger, translations
+from advanced_rvc_inference.utils.variables import logger, translations
 
 class ServerAudioDevice:
     def __init__(self, index, name, host_api, max_input_channels, max_output_channels, default_samplerate):

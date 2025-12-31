@@ -108,7 +108,7 @@ def launch(
         import gradio as gr
 
         # Import required modules
-        from advanced_rvc_inference.variables import (
+        from advanced_rvc_inference.utils.variables import (
             logger,
             config,
             translations,
@@ -325,7 +325,7 @@ def create_app():
     try:
         import gradio as gr
 
-        from advanced_rvc_inference.variables import (
+        from advanced_rvc_inference.utils.variables import (
             config,
             translations,
             theme,

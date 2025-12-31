@@ -28,7 +28,7 @@ os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
 from advanced_rvc_inference.library.utils import clear_gpu_cache
 from advanced_rvc_inference.library.backends import directml, opencl
-from advanced_rvc_inference.variables import logger, translations
+from advanced_rvc_inference.utils.variables import logger, translations
 
 from advanced_rvc_inference.library.algorithm import commons
 from advanced_rvc_inference.infer.train.training import losses
@@ -51,8 +51,8 @@ from advanced_rvc_inference.infer.train.training.utils import (
     plot_spectrogram_to_numpy
 )
 
-from advanced_rvc_inference.variables import config as main_config
-from advanced_rvc_inference.variables import configs as main_configs
+from advanced_rvc_inference.utils.variables import config as main_config
+from advanced_rvc_inference.utils.variables import configs as main_configs
 
 warnings.filterwarnings("ignore")
 logging.getLogger("torch").setLevel(logging.ERROR)

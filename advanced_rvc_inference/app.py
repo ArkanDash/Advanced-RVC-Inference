@@ -10,7 +10,7 @@ from advanced_rvc_inference.tabs.extra.extra import extra_tab
 from advanced_rvc_inference.tabs.training.training import training_tab
 from advanced_rvc_inference.tabs.downloads.downloads import download_tab
 from advanced_rvc_inference.tabs.inference.inference import inference_tab
-from advanced_rvc_inference.variables import logger, config, translations, theme, font, configs, language, allow_disk
+from advanced_rvc_inference.utils.variables import logger, config, translations, theme, font, configs, language, allow_disk
 from advanced_rvc_inference.mainjs import js_code
 ssl._create_default_https_context = ssl._create_unverified_context
 

@@ -18,7 +18,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.ui import replace_export_format
 from advanced_rvc_inference.infer.rvc.pipeline import Pipeline
-from advanced_rvc_inference.variables import config, logger, translations
+from advanced_rvc_inference.utils.variables import config, logger, translations
 from advanced_rvc_inference.infer.rvc.audio_processing import preprocess, postprocess
 from advanced_rvc_inference.library.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
 

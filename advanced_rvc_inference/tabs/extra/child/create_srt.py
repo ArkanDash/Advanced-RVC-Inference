@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.csrt import create_srt
 from advanced_rvc_inference.core.ui import shutil_move, change_audios_choices
-from advanced_rvc_inference.variables import translations, file_types, configs, paths_for_files
+from advanced_rvc_inference.utils.variables import translations, file_types, configs, paths_for_files
 
 def create_srt_tab():
     with gr.Row():

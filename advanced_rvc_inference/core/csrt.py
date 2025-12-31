@@ -6,7 +6,7 @@ sys.path.append(os.getcwd())
 from advanced_rvc_inference.core.inference import whisper_process
 from advanced_rvc_inference.library.utils import check_spk_diarization
 from advanced_rvc_inference.core.ui import gr_info, gr_warning, process_output
-from advanced_rvc_inference.variables import config, translations, configs, logger
+from advanced_rvc_inference.utils.variables import config, translations, configs, logger
 
 def create_srt(model_size, input_audio, output_file, word_timestamps):
     import multiprocessing as mp

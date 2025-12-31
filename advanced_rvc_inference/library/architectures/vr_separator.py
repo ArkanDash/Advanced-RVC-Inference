@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import configs
+from advanced_rvc_inference.utils.variables import configs
 from advanced_rvc_inference.library.uvr5_lib import spec_utils
 from advanced_rvc_inference.library.uvr5_lib.vr_network import nets
 from advanced_rvc_inference.library.uvr5_lib.vr_network import nets_new

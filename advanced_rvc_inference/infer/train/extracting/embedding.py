@@ -11,7 +11,7 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import logger, translations, config
+from advanced_rvc_inference.utils.variables import logger, translations, config
 from advanced_rvc_inference.infer.extracting.setup_path import setup_paths
 from advanced_rvc_inference.library.utils import load_audio, load_embedders_model, extract_features
 

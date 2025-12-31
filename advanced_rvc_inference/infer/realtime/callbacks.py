@@ -7,7 +7,7 @@ import numpy as np
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.infer.realtime.audio import Audio
-from advanced_rvc_inference.variables import logger, translations
+from advanced_rvc_inference.utils.variables import logger, translations
 from advanced_rvc_inference.infer.realtime.realtime import VoiceChanger, RVC_Realtime
 
 class AudioCallbacks:

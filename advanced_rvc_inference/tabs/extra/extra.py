@@ -5,7 +5,7 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations, configs
+from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.tabs.extra.child.fushion import fushion_tab
 from advanced_rvc_inference.tabs.extra.child.settings import settings_tab
 from advanced_rvc_inference.tabs.extra.child.read_model import read_model_tab

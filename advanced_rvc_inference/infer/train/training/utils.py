@@ -11,7 +11,7 @@ from collections import OrderedDict
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import config, translations
+from advanced_rvc_inference.utils.variables import config, translations
 
 MATPLOTLIB_FLAG = False
 

@@ -28,28 +28,28 @@ sys.path.insert(0, str(PACKAGE_ROOT))
 
 def _get_translations():
     """Lazy load translations."""
-    from advanced_rvc_inference.variables import translations
+    from advanced_rvc_inference.utils.variables import translations
 
     return translations
 
 
 def _get_logger():
     """Lazy load logger."""
-    from advanced_rvc_inference.variables import logger
+    from advanced_rvc_inference.utils.variables import logger
 
     return logger
 
 
 def _get_configs():
     """Lazy load configs."""
-    from advanced_rvc_inference.variables import configs, config
+    from advanced_rvc_inference.utils.variables import configs, config
 
     return configs, config
 
 
 def _get_configs_only():
     """Lazy load configs only."""
-    from advanced_rvc_inference.variables import configs
+    from advanced_rvc_inference.utils.variables import configs
 
     return configs
 
@@ -190,7 +190,7 @@ def convert(
         audio_processing: Whether to use audio processing
         alpha: Alpha value for mixing
     """
-    from advanced_rvc_inference.variables import python, configs
+    from advanced_rvc_inference.utils.variables import python, configs
 
     cmd = [
         python,

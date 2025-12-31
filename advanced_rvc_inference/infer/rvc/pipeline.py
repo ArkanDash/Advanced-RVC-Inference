@@ -9,7 +9,7 @@ from scipy import signal
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations
+from advanced_rvc_inference.utils.variables import translations
 from advanced_rvc_inference.library.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index
 
 bh, ah = signal.butter(N=5, Wn=48, btype="high", fs=16000)

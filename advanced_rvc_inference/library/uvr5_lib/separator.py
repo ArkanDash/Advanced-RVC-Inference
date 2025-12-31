@@ -17,7 +17,7 @@ sys.path.append(now_dir)
 from advanced_rvc_inference.library.utils import clear_gpu_cache
 from advanced_rvc_inference.library.backends import directml, opencl
 from advanced_rvc_inference.tools.huggingface import HF_download_file
-from advanced_rvc_inference.variables import config, translations
+from advanced_rvc_inference.utils.variables import config, translations
 
 warnings.filterwarnings("ignore")
 

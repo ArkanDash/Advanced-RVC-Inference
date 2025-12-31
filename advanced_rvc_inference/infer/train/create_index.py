@@ -10,7 +10,7 @@ from sklearn.cluster import MiniBatchKMeans
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import logger, translations, configs
+from advanced_rvc_inference.utils.variables import logger, translations, configs
 
 def parse_arguments():
     parser = argparse.ArgumentParser()

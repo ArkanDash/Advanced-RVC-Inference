@@ -16,7 +16,7 @@ from distutils.util import strtobool
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import config, logger, translations
+from advanced_rvc_inference.utils.variables import config, logger, translations
 from advanced_rvc_inference.infer.separate_music import _separate, vr_models
 
 dataset_temp = "dataset_temp"

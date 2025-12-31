@@ -5,7 +5,7 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations, configs
+from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.tabs.training.child.training import training_model_tab
 from advanced_rvc_inference.tabs.training.child.create_dataset import create_dataset_tab
 from advanced_rvc_inference.tabs.training.child.create_reference import create_reference_tab

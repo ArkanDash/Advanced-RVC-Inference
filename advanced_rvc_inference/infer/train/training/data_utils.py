@@ -7,7 +7,7 @@ import torch.utils.data as tdata
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations
+from advanced_rvc_inference.utils.variables import translations
 from advanced_rvc_inference.infer.training.mel_processing import spectrogram_torch
 from advanced_rvc_inference.infer.training.utils import load_filepaths_and_text, load_wav_to_torch
 

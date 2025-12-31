@@ -16,7 +16,7 @@ from advanced_rvc_inference.tools import huggingface, gdown, meganz, mediafire, 
 from advanced_rvc_inference.core.process import move_files_from_directory, fetch_pretrained_data, extract_name_model
 from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, process_output, replace_url, replace_modelname
 
-from advanced_rvc_inference.variables import logger, translations, model_options, configs
+from advanced_rvc_inference.utils.variables import logger, translations, model_options, configs
 
 def download_url(url):
     if not url: 

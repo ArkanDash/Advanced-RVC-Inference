@@ -14,7 +14,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.backends import directml, opencl
 from advanced_rvc_inference.infer.realtime.audio import list_audio_device
-from advanced_rvc_inference.variables import (
+from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 
     edgetts, google_tts_voice, method_f0, method_f0_full, 
     vr_models, mdx_models, demucs_models, embedders_model, 

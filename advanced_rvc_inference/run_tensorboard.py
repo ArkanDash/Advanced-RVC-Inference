@@ -9,7 +9,7 @@ from tensorboard import program
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import config, translations, logger
+from advanced_rvc_inference.utils.variables import config, translations, logger
 
 def launch_tensorboard():
     warnings.filterwarnings("ignore")

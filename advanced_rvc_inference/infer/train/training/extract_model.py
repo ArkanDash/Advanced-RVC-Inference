@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import logger, translations, config
+from advanced_rvc_inference.utils.variables import logger, translations, config
 from advanced_rvc_inference.infer.training.utils import replace_keys_in_dict
 
 def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, version, hps, model_author, vocoder, energy_use):

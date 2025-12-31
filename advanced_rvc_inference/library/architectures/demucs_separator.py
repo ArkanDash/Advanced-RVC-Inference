@@ -10,7 +10,7 @@ from hashlib import sha256
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import config
+from advanced_rvc_inference.utils.variables import config
 from advanced_rvc_inference.library.utils import clear_gpu_cache
 from advanced_rvc_inference.library.uvr5_lib import spec_utils, common_separator
 from advanced_rvc_inference.library.uvr5_lib.demucs import hdemucs, states, apply

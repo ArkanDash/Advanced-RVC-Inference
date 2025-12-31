@@ -11,7 +11,7 @@ from urllib.parse import urlparse, parse_qs, unquote
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations
+from advanced_rvc_inference.utils.variables import translations
 
 def parse_url(url):
     parsed = urlparse(url)

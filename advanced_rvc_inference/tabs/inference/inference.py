@@ -5,7 +5,7 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.variables import translations, configs
+from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.tabs.inference.child.convert import convert_tab
 from advanced_rvc_inference.tabs.inference.child.separate import separate_tab
 from advanced_rvc_inference.tabs.inference.child.convert_tts import convert_tts_tab

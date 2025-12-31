@@ -7,7 +7,7 @@ import subprocess
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.ui import gr_info
-from advanced_rvc_inference.variables import python, translations, configs_json
+from advanced_rvc_inference.utils.variables import python, translations, configs_json
 
 def restart_app(app):
     gr_info(translations["30s"])
