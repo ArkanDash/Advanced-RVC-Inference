@@ -19,7 +19,7 @@
 - **Audio Separation**: Built-in tools for vocal/instrument separation
 - **Text-to-Speech**: Integration with edge-tts for TTS-based voice conversion
 
-## Installatio
+## Installation
 
 ```bash
 pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
@@ -44,8 +44,6 @@ pip install -e .
 ### Development Installation
 
 ```bash
-pip install advanced-rvc-inference[dev]
-# or
 pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git#egg=advanced-rvc-inference[dev]
 ```
 
@@ -128,32 +126,6 @@ rvc-cli infer \
     --index INDEX.index
 ```
 
-## Project Structure
-
-```
-advanced-rvc-inference/
-├── pyproject.toml          # Package configuration
-├── README.md               # This file
-├── LICENSE                 # MIT License
-├── MANIFEST.in             # Package manifest
-├── requirements.txt        # Legacy requirements file
-├── src/
-│   └── advanced_rvc_inference/
-│       ├── __init__.py     # Package entry point
-│       ├── __main__.py     # Module execution
-│       ├── _version.py     # Version information
-│       ├── api.py          # High-level Python API
-│       ├── cli.py          # Command-line interface
-│       ├── gui.py          # Gradio web UI
-│       ├── variables.py    # Global configuration
-│       ├── core/           # Core processing modules
-│       ├── tabs/           # UI tab components
-│       ├── library/        # ML libraries and utilities
-│       ├── infer/          # Inference engines
-│       ├── tools/          # Utility tools
-│       ├── configs/        # Configuration files
-│       └── assets/         # Resource files
-```
 
 ## Configuration
 
