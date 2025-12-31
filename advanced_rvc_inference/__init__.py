@@ -136,14 +136,14 @@ _setup_paths()
 # CLI and GUI entry points
 def launch_cli():
     """Launch the command-line interface."""
-    from advanced_rvc_inference.cli import main as cli_main
+    from advanced_rvc_inference.api.cli import main as cli_main
 
     cli_main()
 
 
 def launch_gui():
     """Launch the Gradio web interface."""
-    from advanced_rvc_inference.gui import launch as gui_launch
+    from advanced_rvc_inference.app.gui import launch as gui_launch
 
     gui_launch()
 

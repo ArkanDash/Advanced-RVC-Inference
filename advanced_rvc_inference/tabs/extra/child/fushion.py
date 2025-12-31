@@ -5,8 +5,8 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.ui import visible, shutil_move
-from advanced_rvc_inference.core.model_utils import fushion_model
+from advanced_rvc_inference.rvc.ui import visible, shutil_move
+from advanced_rvc_inference.rvc.model_utils import fushion_model
 from advanced_rvc_inference.utils.variables import translations, configs
 
 def fushion_tab():

@@ -5,10 +5,10 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.presets import load_presets, save_presets
-from advanced_rvc_inference.core.inference import convert_audio, convert_selection
+from advanced_rvc_inference.rvc.presets import load_presets, save_presets
+from advanced_rvc_inference.rvc.inference import convert_audio, convert_selection
 from advanced_rvc_inference.utils.variables import translations, paths_for_files, sample_rate_choice, model_name, index_path, method_f0, f0_file, embedders_mode, embedders_model, presets_file, configs, file_types, export_format_choices, hybrid_f0_method
-from advanced_rvc_inference.core.ui import visible, valueFalse_interactive, change_audios_choices, change_f0_choices, unlock_f0, change_preset_choices, change_backing_choices, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move
+from advanced_rvc_inference.rvc.ui import visible, valueFalse_interactive, change_audios_choices, change_f0_choices, unlock_f0, change_preset_choices, change_backing_choices, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move
 
 def convert_tab():
     gr.Markdown(translations["convert_info"])

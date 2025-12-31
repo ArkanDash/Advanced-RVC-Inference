@@ -5,9 +5,9 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.realtime import realtime_start, realtime_stop
+from advanced_rvc_inference.rvc.realtime import realtime_start, realtime_stop
 from advanced_rvc_inference.utils.variables import translations, configs, model_name, index_path, method_f0, embedders_mode, embedders_model
-from advanced_rvc_inference.core.ui import change_models_choices, get_index, index_strength_show, unlock_f0, hoplength_show, change_embedders_mode, visible, audio_device, change_audio_device_choices, update_audio_device
+from advanced_rvc_inference.rvc.ui import change_models_choices, get_index, index_strength_show, unlock_f0, hoplength_show, change_embedders_mode, visible, audio_device, change_audio_device_choices, update_audio_device
 
 input_channels_map, output_channels_map = audio_device()
 
