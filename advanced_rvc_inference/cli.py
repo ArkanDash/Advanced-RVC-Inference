@@ -15,6 +15,7 @@ import argparse
 import sys
 import os
 import platform
+import shutil
 import logging
 from pathlib import Path
 from typing import Optional
@@ -30,8 +31,6 @@ logger = logging.getLogger(__name__)
 
 def setup_environment():
     """Setup the environment for RVC operations."""
-    import os
-
     # Add current directory to path
     cwd = Path.cwd()
     if str(cwd) not in sys.path:
@@ -50,8 +49,6 @@ def get_version():
 
 def show_version():
     """Show version information."""
-    import platform
-
     version_info = [
         f"Advanced RVC Inference v{get_version()}",
         f"Python: {platform.python_version()}",
@@ -72,8 +69,6 @@ def show_version():
 
 def show_info():
     """Show system information and configuration."""
-    import shutil
-
     info = [
         "System Information:",
         f"  Platform: {platform.system()} {platform.release()}",

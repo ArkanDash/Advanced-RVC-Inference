@@ -44,6 +44,8 @@ __all__ = [
     "cli",
     "gui",
     "launch",
+    "launch_cli",
+    "launch_gui",
 ]
 
 # Lazy import for heavy dependencies to speed up initial import
@@ -54,9 +56,44 @@ _LAZY_IMPORTS = {
     "gradio": ("gr", "gradio"),
 }
 
+# Store for lazily imported main classes
+_main_classes = None
+
 
 def __getattr__(name: str):
-    """Lazy import mechanism for heavy dependencies."""
+    """Lazy import mechanism for heavy dependencies and main classes."""
+    global _main_classes
+
+    # Handle main classes first
+    main_class_names = ("RVCInference", "RVCConfig", "RVCModel", "RVCTrainer", "RVCRealtime")
+    if name in main_class_names:
+        if _main_classes is None:
+            try:
+                from .api import (
+                    RVCInference,
+                    RVCConfig,
+                    RVCModel,
+                    RVCTrainer,
+                    RVCRealtime,
+                )
+
+                _main_classes = {
+                    "RVCInference": RVCInference,
+                    "RVCConfig": RVCConfig,
+                    "RVCModel": RVCModel,
+                    "RVCTrainer": RVCTrainer,
+                    "RVCRealtime": RVCRealtime,
+                }
+            except ImportError:
+                raise AttributeError(
+                    f"Module '{__name__}' has no attribute '{name}'. "
+                    f"API module may not be fully available."
+                )
+        if _main_classes and name in _main_classes:
+            return _main_classes[name]
+        raise AttributeError(f"Module '{__name__}' has no attribute '{name}'")
+
+    # Handle lazy imports for heavy dependencies
     if name in _LAZY_IMPORTS:
         module_name, alias = _LAZY_IMPORTS[name]
         try:
@@ -66,8 +103,10 @@ def __getattr__(name: str):
         except ImportError:
             raise AttributeError(
                 f"Module '{__name__}' has no attribute '{name}'. "
-                f"Required dependency '{module_name}' may not be installed."
+                f"Required dependency '{module_name}' may not be installed. "
+                f"Install it with: pip install {module_name}"
             )
+
     raise AttributeError(f"Module '{__name__}' has no attribute '{name}'")
 
 
@@ -94,58 +133,9 @@ def _setup_paths():
 _setup_paths()
 
 
-# Import main classes for convenience (these use lazy loading internally)
-def _import_main_classes():
-    """Import main classes with lazy loading to avoid circular imports."""
-    try:
-        from .api import RVCInference, RVCConfig, RVCModel, RVCTrainer, RVCRealtime
-
-        return {
-            "RVCInference": RVCInference,
-            "RVCConfig": RVCConfig,
-            "RVCModel": RVCModel,
-            "RVCTrainer": RVCTrainer,
-            "RVCRealtime": RVCRealtime,
-        }
-    except ImportError:
-        # API module not available yet - return None
-        return None
-
-
-# Expose main classes
-_main_classes = None
-
-
-def __getattr__(name: str):
-    """Get main classes with lazy loading."""
-    global _main_classes
-
-    if name in ("RVCInference", "RVCConfig", "RVCModel", "RVCTrainer", "RVCRealtime"):
-        if _main_classes is None:
-            _main_classes = _import_main_classes()
-        if _main_classes and name in _main_classes:
-            return _main_classes[name]
-
-    # Handle lazy imports for heavy dependencies
-    if name in _LAZY_IMPORTS:
-        module_name, alias = _LAZY_IMPORTS[name]
-        try:
-            module = __import__(module_name, fromlist=[alias])
-            globals()[alias] = module
-            return module
-        except ImportError:
-            raise AttributeError(
-                f"Module '{__name__}' has no attribute '{name}'. "
-                f"Required dependency '{module_name}' may not be installed."
-            )
-
-    raise AttributeError(f"Module '{__name__}' has no attribute '{name}'")
-
-
 # CLI and GUI entry points
 def launch_cli():
     """Launch the command-line interface."""
-    # Import cli module directly to avoid recursion
     from advanced_rvc_inference.cli import main as cli_main
 
     cli_main()

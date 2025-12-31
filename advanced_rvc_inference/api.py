@@ -6,9 +6,13 @@ and audio processing functionality.
 """
 
 import os
+import logging
 from pathlib import Path
 from typing import Optional, Union, List, Dict, Any
 from dataclasses import dataclass
+
+# Initialize logger
+logger = logging.getLogger(__name__)
 
 # Lazy imports for heavy dependencies
 _TORCH_AVAILABLE = False
@@ -427,9 +431,5 @@ class RVCRealtime:
         if self.model is not None:
             self.model.unload()
             self.model = None
-
-
-# Import logger
-import logging
 
 logger = logging.getLogger(__name__)
