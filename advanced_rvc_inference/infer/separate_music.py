@@ -206,7 +206,7 @@ def _separate(
     main_vocals, backing_vocals = None, None
 
     filename, _ = os.path.splitext(os.path.basename(input_path))
-    output_dirs = os.path.join(output_dirs, filename)
+    output_dirs = os.path.join(output_dirs)
 
     os.makedirs(output_dirs, exist_ok=True)
     clean_file(output_dirs, export_format)
