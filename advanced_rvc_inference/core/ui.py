@@ -13,7 +13,7 @@ import sounddevice as sd
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.uvr.architectures.backends import directml, opencl
-from advanced_rvc_inference.realtime.audio import list_audio_device
+from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
 from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 
     edgetts, google_tts_voice, method_f0, method_f0_full, 

@@ -89,7 +89,7 @@ def realtime_start(
 
     chunk_size = int(chunk_size * DEVICE_SAMPLE_RATE / 1000 / 128)
 
-    from advanced_rvc_inference.realtime.callbacks import AudioCallbacks
+    from advanced_rvc_inference.rvc.realtime.callbacks import AudioCallbacks
 
     callbacks = AudioCallbacks(
         pass_through=False, 

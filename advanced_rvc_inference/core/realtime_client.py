@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.uvr.architectures.utils import clear_gpu_cache
 from advanced_rvc_inference.utils.variables import configs, translations, logger
-from advanced_rvc_inference.realtime.realtime import VoiceChanger, RVC_Realtime
+from advanced_rvc_inference.rvc.realtime.realtime import VoiceChanger, RVC_Realtime
 
 app = FastAPI()
 vc_instance = None

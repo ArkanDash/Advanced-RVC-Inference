@@ -11,7 +11,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, translations
 from advanced_rvc_inference.uvr.architectures.utils import circular_write, check_assets
-from advanced_rvc_inference.realtime.pipeline import create_pipeline
+from advanced_rvc_inference.rvc.realtime.pipeline import create_pipeline
 
 class RVC_Realtime:
     def __init__(self, model_path, index_path = None, f0_method = "rmvpe", f0_onnx = False, embedder_model = "hubert_base", embedders_mode = "fairseq", sample_rate = 16000, hop_length = 160, silent_threshold = 0, input_sample_rate = 48000, output_sample_rate = 48000, vad_enabled = False, vad_sensitivity = 3, vad_frame_ms = 30, clean_audio=False, clean_strength=0.7):
