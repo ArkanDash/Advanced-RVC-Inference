@@ -13,7 +13,7 @@ from pydub import AudioSegment
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.tools import huggingface
+from advanced_rvc_inference.utils import huggingface
 from advanced_rvc_inference.uvr.architectures.backends import directml, opencl
 from advanced_rvc_inference.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
