@@ -164,7 +164,7 @@ def realtime_stop():
         audio_manager = callbacks = None
         gr_info(translations["realtime_has_stop"])
 
-        from advanced_rvc_inference.uvr.architectures.utils import clear_gpu_cache
+        from advanced_rvc_inference.library.architectures.utils import clear_gpu_cache
         clear_gpu_cache()
 
         return translations["realtime_has_stop"], interactive_true, interactive_false

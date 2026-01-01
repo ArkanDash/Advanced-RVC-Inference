@@ -4,7 +4,7 @@ import json
 import torch
 import onnxruntime
 
-from advanced_rvc_inference.uvr.architectures.backends import directml, opencl, zluda
+from advanced_rvc_inference.library.architectures.backends import directml, opencl, zluda
 
 def get_package_dir():
     """Get the package directory (where the installed package files are located)."""

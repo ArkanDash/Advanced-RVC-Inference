@@ -12,7 +12,7 @@ import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.uvr.architectures.utils import load_audio
+from advanced_rvc_inference.library.architectures.utils import load_audio
 from advanced_rvc_inference.utils.variables import logger, translations
 from advanced_rvc_inference.extracting.setup_path import setup_paths
 

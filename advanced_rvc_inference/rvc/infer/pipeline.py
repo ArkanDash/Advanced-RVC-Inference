@@ -10,7 +10,7 @@ from scipy import signal
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
-from advanced_rvc_inference.uvr.architectures.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index
+from advanced_rvc_inference.library.architectures.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index
 
 bh, ah = signal.butter(N=5, Wn=48, btype="high", fs=16000)
 
@@ -137,7 +137,7 @@ class Pipeline:
 
         if pitch_guidance:
             if not hasattr(self, "f0_generator"): 
-                from advanced_rvc_inference.uvr.architectures.predictors.Generator import Generator
+                from advanced_rvc_inference.library.architectures.predictors.Generator import Generator
                 self.f0_generator = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, del_onnx)
 
             pitch, pitchf = self.f0_generator.calculator(self.x_pad, f0_method, audio_pad, f0_up_key, p_len, filter_radius, f0_autotune, f0_autotune_strength, manual_f0=inp_f0, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold)

@@ -10,7 +10,7 @@ import torchaudio.transforms as tat
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, translations
-from advanced_rvc_inference.uvr.architectures.utils import circular_write, check_assets
+from advanced_rvc_inference.library.architectures.utils import circular_write, check_assets
 from advanced_rvc_inference.rvc.realtime.pipeline import create_pipeline
 
 class RVC_Realtime:

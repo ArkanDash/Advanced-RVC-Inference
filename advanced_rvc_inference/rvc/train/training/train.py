@@ -26,11 +26,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 sys.path.append(os.getcwd())
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
-from advanced_rvc_inference.uvr.architectures.utils import clear_gpu_cache
-from advanced_rvc_inference.uvr.architectures.backends import directml, opencl
+from advanced_rvc_inference.library.architectures.utils import clear_gpu_cache
+from advanced_rvc_inference.library.architectures.backends import directml, opencl
 from advanced_rvc_inference.utils.variables import logger, translations
 
-from advanced_rvc_inference.uvr.architectures.algorithm import commons
+from advanced_rvc_inference.library.architectures.algorithm import commons
 from advanced_rvc_inference.train.training import losses
 
 from advanced_rvc_inference.train.training.extract_model import extract_model
@@ -268,8 +268,8 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         logger.warning(translations["not_enough_data"])
         sys.exit(1)
 
-    from advanced_rvc_inference.uvr.architectures.algorithm.synthesizers import Synthesizer
-    from advanced_rvc_inference.uvr.architectures.algorithm.discriminators import MultiPeriodDiscriminator
+    from advanced_rvc_inference.library.architectures.algorithm.synthesizers import Synthesizer
+    from advanced_rvc_inference.library.architectures.algorithm.discriminators import MultiPeriodDiscriminator
 
     net_g, net_d = (
         Synthesizer(

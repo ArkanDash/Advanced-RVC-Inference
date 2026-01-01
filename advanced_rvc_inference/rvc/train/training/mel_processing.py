@@ -5,7 +5,7 @@ import librosa
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.uvr.architectures.backends.utils import STFT
+from advanced_rvc_inference.library.architectures.backends.utils import STFT
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     return (x.clamp(min=clip_val) * C).log()
