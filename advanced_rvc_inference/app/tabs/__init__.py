@@ -43,7 +43,7 @@ def training_tab():
     return tab()
 
 
-def download_tab():
+def downloads_tab():
     """Load and return the downloads tab."""
     from .downloads import download_tab as tab
 
