@@ -104,7 +104,7 @@ def onnx_export(model_path):
     try:
         gr_info(translations["start_onnx_export"])
 
-        from advanced_rvc_inference.library.architectures.onnx.onnx_export import onnx_exporter
+        from advanced_rvc_inference.library.onnx.onnx_export import onnx_exporter
         output = onnx_exporter(model_path, model_path.replace(".pth", ".onnx"), is_half=config.is_half, device=config.device)
 
         gr_info(translations["success"])

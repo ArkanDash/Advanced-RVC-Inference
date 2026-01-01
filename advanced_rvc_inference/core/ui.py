@@ -12,7 +12,7 @@ import sounddevice as sd
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.library.architectures.backends import directml, opencl
+from advanced_rvc_inference.library.backends import directml, opencl
 from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
 from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 

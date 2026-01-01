@@ -14,7 +14,7 @@ from distutils.util import strtobool
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
-from advanced_rvc_inference.library.architectures.utils import load_audio, load_embedders_model, extract_features
+from advanced_rvc_inference.library.utils import load_audio, load_embedders_model, extract_features
 
 warnings.filterwarnings("ignore")
 
@@ -125,7 +125,7 @@ def create_reference(
         pbar.update(1)
 
         if pitch_guidance:
-            from advanced_rvc_inference.library.architectures.predictors.Generator import Generator
+            from advanced_rvc_inference.library.predictors.Generator import Generator
 
             generator = Generator(
                 sample_rate=SAMPLE_RATE, 

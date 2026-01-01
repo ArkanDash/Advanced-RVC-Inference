@@ -356,7 +356,7 @@ def convert_audio(
         # Use UVR output path instead of audios_path
         output_audio = get_uvr_output_path(input_audio_name)
 
-        from advanced_rvc_inference.library.architectures.utils import pydub_load
+        from advanced_rvc_inference.library.utils import pydub_load
 
         def get_audio_file(label: str) -> str:
             matching_files = [f for f in os.listdir(output_audio) if label in f]
@@ -657,7 +657,7 @@ def whisper_process(
     word_timestamps: bool = True,
 ):
     """Process audio with Whisper for speaker diarization."""
-    from advanced_rvc_inference.library.architectures.speaker_diarization.whisper import load_model
+    from advanced_rvc_inference.library.speaker_diarization.whisper import load_model
 
     try:
         model = load_model(model_size, device=device)
@@ -772,10 +772,10 @@ def convert_with_whisper(
         from pydub import AudioSegment
         from sklearn.cluster import AgglomerativeClustering
 
-        from advanced_rvc_inference.library.architectures.utils import clear_gpu_cache, pydub_load
-        from advanced_rvc_inference.library.architectures.speaker_diarization.audio import Audio
-        from advanced_rvc_inference.library.architectures.speaker_diarization.segment import Segment
-        from advanced_rvc_inference.library.architectures.speaker_diarization.embedding import SpeechBrainPretrainedSpeakerEmbedding
+        from advanced_rvc_inference.library.utils import clear_gpu_cache, pydub_load
+        from advanced_rvc_inference.library.speaker_diarization.audio import Audio
+        from advanced_rvc_inference.library.speaker_diarization.segment import Segment
+        from advanced_rvc_inference.library.speaker_diarization.embedding import SpeechBrainPretrainedSpeakerEmbedding
 
         # Validate models
         model_pth_1 = (

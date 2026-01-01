@@ -142,7 +142,7 @@ class Config:
 
             # Check for other accelerators
             try:
-                from advanced_rvc_inference.library.architectures.backends import directml, opencl
+                from advanced_rvc_inference.library.backends import directml, opencl
 
                 if directml.is_available():
                     return "privateuseone:0"
@@ -159,7 +159,7 @@ class Config:
 
         torch.cuda.is_available = lambda: False
         try:
-            from advanced_rvc_inference.library.architectures.backends import directml, opencl
+            from advanced_rvc_inference.library.backends import directml, opencl
 
             directml.is_available = lambda: False
             opencl.is_available = lambda: False

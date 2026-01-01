@@ -9,7 +9,7 @@ import torchaudio.transforms as tat
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config
-from advanced_rvc_inference.library.architectures.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
+from advanced_rvc_inference.library.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
 
 class Inference:
     def get_synthesizer(self, model_path):

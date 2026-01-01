@@ -17,7 +17,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.library.architectures.utils import load_audio
+from advanced_rvc_inference.library.utils import load_audio
 from advanced_rvc_inference.train.preprocess.slicer2 import Slicer
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
 

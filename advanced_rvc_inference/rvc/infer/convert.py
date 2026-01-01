@@ -20,7 +20,7 @@ from advanced_rvc_inference.core.ui import replace_export_format
 from advanced_rvc_inference.rvc.infer.pipeline import Pipeline
 from advanced_rvc_inference.utils.variables import config, logger, translations
 from advanced_rvc_inference.rvc.infer.audio_processing import preprocess, postprocess
-from advanced_rvc_inference.library.architectures.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
+from advanced_rvc_inference.library.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
 
 for l in ["torch", "faiss", "omegaconf", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "transformers", "matplotlib"]:
     logging.getLogger(l).setLevel(logging.ERROR)
@@ -347,7 +347,7 @@ class VoiceConverter:
     def setup(self):
         if self.cpt is not None:
             if self.loaded_model.endswith(".pth"):
-                from advanced_rvc_inference.library.architectures.algorithm.synthesizers import Synthesizer
+                from advanced_rvc_inference.library.algorithm.synthesizers import Synthesizer
 
                 self.tgt_sr = self.cpt["config"][-1]
                 self.cpt["config"][-3] = self.cpt["weight"]["emb_g.weight"].shape[0]
