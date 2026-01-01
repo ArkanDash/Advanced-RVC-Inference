@@ -61,15 +61,15 @@ def _get_ui_helpers():
     return gr_info, gr_warning, gr_error, process_output, replace_export_format
 
 
-def search_separated_audio_folders(search_path: Optional[str] = None) -> List[str]:
+def search_separated_audio_folders(search_path: Optional[str] = None) -> List[Dict[str, Any]]:
     """
-    Search for folders containing separated audio files.
+    Search for folders containing separated audio files and detect UVR options.
 
     Args:
         search_path: Base path to search (uses UVR path if None)
 
     Returns:
-        List of folder names containing audio files
+        List of dictionaries containing folder name and detected UVR options
     """
     configs, _ = _get_configs()
 
@@ -84,7 +84,7 @@ def search_separated_audio_folders(search_path: Optional[str] = None) -> List[st
     if not os.path.exists(search_path):
         return []
 
-    valid_dirs = []
+    valid_folders = []
     audio_extensions = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
                        ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3")
 
@@ -93,14 +93,92 @@ def search_separated_audio_folders(search_path: Optional[str] = None) -> List[st
         if not os.path.isdir(dir_path):
             continue
 
+        files = os.listdir(dir_path)
         has_audio = any(
             f.lower().endswith(audio_extensions)
-            for f in os.listdir(dir_path)
+            for f in files
         )
-        if has_audio:
-            valid_dirs.append(dir_name)
+        if not has_audio:
+            continue
 
-    return sorted(valid_dirs)
+        # Detect UVR options from folder contents
+        uvr_options = detect_uvr_options(dir_path, files)
+        
+        valid_folders.append({
+            "name": dir_name,
+            "uvr_options": uvr_options
+        })
+
+    return sorted(valid_folders, key=lambda x: x["name"])
+
+
+def detect_uvr_options(folder_path: str, files: Optional[List[str]] = None) -> Dict[str, Any]:
+    """
+    Detect UVR options based on folder contents and file patterns.
+    
+    Args:
+        folder_path: Path to the separated audio folder
+        files: List of files in folder (optional, will read from folder if None)
+    
+    Returns:
+        Dictionary containing detected UVR options
+    """
+    if files is None:
+        if not os.path.exists(folder_path):
+            return {}
+        files = os.listdir(folder_path)
+    
+    uvr_options = {
+        "has_backing": False,
+        "has_reverb": False,
+        "has_demucs": False,
+        "has_instruments": False,
+        "has_original_vocals": False,
+        "has_main_vocals": False,
+        "model_type": "unknown"
+    }
+    
+    # Check for backing vocals (indicates separate_backing was True)
+    if any("Backing_Vocals" in f for f in files):
+        uvr_options["has_backing"] = True
+    
+    # Check for reverb files (indicates separate_reverb was True)
+    if any(any(suffix in f for suffix in ["_Reverb", "_No_Reverb", "_Echo", "_No_Echo"]) for f in files):
+        uvr_options["has_reverb"] = True
+    
+    # Check for Demucs 4-stem output
+    if any(any(suffix in f for suffix in ["_Drums", "_Bass", "_Other"]) for f in files):
+        uvr_options["has_demucs"] = True
+        uvr_options["model_type"] = "demucs"
+    
+    # Check for instruments (MDX/VR separation)
+    if any("Instruments" in f for f in files):
+        uvr_options["has_instruments"] = True
+        uvr_options["model_type"] = "mdx" if not uvr_options["has_demucs"] else "demucs"
+    
+    # Check for original vocals
+    if any("Original_Vocals" in f for f in files):
+        uvr_options["has_original_vocals"] = True
+    
+    # Check for main vocals (karaoke mode)
+    if any("Main_Vocals" in f for f in files):
+        uvr_options["has_main_vocals"] = True
+        if uvr_options["has_backing"]:
+            uvr_options["model_type"] = "karaoke"
+    
+    # Check for metadata file
+    metadata_file = os.path.join(folder_path, "uvr_settings.json")
+    if os.path.exists(metadata_file):
+        try:
+            import json
+            with open(metadata_file, 'r') as f:
+                metadata = json.load(f)
+                # Merge detected options with metadata (metadata takes precedence)
+                uvr_options.update(metadata)
+        except Exception:
+            pass
+    
+    return uvr_options
 
 
 def get_uvr_output_path(input_audio_name: Optional[str] = None) -> str:

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import json
 import argparse
 import traceback
 
@@ -327,7 +328,35 @@ def _separate(
             
             if "Original_Vocals" in os.path.basename(no_reverb_vocals): original_vocals = no_reverb_vocals
             else: main_vocals = no_reverb_vocals
-    
+
+    # Save UVR options to JSON file for inference detection
+    uvr_options = {
+        "model_name": model_name,
+        "karaoke_model": karaoke_model,
+        "reverb_model": reverb_model,
+        "denoise_model": denoise_model,
+        "export_format": export_format,
+        "sample_rate": sample_rate,
+        "shifts": shifts,
+        "batch_size": batch_size,
+        "overlap": overlap,
+        "aggression": aggression,
+        "hop_length": hop_length,
+        "window_size": window_size,
+        "segments_size": segments_size,
+        "post_process_threshold": post_process_threshold,
+        "enable_tta": enable_tta,
+        "enable_denoise": enable_denoise,
+        "high_end_process": high_end_process,
+        "enable_post_process": enable_post_process,
+        "separate_backing": separate_backing,
+        "separate_reverb": separate_reverb
+    }
+
+    uvr_options_path = os.path.join(output_dirs, "uvr_options.json")
+    with open(uvr_options_path, "w") as f:
+        json.dump(uvr_options, f, indent=4)
+
     return original_vocals, instruments, main_vocals, backing_vocals
 
 def vr_main(
