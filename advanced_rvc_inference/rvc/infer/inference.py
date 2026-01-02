@@ -77,9 +77,16 @@ def search_separated_audio_folders(search_path: Optional[str] = None) -> List[Di
 
     # Default to UVR directory if no path specified
     if search_path is None:
-        uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios", "uvr")
+        uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios")
         # Check if custom uvr_path is configured
         search_path = configs.get("uvr_path", uvr_base)
+
+    # Also check installed package directory as fallback
+    if not os.path.exists(search_path):
+        import advanced_rvc_inference
+        package_path = os.path.join(os.path.dirname(advanced_rvc_inference.__file__), "assets", "audios")
+        if os.path.exists(package_path):
+            search_path = package_path
 
     if not os.path.exists(search_path):
         return []
@@ -193,7 +200,7 @@ def get_uvr_output_path(input_audio_name: Optional[str] = None) -> str:
     """
     configs, _ = _get_configs()
 
-    uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios", "uvr")
+    uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios")
     uvr_path = configs.get("uvr_path", uvr_base)
 
     if input_audio_name:
