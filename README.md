@@ -102,6 +102,44 @@ audio_files = rvc.infer_batch(
 rvc.unload_model()
 ```
 
+## UVR Vocal Separation
+
+Advanced RVC Inference includes built-in vocal separation using UVR (Ultimate Vocal Remover) technology. The system automatically detects separation settings and options, making it easy to process multi-track audio.
+
+### Separation Process
+
+1. Select your audio file in the UVR tab
+2. Choose your separation model and options
+3. Click "Start Separation"
+4. Separated files will be saved to the assets/audios directory
+
+### Auto-Detection Feature
+
+When using separated audio files for voice conversion, the system automatically detects:
+
+- **Separation Model**: MDX, VR, or Demucs-based separation
+- **Backing Vocals**: Whether backing track separation was enabled
+- **Reverb Options**: Whether reverb removal was applied
+- **Output Format**: Audio format used for separation
+
+This information is stored in `uvr_options.json` within each separation folder, allowing the system to correctly process your audio without manual configuration.
+
+### Audio Folder Structure
+
+After separation, your audio files will be organized as follows:
+
+```
+assets/
+└── audios/
+    └── [Song Name]/
+        ├── Original_Vocals.wav      # Main vocal track
+        ├── Instruments.wav          # Instrumental track
+        ├── Main_Vocals.wav          # Lead vocals (karaoke mode)
+        ├── Backing_Vocals.wav       # Backing vocals (if enabled)
+        ├── Original_Vocals_No_Reverb.wav  # De-reverbbed vocals
+        └── uvr_options.json         # Separation settings (auto-generated)
+```
+
 ## Command Reference
 
 ### CLI Commands
@@ -148,9 +186,19 @@ Configuration is managed through `advanced_rvc_inference/configs/config.json`:
     "fp16": true,
     "app_port": 7860,
     "language": "vi-VN",
-    "theme": "NoCrypt/miku"
+    "theme": "NoCrypt/miku",
+    "uvr_path": "advanced_rvc_inference/assets/audios"
 }
 ```
+
+### UVR Path Configuration
+
+The `uvr_path` setting specifies where separated audio files are stored. By default, files are saved to:
+
+- **Project Directory**: `advanced_rvc_inference/assets/audios/` (when running from source)
+- **Package Directory**: `advanced_rvc_inference/assets/audios/` (when installed via pip)
+
+You can customize this path in the configuration file if needed.
 
 ## Dependencies
 
@@ -194,6 +242,27 @@ Reduce batch size or use CPU mode:
 ```python
 rvc = RVCInference(device="cpu")
 ```
+
+### Separated Audio Not Found
+
+If the system cannot find your separated audio files:
+
+1. Ensure files are in the correct directory structure: `assets/audios/[Song Name]/`
+2. Check that audio files have proper extensions (.wav, .mp3, .flac, etc.)
+3. Verify the `uvr_path` setting in your configuration file points to the correct location
+4. Ensure the folder name matches exactly (case-sensitive)
+
+### UVR Separation Errors
+
+If you encounter errors during vocal separation:
+
+1. Ensure ffmpeg is installed (required for audio processing)
+2. Check that input audio is not corrupted or in an unsupported format
+3. Reduce batch size or segment size if experiencing memory issues
+4. For Demucs models, ensure the demucs package is installed:
+   ```bash
+   pip install demucs
+   ```
 
 
 ## Contributing

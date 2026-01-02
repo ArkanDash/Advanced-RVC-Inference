@@ -138,8 +138,13 @@ advanced_rvc_inference/
 ├── core/           # Core processing modules
 ├── tabs/           # UI tab components
 ├── library/        # ML libraries and utilities
+│   ├── uvr5_lib/   # UVR separation library
+│   └── speaker_diarization/  # Speaker diarization modules
 ├── infer/          # Inference engines
-├── tools/          # Utility tools
+├── rvc/            # RVC-specific modules
+│   └── realtime/   # Real-time processing
+├── uvr/            # UVR separation modules
+├── utils/          # Utility functions and variables
 ├── assets/         # Resource files
 ├── configs/        # Configuration files
 ├── gui.py          # Main Gradio interface
