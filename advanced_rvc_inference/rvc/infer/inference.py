@@ -167,7 +167,7 @@ def detect_uvr_options(folder_path: str, files: Optional[List[str]] = None) -> D
             uvr_options["model_type"] = "karaoke"
     
     # Check for metadata file
-    metadata_file = os.path.join(folder_path, "uvr_settings.json")
+    metadata_file = os.path.join(folder_path, "uvr_options.json")
     if os.path.exists(metadata_file):
         try:
             import json
