@@ -75,46 +75,73 @@ def search_separated_audio_folders(search_path: Optional[str] = None) -> List[Di
 
     translations = _get_translations()
 
-    # Default to UVR directory if no path specified
-    if search_path is None:
-        uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios")
-        # Check if custom uvr_path is configured
-        search_path = configs.get("uvr_path", uvr_base)
+    # List of potential search paths to check
+    potential_paths = []
 
-    # Also check installed package directory as fallback
-    if not os.path.exists(search_path):
+    # Use provided path or get from config
+    if search_path:
+        potential_paths.append(search_path)
+    else:
+        # Check config for custom uvr_path
+        config_uvr_path = configs.get("uvr_path")
+        if config_uvr_path:
+            potential_paths.append(config_uvr_path)
+
+        # Add default project path
+        potential_paths.append(os.path.join("advanced_rvc_inference", "assets", "audios"))
+
+        # Add current working directory variant
+        potential_paths.append(os.path.join(os.getcwd(), "advanced_rvc_inference", "assets", "audios"))
+
+    # Also check installed package directory
+    try:
         import advanced_rvc_inference
         package_path = os.path.join(os.path.dirname(advanced_rvc_inference.__file__), "assets", "audios")
-        if os.path.exists(package_path):
-            search_path = package_path
+        potential_paths.append(package_path)
+    except Exception:
+        pass
 
-    if not os.path.exists(search_path):
+    # Find the first existing path
+    actual_search_path = None
+    for path in potential_paths:
+        if path and os.path.exists(path):
+            actual_search_path = path
+            break
+
+    if not actual_search_path:
         return []
 
     valid_folders = []
     audio_extensions = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
                        ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3")
 
-    for dir_name in os.listdir(search_path):
-        dir_path = os.path.join(search_path, dir_name)
-        if not os.path.isdir(dir_path):
-            continue
+    try:
+        for dir_name in os.listdir(actual_search_path):
+            dir_path = os.path.join(actual_search_path, dir_name)
+            if not os.path.isdir(dir_path):
+                continue
 
-        files = os.listdir(dir_path)
-        has_audio = any(
-            f.lower().endswith(audio_extensions)
-            for f in files
-        )
-        if not has_audio:
-            continue
+            try:
+                files = os.listdir(dir_path)
+            except Exception:
+                continue
 
-        # Detect UVR options from folder contents
-        uvr_options = detect_uvr_options(dir_path, files)
-        
-        valid_folders.append({
-            "name": dir_name,
-            "uvr_options": uvr_options
-        })
+            has_audio = any(
+                f.lower().endswith(audio_extensions)
+                for f in files
+            )
+            if not has_audio:
+                continue
+
+            # Detect UVR options from folder contents
+            uvr_options = detect_uvr_options(dir_path, files)
+
+            valid_folders.append({
+                "name": dir_name,
+                "uvr_options": uvr_options
+            })
+    except Exception:
+        pass
 
     return sorted(valid_folders, key=lambda x: x["name"])
 
@@ -200,8 +227,33 @@ def get_uvr_output_path(input_audio_name: Optional[str] = None) -> str:
     """
     configs, _ = _get_configs()
 
-    uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios")
-    uvr_path = configs.get("uvr_path", uvr_base)
+    # Check config for custom uvr_path first
+    uvr_path = configs.get("uvr_path")
+
+    # If not in config, check default locations
+    if not uvr_path:
+        potential_paths = [
+            os.path.join("advanced_rvc_inference", "assets", "audios"),
+            os.path.join(os.getcwd(), "advanced_rvc_inference", "assets", "audios"),
+        ]
+
+        # Also check installed package directory
+        try:
+            import advanced_rvc_inference
+            package_path = os.path.join(os.path.dirname(advanced_rvc_inference.__file__), "assets", "audios")
+            potential_paths.append(package_path)
+        except Exception:
+            pass
+
+        # Find first existing path
+        for path in potential_paths:
+            if os.path.exists(path):
+                uvr_path = path
+                break
+
+        # Fallback to default if nothing found
+        if not uvr_path:
+            uvr_path = os.path.join("advanced_rvc_inference", "assets", "audios")
 
     if input_audio_name:
         return os.path.join(uvr_path, input_audio_name)
