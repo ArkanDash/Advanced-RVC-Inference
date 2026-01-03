@@ -58,46 +58,50 @@ def parse_arguments():
     parser.add_argument("--proposal_pitch_threshold", type=float, default=255.0)
     parser.add_argument("--audio_processing", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--alpha", type=float, default=0.5)
+    parser.add_argument("--predictor_onnx", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--sid", type=int, default=0)
 
     return parser.parse_args()
 
 def main():
     args = parse_arguments()
-    pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0_method, input_path, output_path, pth_path, index_path, f0_autotune, f0_autotune_strength, clean_audio, clean_strength, export_format, embedder_model, resample_sr, split_audio, checkpointing, f0_file, f0_onnx, embedders_mode, formant_shifting, formant_qfrency, formant_timbre, proposal_pitch, proposal_pitch_threshold, audio_processing, alpha = args.pitch, args.filter_radius, args.index_rate, args.rms_mix_rate,args.protect, args.hop_length, args.f0_method, args.input_path, args.output_path, args.pth_path, args.index_path, args.f0_autotune, args.f0_autotune_strength, args.clean_audio, args.clean_strength, args.export_format, args.embedder_model, args.resample_sr, args.split_audio, args.checkpointing, args.f0_file, args.f0_onnx, args.embedders_mode, args.formant_shifting, args.formant_qfrency, args.formant_timbre, args.proposal_pitch, args.proposal_pitch_threshold, args.audio_processing, args.alpha
-    
-    run_convert_script(pitch=pitch, filter_radius=filter_radius, index_rate=index_rate, rms_mix_rate=rms_mix_rate, protect=protect, hop_length=hop_length, f0_method=f0_method, input_path=input_path, output_path=output_path, pth_path=pth_path, index_path=index_path, f0_autotune=f0_autotune, f0_autotune_strength=f0_autotune_strength, clean_audio=clean_audio, clean_strength=clean_strength, export_format=export_format, embedder_model=embedder_model, resample_sr=resample_sr, split_audio=split_audio, checkpointing=checkpointing, f0_file=f0_file, f0_onnx=f0_onnx, embedders_mode=embedders_mode, formant_shifting=formant_shifting, formant_qfrency=formant_qfrency, formant_timbre=formant_timbre, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold, audio_processing=audio_processing, alpha=alpha)
+    pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length, f0_method, input_path, output_path, pth_path, index_path, f0_autotune, f0_autotune_strength, clean_audio, clean_strength, export_format, embedder_model, resample_sr, split_audio, checkpointing, f0_file, f0_onnx, embedders_mode, formant_shifting, formant_qfrency, formant_timbre, proposal_pitch, proposal_pitch_threshold, audio_processing, alpha, predictor_onnx, sid = args.pitch, args.filter_radius, args.index_rate, args.rms_mix_rate, args.protect, args.hop_length, args.f0_method, args.input_path, args.output_path, args.pth_path, args.index_path, args.f0_autotune, args.f0_autotune_strength, args.clean_audio, args.clean_strength, args.export_format, args.embedder_model, args.resample_sr, args.split_audio, args.checkpointing, args.f0_file, args.f0_onnx, args.embedders_mode, args.formant_shifting, args.formant_qfrency, args.formant_timbre, args.proposal_pitch, args.proposal_pitch_threshold, args.audio_processing, args.alpha, args.predictor_onnx, args.sid
+
+    run_convert_script(pitch=pitch, filter_radius=filter_radius, index_rate=index_rate, rms_mix_rate=rms_mix_rate, protect=protect, hop_length=hop_length, f0_method=f0_method, input_path=input_path, output_path=output_path, pth_path=pth_path, index_path=index_path, f0_autotune=f0_autotune, f0_autotune_strength=f0_autotune_strength, clean_audio=clean_audio, clean_strength=clean_strength, export_format=export_format, embedder_model=embedder_model, resample_sr=resample_sr, split_audio=split_audio, checkpointing=checkpointing, f0_file=f0_file, f0_onnx=f0_onnx, embedders_mode=embedders_mode, formant_shifting=formant_shifting, formant_qfrency=formant_qfrency, formant_timbre=formant_timbre, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold, audio_processing=audio_processing, alpha=alpha, predictor_onnx=predictor_onnx, sid=sid)
 
 def run_convert_script(
-    pitch=0, 
-    filter_radius=3, 
-    index_rate=0.5, 
-    rms_mix_rate=1, 
-    protect=0.5, 
-    hop_length=64, 
-    f0_method="rmvpe", 
-    input_path=None, 
-    output_path="./output.wav", 
-    pth_path=None, 
-    index_path=None, 
-    f0_autotune=False, 
-    f0_autotune_strength=1, 
-    clean_audio=False, 
-    clean_strength=0.7, 
-    export_format="wav", 
-    embedder_model="hubert_base", 
-    resample_sr=0, 
-    split_audio=False, 
-    checkpointing=False, 
-    f0_file=None, 
-    f0_onnx=False, 
-    embedders_mode="fairseq", 
-    formant_shifting=False, 
-    formant_qfrency=0.8, 
-    formant_timbre=0.8, 
-    proposal_pitch=False, 
-    proposal_pitch_threshold=255.0, 
+    pitch=0,
+    filter_radius=3,
+    index_rate=0.5,
+    rms_mix_rate=1,
+    protect=0.5,
+    hop_length=64,
+    f0_method="rmvpe",
+    input_path=None,
+    output_path="./output.wav",
+    pth_path=None,
+    index_path=None,
+    f0_autotune=False,
+    f0_autotune_strength=1,
+    clean_audio=False,
+    clean_strength=0.7,
+    export_format="wav",
+    embedder_model="hubert_base",
+    resample_sr=0,
+    split_audio=False,
+    checkpointing=False,
+    f0_file=None,
+    f0_onnx=False,
+    embedders_mode="fairseq",
+    formant_shifting=False,
+    formant_qfrency=0.8,
+    formant_timbre=0.8,
+    proposal_pitch=False,
+    proposal_pitch_threshold=255.0,
     audio_processing=False,
-    alpha=0.5
+    alpha=0.5,
+    predictor_onnx=False,
+    sid=0
 ):
     check_assets(f0_method, embedder_model, f0_onnx=f0_onnx, embedders_mode=embedders_mode)
     log_data = {
@@ -141,7 +145,7 @@ def run_convert_script(
         logger.warning(translations["provide_file"].format(filename=translations["model"]))
         sys.exit(1)
 
-    cvt = VoiceConverter(pth_path, 0)
+    cvt = VoiceConverter(pth_path, sid)
     start_time = time.time()
 
     pid_path = os.path.join("advanced_rvc_inference", "assets", "convert_pid.txt")
