@@ -1,10 +1,8 @@
 """
 Optimized inference module for RVC voice conversion.
-
 This module provides efficient voice conversion with support for
 batch processing, speaker diarization, and text-to-speech integration.
 """
-
 import os
 import re
 import gc
@@ -29,235 +27,81 @@ sys.path.insert(0, str(PACKAGE_ROOT))
 def _get_translations():
     """Lazy load translations."""
     from advanced_rvc_inference.utils.variables import translations
-
     return translations
 
 
 def _get_logger():
     """Lazy load logger."""
     from advanced_rvc_inference.utils.variables import logger
-
     return logger
 
 
 def _get_configs():
     """Lazy load configs."""
     from advanced_rvc_inference.utils.variables import configs, config
-
     return configs, config
 
 
 def _get_configs_only():
     """Lazy load configs only."""
     from advanced_rvc_inference.utils.variables import configs
-
     return configs
 
 
 def _get_ui_helpers():
     """Lazy load UI helper functions."""
     from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, process_output, replace_export_format
-
     return gr_info, gr_warning, gr_error, process_output, replace_export_format
 
 
 def search_separated_audio_folders(search_path: Optional[str] = None) -> List[Dict[str, Any]]:
     """
-    Search for folders containing separated audio files and detect UVR options.
-
-    Args:
-        search_path: Base path to search (uses UVR path if None)
-
-    Returns:
-        List of dictionaries containing folder name and detected UVR options
+    Search for folders containing separated audio files from UVR.
+    Uses hardcoded UVR output path: ./advanced_rvc_inference/assets/audios/uvr
     """
-    configs, _ = _get_configs()
-
     translations = _get_translations()
+    uvr_base = os.path.join("advanced_rvc_inference", "assets", "audios", "uvr")
 
-    # List of potential search paths to check
-    potential_paths = []
-
-    # Use provided path or get from config
-    if search_path:
-        potential_paths.append(search_path)
-    else:
-        # Check config for custom uvr_path
-        config_uvr_path = configs.get("uvr_path")
-        if config_uvr_path:
-            potential_paths.append(config_uvr_path)
-
-        # Add default project path
-        potential_paths.append(os.path.join("advanced_rvc_inference", "assets", "audios"))
-
-        # Add current working directory variant
-        potential_paths.append(os.path.join(os.getcwd(), "advanced_rvc_inference", "assets", "audios"))
-
-    # Also check installed package directory
-    try:
-        import advanced_rvc_inference
-        package_path = os.path.join(os.path.dirname(advanced_rvc_inference.__file__), "assets", "audios")
-        potential_paths.append(package_path)
-    except Exception:
-        pass
-
-    # Find the first existing path
-    actual_search_path = None
-    for path in potential_paths:
-        if path and os.path.exists(path):
-            actual_search_path = path
-            break
-
-    if not actual_search_path:
+    if not os.path.exists(uvr_base):
         return []
 
-    valid_folders = []
-    audio_extensions = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
-                       ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3")
-
     try:
-        for dir_name in os.listdir(actual_search_path):
-            dir_path = os.path.join(actual_search_path, dir_name)
-            if not os.path.isdir(dir_path):
-                continue
+        if _get_configs_only().get("debug_mode", False):
+            candidate_dirs = [
+                f for f in os.listdir(uvr_base)
+                if os.path.isdir(os.path.join(uvr_base, f))
+            ]
+        else:
+            candidate_dirs = [
+                f for f in os.listdir(uvr_base)
+                if os.path.isdir(os.path.join(uvr_base, f)) and any(
+                    file.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
+                                           ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3"))
+                    for file in os.listdir(os.path.join(uvr_base, f))
+                )
+            ]
 
-            try:
-                files = os.listdir(dir_path)
-            except Exception:
-                continue
-
-            has_audio = any(
-                f.lower().endswith(audio_extensions)
-                for f in files
-            )
-            if not has_audio:
-                continue
-
-            # Detect UVR options from folder contents
-            uvr_options = detect_uvr_options(dir_path, files)
-
+        valid_folders = []
+        for dir_name in candidate_dirs:
             valid_folders.append({
                 "name": dir_name,
-                "uvr_options": uvr_options
+                "uvr_options": {}  # keep for compatibility, not used in new logic
             })
+
+        return sorted(valid_folders, key=lambda x: x["name"])
     except Exception:
-        pass
-
-    return sorted(valid_folders, key=lambda x: x["name"])
-
-
-def detect_uvr_options(folder_path: str, files: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Detect UVR options based on folder contents and file patterns.
-    
-    Args:
-        folder_path: Path to the separated audio folder
-        files: List of files in folder (optional, will read from folder if None)
-    
-    Returns:
-        Dictionary containing detected UVR options
-    """
-    if files is None:
-        if not os.path.exists(folder_path):
-            return {}
-        files = os.listdir(folder_path)
-    
-    uvr_options = {
-        "has_backing": False,
-        "has_reverb": False,
-        "has_demucs": False,
-        "has_instruments": False,
-        "has_original_vocals": False,
-        "has_main_vocals": False,
-        "model_type": "unknown"
-    }
-    
-    # Check for backing vocals (indicates separate_backing was True)
-    if any("Backing_Vocals" in f for f in files):
-        uvr_options["has_backing"] = True
-    
-    # Check for reverb files (indicates separate_reverb was True)
-    if any(any(suffix in f for suffix in ["_Reverb", "_No_Reverb", "_Echo", "_No_Echo"]) for f in files):
-        uvr_options["has_reverb"] = True
-    
-    # Check for Demucs 4-stem output
-    if any(any(suffix in f for suffix in ["_Drums", "_Bass", "_Other"]) for f in files):
-        uvr_options["has_demucs"] = True
-        uvr_options["model_type"] = "demucs"
-    
-    # Check for instruments (MDX/VR separation)
-    if any("Instruments" in f for f in files):
-        uvr_options["has_instruments"] = True
-        uvr_options["model_type"] = "mdx" if not uvr_options["has_demucs"] else "demucs"
-    
-    # Check for original vocals
-    if any("Original_Vocals" in f for f in files):
-        uvr_options["has_original_vocals"] = True
-    
-    # Check for main vocals (karaoke mode)
-    if any("Main_Vocals" in f for f in files):
-        uvr_options["has_main_vocals"] = True
-        if uvr_options["has_backing"]:
-            uvr_options["model_type"] = "karaoke"
-    
-    # Check for metadata file
-    metadata_file = os.path.join(folder_path, "uvr_options.json")
-    if os.path.exists(metadata_file):
-        try:
-            import json
-            with open(metadata_file, 'r') as f:
-                metadata = json.load(f)
-                # Merge detected options with metadata (metadata takes precedence)
-                uvr_options.update(metadata)
-        except Exception:
-            pass
-    
-    return uvr_options
+        return []
 
 
 def get_uvr_output_path(input_audio_name: Optional[str] = None) -> str:
     """
     Get the path to UVR output audio.
-
-    Args:
-        input_audio_name: Name of the separated audio folder
-
-    Returns:
-        Path to the UVR output directory
+    Hardcoded to: ./advanced_rvc_inference/assets/audios/uvr/[input_audio_name]
     """
-    configs, _ = _get_configs()
-
-    # Check config for custom uvr_path first
-    uvr_path = configs.get("uvr_path")
-
-    # If not in config, check default locations
-    if not uvr_path:
-        potential_paths = [
-            os.path.join("advanced_rvc_inference", "assets", "audios"),
-            os.path.join(os.getcwd(), "advanced_rvc_inference", "assets", "audios"),
-        ]
-
-        # Also check installed package directory
-        try:
-            import advanced_rvc_inference
-            package_path = os.path.join(os.path.dirname(advanced_rvc_inference.__file__), "assets", "audios")
-            potential_paths.append(package_path)
-        except Exception:
-            pass
-
-        # Find first existing path
-        for path in potential_paths:
-            if os.path.exists(path):
-                uvr_path = path
-                break
-
-        # Fallback to default if nothing found
-        if not uvr_path:
-            uvr_path = os.path.join("advanced_rvc_inference", "assets", "audios")
-
+    uvr_base = os.path.join(PACKAGE_ROOT, "assets", "audios", "uvr")
     if input_audio_name:
-        return os.path.join(uvr_path, input_audio_name)
-    return uvr_path
+        return os.path.join(uvr_base, input_audio_name)
+    return uvr_base
 
 
 def convert(
@@ -294,41 +138,8 @@ def convert(
 ):
     """
     Run voice conversion on an audio file.
-
-    Args:
-        pitch: Pitch shift in semitones
-        filter_radius: Filter radius for pitch extraction
-        index_rate: Rate for index-based retrieval
-        rms_mix_rate: Rate for RMS mixing
-        protect: Protection parameter for vocals
-        hop_length: Hop length for pitch extraction
-        f0_method: Pitch extraction method
-        input_path: Path to input audio
-        output_path: Path to output audio
-        pth_path: Path to model file
-        index_path: Path to index file
-        f0_autotune: Whether to apply autotune
-        clean_audio: Whether to clean audio
-        clean_strength: Strength of audio cleaning
-        export_format: Output format
-        embedder_model: Embedder model name
-        resample_sr: Target sample rate (0 for original)
-        split_audio: Whether to split audio
-        f0_autotune_strength: Autotune strength
-        checkpointing: Whether to use checkpointing
-        f0_onnx: Whether to use ONNX for F0
-        embedders_mode: Embedder mode
-        formant_shifting: Whether to shift formants
-        formant_qfrency: Formant frequency shift
-        formant_timbre: Formant timbre shift
-        f0_file: Path to F0 file
-        proposal_pitch: Whether to use proposal pitch
-        proposal_pitch_threshold: Proposal pitch threshold
-        audio_processing: Whether to use audio processing
-        alpha: Alpha value for mixing
     """
     from advanced_rvc_inference.utils.variables import python, configs
-
     cmd = [
         python,
         configs["convert_path"],
@@ -362,10 +173,8 @@ def convert(
         "--audio_processing", str(audio_processing),
         "--alpha", str(alpha),
     ]
-
     if index_path:
         cmd.extend(["--index_path", index_path])
-
     subprocess.run(cmd, check=True)
 
 
@@ -411,52 +220,8 @@ def convert_audio(
 ) -> Tuple:
     """
     Convert audio with various options.
-
-    Args:
-        clean: Whether to clean audio
-        autotune: Whether to apply autotune
-        use_audio: Whether to use separated audio
-        use_original: Whether to use original vocals
-        convert_backing: Whether to convert backing
-        not_merge_backing: Whether to skip merging backing
-        merge_instrument: Whether to merge with instruments
-        pitch: Pitch shift
-        clean_strength: Cleaning strength
-        model: Model name/path
-        index: Index path
-        index_rate: Index rate
-        input_path: Input path
-        output_path: Output path
-        format: Output format
-        method: F0 method
-        hybrid_method: Hybrid F0 method
-        hop_length: Hop length
-        embedders: Embedder model
-        custom_embedders: Custom embedder path
-        resample_sr: Resample rate
-        filter_radius: Filter radius
-        rms_mix_rate: RMS mix rate
-        protect: Protection
-        split_audio: Whether to split audio
-        f0_autotune_strength: Autotune strength
-        input_audio_name: Name of separated audio folder
-        checkpointing: Use checkpointing
-        onnx_f0_mode: Use ONNX for F0
-        formant_shifting: Shift formants
-        formant_qfrency: Formant frequency
-        formant_timbre: Formant timbre
-        f0_file: F0 file path
-        embedders_mode: Embedder mode
-        proposal_pitch: Use proposal pitch
-        proposal_pitch_threshold: Proposal pitch threshold
-        audio_processing: Use audio processing
-        alpha: Alpha value
-
-    Returns:
-        Tuple of output values
     """
     configs = _get_configs_only()
-
     translations = _get_translations()
     gr_warning_func, _, _, process_output_func, replace_export_format_func = _get_ui_helpers()
 
@@ -490,11 +255,16 @@ def convert_audio(
     embedder_model = embedders if embedders != "custom" else custom_embedders
 
     if use_audio:
-        # Use UVR output path instead of audios_path
+        # Use hardcoded UVR path
         output_audio = get_uvr_output_path(input_audio_name)
+
+        if not os.path.exists(output_audio):
+            gr_warning_func(translations["input_not_valid"])
+            return return_none
 
         from advanced_rvc_inference.library.utils import pydub_load
 
+        # Exact logic from your newer code
         def get_audio_file(label: str) -> str:
             matching_files = [f for f in os.listdir(output_audio) if label in f]
             if not matching_files:
@@ -506,8 +276,7 @@ def convert_audio(
         output_merge_backup = os.path.join(output_audio, f"Vocals+Backing.{format}")
         output_merge_instrument = os.path.join(output_audio, f"Vocals+Instruments.{format}")
 
-        if os.path.exists(output_audio):
-            os.makedirs(output_audio, exist_ok=True)
+        os.makedirs(output_audio, exist_ok=True)
         output_path = process_output_func(output_path)
 
         if use_original:
@@ -519,10 +288,10 @@ def convert_audio(
                 return return_none
             input_path = original_vocal
         else:
-            main_vocal = get_audio_file("main_Vocals_No_Reverb.")
+            main_vocal = get_audio_file("Main_Vocals_No_Reverb.")
             backing_vocal = get_audio_file("Backing_Vocals.")
             if main_vocal == translations["notfound"]:
-                main_vocal = get_audio_file("main_Vocals.")
+                main_vocal = get_audio_file("Main_Vocals.")
             if main_vocal == translations["notfound"]:
                 gr_warning_func(translations["not_found_main_vocal"])
                 return return_none
@@ -532,7 +301,7 @@ def convert_audio(
             input_path = main_vocal
             backing_path = backing_vocal
 
-        # Convert vocals
+        # Convert main vocals
         convert(
             pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length,
             f0method, input_path, output_path, model_path, index, autotune,
@@ -542,7 +311,7 @@ def convert_audio(
             f0_file, proposal_pitch, proposal_pitch_threshold, audio_processing, alpha
         )
 
-        # Convert backing if requested
+        # Convert backing vocals if needed
         if convert_backing:
             output_backing = process_output_func(output_backing)
             convert(
@@ -584,26 +353,24 @@ def convert_audio(
             output_merge_instrument if merge_instrument else None,
             {"visible": True, "__type__": "update"}
         ]
+
     else:
         if not input_path or not os.path.exists(input_path):
             gr_warning_func(translations["input_not_valid"])
             return return_none
-
         if not output_path:
             gr_warning_func(translations["output_not_valid"])
             return return_none
-
         output_path = replace_export_format_func(output_path, format)
 
         if os.path.isdir(input_path):
             if not any(
                 f.lower().endswith((".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a",
-                                   ".mp4", ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3"))
+                                    ".mp4", ".aac", ".alac", ".wma", ".aiff", ".webm", ".ac3"))
                 for f in os.listdir(input_path)
             ):
                 gr_warning_func(translations["not_found_in_folder"])
                 return return_none
-
             output_dir = os.path.dirname(output_path) or output_path
             convert(
                 pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length,
@@ -619,7 +386,6 @@ def convert_audio(
             if not os.path.exists(output_dir):
                 os.makedirs(output_dir, exist_ok=True)
             output_path = process_output_func(output_path)
-
             convert(
                 pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length,
                 f0method, input_path, output_path, model_path, index, autotune,
@@ -628,7 +394,6 @@ def convert_audio(
                 embedders_mode, formant_shifting, formant_qfrency, formant_timbre,
                 f0_file, proposal_pitch, proposal_pitch_threshold, audio_processing, alpha
             )
-
             return_none[0] = output_path
             return return_none
 
@@ -674,58 +439,13 @@ def convert_selection(
 ) -> Dict[str, Any]:
     """
     Convert audio with selection for separated tracks.
-
-    Args:
-        clean: Whether to clean audio
-        autotune: Whether to apply autotune
-        use_audio: Whether to use separated audio
-        use_original: Whether to use original vocals
-        convert_backing: Whether to convert backing
-        not_merge_backing: Whether to skip merging backing
-        merge_instrument: Whether to merge with instruments
-        pitch: Pitch shift
-        clean_strength: Cleaning strength
-        model: Model name/path
-        index: Index path
-        index_rate: Index rate
-        input_path: Input path
-        output_path: Output path
-        format: Output format
-        method: F0 method
-        hybrid_method: Hybrid F0 method
-        hop_length: Hop length
-        embedders: Embedder model
-        custom_embedders: Custom embedder path
-        resample_sr: Resample rate
-        filter_radius: Filter radius
-        rms_mix_rate: RMS mix rate
-        protect: Protection
-        split_audio: Whether to split audio
-        f0_autotune_strength: Autotune strength
-        checkpointing: Use checkpointing
-        onnx_f0_mode: Use ONNX for F0
-        formant_shifting: Shift formants
-        formant_qfrency: Formant frequency
-        formant_timbre: Formant timbre
-        f0_file: F0 file path
-        embedders_mode: Embedder mode
-        proposal_pitch: Use proposal pitch
-        proposal_pitch_threshold: Proposal pitch threshold
-        audio_processing: Use audio processing
-        alpha: Alpha value
-
-    Returns:
-        Dictionary with UI update values
     """
-    configs = _get_configs_only()
-
     translations = _get_translations()
     gr_info_func = _get_ui_helpers()[0]
 
     if use_audio:
         gr_info_func(translations["search_separate"])
         choice = search_separated_audio_folders()
-
         gr_info_func(translations["found_choice"].format(choice=len(choice)))
 
         if len(choice) == 0:
@@ -744,7 +464,7 @@ def convert_selection(
                 model, index, index_rate, None, None, format, method,
                 hybrid_method, hop_length, embedders, custom_embedders,
                 resample_sr, filter_radius, rms_mix_rate, protect,
-                split_audio, f0_autotune_strength, choice[0], checkpointing,
+                split_audio, f0_autotune_strength, choice[0]["name"], checkpointing,
                 onnx_f0_mode, formant_shifting, formant_qfrency, formant_timbre,
                 f0_file, embedders_mode, proposal_pitch, proposal_pitch_threshold,
                 audio_processing, alpha
@@ -758,8 +478,8 @@ def convert_selection(
             }, convert_output[0], convert_output[1], convert_output[2], convert_output[3], convert_output[4], {"visible": True, "__type__": "update"}, {"visible": False, "__type__": "update"}
         else:
             return {
-                "choices": choice,
-                "value": choice[0],
+                "choices": [f["name"] for f in choice],
+                "value": choice[0]["name"],
                 "interactive": True,
                 "visible": True,
                 "__type__": "update"
@@ -795,7 +515,6 @@ def whisper_process(
 ):
     """Process audio with Whisper for speaker diarization."""
     from advanced_rvc_inference.library.speaker_diarization.whisper import load_model
-
     try:
         model = load_model(model_size, device=device)
         segments = model.transcribe(
@@ -852,52 +571,8 @@ def convert_with_whisper(
 ) -> Optional[str]:
     """
     Convert audio with speaker diarization using Whisper.
-
-    Args:
-        num_spk: Number of speakers
-        model_size: Whisper model size
-        cleaner: Whether to clean audio
-        clean_strength: Cleaning strength
-        autotune: Whether to apply autotune
-        f0_autotune_strength: Autotune strength
-        checkpointing: Use checkpointing
-        model_1: First model path
-        model_2: Second model path
-        model_index_1: First model index
-        model_index_2: Second model index
-        pitch_1: First pitch shift
-        pitch_2: Second pitch shift
-        index_strength_1: First index strength
-        index_strength_2: Second index strength
-        export_format: Output format
-        input_audio: Input audio path
-        output_audio: Output audio path
-        onnx_f0_mode: Use ONNX for F0
-        method: F0 method
-        hybrid_method: Hybrid F0 method
-        hop_length: Hop length
-        embed_mode: Embedder mode
-        embedders: Embedder model
-        custom_embedders: Custom embedder path
-        resample_sr: Resample rate
-        filter_radius: Filter radius
-        rms_mix_rate: RMS mix rate
-        protect: Protection
-        formant_shifting: Shift formants
-        formant_qfrency_1: First formant frequency
-        formant_timbre_1: First formant timbre
-        formant_qfrency_2: Second formant frequency
-        formant_timbre_2: Second formant timbre
-        proposal_pitch: Use proposal pitch
-        proposal_pitch_threshold: Proposal pitch threshold
-        audio_processing: Use audio processing
-        alpha: Alpha value
-
-    Returns:
-        Path to output audio or None if failed
     """
     configs, config = _get_configs()
-
     translations = _get_translations()
     gr_info_func = _get_ui_helpers()[0]
     gr_error_func = _get_ui_helpers()[2]
@@ -908,7 +583,6 @@ def convert_with_whisper(
         import numpy as np
         from pydub import AudioSegment
         from sklearn.cluster import AgglomerativeClustering
-
         from advanced_rvc_inference.library.utils import clear_gpu_cache, pydub_load
         from advanced_rvc_inference.library.speaker_diarization.audio import Audio
         from advanced_rvc_inference.library.speaker_diarization.segment import Segment
@@ -963,10 +637,8 @@ def convert_with_whisper(
             args=(model_size, input_audio, configs, config.device, whisper_queue, True)
         )
         whisperprocess.start()
-
         segments = whisper_queue.get()
         audio = Audio()
-
         embedding_model = SpeechBrainPretrainedSpeakerEmbedding(
             embedding=os.path.join(configs["speaker_diarization_path"], "models", "speechbrain"),
             device=config.device
@@ -998,6 +670,7 @@ def convert_with_whisper(
 
             if current_position < total_duration:
                 combined += AudioSegment.silent(duration=total_duration - current_position)
+
             combined.export(output_path, format=fmt)
             return output_path
 
@@ -1017,12 +690,10 @@ def convert_with_whisper(
         current_speaker = None
         current_start = None
         end_time = 0
-
         for i, segment in enumerate(segments):
             speaker = segment["speaker"]
             start_time = segment["start"]
             text = segment["text"][1:]
-
             if speaker == current_speaker:
                 current_text.append(text)
                 end_time = segment["end"]
@@ -1038,7 +709,6 @@ def convert_with_whisper(
                 current_start = start_time
                 current_text = [text]
                 end_time = segment["end"]
-
         if current_speaker is not None:
             merged_segments.append({
                 "speaker": current_speaker,
@@ -1054,20 +724,17 @@ def convert_with_whisper(
         for segment in merged_segments:
             x += f"\n{segment['speaker']} {str(time_format(segment['start']))} - {str(time_format(segment['end']))}\n"
             x += segment["text"] + "\n"
-
         _get_logger().info(x)
 
         # Cleanup
         del audio, embedding_model, segments, labels
         clear_gpu_cache()
         gc.collect()
-
         gr_info_func(translations["process_audio"])
 
         # Process segments
         audio = pydub_load(input_audio)
         output_folder = "audios_temp"
-
         if os.path.exists(output_folder):
             shutil.rmtree(output_folder, ignore_errors=True)
         for f in [output_folder, os.path.join(output_folder, "1"), os.path.join(output_folder, "2")]:
@@ -1079,10 +746,8 @@ def convert_with_whisper(
             start_ms = int(segment["start"] * 1000)
             end_ms = int(segment["end"] * 1000)
             index = i + 1
-
             segment_filename = os.path.join(output_folder, "1" if i % 2 == 1 else "2", f"segment_{index}.wav")
             audio[start_ms:end_ms].export(segment_filename, format="wav")
-
             processed_segments.append(
                 os.path.join(output_folder, "1" if i % 2 == 1 else "2", f"segment_{index}_output.wav")
             )
@@ -1090,7 +755,6 @@ def convert_with_whisper(
 
         f0method = method if method != "hybrid" else hybrid_method
         embedder_model = embedders if embedders != "custom" else custom_embedders
-
         gr_info_func(translations["process_done_start_convert"])
 
         # Convert both speaker tracks
@@ -1110,7 +774,6 @@ def convert_with_whisper(
             embed_mode, formant_shifting, formant_qfrency_2, formant_timbre_2, "",
             proposal_pitch, proposal_pitch_threshold, audio_processing, alpha
         )
-
         gr_info_func(translations["convert_success"])
         replace_export_format_func = _get_ui_helpers()[4]
         return merge_audio(
@@ -1118,14 +781,11 @@ def convert_with_whisper(
             replace_export_format_func(output_audio, export_format),
             export_format
         )
-
     except Exception as e:
         gr_error_func(translations["error_occurred"].format(e=e))
         import traceback
-
         _get_logger().debug(traceback.format_exc())
         return None
-
     finally:
         if os.path.exists("audios_temp"):
             shutil.rmtree("audios_temp", ignore_errors=True)
@@ -1167,46 +827,8 @@ def convert_tts(
 ) -> Optional[str]:
     """
     Convert TTS audio with RVC model.
-
-    Args:
-        clean: Whether to clean audio
-        autotune: Whether to apply autotune
-        pitch: Pitch shift
-        clean_strength: Cleaning strength
-        model: Model name/path
-        index: Index path
-        index_rate: Index rate
-        input_path: Input path
-        output_path: Output path
-        format: Output format
-        method: F0 method
-        hybrid_method: Hybrid F0 method
-        hop_length: Hop length
-        embedders: Embedder model
-        custom_embedders: Custom embedder path
-        resample_sr: Resample rate
-        filter_radius: Filter radius
-        rms_mix_rate: RMS mix rate
-        protect: Protection
-        split_audio: Whether to split audio
-        f0_autotune_strength: Autotune strength
-        checkpointing: Use checkpointing
-        onnx_f0_mode: Use ONNX for F0
-        formant_shifting: Shift formants
-        formant_qfrency: Formant frequency
-        formant_timbre: Formant timbre
-        f0_file: F0 file path
-        embedders_mode: Embedder mode
-        proposal_pitch: Use proposal pitch
-        proposal_pitch_threshold: Proposal pitch threshold
-        audio_processing: Use audio processing
-        alpha: Alpha value
-
-    Returns:
-        Path to output audio or None if failed
     """
     configs = _get_configs_only()
-
     translations = _get_translations()
     gr_warning_func = _get_ui_helpers()[1]
     gr_info_func = _get_ui_helpers()[0]
@@ -1252,7 +874,6 @@ def convert_tts(
     embedder_model = embedders if embedders != "custom" else custom_embedders
 
     gr_info_func(translations["convert_vocal"])
-
     convert(
         pitch, filter_radius, index_rate, rms_mix_rate, protect, hop_length,
         f0method, input_path, output_path, model_path, index, autotune,
@@ -1261,6 +882,5 @@ def convert_tts(
         embedders_mode, formant_shifting, formant_qfrency, formant_timbre,
         f0_file, proposal_pitch, proposal_pitch_threshold, audio_processing, alpha
     )
-
     gr_info_func(translations["convert_success"])
     return output_path
