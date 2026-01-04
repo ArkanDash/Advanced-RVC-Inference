@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.core.ui import change_fp
 from advanced_rvc_inference.core.utils import stop_pid
-from advanced_rvc_inference.core.restart import change_font, change_language, change_theme
+from advanced_rvc_inference.core.restart import change_language, change_theme
 from advanced_rvc_inference.utils.variables import translations, theme, font, configs, language, config
 
 def settings_tab(app):
@@ -26,9 +26,7 @@ def settings_tab(app):
         with gr.Column():
             fp_choice = gr.Radio(choices=["fp16","fp32"], value="fp16" if configs.get("fp16", False) else "fp32", label=translations["precision"], info=translations["precision_info"], interactive=config.device not in ["cpu", "mps", "ocl:0"])
             fp_button = gr.Button(translations["update_precision"], variant="secondary", scale=2)
-        with gr.Column():
-            font_choice = gr.Textbox(label=translations["font"], info=translations["font_info"], value=font, interactive=True)
-            font_button = gr.Button(translations["change_font"])
+        
     with gr.Row():
         with gr.Column():
             with gr.Accordion(translations["stop"], open=False, visible=True):
