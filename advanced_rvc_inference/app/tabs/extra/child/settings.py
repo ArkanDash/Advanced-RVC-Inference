@@ -47,7 +47,7 @@ def settings_tab(app):
     with gr.Row():
         change_lang.click(fn=None, js="setTimeout(function() {location.reload()}, 30000)", inputs=[], outputs=[])
         changetheme.click(fn=None, js="setTimeout(function() {location.reload()}, 30000)", inputs=[], outputs=[])
-        font_button.click(fn=None, js="setTimeout(function() {location.reload()}, 30000)", inputs=[], outputs=[])
+        
     with gr.Row():
         separate_stop.click(fn=lambda: stop_pid("separate_pid", None, False), inputs=[], outputs=[])
         convert_stop.click(fn=lambda: stop_pid("convert_pid", None, False), inputs=[], outputs=[])
