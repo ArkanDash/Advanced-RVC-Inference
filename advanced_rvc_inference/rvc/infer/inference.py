@@ -181,7 +181,7 @@ def convert_audio(
     if use_audio:
         output_audio = os.path.join(configs["audios_path"], input_audio_name)
 
-        from main.library.utils import pydub_load
+        from advanced_rvc_inference.library.utils import pydub_load
         
         def get_audio_file(label):
             matching_files = [f for f in os.listdir(output_audio) if label in f]
