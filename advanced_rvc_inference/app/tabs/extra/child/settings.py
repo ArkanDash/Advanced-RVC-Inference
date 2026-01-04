@@ -44,7 +44,6 @@ def settings_tab(app):
     with gr.Row():
         change_lang.click(fn=lambda a: change_language(a, app), inputs=[language_dropdown], outputs=[])
         changetheme.click(fn=lambda a: change_theme(a, app) , inputs=[theme_dropdown], outputs=[])
-        font_button.click(fn=lambda a: change_font(a, app), inputs=[font_choice], outputs=[])
     with gr.Row():
         change_lang.click(fn=None, js="setTimeout(function() {location.reload()}, 30000)", inputs=[], outputs=[])
         changetheme.click(fn=None, js="setTimeout(function() {location.reload()}, 30000)", inputs=[], outputs=[])
