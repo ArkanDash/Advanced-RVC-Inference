@@ -1,0 +1,1 @@
+"""Package initialization for assets.models.uvr5 module."""

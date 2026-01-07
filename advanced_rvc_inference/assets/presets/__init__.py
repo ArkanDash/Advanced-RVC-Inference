@@ -1,0 +1,1 @@
+"""Package initialization for assets.presets module."""
