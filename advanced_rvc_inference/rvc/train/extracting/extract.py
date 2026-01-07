@@ -14,8 +14,8 @@ from advanced_rvc_inference.library.utils import check_assets
 from advanced_rvc_inference.rvc.train.extracting.rms import run_rms_extraction
 from advanced_rvc_inference.rvc.train.extracting.feature import run_pitch_extraction
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
-from advanced_rvc_inference.extracting.embedding import run_embedding_extraction
-from advanced_rvc_inference.extracting.preparing_files import generate_config, generate_filelist
+from advanced_rvc_inference.rvc.train.extracting.embedding import run_embedding_extraction
+from advanced_rvc_inference.rvc.train.extracting.preparing_files import generate_config, generate_filelist
 
 warnings.filterwarnings("ignore")
 for l in ["torch", "faiss", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "matplotlib"]:
