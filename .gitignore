@@ -906,9 +906,3 @@
 # This allows outer git to track inner repo files while preserving inner git history
 **/.git_backup_by_agent
 **/.git_backup_by_agent/
-
-# Browser artifacts
-browser/
-
-# Browser artifacts
-browser/
