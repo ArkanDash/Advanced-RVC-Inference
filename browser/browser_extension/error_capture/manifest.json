@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Matrix Error Logger",
+  "version": "1.0",
+  "description": "A simple error logging extension that stores errors in window.__matrix_errors__.",
+  "permissions": [
+    "scripting",
+    "webNavigation",
+    "webRequest",
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "injector.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    }
+  ]
+}

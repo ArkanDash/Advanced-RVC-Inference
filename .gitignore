@@ -15,6 +15,7 @@
 **/build/
 **/develop-eggs/
 **/dist/
+**/downloads/
 **/eggs/
 **/.eggs/
 **/lib/
@@ -898,17 +899,6 @@
 **/.claude/debug/
 **/.claude/debug/**
 
-# ==============================================================================
-# PROJECT SPECIFIC
-# ==============================================================================
-# Add your project-specific ignores here
-# workspace/
-# data/
-# uploads/
-# downloads/
-
-# Project-specific directories
-tmp/
 # ==============================================================================
 # NESTED GIT REPOSITORIES
 # ==============================================================================
