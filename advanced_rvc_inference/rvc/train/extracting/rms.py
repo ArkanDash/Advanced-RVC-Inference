@@ -14,7 +14,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import load_audio
 from advanced_rvc_inference.utils.variables import logger, translations
-from advanced_rvc_inference.extracting.setup_path import setup_paths
+from advanced_rvc_inference.rvc.train.extracting.setup_path import setup_paths
 
 class RMSEnergyExtractor(nn.Module):
     def __init__(self, frame_length=2048, hop_length=512, center=True, pad_mode = "reflect"):
