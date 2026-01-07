@@ -1,0 +1,1 @@
+"""Package initialization for infer.train.extracting module."""

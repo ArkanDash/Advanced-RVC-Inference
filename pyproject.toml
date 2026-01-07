@@ -1,0 +1,138 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "advanced-rvc-inference"
+version = "0.1.0"
+description = "Advanced RVC Inference - A comprehensive tool for RVC (Retrieval-based Voice Conversion) inference, training, and more"
+requires-python = ">=3.10,<3.13"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "ArkanDash", email = "arkandash@example.com"}
+]
+keywords = ["rvc", "voice-conversion", "audio", "machine-learning", "deep-learning", "gradio"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Platform-specific requirements
+    "pip>=23.3",
+    "wheel",
+    "omegaconf>=2.0.6",
+    "onnxruntime; sys_platform == 'darwin'",
+    "onnxruntime-gpu; sys_platform != 'darwin'",
+
+    # Core dependencies
+    "PyYAML>=6.0",
+    "tiktoken",
+    "hyperpyyaml",
+    "torch>=2.3.1",
+    "tqdm>=4.63.1",
+    "sortedcontainers",
+    "torchvision>=0.18.1",
+    "torchaudio>=2.3.1",
+    "torchcodec>=0.8.1",
+
+    # FAISS with version compatibility
+    "faiss-cpu==1.7.3; python_version < '3.12'",
+    "faiss-cpu>=1.7.3; python_version >= '3.12'",
+
+    # Machine learning, NLP and deep learning
+    "transformers>=4.49.0",
+    "scikit-learn",
+    "einops>=0.8.0",
+
+    # Pitch and sound processing
+    "librosa>=0.10.2",
+    "pydub>=0.25.1",
+    "praat-parselmouth",
+    "soundfile>=0.13.0",
+    "pedalboard",
+
+    # Data processing and calculation
+    "numpy>=1.25.2,<2.0.0",
+    "numba>=0.57.0",
+    "scipy>=1.15.0",
+    "matplotlib>=3.7.2",
+
+    # Implementation and web framework
+    "gradio>=5.23.3",
+    "requests>=2.32.3",
+    "aiohttp",
+    "pysrt",
+
+    # Utility section
+    "yt-dlp",
+    "edge-tts>=7.2.0",
+    "ffmpy==0.3.1",
+    "ffmpeg-python>=0.2.0",
+    "beautifulsoup4",
+
+    # Tensorboard and ONNX
+    "tensorboard",
+    "onnx>=1.14",
+    "onnxslim",
+    "onnx2torch>=1.5.15",
+
+    # Cryptography section
+    "pycryptodome>=3.9.6,<4.0.0",
+
+    # Realtime and VAD
+    "sounddevice>=0.5.2",
+    "webrtcvad-wheels>=2.0.14",
+]
+
+[project.optional-dependencies]
+gpu = [
+    "onnxruntime-gpu; sys_platform != 'darwin'",
+]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.0.0",
+]
+
+[project.scripts]
+rvc-cli = "advanced_rvc_inference.api.cli:main"
+rvc-gui = "advanced_rvc_inference.app.gui:launch"
+
+[project.urls]
+Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
+Repository = "https://github.com/ArkanDash/Advanced-RVC-Inference.git"
+Issues = "https://github.com/ArkanDash/Advanced-RVC-Inference/issues"
+Discord = "https://discord.gg/hvmsukmBHE"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["advanced_rvc_inference*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311', 'py312']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
