@@ -31,7 +31,7 @@ def mute_file(embedders_mode, embedders_model, mute_base_path, rvc_version):
 
 def generate_config(rvc_version, sample_rate, model_path):
     config_save_path = os.path.join(model_path, "config.json")
-    if not os.path.exists(config_save_path): shutil.copy(os.path.join(os.path.dirname(os.path.abspath(__file__)), "configs", rvc_version, f"{sample_rate}.json"), config_save_path)
+    if not os.path.exists(config_save_path): shutil.copy(os.path.join(os.path.dirname(os.getcwd(), "advanced_rvc_inference", "configs", rvc_version, f"{sample_rate}.json"), config_save_path)
 
 def generate_filelist(pitch_guidance, model_path, rvc_version, sample_rate, embedders_mode = "fairseq", embedder_model = "hubert_base", rms_extract = False):
     gt_wavs_dir, feature_dir = os.path.join(model_path, "sliced_audios"), os.path.join(model_path, f"{rvc_version}_extracted")
