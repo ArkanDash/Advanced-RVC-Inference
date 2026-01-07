@@ -12,7 +12,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import load_audio
 from advanced_rvc_inference.utils.variables import config, logger, translations
-from advanced_rvc_inference.extracting.setup_path import setup_paths
+from advanced_rvc_inference.rvc.train.extracting.setup_path import setup_paths
 
 class FeatureInput:
     def __init__(self, is_half=config.is_half, device=config.device):
@@ -24,7 +24,7 @@ class FeatureInput:
 
     def process_file(self, file_info, f0_method, hop_length, f0_onnx, f0_autotune, f0_autotune_strength, alpha):
         if not hasattr(self, "f0_gen"): 
-            from main.library.predictors.Generator import Generator
+            from advanced_rvc_inference.library.predictors.Generator import Generator
             self.f0_gen = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, False)
 
         inp_path, opt_path1, opt_path2, file_inp = file_info
