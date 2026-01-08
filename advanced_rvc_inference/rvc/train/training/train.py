@@ -99,6 +99,40 @@ experiment_dir = os.path.join(main_configs["logs_path"], model_name)
 training_file_path = os.path.join(experiment_dir, "training_data.json")
 config_save_path = os.path.join(experiment_dir, "config.json")
 
+# Create config.json if it doesn't exist
+if not os.path.exists(config_save_path):
+    import shutil
+    # Create the experiment directory if it doesn't exist
+    os.makedirs(experiment_dir, exist_ok=True)
+    
+    # Determine sample rate from existing extracted files or use default
+    sr = 32000  # default sample rate
+    
+    # Try to determine sample rate from existing files
+    extracted_dir = os.path.join(experiment_dir, f"{version}_extracted")
+    if os.path.exists(extracted_dir):
+        wav_files = glob.glob(os.path.join(extracted_dir, "*.wav"))
+        if wav_files:
+            try:
+                import soundfile as sf
+                _, detected_sr = sf.read(wav_files[0])
+                sr = detected_sr
+            except:
+                pass
+    
+    # Determine the appropriate config template based on sample rate
+    config_template_path = os.path.join(main_configs["configs_path"], version, f"{sr}.json")
+    
+    # Fallback to 32000 if the specific sample rate config doesn't exist
+    if not os.path.exists(config_template_path):
+        config_template_path = os.path.join(main_configs["configs_path"], version, "32000.json")
+    
+    # Copy the config template to the experiment directory
+    if os.path.exists(config_template_path):
+        shutil.copy(config_template_path, config_save_path)
+    else:
+        raise FileNotFoundError(f"Config template not found at: {config_template_path}")
+
 torch.backends.cudnn.deterministic = args.deterministic if not main_config.device.startswith("ocl") else False
 torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.startswith("ocl") else False
 
