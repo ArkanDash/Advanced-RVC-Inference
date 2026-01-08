@@ -105,14 +105,22 @@ torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.starts
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
 global_step, last_loss_gen_all, overtrain_save_epoch = 0, 0, 0
 loss_gen_history, smoothed_loss_gen_history, loss_disc_history, smoothed_loss_disc_history = [], [], [], []
-avg_losses = {"grad_d_50": deque(maxlen=50), "grad_g_50": deque(maxlen=50), "disc_loss_50": deque(maxlen=50), "adv_loss_50": deque(maxlen=50), "fm_loss_50": deque(maxlen=50), "kl_loss_50": deque(maxlen=50), "mel_loss_50": deque(maxlen=50), "gen_loss_50": deque(maxlen=50)}
+avg_losses = {
+    "grad_d_50": deque(maxlen=50), 
+    "grad_g_50": deque(maxlen=50), 
+    "disc_loss_50": deque(maxlen=50), 
+    "adv_loss_50": deque(maxlen=50), 
+    "fm_loss_50": deque(maxlen=50), 
+    "kl_loss_50": deque(maxlen=50), 
+    "mel_loss_50": deque(maxlen=50), 
+    "gen_loss_50": deque(maxlen=50)
+}
 
 with open(config_save_path, "r") as f:
     config = json.load(f)
 
 config = HParams(**config)
 config.data.training_files = os.path.join(experiment_dir, "filelist.txt")
-
 def main():
     global training_file_path, last_loss_gen_all, smoothed_loss_gen_history, loss_gen_history, loss_disc_history, smoothed_loss_disc_history, overtrain_save_epoch, model_author, vocoder, checkpointing, gpus, energy_use
 
