@@ -148,7 +148,7 @@ def run_convert_script(
     cvt = VoiceConverter(pth_path, sid)
     start_time = time.time()
 
-    pid_path = os.path.join(os.getcwd(), "assets", "convert_pid.txt")
+    pid_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "assets", "convert_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
 
