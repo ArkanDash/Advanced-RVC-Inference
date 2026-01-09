@@ -1,9 +1,0 @@
-This project is still WIP (Work in Progress). More features and improvements will be added soon. Stay tuned!
-
-Current status:
-- Enhanced F0 methods from Vietnamese-RVC integrated
-- Extended embedder models from Vietnamese-RVC integrated  
-- UVR audio separation features (RVC x UVR) implemented
-- Full inference tab for RVC x UVR pipeline added
-- Hybrid f0 methods support added
-- WIP note added to project
