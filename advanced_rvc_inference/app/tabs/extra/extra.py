@@ -7,7 +7,6 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.app.tabs.extra.child.fushion import fushion_tab
-from advanced_rvc_inference.app.tabs.extra.child.settings import settings_tab
 from advanced_rvc_inference.app.tabs.extra.child.read_model import read_model_tab
 from advanced_rvc_inference.app.tabs.extra.child.f0_extract import f0_extract_tab
 from advanced_rvc_inference.app.tabs.extra.child.create_srt import create_srt_tab
@@ -34,7 +33,3 @@ def extra_tab(app):
         with gr.TabItem(translations["create_srt_tab"], visible=configs.get("create_srt_tab", True)):
             gr.Markdown(translations["create_srt_markdown"])
             create_srt_tab()
-
-        with gr.TabItem(translations["settings"], visible=configs.get("settings_tab", True)):
-            gr.Markdown(translations["settings_markdown"])
-            settings_tab(app)
