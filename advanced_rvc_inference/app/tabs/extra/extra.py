@@ -11,9 +11,14 @@ from advanced_rvc_inference.app.tabs.extra.child.read_model import read_model_ta
 from advanced_rvc_inference.app.tabs.extra.child.f0_extract import f0_extract_tab
 from advanced_rvc_inference.app.tabs.extra.child.create_srt import create_srt_tab
 from advanced_rvc_inference.app.tabs.extra.child.convert_model import convert_model_tab
+from main.app.tabs.extra.child.settings import settings_tab
 
 def extra_tab(app):
     with gr.TabItem(translations["extra"], visible=configs.get("extra_tab", True)):
+        with gr.TabItem(translations["settings"], visible=configs.get("settings_tab", True)):
+            gr.Markdown(translations["settings_markdown"])
+            settings_tab(app)
+            
         with gr.TabItem(translations["fushion"], visible=configs.get("fushion_tab", True)):
             gr.Markdown(translations["fushion_markdown"])
             fushion_tab()
