@@ -120,10 +120,6 @@ rvc.unload_model()
 | `rvc-cli reference` | Create reference audio for training |
 | `rvc-cli tts` | Text-to-speech voice conversion |
 | `rvc-cli serve` | Launch the web interface |
-| `rvc-cli utils check-gpu` | Check GPU availability |
-| `rvc-cli utils check-deps` | Verify dependencies |
-| `rvc-cli utils clean-cache` | Clean temporary files |
-| `rvc-cli version` | Show version information |
 | `rvc-cli info` | Show system information |
 
 ### Quick Inference
@@ -162,14 +158,6 @@ Launch the Gradio web UI:
 
 ```bash
 rvc-cli serve --port 7860
-```
-
-### System Information
-
-Check GPU availability:
-
-```bash
-rvc-cli utils check-gpu
 ```
 
 View help for any command:
