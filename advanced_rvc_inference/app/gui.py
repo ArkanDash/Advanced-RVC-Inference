@@ -136,7 +136,7 @@ def launch(
             theme=theme,
         ) as app:
             gr.HTML(
-                f"<h1 style='text-align: center;'>Advanced RVC Inference v{get_version()}</h1>"
+                f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
             )
 
             from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
