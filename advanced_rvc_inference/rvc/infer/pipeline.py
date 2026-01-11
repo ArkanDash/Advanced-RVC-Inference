@@ -148,7 +148,7 @@ class Pipeline:
 
         if energy_use:
             if not hasattr(self, "rms_extract"): 
-                from advanced_rvc_inference.extracting.rms import RMSEnergyExtractor
+                from advanced_rvc_inference.rvc.train.extracting.rms import RMSEnergyExtractor
                 self.rms_extract = RMSEnergyExtractor(frame_length=2048, hop_length=self.window, center=True, pad_mode = "reflect").to(self.device).eval()
 
             energy = self.rms_extract(torch.from_numpy(audio_pad).to(self.device).unsqueeze(0))[:p_len].to(self.device).float()
