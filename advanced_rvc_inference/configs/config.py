@@ -73,7 +73,7 @@ class Config:
             if len([l for l in os.listdir(self.configs["language_path"]) if l.endswith(".json")]) < 1: raise FileNotFoundError("Không tìm thấy bất cứ gói ngôn ngữ nào(No package languages found)")
 
             if not lang: lang = "vi-VN"
-            if lang not in self.configs["support_language"]: raise ValueError("Ngôn ngữ không được hỗ trợ(Language not supported)")
+            if lang not in self.configs["support_language"]: raise ValueError("Language not supported.")
 
             lang_path = os.path.join(self.configs["language_path"], f"{lang}.json")
             if not os.path.exists(lang_path): lang_path = os.path.join(self.configs["language_path"], "vi-VN.json")
