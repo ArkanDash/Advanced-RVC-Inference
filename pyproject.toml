@@ -110,6 +110,7 @@ dev = [
 [project.scripts]
 rvc-cli = "advanced_rvc_inference.api.cli:main"
 rvc-gui = "advanced_rvc_inference.app.gui:launch"
+rvc-tensor = "advanced_rvc_inference.app.run_tensorboard"
 
 [project.urls]
 Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
