@@ -4,8 +4,9 @@
         "en-US",
         "vi-VN"
     ],
-    "theme": "NeoPy/Soft",
+    "theme": "bethecloud/storj_theme",
     "themes": [
+        "NeoPy/Soft",
         "NoCrypt/miku",
         "gstaff/xkcd",
         "JohnSmith9982/small_and_pretty",
@@ -554,7 +555,7 @@
         "zh-TW",
         "zh"
     ],
-    "fp16": false,
+    "fp16": true,
     "editing_tab": true,
     "infer_tab": true,
     "create_and_training_tab": true,
