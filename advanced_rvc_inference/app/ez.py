@@ -204,7 +204,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                 gr.Markdown(translations["output_convert"])
             
             with gr.Row():
-                main_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["main_convert"])
+                main_convert = gr.Audio(interactive=False, label=translations["main_convert"])
             
             # ===== Event Handlers =====
             refresh.click(fn=change_models_choices, inputs=[], outputs=[model_pth, model_index])
