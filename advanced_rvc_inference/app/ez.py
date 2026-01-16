@@ -711,7 +711,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     sys.exit(
-        launch(
+        app.launch(
             share=args.share and not args.no_share,
             server_name=args.host,
             server_port=args.port,
