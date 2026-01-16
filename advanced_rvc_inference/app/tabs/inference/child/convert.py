@@ -25,9 +25,7 @@ def convert_tab():
         with gr.Column():
             audio_select = gr.Dropdown(label=translations["select_separate"], choices=[], value="", interactive=True, allow_custom_value=True, visible=False)
             convert_button_2 = gr.Button(translations["convert_audio"], visible=False)
-    with gr.Row():
-        with gr.Column():
-            convert_button = gr.Button(translations["convert_audio"], variant="primary")
+    
     with gr.Row():
         with gr.Column():
             input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)  
@@ -115,6 +113,8 @@ def convert_tab():
                 with gr.Row():
                     formant_qfrency = gr.Slider(value=1.0, label=translations["formant_qfrency"], info=translations["formant_qfrency"], minimum=0.0, maximum=16.0, step=0.1, interactive=True, visible=False)
                     formant_timbre = gr.Slider(value=1.0, label=translations["formant_timbre"], info=translations["formant_timbre"], minimum=0.0, maximum=16.0, step=0.1, interactive=True, visible=False)
+    with gr.Row():
+        convert_button = gr.Button(translations["convert_audio"], variant="primary")
     with gr.Row():
         gr.Markdown(translations["output_convert"])
     with gr.Row():
