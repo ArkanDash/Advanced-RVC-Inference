@@ -125,12 +125,12 @@ def launch(
         
         # Build the UI
         with gr.Blocks(
-            title=f"Advanced RVC Inference v{get_version()}",
+            title=f"Advanced RVC Inference",
             theme=gr.themes.Base(primary_hue="rose", neutral_hue="zinc"),
         ) as app:
             
             with gr.Row():
-                gr.HTML(f"<h1 style='text-align: center;'>Advanced RVC Inference v{get_version()}</h1>")
+                gr.HTML(f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>")
             
             with gr.Tabs():
                 # ===== INFERENCE/CONVERT TAB =====
