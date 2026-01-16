@@ -85,7 +85,6 @@ def launch(
         enable_localtunnel: Whether to use localtunnel as fallback if gradio share fails
         keep_alive: Whether to keep the tunnel alive (useful for Colab)
     """
-    setup_environment()
     _setup_signal_handlers()
 
     try:
