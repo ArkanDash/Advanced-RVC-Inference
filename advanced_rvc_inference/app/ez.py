@@ -107,7 +107,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                         with gr.TabItem("Upload"):
                             input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)
                         with gr.TabItem("Record"):
-                            record_button = gr.Audio(source="microphone", label="Record Audio", type="filepath")
+                            record_button = gr.Audio(sources="microphone", label="Record Audio", type="filepath")
                     
                     play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
                 
