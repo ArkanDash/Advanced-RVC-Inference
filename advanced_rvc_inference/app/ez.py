@@ -315,7 +315,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                             )
                             download_button = gr.Button(translations.get("downloads", "Download"))
                     
-                    audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations.get("input_audio", "Input Audio"))
+                    audio_input = gr.Audio(interactive=False, label=translations.get("input_audio", "Input Audio"))
                 
                 with gr.Column():
                     sample_rate = gr.Radio(
@@ -353,7 +353,6 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
             
             with gr.Row():
                 instruments_audio = gr.Audio(
-                    show_download_button=True, 
                     interactive=False, 
                     label=translations.get("instruments", "Instruments")
                 )
@@ -363,7 +362,6 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                     label=translations.get("original_vocal", "Original Vocals")
                 )
                 main_vocals = gr.Audio(
-                    show_download_button=True, 
                     interactive=False, 
                     label=translations.get("main_vocal", "Main Vocals"), 
                     visible=False
