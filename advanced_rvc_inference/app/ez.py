@@ -172,6 +172,16 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                                 value=0, 
                                 interactive=True
                             )
+                            f0_autotune_strength = gr.Slider(
+                                minimum=0,
+                                maximum=1,
+                                label=translations["autotune_rate"],
+                                info=translations["autotune_rate_info"],
+                                value=1,
+                                step=0.1, 
+                                interactive=True, 
+                                visible=False
+                            )
                             filter_radius = gr.Slider(
                                 minimum=0, 
                                 maximum=7, 
