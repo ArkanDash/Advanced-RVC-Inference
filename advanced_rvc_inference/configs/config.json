@@ -2,6 +2,7 @@
     "language": "en-US",
     "support_language": [
         "en-US",
+        "id-ID",
         "vi-VN"
     ],
     "theme": "bethecloud/storj_theme",
