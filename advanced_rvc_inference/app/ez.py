@@ -109,7 +109,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                         with gr.TabItem("Record"):
                             record_button = gr.Audio(sources="microphone", label="Record Audio", type="filepath")
                     
-                    play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
+                    play_audio = gr.Audio(interactive=True, label=translations["input_audio"])
                 
                 with gr.Column():
                     index_strength = gr.Slider(
