@@ -125,7 +125,7 @@ class Config:
 
         for config_file in version_config_paths:
             try:
-                config_path = os.path.join(package_dir, config_file)
+                config_path = os.path.join(package_dir, "advanced_rvc_inference",  "configs", config_file)
                 # Fallback to cwd path if running from source
                 if not os.path.exists(config_path):
                     config_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", config_file)
