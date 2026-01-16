@@ -357,7 +357,6 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                     label=translations.get("instruments", "Instruments")
                 )
                 original_vocals = gr.Audio(
-                    show_download_button=True, 
                     interactive=False, 
                     label=translations.get("original_vocal", "Original Vocals")
                 )
@@ -366,8 +365,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                     label=translations.get("main_vocal", "Main Vocals"), 
                     visible=False
                 )
-                backing_vocals = gr.Audio(
-                    show_download_button=True, 
+                backing_vocals = gr.Audio( 
                     interactive=False, 
                     label=translations.get("backing_vocal", "Backing Vocals"), 
                     visible=False
