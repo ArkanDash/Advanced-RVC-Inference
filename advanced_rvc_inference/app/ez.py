@@ -172,7 +172,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
                                 value=0, 
                                 interactive=True
                             )
-                            f0_autotune_strength = gr.Slider(
+                            autotune_strength = gr.Slider(
                                 minimum=0,
                                 maximum=1,
                                 label=translations["autotune_rate"],
@@ -241,7 +241,7 @@ with gr.Blocks(title="🔊 Advanced RVC Inference", theme=gr.themes.Base(primary
             
             refresh0.click(fn=change_audios_choices, inputs=[input_audio0], outputs=[input_audio0])
             
-            autotune.change(fn=visible, inputs=[autotune], outputs=[f0_autotune_strength])
+            autotune.change(fn=visible, inputs=[autotune], outputs=[autotune_strength])
             cleaner0.change(fn=visible, inputs=[cleaner0], outputs=[clean_strength0])
             
             convert_button.click(
