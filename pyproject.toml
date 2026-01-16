@@ -110,6 +110,7 @@ dev = [
 [project.scripts]
 rvc-cli = "advanced_rvc_inference.api.cli:main"
 rvc-gui = "advanced_rvc_inference.app.gui:launch"
+ez = "advanced_rvc_inference.app.ez:launch"
 
 [project.urls]
 Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
