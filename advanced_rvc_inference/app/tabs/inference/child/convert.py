@@ -100,8 +100,8 @@ def convert_tab():
                             with gr.Column():
                                 name_to_save_file = gr.Textbox(label=translations["filename_to_save"])
                                 save_file_button = gr.Button(translations["export_file"])
-                    with gr.Row():
-                        upload_presets = gr.Files(label=translations["upload_presets"], file_types=[".conversion.json"])  
+                        with gr.Row():
+                            upload_presets = gr.Files(label=translations["upload_presets"], file_types=[".conversion.json"])  
                 with gr.Column():
                     with gr.Group():
                         with gr.Row():
