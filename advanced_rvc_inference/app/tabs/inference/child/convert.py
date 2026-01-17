@@ -28,8 +28,9 @@ def convert_tab():
     
     with gr.Row():
         with gr.Column():
-            input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)  
-            play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
+            input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)
+          
+        play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
         with gr.Column():
             index_strength = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=False)
             with gr.Accordion(translations["input_output"], open=False):
@@ -51,30 +52,34 @@ def convert_tab():
                         convert_backing = gr.Checkbox(label=translations["convert_backing"], value=False, interactive=True, visible=False)   
                         not_merge_backing = gr.Checkbox(label=translations["not_merge_backing"], value=False, interactive=True, visible=False)             
                         merge_instrument = gr.Checkbox(label=translations["merge_instruments"], value=False, interactive=True, visible=False) 
-                    
-                with gr.Accordion(translations["f0_method"], open=False):
-                    with gr.Group():
-                        with gr.Row():
-                            onnx_f0_mode = gr.Checkbox(label=translations["f0_onnx_mode"], info=translations["f0_onnx_mode_info"], value=False, interactive=True)
-                            unlock_full_method = gr.Checkbox(label=translations["f0_unlock"], info=translations["f0_unlock_info"], value=False, interactive=True)
+                with gr.Row():
+                    with gr.Accordion(translations["f0_method"], open=False):
+                        with gr.Group():
+                            with gr.Row():
+                                onnx_f0_mode = gr.Checkbox(label=translations["f0_onnx_mode"], info=translations["f0_onnx_mode_info"], value=False, interactive=True)
+                                unlock_full_method = gr.Checkbox(label=translations["f0_unlock"], info=translations["f0_unlock_info"], value=False, interactive=True)
                         method = gr.Radio(label=translations["f0_method"], info=translations["f0_method_info"], choices=method_f0, value="rmvpe", interactive=True)
                         hybrid_method = gr.Dropdown(label=translations["f0_method_hybrid"], info=translations["f0_method_hybrid_info"], choices=hybrid_f0_method, value=hybrid_f0_method[0], interactive=True, allow_custom_value=True, visible=False)
-                hop_length = gr.Slider(label=translations['hop_length'], info=translations["hop_length_info"], minimum=64, maximum=512, value=160, step=1, interactive=True, visible=False)
-                alpha = gr.Slider(label=translations["alpha_label"], info=translations["alpha_info"], minimum=0.1, maximum=1, value=0.5, step=0.1, interactive=True, visible=False)
-                with gr.Accordion(translations["f0_file"], open=False):
-                    upload_f0_file = gr.File(label=translations["upload_f0"], file_types=[".txt"])  
-                    f0_file_dropdown = gr.Dropdown(label=translations["f0_file_2"], value="", choices=f0_file, allow_custom_value=True, interactive=True)
-                    refresh_f0_file = gr.Button(translations["refresh"])
-                with gr.Accordion(translations["hubert_model"], open=False):
-                    embed_mode = gr.Radio(label=translations["embed_mode"], info=translations["embed_mode_info"], value="fairseq", choices=embedders_mode, interactive=True, visible=True)
-                    embedders = gr.Radio(label=translations["hubert_model"], info=translations["hubert_info"], choices=embedders_model, value="hubert_base", interactive=True)
-                    custom_embedders = gr.Textbox(label=translations["modelname"], info=translations["modelname_info"], value="", placeholder="hubert_base", interactive=True, visible=False)    
-                with gr.Accordion(translations["use_presets"], open=False):
-                    with gr.Row():
-                        presets_name = gr.Dropdown(label=translations["file_preset"], choices=presets_file, value=presets_file[0] if len(presets_file) > 0 else '', interactive=True, allow_custom_value=True)
-                    with gr.Row():
-                        load_click = gr.Button(translations["load_file"], variant="primary")
-                        refresh_click = gr.Button(translations["refresh"])
+                    hop_length = gr.Slider(label=translations['hop_length'], info=translations["hop_length_info"], minimum=64, maximum=512, value=160, step=1, interactive=True, visible=False)
+                    alpha = gr.Slider(label=translations["alpha_label"], info=translations["alpha_info"], minimum=0.1, maximum=1, value=0.5, step=0.1, interactive=True, visible=False)
+                with gr.Row():
+                    with gr.Accordion(translations["f0_file"], open=False):
+                        upload_f0_file = gr.File(label=translations["upload_f0"], file_types=[".txt"])  
+                        f0_file_dropdown = gr.Dropdown(label=translations["f0_file_2"], value="", choices=f0_file, allow_custom_value=True, interactive=True)
+                        refresh_f0_file = gr.Button(translations["refresh"])
+                with gr.Row():
+                    with gr.Accordion(translations["hubert_model"], open=False):
+                        embed_mode = gr.Radio(label=translations["embed_mode"], info=translations["embed_mode_info"], value="fairseq", choices=embedders_mode, interactive=True, visible=True)
+                        embedders = gr.Radio(label=translations["hubert_model"], info=translations["hubert_info"], choices=embedders_model, value="hubert_base", interactive=True)
+                        custom_embedders = gr.Textbox(label=translations["modelname"], info=translations["modelname_info"], value="", placeholder="hubert_base", interactive=True, visible=False)    
+                with gr.Row():
+                    with gr.Accordion(translations["use_presets"], open=False):
+                        with gr.Row():
+                            presets_name = gr.Dropdown(label=translations["file_preset"], choices=presets_file, value=presets_file[0] if len(presets_file) > 0 else '', interactive=True, allow_custom_value=True)
+                        with gr.Row():
+                            load_click = gr.Button(translations["load_file"], variant="primary")
+                            refresh_click = gr.Button(translations["refresh"])
+                with gr.Row():
                     with gr.Accordion(translations["export_file"], open=False):
                         with gr.Row():
                             with gr.Column():
