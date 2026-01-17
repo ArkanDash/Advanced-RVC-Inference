@@ -31,6 +31,7 @@ def convert_tab():
             input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)
           
         play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
+    with gr.Row():
         with gr.Column():
             index_strength = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=False)
             with gr.Accordion(translations["input_output"], open=False):
