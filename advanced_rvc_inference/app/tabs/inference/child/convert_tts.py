@@ -50,6 +50,7 @@ def convert_tts_tab():
                     source_lang = gr.Dropdown(label=translations["source_lang"], choices=["auto"]+google_tts_voice, interactive=True, value="auto")
                     target_lang = gr.Dropdown(label=translations["target_lang"], choices=google_tts_voice, interactive=True, value="en")
                 translate_button = gr.Button(translations["translate"])
+    with gr.Row():
         with gr.Column():
             index_strength0 = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=False)
         with gr.Column():
