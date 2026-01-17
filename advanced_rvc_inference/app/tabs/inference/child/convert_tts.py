@@ -53,12 +53,14 @@ def convert_tts_tab():
     with gr.Row():
         with gr.Column():
             index_strength0 = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=False)
+    with gr.Row():    
         with gr.Column():
             with gr.Accordion(translations["output_path"], open=False):
                 export_format0 = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                 output_audio0 = gr.Textbox(label=translations["output_tts"], value="advanced_rvc_inference/assets/audio/tts/tts.wav", placeholder="audios/tts.wav", info=translations["tts_output"], interactive=True)
                 output_audio1 = gr.Textbox(label=translations["output_tts_convert"], value="advanced_rvc_inference/assets/audios/rvc/tts-convert.wav", placeholder="audios/tts-convert.wav", info=translations["tts_output"], interactive=True)
-            
+    with gr.Row():    
+        with gr.Column():
             with gr.Accordion(translations["setting"], open=False):
                 with gr.Accordion(translations["f0_method"], open=False):
                     with gr.Group():
