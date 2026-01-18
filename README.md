@@ -244,8 +244,10 @@ The use of the converted voice for the following purposes is prohibited:
 
 | Repository | Owner |
 |------------|-------|
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | [PhamHuynhAnh16](https://github.com/PhamHuynhAnh16/) |
-| [Applio](https://github.com/IAHispano/Applio) | [IAHispano](https://github.com/IAHispano) |
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh |
+| [Applio](https://github.com/IAHispano/Applio) | IAHispano |
+| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke |
+| [whisper](https://github.com/openai/whisper) | OpenAI |
 
 ## Support
 
