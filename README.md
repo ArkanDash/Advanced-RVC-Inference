@@ -2,7 +2,7 @@
 
 # Advanced RVC Inference
 
-**A modular Retrieval-based Voice Conversion framework with Gradio UI, training capabilities, and audio processing tools**
+Advanced RVC Inference presents itself as a state-of-the-art web UI crafted to streamline rapid and effortless inference. This comprehensive toolset encompasses a model downloader, a voice splitter, training and more.
 
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
@@ -14,7 +14,7 @@
 - **Model Training**: Complete training pipeline for creating custom RVC models
 - **Real-time Processing**: Low-latency real-time voice conversion support
 - **Web UI**: Intuitive Gradio-based web interface
-- **CLI Support**: Command-line interface for scripting and automation
+- **CLI Support**: Command-line interface for scripting and automation 
 - **API Access**: Python API for programmatic access
 - **Audio Separation**: Built-in tools for vocal/instrument separation
 - **Text-to-Speech**: Integration with edge-tts for TTS-based voice conversion
