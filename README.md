@@ -251,6 +251,8 @@ The use of the converted voice for the following purposes is prohibited:
 
 For issues and feature requests, please use the [GitHub Issues](https://github.com/ArkanDash/Advanced-RVC-Inference/issues) page.
 
+## NOTES
+if you want use older verion use v1 branch (py3.12+ support comming soon), dont't lazy
 ---
 
 <div align="center">
