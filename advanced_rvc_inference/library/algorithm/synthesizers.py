@@ -33,7 +33,26 @@ class Synthesizer(torch.nn.Module):
         if use_f0:
             if vocoder == "RefineGAN": 
                 from advanced_rvc_inference.library.generators.refinegan import RefineGANGenerator
-                self.dec = RefineGANGenerator(sample_rate=sr, upsample_rates=upsample_rates, num_mels=inter_channels, checkpointing=checkpointing)
+                self.dec = RefineGANGenerator(
+                    sample_rate=sr,
+                    upsample_rates=upsample_rates,
+                    num_mels=inter_channels, 
+                    checkpointing=checkpointing
+                )
+            elif vocoder == "BigVGAN":
+                from advanced_rvc_inference.library.generators.bigvgan import BigVGANGenerator
+
+                self.dec = BigVGANGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sample_rate=sr,
+                    harmonic_num=0, 
+                )
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
                 from advanced_rvc_inference.library.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
