@@ -14,7 +14,7 @@ def restart_app(app):
     os.system("cls" if platform.system() == "Windows" else "clear")
     
     app.close()
-    subprocess.run([python, os.path.join("advanced_rvc_inference", "app.py")] + [arg for arg in sys.argv[1:] if arg != "--open"])
+    subprocess.run([python, os.path.join("advanced_rvc_inference", "gui.py")] + [arg for arg in sys.argv[1:] if arg != "--open"])
 
 def change_language(lang, app):
     configs = json.load(open(configs_json, "r"))
@@ -37,12 +37,3 @@ def change_theme(theme, app):
 
         restart_app(app)
 
-def change_font(font, app):
-    configs = json.load(open(configs_json, "r"))
-
-    if font != configs["font"]:
-        configs["font"] = font
-        with open(configs_json, "w") as f:
-            json.dump(configs, f, indent=4)
-
-        restart_app(app)
