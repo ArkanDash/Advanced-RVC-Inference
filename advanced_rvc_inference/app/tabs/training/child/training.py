@@ -102,7 +102,7 @@ def training_model_tab():
                                 train_batch_size = gr.Slider(label=translations["batch_size"], info=translations["batch_size_info"], minimum=1, maximum=64, value=8, step=1, interactive=True)
                     with gr.Group():
                         multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
-                        vocoders = gr.Radio(label=translations["vocoder"], info=translations["vocoder_info"], choices=["Default", "MRF-HiFi-GAN", "RefineGAN", "RingFormer", "PCPH-GAN"], value="Default", interactive=True) 
+                        vocoders = gr.Radio(label=translations["vocoder"], info=translations["vocoder_info"], choices=["Default", "MRF-HiFi-GAN", "RefineGAN", "RingFormer", "PCPH-GAN", "BigVGAN"], value="Default", interactive=True) 
                     with gr.Row():
                         deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
                         benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
