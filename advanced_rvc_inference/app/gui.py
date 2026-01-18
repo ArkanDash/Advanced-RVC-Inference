@@ -355,7 +355,6 @@ def create_app():
 
             with gr.Tabs():
                 inference_tab()
-
                 if client_mode:
                     from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
                         realtime_client_tab,
@@ -365,8 +364,9 @@ def create_app():
                 else:
                     realtime_tab()
 
-                training_tab()
                 download_tab()
+                training_tab()
+                
                 extra_tab(app)
 
             with gr.Row():
