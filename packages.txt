@@ -1,0 +1,3 @@
+git-lfs
+aria2 -y
+ffmpeg
