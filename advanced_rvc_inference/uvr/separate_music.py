@@ -162,17 +162,6 @@ def separate(
                     separate_backing,
                     separate_reverb
                 ))
-    except ModuleNotFoundError as e:
-        if "demucs" in str(e):
-            logger.error(f"{translations['separator_error']}: The 'demucs' module is not installed. "
-                        f"Please install it with: pip install demucs")
-            logger.debug(traceback.format_exc())
-        else:
-            logger.error(f"{translations['separator_error']}: {e}")
-            logger.debug(traceback.format_exc())
-    except Exception as e:
-        logger.error(f"{translations['separator_error']}: {e}")
-        logger.debug(traceback.format_exc())
 
     if os.path.exists(pid_path): os.remove(pid_path)
     elapsed_time = time.time() - start_time
@@ -430,33 +419,6 @@ def vr_main(
     logger.info(translations["separator_success_2"])
     return process_file(denoise_list if enable_denoise else output_list, output_dirs, export_format, mode)
 
-def demucs_main(
-    input_path,
-    output_dirs,
-    model_name,
-    export_format="wav",
-    segments_size=256,
-    overlap=0.25,
-    shifts=2,
-    sample_rate=44100
-):
-    exists_file(input_path, output_dirs)
-    
-    logger.info(f"{translations['separator_process_2']}...")
-
-    output_list = separate_main(
-        audio_file=input_path, 
-        output_dir=output_dirs, 
-        model_filename=demucs_models.get(model_name, model_name), 
-        export_format=export_format, 
-        segment_size=(segments_size / 2), 
-        overlap=overlap, 
-        shifts=shifts, 
-        sample_rate=sample_rate
-    )
-
-    logger.info(translations["separator_success_2"])
-    return process_file(output_list, output_dirs, export_format, mode="4stem")
 
 def mdx_main(
     input_path,
