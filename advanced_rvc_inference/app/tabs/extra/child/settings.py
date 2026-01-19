@@ -8,7 +8,7 @@ sys.path.append(os.getcwd())
 from advanced_rvc_inference.core.ui import change_fp
 from advanced_rvc_inference.core.utils import stop_pid
 from advanced_rvc_inference.core.restart import change_language, change_theme
-from advanced_rvc_inference.utils.variables import translations, theme, font, configs, language, config
+from advanced_rvc_inference.utils.variables import translations, theme, configs, language, config
 
 def settings_tab(app):
     with gr.Row():
