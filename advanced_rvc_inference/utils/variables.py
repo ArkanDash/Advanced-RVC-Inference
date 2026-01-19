@@ -504,12 +504,11 @@ google_tts_voice = configs.get("google_tts_voice", ["vi", "en"])
 
 # VR models
 vr_models = configs.get("vr_models", "")
-demucs_models = configs.get("demucs_models", "")
 mdx_models = configs.get("mdx_models", "")
 karaoke_models = configs.get("karaoke_models", "")
 reverb_models = configs.get("reverb_models", "")
 denoise_models = configs.get("denoise_models", "")
-uvr_model = list(demucs_models.keys()) + list(vr_models.keys()) + list(mdx_models.keys())
+uvr_model = list(vr_models.keys()) + list(mdx_models.keys())
 
 # Sample rates
 sample_rate_choice = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000]

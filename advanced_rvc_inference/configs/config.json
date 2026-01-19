@@ -127,12 +127,6 @@
         "Inst_Main": "UVR-MDX-NET-Inst_Main.onnx",
         "MDXNET_Main": "UVR_MDXNET_Main.onnx"
     },
-    "demucs_models": {
-        "HT-Tuned": "htdemucs_ft.yaml",
-        "HT-Normal": "htdemucs.yaml",
-        "HD_MMI": "hdemucs_mmi.yaml",
-        "HT_6S": "htdemucs_6s.yaml"
-    },
     "vr_models": {
         "HP-1": "1_HP-UVR.pth",
         "HP-2": "2_HP-UVR.pth",
@@ -577,7 +571,6 @@
     "realtime_tab": true,
     "realtime_client_tab": true,
     "create_reference_tab": true,
-    "font": "",
     "app_port": 7860,
     "tensorboard_port": 6870,
     "num_of_restart": 5,
@@ -609,8 +602,6 @@
     "audios_path": "advanced_rvc_inference/assets/audios",
     "uvr_path": "advanced_rvc_inference/assets/audios/uvr",
     "reference_path": "advanced_rvc_inference/assets/logs/reference",
-    "demucs_segments_enable": true,
-    "demucs_cpu_mode": false,
     "limit_f0": 8,
     "debug_mode": false,
     "pretrain_verify_shape": true,
