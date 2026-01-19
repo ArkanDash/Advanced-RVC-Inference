@@ -155,9 +155,9 @@ def launch(
                     realtime_client_tab()
                 else:
                     realtime_tab()
+                download_tab()
 
                 training_tab()
-                download_tab()
                 extra_tab(app)
 
             with gr.Row():
