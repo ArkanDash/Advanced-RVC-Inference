@@ -456,9 +456,6 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
         if mode == "original":
             if "_(Instrumental)_" in file: os.rename(file_path, instruments_audio)
             elif "_(Vocals)_" in file: os.rename(file_path, original_audio)
-        elif mode == "4stem":
-            if "_(Vocals)_" in file: os.rename(file_path, original_audio)
-            elif "_(Drums)_" in file or "_(Bass)_" in file or "_(Other)_" in file: demucs_inst.append(file_path)
         elif mode == "reverb":
             filename = file.split("_(")[0]
 
@@ -474,15 +471,7 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
     if mode == "reverb": return reverb_audio, no_reverb_audio
     if mode == "karaoke": return main_audio, backing_audio 
 
-    if mode == "4stem":
-        demucs_audio = pydub_load(demucs_inst[0])
-        for file in demucs_inst[1:]:
-            demucs_audio = demucs_audio.overlay(pydub_load(file))
 
-        demucs_audio.export(instruments_audio, format=export_format)
-
-        for f in demucs_inst:
-            if os.path.exists(f): os.remove(f)
 
     return original_audio, instruments_audio
 
