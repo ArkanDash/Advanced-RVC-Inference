@@ -17,7 +17,7 @@ from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
 from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 
     edgetts, google_tts_voice, method_f0, method_f0_full, 
-    vr_models, mdx_models, demucs_models, embedders_model, 
+    vr_models, mdx_models, embedders_model, 
     spin_model, whisper_model
 )
 
@@ -29,7 +29,6 @@ AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a",
 MODEL_TYPES = {
     "vr": list(vr_models.keys()),
     "mdx": list(mdx_models.keys()),
-    "demucs": list(demucs_models.keys())
 }
 
 # Constants for F0 methods that require hop length
