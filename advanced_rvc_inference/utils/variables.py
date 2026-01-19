@@ -304,8 +304,6 @@ method_f0_full = [
     "rmvpe-clipping-medfilt", 
     "hpa-rmvpe", 
     "hpa-rmvpe-medfilt", 
-    "hpa-rmvpe-previous", 
-    "hpa-rmvpe-previous-medfilt",
     "harvest",
     "yin",
     "pyin",
@@ -498,7 +496,7 @@ export_format_choices = [ext[1:] for ext in audio_extensions]
 
 # Language and theme
 language = configs.get("language", "vi-VN")
-theme = configs.get("theme", "NoCrypt/miku")
+theme = configs.get("theme", "NeoPy/Soft")
 
 # TTS voices
 edgetts = configs.get("edge_tts", ["vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"])
@@ -512,9 +510,6 @@ karaoke_models = configs.get("karaoke_models", "")
 reverb_models = configs.get("reverb_models", "")
 denoise_models = configs.get("denoise_models", "")
 uvr_model = list(demucs_models.keys()) + list(vr_models.keys()) + list(mdx_models.keys())
-
-# Font
-font = configs.get("font", "https://fonts.googleapis.com/css2?family=Courgette&display=swap")
 
 # Sample rates
 sample_rate_choice = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000]
