@@ -21,8 +21,8 @@ for l in ["httpx", "httpcore"]:
     logging.getLogger(l).setLevel(logging.ERROR)
 
 def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
-    predictors_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cerqvpgbef/", "rot13")
-    embedders_url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/rzorqqref/", "rot13")
+    predictors_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/predictors/"
+    embedders_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/embedders/"
     if embedders_mode == "spin": embedders_mode = "transformers"
 
     def download_predictor(predictor):
@@ -63,7 +63,11 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
         suffix = ".onnx" if f0_onnx else (".pt" if "crepe" not in f0_method else ".pth")
 
         if "rmvpe" in f0_method:
-            modelname = "rmvpe"
+            modelname = (
+                "hpa-rmvpe" 
+                if "previous" in f0_method else 
+                "hpa-rmvpe"
+            ) if "hpa" in f0_method else "rmvpe"
         elif "fcpe" in f0_method:
             modelname = ("fcpe" + ("_legacy" if "legacy" in f0_method and "previous" not in f0_method else "")) if "previous" in f0_method else "ddsp_200k"
         elif "crepe" in f0_method:
