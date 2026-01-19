@@ -113,7 +113,6 @@ def launch(
             config,
             translations,
             theme,
-            font,
             configs,
             language,
             allow_disk,
