@@ -592,12 +592,6 @@ def separate_main(
                 "batch_size": batch_size, 
                 "enable_denoise": enable_denoise
             }, 
-            demucs_params={
-                "segment_size": segment_size, 
-                "shifts": shifts, 
-                "overlap": overlap, 
-                "segments_enabled": config.configs.get("demucs_segments_enable", True)
-            },
             vr_params={
                 "batch_size": batch_size, 
                 "window_size": window_size, 
@@ -627,12 +621,6 @@ def separate_main(
                 "batch_size": 1, 
                 "enable_denoise": enable_denoise
             }, 
-            demucs_params={
-                "segment_size": 128, 
-                "shifts": 2, 
-                "overlap": 0.25, 
-                "segments_enabled": config.configs.get("demucs_segments_enable", True)
-            },
             vr_params={
                 "batch_size": 1, 
                 "window_size": 512, 

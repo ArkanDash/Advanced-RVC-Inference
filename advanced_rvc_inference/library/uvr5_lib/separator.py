@@ -65,7 +65,7 @@ class Separator:
         self.normalization_threshold = normalization_threshold
         if normalization_threshold <= 0 or normalization_threshold > 1: raise ValueError
         self.sample_rate = int(sample_rate)
-        self.arch_specific_params = {"MDX": mdx_params, "Demucs": demucs_params, "VR": vr_params}
+        self.arch_specific_params = {"MDX": mdx_params, "VR": vr_params}
         self.torch_device = None
         self.torch_device_cpu = None
         self.torch_device_mps = None
@@ -144,7 +144,6 @@ class Separator:
                 **model_downloads_list["mdx_download_list"], 
                 **model_downloads_list["mdx_download_vip_list"]
             }, 
-            "Demucs": {key: value for key, value in model_downloads_list["demucs_download_list"].items() if key.startswith("Demucs v4")},
             "VR": {
                 **model_downloads_list["vr_download_list"]
             }
@@ -163,9 +162,7 @@ class Separator:
                     except:
                         try:
                             self.download_file_if_not_exists(f"{model_repo}/VR/{model_filename}", model_path)
-                        except:
-                            self.download_file_if_not_exists(f"{model_repo}/Demucs/{model_filename}", model_path)
-
+                        
                     return model_filename, model_type, model_path
 
                 elif isinstance(files, dict) and any(model_filename in (k, v) for k, v in files.items()):
@@ -174,8 +171,6 @@ class Separator:
 
                         if file_val.startswith("http"):
                             self.download_file_if_not_exists(file_val, out_path)
-                        else:
-                            self.download_file_if_not_exists(f"{model_repo}/Demucs/{file_val}", os.path.join(self.model_file_dir, file_val))
 
                     return model_filename, model_type, model_path
 
@@ -221,12 +216,12 @@ class Separator:
             "invert_using_spec": False, 
             "sample_rate": self.sample_rate
         }
-        separator_classes = {"MDX": "mdx_separator.MDXSeparator", "Demucs": "demucs_separator.DemucsSeparator", "VR": "vr_separator.VRSeparator"}
+        separator_classes = {"MDX": "mdx_separator.MDXSeparator",  "VR": "vr_separator.VRSeparator"}
 
         if model_type not in self.arch_specific_params or model_type not in separator_classes: raise ValueError(translations["model_type_not_support"].format(model_type=model_type))
 
         module_name, class_name = separator_classes[model_type].split(".")
-        separator_class = getattr(import_module(f"advanced_rvc_inference.library.{module_name}"), class_name)
+        separator_class = getattr(import_module(f"advanced_rvc_inference.library.uvr.{module_name}"), class_name)
         self.model_instance = separator_class(common_config=common_params, arch_config=self.arch_specific_params[model_type])
 
     def separate(self, audio_file_path):
