@@ -11,7 +11,7 @@ sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.library.utils import pydub_load
 from advanced_rvc_inference.library.uvr5_lib.separator import Separator
-from advanced_rvc_inference.utils.variables import config, logger, translations, vr_models, demucs_models, mdx_models, karaoke_models, reverb_models, denoise_models
+from advanced_rvc_inference.utils.variables import config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
