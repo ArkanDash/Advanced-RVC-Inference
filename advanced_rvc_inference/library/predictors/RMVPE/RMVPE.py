@@ -22,7 +22,7 @@ class RMVPE:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
-            from main.library.predictors.RMVPE.e2e import E2E
+            from advanced_rvc_inference.library.predictors.RMVPE.e2e import E2E
             model = E2E(4, 1, (2, 2), 5, 4, 1, 16, hpa=hpa)
 
             model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
