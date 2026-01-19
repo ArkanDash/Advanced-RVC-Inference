@@ -201,18 +201,7 @@ def _separate(
     os.makedirs(output_dirs, exist_ok=True)
     clean_file(output_dirs, export_format)
 
-    if model_name in list(demucs_models.keys()):
-        original_vocals, instruments = demucs_main(
-            input_path,
-            output_dirs,
-            model_name,
-            export_format,
-            segments_size,
-            overlap,
-            shifts,
-            sample_rate
-        )
-    elif model_name in list(vr_models.keys()):
+    if model_name in list(vr_models.keys()):
         original_vocals, instruments = vr_main(
             input_path,
             output_dirs,
