@@ -38,12 +38,6 @@ class Separator:
                 "batch_size": 1, 
                 "enable_denoise": False
             }, 
-            demucs_params={
-                "segment_size": "Default", 
-                "shifts": 2, 
-                "overlap": 0.25, 
-                "segments_enabled": True
-            }, 
             vr_params={
                 "batch_size": 1, 
                 "window_size": 512, 
