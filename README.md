@@ -58,7 +58,7 @@ The web interface will be available at `http://localhost:7860`
 
 ### Command Line Interface
 
-see guides mkre at [Wiki](https://github.com/ArkanDash/Advanced-RVC-Inference/wiki/Cli-Guide)
+see guides more at [Wiki](https://github.com/ArkanDash/Advanced-RVC-Inference/wiki/Cli-Guide)!
 
 
 ### Python API
@@ -88,24 +88,6 @@ rvc.unload_model()
 ```
 
 
-## Command Reference
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `rvc-cli infer` | Run voice conversion inference on a single audio file |
-| `rvc-cli infer-batch` | Run batch voice conversion on multiple files |
-| `rvc-cli train` | Train RVC models (use web UI for full features) |
-| `rvc-cli dataset` | Create and manage training datasets |
-| `rvc-cli preprocess` | Preprocess training data |
-| `rvc-cli extract` | Extract features for training |
-| `rvc-cli index` | Create index for feature retrieval |
-| `rvc-cli separate` | Separate music into vocals and instruments |
-| `rvc-cli reference` | Create reference audio for training |
-| `rvc-cli tts` | Text-to-speech voice conversion |
-| `rvc-cli serve` | Launch the web interface |
-| `rvc-cli info` | Show system information |
 
 ### Quick Inference
 
