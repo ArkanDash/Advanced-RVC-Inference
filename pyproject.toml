@@ -108,7 +108,7 @@ dev = [
 ]
 
 [project.scripts]
-rvc-cli = "advanced_rvc_inference.api.cli:main"
+rvc-cli = "rvc_cli:main"
 rvc-gui = "advanced_rvc_inference.app.gui:launch"
 
 [project.urls]
