@@ -14,7 +14,7 @@ from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
 
-from lib import gdown, mega, mediafire, pixeldrain huggingface
+from lib import gdown, mega, mediafire, huggingface
 
 now_dir = os.getcwd()
 tmp = os.path.join(now_dir, "TEMP")
@@ -945,3 +945,4 @@ with gr.Blocks() as app:
         )
 
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
+
