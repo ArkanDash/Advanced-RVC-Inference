@@ -452,6 +452,10 @@ def download_and_extract_models(urls):
         logs.append(f"Downloading...")
         yield "\n".join(logs)
         if "drive.google.com" in url:
+            file_id = None
+            if "/file/d/" in url: file_id = url.split("/d/")[1].split("/")[0]             
+            elif "open?id=" in url: file_id = url.split("open?id=")[1].split("/")[0]
+            elif "/download?id=" in url: file_id = url.split("/download?id=")[1].split("&")[0]
             gdown.gdown_downloadfile.endswith(".zip"): shutil.unpack_archive(file, model_zip_path)
         elif "mega.nz" in url:
             meganz.mega_download_url(url, model_zip_path)
@@ -945,4 +949,5 @@ with gr.Blocks() as app:
         )
 
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
+
 
