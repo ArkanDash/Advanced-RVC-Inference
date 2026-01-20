@@ -130,29 +130,6 @@ This project follows [PEP 8](https://www.python.org/dev/peps/pep-0008/) with som
 - Maximum line length: 120 characters
 - Use descriptive variable and function names
 - Write docstrings for all public functions and classes
-
-### Code Organization
-
-```
-advanced_rvc_inference/
-├── core/           # Core processing modules
-├── tabs/           # UI tab components
-├── library/        # ML libraries and utilities
-│   ├── uvr5_lib/   # UVR separation library
-│   └── speaker_diarization/  # Speaker diarization modules
-├── infer/          # Inference engines
-├── rvc/            # RVC-specific modules
-│   └── realtime/   # Real-time processing
-├── uvr/            # UVR separation modules
-├── utils/          # Utility functions and variables
-├── assets/         # Resource files
-├── configs/        # Configuration files
-├── gui.py          # Main Gradio interface
-├── api.py          # Python API
-├── cli.py          # Command-line interface
-└── variables.py    # Global configuration
-```
-
 ### Import Order
 
 Organize imports in the following order:
