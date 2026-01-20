@@ -41,6 +41,8 @@ def separate_tab():
                     segments_size = gr.Slider(label=translations["segments_size"], info=translations["segments_size_info"], minimum=32, maximum=3072, value=256, step=32, interactive=True)
                     aggression = gr.Slider(label=translations['aggression'], info=translations["aggression_info"], minimum=1, maximum=50, value=5, step=1, interactive=True, visible=False)
             drop_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)    
+            audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+        with gr.Row():
             with gr.Accordion(translations["use_url"], open=False):
                 url = gr.Textbox(label=translations["url_audio"], value="", placeholder="https://www.youtube.com/...", scale=6)
                 download_button = gr.Button(translations["downloads"])
@@ -59,7 +61,7 @@ def separate_tab():
                 input_audio = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, allow_custom_value=True, interactive=True)
                 refresh_audio = gr.Button(translations["refresh"])
                 output_dirs = gr.Textbox(label=translations["output_folder"], value=configs.get("uvr_path", "advanced_rvc_inference/assets/audios/uvr"), placeholder="audios", info=translations["output_folder_info"], interactive=True)
-            audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+            
     with gr.Row():
         gr.Markdown(translations["output_separator"])
     with gr.Row():
