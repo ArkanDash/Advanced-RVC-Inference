@@ -31,3 +31,4 @@ gdown
 packaging==24.1
 pydantic==2.8.2
 pydantic_core==2.20.1
+git+https://github.com/terastudio-org/fairseq
