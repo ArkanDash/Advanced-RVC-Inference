@@ -458,10 +458,9 @@ def download_and_extract_models(urls):
             elif "/download?id=" in url: file_id = url.split("/download?id=")[1].split("&")[0]
                 
             if file_id:
-                    file = gdown.gdown_download(id=file_id, output=model_zip_path)
-                    if file.endswith(".zip"): shutil.unpack_archive(file, model_zip_path)
+                file = gdown.gdown_download(id=file_id, output=model_zip_path)
+                if file.endswith(".zip"): shutil.unpack_archive(file, model_zip_path)
 
-                    move_files_from_directory(download_dir, model_folders, model)
         elif "mega.nz" in url:
             meganz.mega_download_url(url, model_zip_path)
             file_download.endswith(".zip"): shutil.unpack_archive(os.path.join(download_dir, file_download), model_zip_path)
@@ -954,6 +953,7 @@ with gr.Blocks() as app:
         )
 
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
+
 
 
 
