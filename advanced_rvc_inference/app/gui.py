@@ -160,8 +160,7 @@ def launch(
                     download_tab()
                     training_tab()
                 
-                with gr.TabItem("Extra"):
-                    extra_tab(app)
+                extra_tab(app)
 
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])
