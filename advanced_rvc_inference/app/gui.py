@@ -144,20 +144,24 @@ def launch(
             from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
             from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
+            # FIXED: Use gr.TabItem instead of gr.Tabs for individual pages
             with gr.Tabs():
-                with gr.Tabs("Infer"):
+                with gr.TabItem("Inference"):
                     inference_tab()
                     if client_mode:
                         from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
-                        realtime_client_tab,
+                            realtime_client_tab,
                         )
                         realtime_client_tab()
                     else:
                         realtime_tab()
-                with gr.Tabs("Models"):
+                
+                with gr.TabItem("Models"):
                     download_tab()
                     training_tab()
-                extra_tab(app)
+                
+                with gr.TabItem("Extra"):
+                    extra_tab(app)
 
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])
@@ -351,21 +355,24 @@ def create_app():
             from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
             from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
+            # FIXED: Use gr.TabItem instead of gr.Tabs for individual pages
             with gr.Tabs():
-                inference_tab()
-                if client_mode:
-                    from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
-                        realtime_client_tab,
-                    )
+                with gr.TabItem("Inference"):
+                    inference_tab()
+                    if client_mode:
+                        from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
+                            realtime_client_tab,
+                        )
+                        realtime_client_tab()
+                    else:
+                        realtime_tab()
 
-                    realtime_client_tab()
-                else:
-                    realtime_tab()
-
-                download_tab()
-                training_tab()
+                with gr.TabItem("Models"):
+                    download_tab()
+                    training_tab()
                 
-                extra_tab(app)
+                with gr.TabItem("Extra"):
+                    extra_tab(app)
 
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])
