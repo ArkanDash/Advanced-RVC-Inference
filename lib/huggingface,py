@@ -1,0 +1,14 @@
+import requests, os
+
+def HF_download(url, output_path=None):
+    url = url.replace("/blob/", "/resolve/").replace("?download=true", "").strip()
+    output_path = os.path.basename(url) if output_path is None else (os.path.join(output_path, os.path.basename(url)) if os.path.isdir(output_path) else output_path)
+    response = requests.get(url, stream=True, timeout=300)
+
+    if response.status_code == 200:
+        with open(output_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=10 * 1024 * 1024):
+                f.write(chunk)
+
+        return output_path
+    else: raise ValueError(response.status_code)
