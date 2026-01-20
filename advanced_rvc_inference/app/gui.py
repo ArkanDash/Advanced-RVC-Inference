@@ -145,19 +145,18 @@ def launch(
             from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
             with gr.Tabs():
-                inference_tab()
-
-                if client_mode:
-                    from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
+                with gr.Tabs("Infer"):
+                    inference_tab()
+                    if client_mode:
+                        from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
                         realtime_client_tab,
-                    )
-
-                    realtime_client_tab()
-                else:
-                    realtime_tab()
-                download_tab()
-
-                training_tab()
+                        )
+                        realtime_client_tab()
+                    else:
+                        realtime_tab()
+                with gr.Tabs("Models"):
+                    download_tab()
+                    training_tab()
                 extra_tab(app)
 
             with gr.Row():
