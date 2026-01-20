@@ -30,6 +30,10 @@ def separate_tab():
                     denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
     with gr.Row():
         with gr.Column():
+            drop_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)    
+            audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
+    with gr.Row(): 
+        with gr.Column():
             separate_button = gr.Button(translations["separator_tab"], variant="primary")
     with gr.Row():
         with gr.Column():
@@ -40,9 +44,9 @@ def separate_tab():
                 with gr.Row():
                     segments_size = gr.Slider(label=translations["segments_size"], info=translations["segments_size_info"], minimum=32, maximum=3072, value=256, step=32, interactive=True)
                     aggression = gr.Slider(label=translations['aggression'], info=translations["aggression_info"], minimum=1, maximum=50, value=5, step=1, interactive=True, visible=False)
-            drop_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)    
-            audio_input = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
-        with gr.Row():
+            
+    with gr.Row():
+        with gr.Column(): 
             with gr.Accordion(translations["use_url"], open=False):
                 url = gr.Textbox(label=translations["url_audio"], value="", placeholder="https://www.youtube.com/...", scale=6)
                 download_button = gr.Button(translations["downloads"])
