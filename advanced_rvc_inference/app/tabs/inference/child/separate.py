@@ -53,6 +53,7 @@ def separate_tab():
                     hop_length = gr.Slider(label=translations['hop_length'], info=translations["hop_length_info"], minimum=64, maximum=8192, value=1024, step=1, interactive=True, visible=False)
                     post_process_threshold = gr.Slider(label=translations['post_process_threshold'], info=translations["post_process_threshold_info"], minimum=0.1, maximum=0.3, value=0.2, step=0.1, interactive=True, visible=False)
             sample_rate = gr.Radio(choices=sample_rate_choice, value=44100, label=translations["sr"], info=translations["sr_info"], interactive=True)
+        with gr.Row():
             with gr.Accordion(translations["input_output"], open=False):
                 export_format = gr.Radio(label=translations["export_format"], info=translations["export_info"], choices=export_format_choices, value="wav", interactive=True)
                 input_audio = gr.Dropdown(label=translations["audio_path"], value="", choices=paths_for_files, allow_custom_value=True, interactive=True)
