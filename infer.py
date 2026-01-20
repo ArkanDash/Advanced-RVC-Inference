@@ -13,7 +13,8 @@ import soundfile as sf
 from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
-from mega import Mega
+
+from lib import gdown, mega, mediafire, pixeldrain huggingface
 
 now_dir = os.getcwd()
 tmp = os.path.join(now_dir, "TEMP")
@@ -451,10 +452,10 @@ def download_and_extract_models(urls):
         logs.append(f"Downloading...")
         yield "\n".join(logs)
         if "drive.google.com" in url:
-            gdown.download(url, os.path.join("zips", "extract"), quiet=False)
+            gdown.gdown_downloadfile.endswith(".zip"): shutil.unpack_archive(file, model_zip_path)
         elif "mega.nz" in url:
-            m = Mega()
-            m.download_url(url, 'zips')
+            meganz.mega_download_url(url, model_zip_path)
+            file_download.endswith(".zip"): shutil.unpack_archive(os.path.join(download_dir, file_download), model_zip_path)
         else:
             os.system(f"wget {url} -O {model_zip_path}")
         logs.append(f"Extracting...")
@@ -942,4 +943,5 @@ with gr.Blocks() as app:
             "# <center> Settings\n"+
             "#### <center> Work in progress"
         )
+
     app.queue(concurrency_count=1, max_size=50, api_open=config.api).launch(share=config.colab)
