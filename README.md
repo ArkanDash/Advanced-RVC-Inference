@@ -41,11 +41,6 @@ cd Advanced-RVC-Inference
 pip install -e .
 ```
 
-### Development Installation
-
-```bash
-pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git#egg=advanced-rvc-inference[dev]
-```
 
 ## Quick Start
 
@@ -63,18 +58,8 @@ The web interface will be available at `http://localhost:7860`
 
 ### Command Line Interface
 
-Run voice conversion from the command line:
+see guides mkre at [Wiki](https://github.com/ArkanDash/Advanced-RVC-Inference/wiki/Cli-Guide)
 
-```bash
-rvc-cli infer --model path/to/model.pth --input audio.wav --output converted.wav --pitch 0
-```
-
-View help:
-
-```bash
-rvc-cli --help
-rvc-cli infer --help
-```
 
 ### Python API
 
