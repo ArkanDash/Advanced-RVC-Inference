@@ -15,6 +15,7 @@ sortedcontainers
 torchvision>=0.18.1
 torchaudio>=2.3.1
 torchcodec>=0.8.1
+rich 
 
 faiss-cpu==1.7.3; python_version < "3.12"
 faiss-cpu>=1.7.3; python_version >= "3.12"
@@ -62,3 +63,4 @@ pycryptodome>=3.9.6,<4.0.0
 # Realtime and VAD
 sounddevice>=0.5.2
 webrtcvad-wheels>=2.0.14
+
