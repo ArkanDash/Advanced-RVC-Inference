@@ -28,10 +28,6 @@ call .venv\Scripts\activate.bat
 
 echo Virtual environment activated.
 
-REM Install torch with CUDA support
-echo Installing PyTorch with CUDA support...
-uv pip install --upgrade "torch>=2.0.0" "torchvision>=0.15.0" "torchaudio>=2.0.0" --index-url https://download.pytorch.org/whl/cu121
-
 REM Install dependencies from requirements.txt
 echo Installing requirements...
 uv pip install -r requirements.txt --index-strategy unsafe-best-match
@@ -40,19 +36,13 @@ REM Install this package in development mode - only install if dependencies are 
 echo Installing Advanced RVC Inference package...
 uv pip install -e . || echo Warning: Development install failed, continuing with basic setup...
 
-REM Install prerequisites for RVC
-echo Installing RVC prerequisites...
-python -c "from advanced_rvc_inference.core import run_prerequisites_script; run_prerequisites_script(pretraineds_hifigan=True, models=True, exe=True)"
-
 echo ===========================================
 echo Installation completed successfully!
 echo ===========================================
 
 echo To run the application, use one of the following commands:
-echo   python -m advanced_rvc_inference.app              // Run with default settings
-echo   python -m advanced_rvc_inference.app --share      // Run with public sharing
-echo   python -m advanced_rvc_inference.app --listen     // Run with external access
-
+echo   rvc-gui   
 echo ===========================================
+
 
 pause
