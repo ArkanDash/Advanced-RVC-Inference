@@ -15,4 +15,4 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Run the CLI
-python3 rvc_cli.py "$@"
+python rvc-cli "$@"
