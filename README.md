@@ -48,8 +48,11 @@ Launch the Gradio web UI:
 
 ```bash
 rvc-gui
+```
+
+```
 # or
-python -m advanced_rvc_inference.gui
+python -m advanced_rvc_inference.app.gui
 ```
 
 The web interface will be available at `http://localhost:7860`
