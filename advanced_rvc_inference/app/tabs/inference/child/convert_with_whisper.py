@@ -108,8 +108,8 @@ def convert_with_whisper_tab():
         gr.Markdown(translations["input_output"])
     
     with gr.Row():
-        play_audio2 = gr.Audio(show_download_button=True, interactive=False, label=translations["input_audio"])
-        play_audio3 = gr.Audio(show_download_button=True, interactive=False, label=translations["output_file_tts_convert"])
+        play_audio2 = gr.Audio(interactive=False, label=translations["input_audio"])
+        play_audio3 = gr.Audio(interactive=False, label=translations["output_file_tts_convert"])
     
     # Event Handlers
     with gr.Row():
