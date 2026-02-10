@@ -157,6 +157,7 @@ The use of the converted voice for the following purposes is prohibited:
 | [Applio](https://github.com/IAHispano/Applio) | IAHispano |
 | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke |
 | [whisper](https://github.com/openai/whisper) | OpenAI |
+| [BigVGAN](https://github.com/NVIDIA/BigVGAN.git) | Nvidia |
 
 ## Support
 
