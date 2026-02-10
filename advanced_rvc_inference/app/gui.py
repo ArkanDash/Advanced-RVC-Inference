@@ -130,9 +130,8 @@ def launch(
 
         # Build the UI
         with gr.Blocks(
-            title=f"Advanced RVC Inference v{get_version()}",
+            title=f"Advanced RVC Inference",
             js=js_code if client_mode else None,
-            theme=theme,
         ) as app:
             gr.HTML(
                 f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
@@ -227,6 +226,7 @@ def launch(
 
         try:
             app.launch(
+                theme=theme,
                 server_name=server_name,
                 server_port=port,
                 show_error=show_error,
