@@ -60,9 +60,9 @@ def training_model_tab():
                             extract_embedders = gr.Radio(label=translations["hubert_model"], info=translations["hubert_info"], choices=embedders_model, value="hubert_base", interactive=True)
                         with gr.Row():
                             extract_embedders_custom = gr.Textbox(label=translations["modelname"], info=translations["modelname_info"], value="", placeholder="hubert_base", interactive=True, visible=extract_embedders.value == "custom")
-                with gr.Column():
-                    extract_button = gr.Button(translations["extract_button"], scale=2)
-                    extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
+        with gr.Column():
+            extract_button = gr.Button(translations["extract_button"], scale=2)
+            extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
         with gr.Column():
             with gr.Row():
                 with gr.Column():
