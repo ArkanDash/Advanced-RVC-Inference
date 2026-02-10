@@ -30,7 +30,7 @@ def convert_tab():
         with gr.Column():
             input0 = gr.Files(label=translations["drop_audio"], file_types=file_types)
           
-        play_audio = gr.Audio(show_download_button=True, interactive=True, label=translations["input_audio"])
+        play_audio = gr.Audio(interactive=True, label=translations["input_audio"])
     with gr.Row():
         with gr.Column():
             index_strength = gr.Slider(label=translations["index_strength"], info=translations["index_strength_info"], minimum=0, maximum=1, value=0.5, step=0.01, interactive=True, visible=False)
@@ -125,12 +125,12 @@ def convert_tab():
     with gr.Row():
         gr.Markdown(translations["output_convert"])
     with gr.Row():
-        main_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["main_convert"])
-        backing_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["convert_backing"], visible=False)
-        main_backing = gr.Audio(show_download_button=True, interactive=False, label=translations["main_or_backing"], visible=False)  
+        main_convert = gr.Audio(interactive=False, label=translations["main_convert"])
+        backing_convert = gr.Audio(interactive=False, label=translations["convert_backing"], visible=False)
+        main_backing = gr.Audio(interactive=False, label=translations["main_or_backing"], visible=False)  
     with gr.Row():
-        original_convert = gr.Audio(show_download_button=True, interactive=False, label=translations["convert_original"], visible=False)
-        vocal_instrument = gr.Audio(show_download_button=True, interactive=False, label=translations["voice_or_instruments"], visible=False)  
+        original_convert = gr.Audio(interactive=False, label=translations["convert_original"], visible=False)
+        vocal_instrument = gr.Audio(interactive=False, label=translations["voice_or_instruments"], visible=False)  
     with gr.Row():
         upload_f0_file.upload(fn=lambda inp: shutil_move(inp.name, configs["f0_path"]), inputs=[upload_f0_file], outputs=[f0_file_dropdown])
         refresh_f0_file.click(fn=change_f0_choices, inputs=[], outputs=[f0_file_dropdown])
