@@ -256,6 +256,7 @@ def launch(
 
                 # Try again without share
                 app.launch(
+                    theme=theme,
                     server_name=server_name,
                     server_port=port,
                     show_error=show_error,
