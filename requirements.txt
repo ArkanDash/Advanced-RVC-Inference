@@ -39,7 +39,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio>=6.0.0
+gradio>=6.5.1
 requests>=2.32.3
 aiohttp
 pysrt
@@ -63,5 +63,6 @@ pycryptodome>=3.9.6,<4.0.0
 # Realtime and VAD
 sounddevice>=0.5.2
 webrtcvad-wheels>=2.0.14
+
 
 
