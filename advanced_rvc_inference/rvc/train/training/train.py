@@ -81,7 +81,7 @@ def parse_arguments():
     parser.add_argument("--deterministic", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--optimizer", type=str, default="AdamW")
-    parser.add_argument("--energy_use", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--energy_use", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--use_custom_reference", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--reference_path", type=str, default="")
     parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
@@ -136,6 +136,12 @@ if not os.path.exists(config_save_path):
 torch.backends.cudnn.deterministic = args.deterministic if not main_config.device.startswith("ocl") else False
 torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.startswith("ocl") else False
 
+# CUDA Optimizer Training: Enable additional CUDA optimizations
+if torch.cuda.is_available():
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.allow_tf32 = True
+    torch.backends.cuda.matmul.allow_fp16_reduced_precision_reduction = True
+
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
 global_step, last_loss_gen_all, overtrain_save_epoch = 0, 0, 0
 loss_gen_history, smoothed_loss_gen_history, loss_disc_history, smoothed_loss_disc_history = [], [], [], []
@@ -147,7 +153,8 @@ avg_losses = {
     "fm_loss_50": deque(maxlen=50), 
     "kl_loss_50": deque(maxlen=50), 
     "mel_loss_50": deque(maxlen=50), 
-    "gen_loss_50": deque(maxlen=50)
+    "gen_loss_50": deque(maxlen=50),
+    "energy_loss_50": deque(maxlen=50)
 }
 
 with open(config_save_path, "r") as f:
@@ -341,7 +348,38 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     else:
         optimizer_optim = torch.optim.AdamW
 
-    optim_g, optim_d = optimizer_optim(net_g.parameters(), config.train.learning_rate * g_lr_coeff, betas=config.train.betas, eps=config.train.eps), optimizer_optim(net_d.parameters(), config.train.learning_rate * d_lr_coeff, betas=config.train.betas, eps=config.train.eps)
+    # CUDA Optimizer Training: Use fused AdamW for better CUDA performance
+    # fused=True provides significant speedup on CUDA devices by fusing the optimizer step kernel
+    use_fused_optimizer = device.type == "cuda" and hasattr(torch.optim.AdamW, "fused")
+    
+    if rank == 0 and use_fused_optimizer:
+        logger.info("CUDA Optimizer Training: Using fused AdamW optimizer for enhanced CUDA performance")
+    
+    optim_g = optimizer_optim(
+        net_g.parameters(), 
+        config.train.learning_rate * g_lr_coeff, 
+        betas=config.train.betas, 
+        eps=config.train.eps,
+        fused=use_fused_optimizer if use_fused_optimizer else None
+    ) if use_fused_optimizer else optimizer_optim(
+        net_g.parameters(), 
+        config.train.learning_rate * g_lr_coeff, 
+        betas=config.train.betas, 
+        eps=config.train.eps
+    )
+    
+    optim_d = optimizer_optim(
+        net_d.parameters(), 
+        config.train.learning_rate * d_lr_coeff, 
+        betas=config.train.betas, 
+        eps=config.train.eps,
+        fused=use_fused_optimizer if use_fused_optimizer else None
+    ) if use_fused_optimizer else optimizer_optim(
+        net_d.parameters(), 
+        config.train.learning_rate * d_lr_coeff, 
+        betas=config.train.betas, 
+        eps=config.train.eps
+    )
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
     if not device.type.startswith(("privateuseone", "ocl")): 
@@ -380,7 +418,25 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             sys.exit(1)
 
     scheduler_g, scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=config.train.lr_decay, last_epoch=epoch_str - 2), torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
-    scaler = GradScaler(device=device, enabled=main_config.is_half and device.type == "cuda")
+    
+    # CUDA Optimizer Training: Enhanced GradScaler settings for better CUDA performance
+    # Using dynamic loss scaling for better mixed precision training stability
+    # - growth_factor: Controls how fast the loss scale grows during training
+    # - backoff_factor: Controls how fast the loss scale decreases when NaN is detected
+    # - growth_interval: Number of successful steps before increasing loss scale
+    scaler = GradScaler(
+        device=device, 
+        enabled=main_config.is_half and device.type == "cuda",
+        growth_factor=2.0,
+        backoff_factor=0.5,
+        growth_interval=100
+    )
+    
+    # CUDA Optimizer Training: Enable CUDA memory caching for better performance
+    if device.type == "cuda":
+        torch.cuda.empty_cache()
+        torch.cuda.memory._set_allocator_settings("max_split_size_mb:512")
+    
     cache = []
 
     if len(scaler_dict) > 0: scaler.load_state_dict(scaler_dict)
@@ -417,6 +473,9 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
+    # CUDA Optimizer Training: Create CUDA stream for async operations
+    cuda_stream = torch.cuda.Stream() if device.type == "cuda" else None
+    
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
         consecutive_increases_gen, consecutive_increases_disc = 0, 0
@@ -455,7 +514,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
               postfix=f", Loss: -") as pbar:
         
         for batch_idx, info in data_iterator:
-            if device.type == "cuda" and not cache_data_in_gpu: info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]  
+            # CUDA Optimizer Training: Use non-blocking data transfer for faster data loading
+            if device.type == "cuda" and not cache_data_in_gpu: 
+                if cuda_stream is not None:
+                    with torch.cuda.stream(cuda_stream):
+                        info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
+                    torch.cuda.current_stream().wait_stream(cuda_stream)
+                else:
+                    info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
             elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
             else: info = [tensor.to(device) for tensor in info]
 
@@ -525,10 +591,31 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             else:
                 loss_kl = losses.kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * config.train.c_kl
 
+            # CUDA Optimizer Training: Add energy loss for better energy training
+            loss_energy = torch.tensor(0.0, device=device)
+            if energy_use and energy is not None:
+                # Compute energy from target waveform
+                energy_target = energy.float()
+                # Slice energy to match the generated audio length
+                energy_slice = commons.slice_segments(
+                    energy_target.unsqueeze(1), 
+                    ids_slice, 
+                    config.train.segment_size // config.data.hop_length, 
+                    dim=2
+                ).squeeze(1)
+                
+                # Compute energy from generated waveform (using RMS)
+                wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
+                energy_pred = wave_rms.squeeze(-1)
+                
+                # Calculate energy loss (L1 loss)
+                loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
+                loss_energy = loss_energy * config.train.get('c_energy', 1.0)
+
             loss_fm = losses.feature_loss(fmap_r, fmap_g)
             loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
 
-            loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
+            loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
             if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
 
             optim_g.zero_grad()
@@ -553,6 +640,10 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             avg_losses["kl_loss_50"].append(loss_kl.detach())
             avg_losses["mel_loss_50"].append(loss_mel.detach())
             avg_losses["gen_loss_50"].append(loss_gen_all.detach())
+            
+            # CUDA Optimizer Training: Track energy loss
+            if energy_use:
+                avg_losses["energy_loss_50"].append(loss_energy.detach())
 
             if rank == 0 and global_step % 50 == 0:
                 scalar_dict = {
@@ -565,6 +656,10 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                     "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
                     "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean()
                 }
+                
+                # CUDA Optimizer Training: Add energy loss to logging
+                if energy_use and len(avg_losses["energy_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
 
                 summarize(
                     writer=writer, 
@@ -623,7 +718,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             "loss/g/adv": loss_gen,
             "loss/g/fm": loss_fm, 
             "loss/g/mel": loss_mel, 
-            "loss/g/kl": loss_kl
+            "loss/g/kl": loss_kl,
+            "loss/g/energy": loss_energy if energy_use else torch.tensor(0.0, device=device)
         }
 
         scalar_dict.update({f"loss/g/{i}": v for i, v in enumerate(losses_gen)})
