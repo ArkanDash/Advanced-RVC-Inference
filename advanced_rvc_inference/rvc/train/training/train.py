@@ -81,7 +81,7 @@ def parse_arguments():
     parser.add_argument("--deterministic", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--optimizer", type=str, default="AdamW")
-    parser.add_argument("--energy_use", type=lambda x: bool(strtobool(x)), default=True)
+    parser.add_argument("--energy_use", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--use_custom_reference", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--reference_path", type=str, default="")
     parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
