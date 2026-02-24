@@ -48,6 +48,90 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Constants
+REPO_URL = "https://github.com/ArkanDash/Advanced-RVC-Inference.git"
+DEFAULT_REPO_DIR = "Advanced-RVC-Inference"
+
+
+# ============================================================================
+# Repository Management (Git Clone)
+# ============================================================================
+
+def get_repo_path() -> Path:
+    """Get the path to the cloned repository."""
+    current_dir = Path.cwd()
+    repo_dir = current_dir / DEFAULT_REPO_DIR
+    parent_repo = current_dir.parent / DEFAULT_REPO_DIR
+
+    if (current_dir / "advanced_rvc_inference").exists():
+        return current_dir
+    elif repo_dir.exists():
+        return repo_dir
+    elif parent_repo.exists():
+        return parent_repo
+    else:
+        return repo_dir
+
+
+def clone_repository(force: bool = False) -> bool:
+    """Clone the Advanced RVC Inference repository."""
+    repo_path = get_repo_path()
+
+    if repo_path.exists() and not force:
+        logger.info(f"Repository already exists at {repo_path}")
+        return True
+
+    if force and repo_path.exists():
+        logger.warning(f"Removing existing repository at {repo_path}")
+        shutil.rmtree(repo_path)
+
+    logger.info(f"Cloning {REPO_URL}...")
+    try:
+        result = subprocess.run(
+            ["git", "clone", REPO_URL],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        logger.info("Repository cloned successfully")
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to clone repository: {e.stderr}")
+        return False
+    except FileNotFoundError:
+        logger.error("Git is not installed. Please install git first.")
+        return False
+
+
+def setup_repository(force_clone: bool = False) -> bool:
+    """Setup the repository and install dependencies."""
+    repo_path = get_repo_path()
+
+    if not repo_path.exists():
+        if not clone_repository(force=force_clone):
+            return False
+    elif force_clone:
+        if not clone_repository(force=True):
+            return False
+
+    if repo_path.exists() and str(repo_path) not in sys.path:
+        os.chdir(repo_path)
+        logger.info(f"Working directory: {repo_path}")
+
+    return True
+
+
+def check_dependencies() -> List[str]:
+    """Check for missing dependencies."""
+    missing = []
+    packages = ["torch", "numpy", "librosa", "gradio"]
+    for pkg in packages:
+        try:
+            __import__(pkg)
+        except ImportError:
+            missing.append(pkg)
+    return missing
+
 
 # ============================================================================
 # Version and Info Functions
@@ -876,7 +960,20 @@ For more information, visit:
         action="store_true",
         help="Enable verbose (debug) logging",
     )
-    
+
+    # Repository setup options
+    parser.add_argument(
+        "--setup",
+        action="store_true",
+        help="Clone the repository and setup environment"
+    )
+
+    parser.add_argument(
+        "--force-clone",
+        action="store_true",
+        help="Force re-clone of repository (use with --setup)"
+    )
+
     # Create subparsers
     subparsers = parser.add_subparsers(
         title="commands",
@@ -1983,28 +2080,53 @@ For more information, visit:
 
 def main():
     """Main entry point for the CLI."""
+    # Create parser first to get the --setup flag
+    parser = create_parser()
+
+    # Parse known args first to check for --setup
+    known_args, _ = parser.parse_known_args()
+
+    # Handle setup before anything else
+    if known_args.setup:
+        logger.info("Setting up repository...")
+        if not setup_repository(force_clone=known_args.force_clone):
+            logger.error("Failed to setup repository")
+            return 1
+
+        # Check dependencies
+        missing = check_dependencies()
+        if missing:
+            logger.warning(f"Missing dependencies: {', '.join(missing)}")
+            logger.info("Install with: pip install -e .")
+
+        logger.info("Setup complete!")
+        return 0
+
     # Setup environment
     package_root = Path(__file__).parent.parent
     if str(package_root) not in sys.path:
         sys.path.insert(0, str(package_root))
-    
+
     os.chdir(package_root)
-    
+
     # Create parser
     parser = create_parser()
-    
+
     # Parse arguments
     args = parser.parse_args()
-    
+
     # Handle verbose flag
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     # Handle no command
     if args.command is None:
         parser.print_help()
+        print("\n" + "="*60)
+        print("Tip: Use --setup to clone the repository first")
+        print("="*60)
         return 0
-    
+
     # Call the appropriate handler
     handler = getattr(args, "handler", None)
     if handler:
@@ -2018,7 +2140,7 @@ def main():
             import traceback
             logger.debug(traceback.format_exc())
             return 1
-    
+
     return 0
 
 
