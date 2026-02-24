@@ -126,9 +126,12 @@ def separate(
             translations['enable_post_process']: enable_post_process
         }
 
-        if separate_backing: log_data[translations['backing_model_ver']] = karaoke_model
-        if separate_reverb: log_data[translations['dereveb_model']] = reverb_model
-        if enable_denoise and model_name in list(vr_models.keys()): log_data["Denoise Model"] = denoise_model
+        if separate_backing: 
+            log_data[translations['backing_model_ver']] = karaoke_model
+        if separate_reverb: 
+            log_data[translations['dereveb_model']] = reverb_model
+        if enable_denoise and model_name in list(vr_models.keys()): 
+            log_data["Denoise Model"] = denoise_model
 
         for key, value in log_data.items():
             logger.debug(f"{key}: {value}")
@@ -163,11 +166,13 @@ def separate(
                     separate_reverb
                 ))
 
-    if os.path.exists(pid_path): os.remove(pid_path)
-    elapsed_time = time.time() - start_time
+        elapsed_time = time.time() - start_time
+        logger.info(translations["separator_success"].format(elapsed_time=f"{elapsed_time:.2f}"))
+        return output_files
 
-    logger.info(translations["separator_success"].format(elapsed_time=f"{elapsed_time:.2f}"))
-    return output_files
+    finally:
+        if os.path.exists(pid_path): 
+            os.remove(pid_path)
 
 def _separate(
     input_path,
@@ -268,7 +273,8 @@ def _separate(
 
     if separate_reverb:
         dereverb = [original_vocals]
-        if separate_backing: dereverb.append(main_vocals)
+        if separate_backing: 
+            dereverb.append(main_vocals)
 
         for audio in dereverb:
             if karaoke_model.startswith("MDX"):
@@ -304,8 +310,10 @@ def _separate(
                     mode="reverb"
                 )
             
-            if "Original_Vocals" in os.path.basename(no_reverb_vocals): original_vocals = no_reverb_vocals
-            else: main_vocals = no_reverb_vocals
+            if "Original_Vocals" in os.path.basename(no_reverb_vocals): 
+                original_vocals = no_reverb_vocals
+            else: 
+                main_vocals = no_reverb_vocals
 
     # Save UVR options to JSON file for inference detection
     uvr_options = {
@@ -393,12 +401,14 @@ def vr_main(
                 sample_rate=sample_rate
             )
 
-            if os.path.exists(audio_path): os.remove(audio_path)
+            if os.path.exists(audio_path): 
+                os.remove(audio_path)
 
             for file in denoise_file:
                 file_path = os.path.join(output_dirs, file)
 
-                if "_(Noise)_" in file and os.path.exists(file_path): os.remove(file_path)
+                if "_(Noise)_" in file and os.path.exists(file_path): 
+                    os.remove(file_path)
                 elif "_(No Noise)_" in file: 
                     filename = "".join([file.split("_(No Noise)_")[0], ".", export_format])
                     os.rename(file_path, os.path.join(output_dirs, filename))
@@ -451,27 +461,34 @@ def process_file(input_list, output_dirs, export_format="wav", mode="original"):
 
     for file in input_list:
         file_path = os.path.join(output_dirs, file)
-        if not os.path.exists(file_path): logger.warning(translations["not_found"].format(name=file_path))
+        if not os.path.exists(file_path): 
+            logger.warning(translations["not_found"].format(name=file_path))
 
         if mode == "original":
-            if "_(Instrumental)_" in file: os.rename(file_path, instruments_audio)
-            elif "_(Vocals)_" in file: os.rename(file_path, original_audio)
+            if "_(Instrumental)_" in file: 
+                os.rename(file_path, instruments_audio)
+            elif "_(Vocals)_" in file: 
+                os.rename(file_path, original_audio)
         elif mode == "reverb":
             filename = file.split("_(")[0]
 
             reverb_audio = os.path.join(output_dirs, "".join([filename, "_Reverb.", export_format]))
             no_reverb_audio = os.path.join(output_dirs, "".join([filename, "_No_Reverb.", export_format]))
 
-            if "_(Reverb)_" in file or "_(Echo)_" in file: os.rename(file_path, reverb_audio)
-            elif "_(No Reverb)_" in file or "_(No Echo)_" in file: os.rename(file_path, no_reverb_audio)
+            if "_(Reverb)_" in file or "_(Echo)_" in file: 
+                os.rename(file_path, reverb_audio)
+            elif "_(No Reverb)_" in file or "_(No Echo)_" in file: 
+                os.rename(file_path, no_reverb_audio)
         elif mode == "karaoke":
-            if "_(Instrumental)_" in file: os.rename(file_path, backing_audio)
-            elif "_(Vocals)_" in file: os.rename(file_path, main_audio)
+            if "_(Instrumental)_" in file: 
+                os.rename(file_path, backing_audio)
+            elif "_(Vocals)_" in file: 
+                os.rename(file_path, main_audio)
 
-    if mode == "reverb": return reverb_audio, no_reverb_audio
-    if mode == "karaoke": return main_audio, backing_audio 
-
-
+    if mode == "reverb": 
+        return reverb_audio, no_reverb_audio
+    if mode == "karaoke": 
+        return main_audio, backing_audio 
 
     return original_audio, instruments_audio
 
@@ -496,7 +513,8 @@ def clean_file(output_dirs, export_format):
         "Backing_Vocals."
     ]:
         file_path = os.path.join(output_dirs, f + export_format)
-        if os.path.exists(file_path): os.remove(file_path)
+        if os.path.exists(file_path): 
+            os.remove(file_path)
 
 def separate_main(
     audio_file=None, 
@@ -575,4 +593,5 @@ def separate_main(
 
         return separator.separate(audio_file)
     
-if __name__ == "__main__": main()
+if __name__ == "__main__": 
+    main()
