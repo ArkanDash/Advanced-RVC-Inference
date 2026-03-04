@@ -12,11 +12,11 @@ from tqdm import tqdm
 sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import configs
-from advanced_rvc_inference.library.uvr5_lib import spec_utils
-from advanced_rvc_inference.library.uvr5_lib.vr_network import nets
-from advanced_rvc_inference.library.uvr5_lib.vr_network import nets_new
-from advanced_rvc_inference.library.uvr5_lib.common_separator import CommonSeparator
-from advanced_rvc_inference.library.uvr5_lib.vr_network.model_param_init import ModelParameters
+from advanced_rvc_inference.uvr.uvr5_lib import spec_utils
+from advanced_rvc_inference.uvr.uvr5_lib.vr_network import nets
+from advanced_rvc_inference.uvr.uvr5_lib.vr_network import nets_new
+from advanced_rvc_inference.uvr.uvr5_lib.common_separator import CommonSeparator
+from advanced_rvc_inference.uvr.uvr5_lib.vr_network.model_param_init import ModelParameters
 
 class VRSeparator(CommonSeparator):
     def __init__(self, common_config, arch_config):
