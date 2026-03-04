@@ -32,30 +32,6 @@ def setup_environment():
         sys.path.insert(0, str(cwd))
 
 
-def get_version():
-    """Get the package version."""
-    try:
-        from advanced_rvc_inference._version import __version__
-
-        return __version__
-    except ImportError:
-        return "2.0.0"
-
-
-def try_install_localtunnel():
-    """Try to install localtunnel for alternative tunneling."""
-    try:
-        import importlib.util
-        if importlib.util.find_spec("localtunnel") is None:
-            logger.info("Installing localtunnel for alternative tunneling...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "localtunnel", "-q"],
-                          check=True, capture_output=True)
-            logger.info("localtunnel installed successfully")
-            return True
-    except Exception as e:
-        logger.debug(f"Failed to install localtunnel: {e}")
-    return False
-
 
 def _setup_signal_handlers():
     """Setup signal handlers to prevent premature shutdown."""
