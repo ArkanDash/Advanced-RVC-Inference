@@ -57,7 +57,8 @@ class Separator:
         self.output_format = output_format if output_format is not None else "wav"
         self.output_bitrate = output_bitrate
         self.normalization_threshold = normalization_threshold
-        if normalization_threshold <= 0 or normalization_threshold > 1: raise ValueError
+        if normalization_threshold <= 0 or normalization_threshold > 1: 
+            raise ValueError("normalization_threshold must be between 0 and 1")
         self.sample_rate = int(sample_rate)
         self.arch_specific_params = {"MDX": mdx_params, "VR": vr_params}
         self.torch_device = None
@@ -95,7 +96,8 @@ class Separator:
         if "CUDAExecutionProvider" in ort_providers:
             self.logger.info(translations["onnx_have"].format(have='CUDAExecutionProvider'))
             self.onnx_execution_provider = ["CUDAExecutionProvider"]
-        else: self.logger.warning(translations["onnx_not_have"].format(have='CUDAExecutionProvider'))
+        else: 
+            self.logger.warning(translations["onnx_not_have"].format(have='CUDAExecutionProvider'))
 
     def configure_amd(self, ort_providers):
         self.logger.info(translations["running_in_amd"])
@@ -104,7 +106,8 @@ class Separator:
         if "DmlExecutionProvider" in ort_providers:
             self.logger.info(translations["onnx_have"].format(have='DmlExecutionProvider'))
             self.onnx_execution_provider = ["DmlExecutionProvider"]
-        else: self.logger.warning(translations["onnx_not_have"].format(have='DmlExecutionProvider'))
+        else: 
+            self.logger.warning(translations["onnx_not_have"].format(have='DmlExecutionProvider'))
 
     def configure_mps(self, ort_providers):
         self.logger.info(translations["set_torch_mps"])
@@ -114,7 +117,8 @@ class Separator:
         if "CoreMLExecutionProvider" in ort_providers:
             self.logger.info(translations["onnx_have"].format(have='CoreMLExecutionProvider'))
             self.onnx_execution_provider = ["CoreMLExecutionProvider"]
-        else: self.logger.warning(translations["onnx_not_have"].format(have='CoreMLExecutionProvider'))
+        else: 
+            self.logger.warning(translations["onnx_not_have"].format(have='CoreMLExecutionProvider'))
 
     def get_model_hash(self, model_path):
         try:
@@ -125,7 +129,8 @@ class Separator:
             return hashlib.md5(open(model_path, "rb").read()).hexdigest()
 
     def download_file_if_not_exists(self, url, output_path):
-        if os.path.isfile(output_path): return
+        if os.path.isfile(output_path): 
+            return
         HF_download_file(url, output_path)
 
     def list_supported_model_files(self):
@@ -153,27 +158,30 @@ class Separator:
                 if isinstance(files, str) and files == model_filename:
                     try:
                         self.download_file_if_not_exists(f"{model_repo}/MDX/{model_filename}", model_path)
-                    except:
+                    except Exception as e:
+                        self.logger.warning(f"Failed to download from MDX: {e}, trying VR...")
                         try:
                             self.download_file_if_not_exists(f"{model_repo}/VR/{model_filename}", model_path)
-                        
+                        except Exception as e2:
+                            self.logger.error(f"Failed to download from VR as well: {e2}")
+                            raise
                     return model_filename, model_type, model_path
 
-                elif isinstance(files, dict) and any(model_filename in (k, v) for k, v in files.items()):
+                elif isinstance(files, dict):
+                    # Check if model_filename matches any key or value in the dict
                     for file_key, file_val in files.items():
-                        out_path = os.path.join(self.model_file_dir, file_key)
+                        if model_filename == file_key or model_filename == file_val:
+                            for file_key, file_val in files.items():
+                                out_path = os.path.join(self.model_file_dir, file_key)
+                                if file_val.startswith("http"):
+                                    self.download_file_if_not_exists(file_val, out_path)
+                            return model_filename, model_type, model_path
 
-                        if file_val.startswith("http"):
-                            self.download_file_if_not_exists(file_val, out_path)
-
-                    return model_filename, model_type, model_path
-
-        raise ValueError
+        raise ValueError(f"Model {model_filename} not found in supported model list")
 
     def load_model_data_from_yaml(self, yaml_config_filename):
         model_data_yaml_filepath = os.path.join(self.model_file_dir, yaml_config_filename) if not os.path.exists(yaml_config_filename) else yaml_config_filename
         model_data = yaml.load(open(model_data_yaml_filepath, encoding="utf-8"), Loader=yaml.FullLoader)
-
         return model_data
 
     def load_model_data_using_hash(self, model_path):
@@ -182,9 +190,10 @@ class Separator:
         response.raise_for_status()
         model_data_object = response.json()
 
-        if model_hash in model_data_object: model_data = model_data_object[model_hash]
-        else: raise ValueError
-
+        if model_hash in model_data_object: 
+            model_data = model_data_object[model_hash]
+        else: 
+            raise ValueError(f"Model hash {model_hash} not found in model data")
         return model_data
 
     def load_model(self, model_filename):
@@ -212,7 +221,8 @@ class Separator:
         }
         separator_classes = {"MDX": "mdx_separator.MDXSeparator",  "VR": "vr_separator.VRSeparator"}
 
-        if model_type not in self.arch_specific_params or model_type not in separator_classes: raise ValueError(translations["model_type_not_support"].format(model_type=model_type))
+        if model_type not in self.arch_specific_params or model_type not in separator_classes: 
+            raise ValueError(translations["model_type_not_support"].format(model_type=model_type))
 
         module_name, class_name = separator_classes[model_type].split(".")
         separator_class = getattr(import_module(f"advanced_rvc_inference.library.uvr.{module_name}"), class_name)
