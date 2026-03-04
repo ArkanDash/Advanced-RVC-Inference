@@ -9,7 +9,6 @@ import os
 import sys
 import time
 import logging
-import subprocess
 import signal
 import threading
 from pathlib import Path
@@ -30,31 +29,6 @@ def setup_environment():
     cwd = Path.cwd()
     if str(cwd) not in sys.path:
         sys.path.insert(0, str(cwd))
-
-
-def get_version():
-    """Get the package version."""
-    try:
-        from advanced_rvc_inference._version import __version__
-
-        return __version__
-    except ImportError:
-        return "2.0.0"
-
-
-def try_install_localtunnel():
-    """Try to install localtunnel for alternative tunneling."""
-    try:
-        import importlib.util
-        if importlib.util.find_spec("localtunnel") is None:
-            logger.info("Installing localtunnel for alternative tunneling...")
-            subprocess.run([sys.executable, "-m", "pip", "install", "localtunnel", "-q"],
-                          check=True, capture_output=True)
-            logger.info("localtunnel installed successfully")
-            return True
-    except Exception as e:
-        logger.debug(f"Failed to install localtunnel: {e}")
-    return False
 
 
 def _setup_signal_handlers():
@@ -85,7 +59,6 @@ def launch(
     inbrowser: bool = False,
     show_error: bool = False,
     prevent_thread_lock: bool = True,
-    enable_localtunnel: bool = False,
     keep_alive: bool = True,
 ):
     """
@@ -98,7 +71,6 @@ def launch(
         inbrowser: Whether to open the URL in a browser
         show_error: Whether to show errors in the UI
         prevent_thread_lock: Whether to prevent thread locking
-        enable_localtunnel: Whether to use localtunnel as fallback if gradio share fails
         keep_alive: Whether to keep the tunnel alive (useful for Colab)
     """
     setup_environment()
@@ -109,7 +81,7 @@ def launch(
 
         # Import required modules
         from advanced_rvc_inference.utils.variables import (
-            logger,
+            logger,          # Note: this overrides the top-level logger; consider using a different name
             config,
             translations,
             theme,
@@ -143,7 +115,6 @@ def launch(
             from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
             from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
-            # FIXED: Use gr.TabItem instead of gr.Tabs for individual pages
             with gr.Tabs():
                 with gr.TabItem("Inference"):
                     inference_tab()
@@ -178,9 +149,6 @@ def launch(
 
         # Launch the app
         logger.info("Starting Gradio server...")
-
-        gradio_url = None
-        share_failed = False
 
         # Build allowed paths list - include package assets directory
         def get_package_assets_path():
@@ -246,7 +214,6 @@ def launch(
                 logger.info(f"Public URL: {app.share_url}")
 
         except Exception as tunnel_error:
-            share_failed = True
             error_msg = str(tunnel_error).lower()
 
             # Check if it's a tunnel-related error
@@ -269,27 +236,12 @@ def launch(
 
                 logger.warning("Share link disabled - using local access only")
                 logger.info(f"Access locally at: http://{server_name}:{port}")
-
-                if enable_localtunnel:
-                    logger.info("Attempting LocalTunnel as alternative...")
-                    try_install_localtunnel()
-                    # Launch localtunnel in background
-                    import threading
-                    def run_localtunnel():
-                        import subprocess
-                        import sys
-                        subprocess.run([
-                            sys.executable, "-m", "localtunnel", 
-                            "--port", str(port)
-                        ])
-                    tunnel_thread = threading.Thread(target=run_localtunnel, daemon=True)
-                    tunnel_thread.start()
-                    logger.info("LocalTunnel started in background")
             else:
+                # Re-raise if it's not a share/tunnel issue
                 raise tunnel_error
 
         # Keep tunnel alive in notebook environments (Colab, etc.)
-        if keep_alive and (share or enable_localtunnel):
+        if keep_alive and share:
             logger.info("Keeping tunnel alive... (Press Ctrl+C to stop)")
             try:
                 _keep_alive()
@@ -355,7 +307,6 @@ def create_app():
             from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
             from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
-            # FIXED: Use gr.TabItem instead of gr.Tabs for individual pages
             with gr.Tabs():
                 with gr.TabItem("Inference"):
                     inference_tab()
@@ -394,7 +345,6 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=7860, help="Port to bind to")
     parser.add_argument("--share", action="store_true", help="Create public URL (may fail in some environments)")
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
-    parser.add_argument("--localtunnel", action="store_true", help="Use localtunnel as fallback if share fails")
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
 
@@ -406,7 +356,6 @@ if __name__ == "__main__":
             server_name=args.host,
             server_port=args.port,
             inbrowser=args.open,
-            enable_localtunnel=args.localtunnel,
             keep_alive=args.keep_alive,
         )
     )
