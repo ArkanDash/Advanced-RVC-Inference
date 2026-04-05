@@ -1,18 +1,14 @@
 #!/bin/bash
 # Advanced RVC Inference CLI Wrapper
-# This script provides an easy way to run the CLI without installation
+# Usage: ./rvc-cli <command> [options]
 
-# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-# Change to the script directory
 cd "$SCRIPT_DIR"
 
-# Check if Python is available
 if ! command -v python3 &> /dev/null; then
     echo "Error: Python 3 is not installed or not in PATH"
     exit 1
 fi
 
-# Run the CLI
-python rvc-cli "$@"
+# Run the CLI module
+python3 -m advanced_rvc_inference.api.cli "$@"
