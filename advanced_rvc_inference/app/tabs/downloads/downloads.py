@@ -10,7 +10,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
-from advanced_rvc_inference.utils.variables import translations, configs
+from advanced_rvc_inference.utils.variables import translations, configs, model_options
 from advanced_rvc_inference.core.downloads import download_model, download_pretrained_model, search_models
 
 
@@ -67,7 +67,7 @@ def download_tab():
                 outputs=[search_results, download_selected_result],
             )
             download_selected_btn.click(
-                fn=lambda url: download_model(url=url) if url else None,
+                fn=lambda name: download_model(url=model_options.get(name, "")) if name else None,
                 inputs=[search_results],
                 outputs=[download_selected_result],
             )
