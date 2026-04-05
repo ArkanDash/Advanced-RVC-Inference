@@ -158,25 +158,56 @@ def download_pretrained_model(choices, model, sample_rate):
         gr_info(translations["success"])
         return translations["success"], translations["success"]
 
+SEARCH_API_URL = codecs.decode("uggcf://ibvpr-zbqryf.pbz/srgpu_qngn.cuc", "rot13")
+MAX_SEARCH_PAGES = 10
+SEARCH_REQUEST_TIMEOUT = 15
+
+
 def fetch_models_data(search):
-    all_table_data = [] 
-    page = 1 
+    """Fetch model data from voice-models.com with paginated search.
 
-    while 1:
+    Uses the pagination HTML to detect the last page (by checking for
+    the 'next disabled' class) instead of relying on empty table data.
+    """
+    all_table_data = []
+    page = 1
+    is_last_page = False
+
+    while page <= MAX_SEARCH_PAGES and not is_last_page:
         try:
-            response = requests.post(url=codecs.decode("uggcf://ibvpr-zbqryf.pbz/srgpu_qngn.cuc", "rot13"), data={"page": page, "search": search})
+            response = requests.post(
+                url=SEARCH_API_URL,
+                data={"page": page, "search": search},
+                timeout=SEARCH_REQUEST_TIMEOUT,
+            )
 
-            if response.status_code == 200:
-                table_data = response.json().get("table", "")
-                if not table_data.strip(): break
-
-                all_table_data.append(table_data)
-                page += 1
-            else:
+            if response.status_code != 200:
                 logger.debug(f"{translations['code_error']} {response.status_code}")
-                break  
-        except json.JSONDecodeError:
-            logger.debug(translations["json_error"])
+                break
+
+            try:
+                data = response.json()
+            except (json.JSONDecodeError, ValueError):
+                logger.debug(translations["json_error"])
+                break
+
+            table_data = data.get("table", "")
+            pagination_html = data.get("pagination", "")
+
+            if not table_data.strip():
+                break
+
+            all_table_data.append(table_data)
+
+            # Check pagination for last page indicator
+            # The API returns "next disabled" class when there are no more pages
+            if pagination_html and "next disabled" in pagination_html:
+                is_last_page = True
+            else:
+                page += 1
+
+        except requests.Timeout:
+            logger.debug(f"Search request timed out on page {page}")
             break
         except requests.RequestException as e:
             logger.debug(translations["requests_error"].format(e=e))
@@ -184,10 +215,52 @@ def fetch_models_data(search):
 
     return all_table_data
 
+
+def _extract_model_url(row):
+    """Extract the download URL from a search result row.
+
+    Priority:
+    1. data-clipboard-text attribute (direct HuggingFace URL)
+    2. <a> tag href with easyaivoice.com/run?url= wrapper
+    Returns the direct URL or None if no HuggingFace URL is found.
+    """
+    # Method 1: Direct URL from clipboard button (most reliable)
+    copy_btn = row.find("button", attrs={"data-clipboard-text": True})
+    if copy_btn and copy_btn.get("data-clipboard-text"):
+        url = copy_btn["data-clipboard-text"]
+        if "huggingface" in url:
+            return url
+
+    # Method 2: Fall back to <a> tag with redirect wrapper
+    for a_tag in row.find_all("a", href=True):
+        href = a_tag["href"]
+        if "huggingface" in href:
+            # Strip redirect wrapper if present
+            return href.replace("https://easyaivoice.com/run?url=", "")
+
+    return None
+
+
+def _extract_model_name(row):
+    """Extract the model display name from a search result row."""
+    name_tag = row.find("a", class_="fs-5")
+    if name_tag:
+        return name_tag.get_text(strip=True)
+    return None
+
+
+def _extract_model_size(row):
+    """Extract the model file size badge from a search result row."""
+    badge = row.find("span", class_="badge")
+    if badge:
+        size_text = badge.get_text(strip=True)
+        return size_text
+    return None
+
 def search_models(name):
-    if not name: 
+    if not name:
         gr_warning(translations["provide_name"])
-        return [None]*2
+        return [None] * 2
 
     gr_info(translations["start"].format(start=translations["search"]))
 
@@ -195,16 +268,31 @@ def search_models(name):
 
     if len(tables) == 0:
         gr_info(translations["not_found"].format(name=name))
-        return [None]*2
-    else:
-        model_options.clear()
-        
-        for table in tables:
-            for row in BeautifulSoup(table, "html.parser").select("tr"):
-                name_tag, url_tag = row.find("a", {"class": "fs-5"}), row.find("a", {"class": "btn btn-sm fw-bold btn-light ms-0 p-1 ps-2 pe-2"})
-                url = url_tag["href"].replace("https://easyaivoice.com/run?url=", "")
-                if "huggingface" in url:
-                    if name_tag and url_tag: model_options[replace_modelname(name_tag.text)] = url
+        return [None] * 2
 
-        gr_info(translations["found"].format(results=len(model_options)))
-        return [{"value": "", "choices": model_options, "interactive": True, "visible": True, "__type__": "update"}, {"value": translations["downloads"], "visible": True, "__type__": "update"}]
+    model_options.clear()
+
+    for table in tables:
+        for row in BeautifulSoup(table, "html.parser").select("tr"):
+            model_name = _extract_model_name(row)
+            model_url = _extract_model_url(row)
+            model_size = _extract_model_size(row)
+
+            if not model_name or not model_url:
+                continue
+
+            clean_name = replace_modelname(model_name)
+
+            # Append size info to display name for better UX
+            if model_size:
+                display_name = f"{clean_name} ({model_size})"
+            else:
+                display_name = clean_name
+
+            model_options[display_name] = model_url
+
+    gr_info(translations["found"].format(results=len(model_options)))
+    return [
+        {"value": "", "choices": model_options, "interactive": True, "visible": True, "__type__": "update"},
+        {"value": translations["downloads"], "visible": True, "__type__": "update"},
+    ]
