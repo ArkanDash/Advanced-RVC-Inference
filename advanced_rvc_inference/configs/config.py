@@ -48,7 +48,13 @@ def singleton(cls):
 class Config:
     def __init__(self):
         self.configs_path = get_package_config_path("config.json")
-        self.configs = json.load(open(self.configs_path, "r"))
+        try:
+            with open(self.configs_path, "r", encoding="utf-8") as f:
+                self.configs = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            import warnings
+            warnings.warn(f"Could not load config from {self.configs_path}: {e}. Using defaults.")
+            self.configs = {}
 
         self.cpu_mode = self.configs.get("cpu_mode", False)
         self.brain = self.configs.get("brain", False)
@@ -81,8 +87,13 @@ class Config:
             with open(lang_path, encoding="utf-8") as f:
                 translations = json.load(f)
         except json.JSONDecodeError:
-            print(self.translations["empty_json"].format(file=lang))
-            pass
+            import warnings
+            warnings.warn(f"Could not load language file: {lang}")
+            translations = {}
+        except Exception as e:
+            import warnings
+            warnings.warn(f"Could not load language: {e}")
+            translations = {}
 
         return translations
     
@@ -112,9 +123,11 @@ class Config:
         if self.device in ["cpu", "mps"] and fp16:
             self.configs["fp16"] = False
             fp16 = False
-
-            with open(self.configs_path, "w") as f:
-                json.dump(self.configs, f, indent=4)
+            try:
+                with open(self.configs_path, "w", encoding="utf-8") as f:
+                    json.dump(self.configs, f, indent=4)
+            except OSError:
+                pass
         
         if not fp16: self.per_preprocess = 3.0
         return fp16
@@ -133,7 +146,9 @@ class Config:
                 with open(config_path, "r") as f:
                     configs[config_file] = json.load(f)
             except json.JSONDecodeError:
-                print(self.translations["empty_json"].format(file=config_file))
+                import warnings
+                warnings.warn(f"Could not parse config file: {config_file}")
+            except Exception:
                 pass
 
         return configs
@@ -159,11 +174,7 @@ class Config:
             else: 
                 device = "cpu"
         else:
-            torch.cuda.is_available = lambda : False
-            directml.is_available = lambda : False
-            opencl.is_available = lambda : False
-            torch.backends.mps.is_available = lambda : False
-
+            # Fallback to CPU
             device = "cpu"
 
         return device 

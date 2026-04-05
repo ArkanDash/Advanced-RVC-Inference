@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "advanced-rvc-inference"
-version = "0.1.0"
+version = "2.1.0"
 description = "Advanced RVC Inference - A comprehensive tool for RVC (Retrieval-based Voice Conversion) inference, training, and more"
 requires-python = ">=3.10,<3.13"
 readme = "README.md"
@@ -69,7 +69,7 @@ dependencies = [
     "matplotlib>=3.7.2",
 
     # Implementation and web framework
-    "gradio>=6.5.1",
+    "gradio @ git+https://github.com/BF667-IDLE/gradio.git@main",
     "requests>=2.32.3",
     "aiohttp",
     "pysrt",

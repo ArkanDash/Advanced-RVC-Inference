@@ -11,7 +11,19 @@ import numpy as np
 import soundfile as sf
 
 from tqdm import tqdm
-from distutils.util import strtobool
+def strtobool(val):
+    """Convert a string representation of truth to boolean."""
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, float)):
+        return bool(val)
+    val_str = str(val).strip().lower()
+    if val_str in ('y', 'yes', 'true', 't', '1', 'on'):
+        return True
+    elif val_str in ('n', 'no', 'false', 'f', '0', 'off'):
+        return False
+    else:
+        raise ValueError(f"Invalid truth value: {val!r}")
 
 warnings.filterwarnings("ignore")
 sys.path.append(os.getcwd())
@@ -247,7 +259,8 @@ class VoiceConverter:
                 try:
                     audio_max = np.abs(audio).max() / 0.95
                     if audio_max > 1: audio /= audio_max
-                except:
+                except (ValueError, RuntimeError) as e:
+                    logger.warning(f"Audio normalization failed, copying original: {e}")
                     import shutil
                     shutil.copy(audio_input_path, audio_output_path)
                     return
@@ -319,7 +332,8 @@ class VoiceConverter:
 
                 try:
                     sf.write(audio_output_path, audio_output, self.tgt_sr, format=export_format)
-                except:
+                except (Exception) as e:
+                    logger.warning(f"Direct audio write failed ({e}), trying with resampling to 48kHz")
                     sf.write(audio_output_path, librosa.resample(audio_output, orig_sr=self.tgt_sr, target_sr=48000, res_type="soxr_vhq"), 48000, format=export_format)
 
                 pbar.update(1)

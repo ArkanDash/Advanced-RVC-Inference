@@ -2,6 +2,7 @@ import os
 import sys
 import json
 import codecs
+import signal
 import requests
 from typing import Optional, List
 
@@ -37,8 +38,8 @@ def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = Fals
         # Terminate each process
         for pid in pids:
             try:
-                os.kill(pid, 9)
-            except ProcessLookupError:
+                os.kill(pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
                 # Process might already be terminated
                 pass
         
@@ -64,8 +65,8 @@ def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = Fals
                         # Terminate additional processes
                         for pid in process_pids:
                             try:
-                                os.kill(pid, 9)
-                            except ProcessLookupError:
+                                os.kill(pid, signal.SIGKILL)
+                            except (ProcessLookupError, PermissionError):
                                 # Process might already be terminated
                                 pass
                         
