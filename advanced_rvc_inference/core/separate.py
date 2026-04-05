@@ -3,7 +3,7 @@ import subprocess
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.ui import gr_info, gr_warning
+from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error
 from advanced_rvc_inference.utils.variables import python, translations, configs
 
 def separate_music(
@@ -42,7 +42,7 @@ def separate_music(
     
     gr_info(translations["start"].format(start=translations["separator_music"]))
 
-    subprocess.run([
+    result = subprocess.run([
         python, configs["separate_path"], 
         "--input_path", input_path,
         "--output_dirs", output_dirs,
@@ -66,7 +66,11 @@ def separate_music(
         "--enable_post_process", str(enable_post_process),
         "--separate_backing", str(separate_backing),
         "--separate_reverb", str(separate_reverb),
-    ])
+    ], timeout=3600)  # 1 hour timeout
+    
+    if result.returncode != 0:
+        gr_error(translations["error_occurred"].format(e=f"Separation process exited with code {result.returncode}"))
+        return [None]*4
 
     gr_info(translations["success"])
     

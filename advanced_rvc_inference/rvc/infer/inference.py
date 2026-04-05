@@ -363,7 +363,8 @@ def convert_audio(
                     )
                 
                 gr_info(translations["merge_success"])
-        except:
+        except Exception as e:
+            logger.error(f"Error during audio merge: {e}")
             return return_none
 
         return [

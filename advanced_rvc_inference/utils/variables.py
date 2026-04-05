@@ -532,7 +532,8 @@ def _load_model_urls():
     """Load model URLs from CSV file."""
     try:
         if os.path.exists(csv_path):
-            reader = list(csv.DictReader(open(csv_path, newline="", encoding="utf-8")))
+            with open(csv_path, newline="", encoding="utf-8") as f:
+                reader = list(csv.DictReader(f))
         else:
             # Try to load from URL (rot13 encoded)
             try:
@@ -549,12 +550,10 @@ def _load_model_urls():
                         ]
                     )
                 )
-                writer = csv.DictWriter(
-                    open(csv_path, mode="w", newline="", encoding="utf-8"),
-                    fieldnames=reader[0].keys(),
-                )
-                writer.writeheader()
-                writer.writerows(reader)
+                with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=reader[0].keys())
+                    writer.writeheader()
+                    writer.writerows(reader)
             except Exception:
                 reader = []
 
