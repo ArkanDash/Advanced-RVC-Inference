@@ -32,12 +32,12 @@ def setup_environment():
 
 
 def _setup_signal_handlers():
-    """Setup signal handlers to prevent premature shutdown."""
-    def signal_handler(signum, frame):
-        logger.info(f"Received signal {signum}, keeping tunnel alive...")
-    
-    # Only setup handlers if not in main process
+    """Setup signal handlers for graceful shutdown."""
     if sys.platform != 'win32':
+        original_sigint = signal.getsignal(signal.SIGINT)
+        def signal_handler(signum, frame):
+            logger.info(f"Received signal {signum}, shutting down gracefully...")
+            sys.exit(0)
         signal.signal(signal.SIGTERM, signal_handler)
         signal.signal(signal.SIGINT, signal_handler)
 
@@ -90,9 +90,6 @@ def launch(
             allow_disk,
         )
         from advanced_rvc_inference.app.mainjs import js_code
-        import ssl
-
-        ssl._create_default_https_context = ssl._create_unverified_context
 
         # Check for client mode
         client_mode = "--client" in sys.argv
@@ -162,7 +159,6 @@ def launch(
             
             # Fallback: try to get path from this file's location
             try:
-                from pathlib import Path
                 package_root = Path(__file__).parent.parent
                 assets_path = package_root / "assets"
                 if assets_path.exists():
@@ -288,9 +284,6 @@ def create_app():
             allow_disk,
         )
         from advanced_rvc_inference.app.mainjs import js_code
-        import ssl
-
-        ssl._create_default_https_context = ssl._create_unverified_context
 
         client_mode = "--client" in sys.argv
 

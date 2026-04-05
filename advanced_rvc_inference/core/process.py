@@ -127,7 +127,8 @@ def fetch_pretrained_data():
         response.raise_for_status()
 
         return response.json()
-    except:
+    except Exception as e:
+        logger.debug(f"Failed to fetch pretrained data: {e}")
         return {}
 
 def update_sample_rate_dropdown(model):

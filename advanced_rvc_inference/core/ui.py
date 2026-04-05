@@ -47,7 +47,10 @@ def gr_warning(message: str) -> None:
 
 def gr_error(message: str) -> None:
     """Display error message in UI and log it"""
-    gr.Error(message=message, duration=6)
+    try:
+        gr.Error(message=message, duration=6)
+    except TypeError:
+        gr.Error(message)
     logger.error(message)
 
 def get_gpu_info() -> str:
@@ -288,11 +291,8 @@ def change_backing_choices(backing: bool, merge: bool) -> Dict[str, Any]:
     """Update backing track choices based on options"""
     if backing or merge:
         return {"value": False, "interactive": False, "__type__": "update"}
-    elif not backing or not merge:
-        return {"interactive": True, "__type__": "update"}
     else:
-        gr_warning(translations["option_not_valid"])
-        return {"__type__": "update"}
+        return {"interactive": True, "__type__": "update"}
 
 def change_download_choices(select: str) -> List[Dict[str, Any]]:
     """Update download UI based on selected option"""
