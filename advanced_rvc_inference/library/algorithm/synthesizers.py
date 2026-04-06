@@ -82,7 +82,97 @@ class Synthesizer(torch.nn.Module):
                     sr=sr
                 )
                 print("    ██████  Vocoder: PCPH-GAN")
-            else: 
+            elif vocoder == "Vocos":
+                from advanced_rvc_inference.library.generators.vocos import VocosGenerator
+                self.dec = VocosGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=0,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: Vocos")
+            elif vocoder == "HiFi-GAN-v3":
+                from advanced_rvc_inference.library.generators.hifigan_v3 import HiFiGANV3Generator
+                self.dec = HiFiGANV3Generator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=0,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: HiFi-GAN-v3")
+            elif vocoder == "JVSF-HiFi-GAN":
+                from advanced_rvc_inference.library.generators.jvsf_hifigan import JVSFHiFiGANGenerator
+                self.dec = JVSFHiFiGANGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=8,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: JVSF-HiFi-GAN")
+            elif vocoder == "WaveGlow":
+                from advanced_rvc_inference.library.generators.waveglow import WaveGlowGenerator
+                self.dec = WaveGlowGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=0,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: WaveGlow")
+            elif vocoder == "NSF-APNet":
+                from advanced_rvc_inference.library.generators.nsf_apnet import NSFAPNetGenerator
+                self.dec = NSFAPNetGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=0,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: NSF-APNet")
+            elif vocoder == "FullBand-MRF":
+                from advanced_rvc_inference.library.generators.fullband_mrf import FullBandMRFGenerator
+                self.dec = FullBandMRFGenerator(
+                    in_channel=inter_channels,
+                    upsample_initial_channel=upsample_initial_channel,
+                    upsample_rates=upsample_rates,
+                    upsample_kernel_sizes=upsample_kernel_sizes,
+                    resblock_kernel_sizes=resblock_kernel_sizes,
+                    resblock_dilations=resblock_dilation_sizes,
+                    gin_channels=gin_channels,
+                    sr=sr,
+                    harmonic_num=0,
+                    checkpointing=checkpointing
+                )
+                print("    ██████  Vocoder: FullBand-MRF")
+            else:
                 from advanced_rvc_inference.library.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
         else: 
