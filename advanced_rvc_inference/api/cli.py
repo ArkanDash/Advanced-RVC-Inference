@@ -867,7 +867,7 @@ For more information, visit:
     p.add_argument("--vocoder", choices=["Default", "MRF-HiFi-GAN", "RefineGAN"], default="Default", help="Vocoder (default: Default)")
     p.add_argument("--energy", action="store_true", help="Use RMS energy")
     p.add_argument("--overtrain_detect", action="store_true", help="Enable overtraining detection")
-    p.add_argument("--optimizer", choices=["AdamW", "RAdam", "AnyPrecisionAdamW"], default="AdamW", help="Optimizer")
+    p.add_argument("--optimizer", default="AdamW", help="Optimizer (default: AdamW)")
     p.add_argument("--multiscale_loss", action="store_true", help="Use multi-scale mel loss")
     p.add_argument("--use_reference", action="store_true", help="Use custom reference set")
     p.add_argument("--reference_path", help="Path to reference set")

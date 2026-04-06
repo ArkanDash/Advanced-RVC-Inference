@@ -9,6 +9,7 @@ from advanced_rvc_inference.core.process import zip_file
 from advanced_rvc_inference.core.training import preprocess, extract, create_index, training
 from advanced_rvc_inference.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
 from advanced_rvc_inference.core.ui import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
+from advanced_rvc_inference.library.optimizers import get_optimizer_choices, get_optimizer_info
 
 def training_model_tab():
     with gr.Row():
@@ -107,7 +108,9 @@ def training_model_tab():
                         deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
                         benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
                     with gr.Row():
-                        optimizer = gr.Radio(label=translations["optimizer"], info=translations["optimizer_info"], value="AdamW", choices=["AdamW", "RAdam", "AnyPrecisionAdamW"], interactive=True)
+                        optimizer_choices = get_optimizer_choices()
+                        optimizer_info_text = translations.get("optimizer_info", "Optimizer in training, AdamW is default.")
+                        optimizer = gr.Dropdown(label=translations["optimizer"], info=optimizer_info_text, value="AdamW", choices=optimizer_choices, interactive=True, allow_custom_value=False)
                     with gr.Row():
                         model_author = gr.Textbox(label=translations["training_author"], info=translations["training_author_info"], value="", placeholder=translations["training_author"], interactive=True)
                     with gr.Row():
