@@ -467,11 +467,18 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             reference += (None, None, info[6].to(device))
             reference += (info[7].to(device),) if energy_use else (None,)
 
-    for epoch in range(epoch_str, total_epoch + 1):
-        train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss)
-        scheduler_g.step(); scheduler_d.step()
+    steps_per_epoch = len(train_loader)
+    total_training_steps = (total_epoch - epoch_str + 1) * steps_per_epoch
+    
+    with tqdm(total=total_training_steps, desc="Training", 
+              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
+              postfix="") as pbar:
+        
+        for epoch in range(epoch_str, total_epoch + 1):
+            train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
+            scheduler_g.step(); scheduler_d.step()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
@@ -509,62 +516,68 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     # Calculate total steps for this epoch
     total_steps = len(train_loader)
     
-    # Use the new tqdm style with improved formatting
-    with tqdm(total=total_steps, desc=f"Epoch {epoch}/{total_epoch}", 
-              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
-              postfix=f", Loss: -") as pbar:
-        
-        for batch_idx, info in data_iterator:
-            # CUDA Optimizer Training: Use non-blocking data transfer for faster data loading
-            if device.type == "cuda" and not cache_data_in_gpu: 
-                if cuda_stream is not None:
-                    with torch.cuda.stream(cuda_stream):
-                        info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
-                    torch.cuda.current_stream().wait_stream(cuda_stream)
-                else:
+    for batch_idx, info in data_iterator:
+        # CUDA Optimizer Training: Use non-blocking data transfer for faster data loading
+        if device.type == "cuda" and not cache_data_in_gpu: 
+            if cuda_stream is not None:
+                with torch.cuda.stream(cuda_stream):
                     info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
-            elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
-            else: info = [tensor.to(device) for tensor in info]
-
-            phone, phone_lengths = info[0], info[1]
-            if pitch_guidance:
-                pitch, pitchf = info[2], info[3]
-                spec, spec_lengths, wave, sid = info[4], info[5], info[6], info[8]
-                energy = info[9] if energy_use else None
+                torch.cuda.current_stream().wait_stream(cuda_stream)
             else:
-                pitch = pitchf = None
-                spec, spec_lengths, wave, sid = info[2], info[3], info[4], info[6]
-                energy = info[7] if energy_use else None
+                info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
+        elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
+        else: info = [tensor.to(device) for tensor in info]
 
+        phone, phone_lengths = info[0], info[1]
+        if pitch_guidance:
+            pitch, pitchf = info[2], info[3]
+            spec, spec_lengths, wave, sid = info[4], info[5], info[6], info[8]
+            energy = info[9] if energy_use else None
+        else:
+            pitch = pitchf = None
+            spec, spec_lengths, wave, sid = info[2], info[3], info[4], info[6]
+            energy = info[7] if energy_use else None
+
+        with autocasts:
+            y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
+            wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
+
+        for _ in range(d_step_per_g_step):
             with autocasts:
-                y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
-                wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
+                y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
+                loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
 
-            for _ in range(d_step_per_g_step):
-                with autocasts:
-                    y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
-                    loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
+            optim_d.zero_grad()
 
-                optim_d.zero_grad()
-
-                if autocast_enabled:
-                    scaler.scale(loss_disc).backward()
-                    scaler.unscale_(optim_d)
-                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                    scaler.step(optim_d)
-                else:
-                    loss_disc.backward()
-                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                    optim_d.step()
-
-            with autocasts:
-                y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
-
-            if multiscale_mel_loss: 
-                loss_mel = fn_mel_loss(wave, y_hat) * config.train.c_mel / 3.0
+            if autocast_enabled:
+                scaler.scale(loss_disc).backward()
+                scaler.unscale_(optim_d)
+                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                scaler.step(optim_d)
             else:
-                y_hat_mel = mel_spectrogram_torch(
-                    y_hat.float().squeeze(1), 
+                loss_disc.backward()
+                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                optim_d.step()
+
+        with autocasts:
+            y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
+
+        if multiscale_mel_loss: 
+            loss_mel = fn_mel_loss(wave, y_hat) * config.train.c_mel / 3.0
+        else:
+            y_hat_mel = mel_spectrogram_torch(
+                y_hat.float().squeeze(1), 
+                config.data.filter_length, 
+                config.data.n_mel_channels, 
+                config.data.sample_rate, 
+                config.data.hop_length, 
+                config.data.win_length, 
+                config.data.mel_fmin, 
+                config.data.mel_fmax
+            )
+            loss_mel = fn_mel_loss(
+                mel_spectrogram_torch(
+                    wave.float().squeeze(1), 
                     config.data.filter_length, 
                     config.data.n_mel_channels, 
                     config.data.sample_rate, 
@@ -572,113 +585,103 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                     config.data.win_length, 
                     config.data.mel_fmin, 
                     config.data.mel_fmax
-                )
-                loss_mel = fn_mel_loss(
-                    mel_spectrogram_torch(
-                        wave.float().squeeze(1), 
-                        config.data.filter_length, 
-                        config.data.n_mel_channels, 
-                        config.data.sample_rate, 
-                        config.data.hop_length, 
-                        config.data.win_length, 
-                        config.data.mel_fmin, 
-                        config.data.mel_fmax
-                    ), 
-                    y_hat_mel
-                ) * config.train.c_mel
+                ), 
+                y_hat_mel
+            ) * config.train.c_mel
 
-            if device.type == "privateuseone": 
-                loss_kl = (losses.kl_loss(z_p.detach().cpu(), logs_q.detach().cpu(), m_p.detach().cpu(), logs_p.detach().cpu(), z_mask.detach().cpu()) * config.train.c_kl).to(device)
-            else:
-                loss_kl = losses.kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * config.train.c_kl
+        if device.type == "privateuseone": 
+            loss_kl = (losses.kl_loss(z_p.detach().cpu(), logs_q.detach().cpu(), m_p.detach().cpu(), logs_p.detach().cpu(), z_mask.detach().cpu()) * config.train.c_kl).to(device)
+        else:
+            loss_kl = losses.kl_loss(z_p, logs_q, m_p, logs_p, z_mask) * config.train.c_kl
 
-            # CUDA Optimizer Training: Add energy loss for better energy training
-            loss_energy = torch.tensor(0.0, device=device)
-            if energy_use and energy is not None:
-                # Compute energy from target waveform
-                energy_target = energy.float()
-                # Slice energy to match the generated audio length
-                energy_slice = commons.slice_segments(
-                    energy_target.unsqueeze(1), 
-                    ids_slice, 
-                    config.train.segment_size // config.data.hop_length, 
-                    dim=2
-                ).squeeze(1)
-                
-                # Compute energy from generated waveform (using RMS)
-                wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
-                energy_pred = wave_rms.squeeze(-1)
-                
-                # Calculate energy loss (L1 loss)
-                loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
-                loss_energy = loss_energy * config.train.get('c_energy', 1.0)
-
-            loss_fm = losses.feature_loss(fmap_r, fmap_g)
-            loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
-
-            loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
-            if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
-
-            optim_g.zero_grad()
-            if autocast_enabled:
-                scaler.scale(loss_gen_all).backward()
-                scaler.unscale_(optim_g)
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
-                scaler.step(optim_g)
-                scaler.update()
-            else:
-                loss_gen_all.backward()
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
-                optim_g.step()
-
-            global_step += 1
-
-            avg_losses["grad_d_50"].append(grad_norm_d)
-            avg_losses["grad_g_50"].append(grad_norm_g)
-            avg_losses["disc_loss_50"].append(loss_disc.detach())
-            avg_losses["adv_loss_50"].append(loss_gen.detach())
-            avg_losses["fm_loss_50"].append(loss_fm.detach())
-            avg_losses["kl_loss_50"].append(loss_kl.detach())
-            avg_losses["mel_loss_50"].append(loss_mel.detach())
-            avg_losses["gen_loss_50"].append(loss_gen_all.detach())
+        # CUDA Optimizer Training: Add energy loss for better energy training
+        loss_energy = torch.tensor(0.0, device=device)
+        if energy_use and energy is not None:
+            # Compute energy from target waveform
+            energy_target = energy.float()
+            # Slice energy to match the generated audio length
+            energy_slice = commons.slice_segments(
+                energy_target.unsqueeze(1), 
+                ids_slice, 
+                config.train.segment_size // config.data.hop_length, 
+                dim=2
+            ).squeeze(1)
             
-            # CUDA Optimizer Training: Track energy loss
-            if energy_use:
-                avg_losses["energy_loss_50"].append(loss_energy.detach())
-
-            if rank == 0 and global_step % 50 == 0:
-                scalar_dict = {
-                    "grad_avg_50/norm_d": sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"]),
-                    "grad_avg_50/norm_g": sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"]),
-                    "loss_avg_50/d/adv": torch.stack(list(avg_losses["disc_loss_50"])).mean(),
-                    "loss_avg_50/g/adv": torch.stack(list(avg_losses["adv_loss_50"])).mean(),
-                    "loss_avg_50/g/fm": torch.stack(list(avg_losses["fm_loss_50"])).mean(),
-                    "loss_avg_50/g/kl": torch.stack(list(avg_losses["kl_loss_50"])).mean(),
-                    "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
-                    "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean()
-                }
-                
-                # CUDA Optimizer Training: Add energy loss to logging
-                if energy_use and len(avg_losses["energy_loss_50"]) > 0:
-                    scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
-
-                summarize(
-                    writer=writer, 
-                    global_step=global_step, 
-                    scalars=scalar_dict
-                )
-
-            # Update progress bar with current loss information
-            current_progress = batch_idx + 1
-            current_epoch_progress = epoch - 1 + (current_progress / total_steps)
+            # Compute energy from generated waveform (using RMS)
+            wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
+            energy_pred = wave_rms.squeeze(-1)
             
-            # Format the postfix with loss information
-            loss_str = f"Loss: {loss_gen_all.item():.4f}"
-            epoch_str = f"Epoch: {current_epoch_progress:.2f}/{total_epoch}"
-            step_str = f"Step: {global_step}"
+            # Calculate energy loss (L1 loss)
+            loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
+            loss_energy = loss_energy * config.train.get('c_energy', 1.0)
+
+        loss_fm = losses.feature_loss(fmap_r, fmap_g)
+        loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
+
+        loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
+        if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
+
+        optim_g.zero_grad()
+        if autocast_enabled:
+            scaler.scale(loss_gen_all).backward()
+            scaler.unscale_(optim_g)
+            grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
+            scaler.step(optim_g)
+            scaler.update()
+        else:
+            loss_gen_all.backward()
+            grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
+            optim_g.step()
+
+        global_step += 1
+
+        avg_losses["grad_d_50"].append(grad_norm_d)
+        avg_losses["grad_g_50"].append(grad_norm_g)
+        avg_losses["disc_loss_50"].append(loss_disc.detach())
+        avg_losses["adv_loss_50"].append(loss_gen.detach())
+        avg_losses["fm_loss_50"].append(loss_fm.detach())
+        avg_losses["kl_loss_50"].append(loss_kl.detach())
+        avg_losses["mel_loss_50"].append(loss_mel.detach())
+        avg_losses["gen_loss_50"].append(loss_gen_all.detach())
+        
+        # CUDA Optimizer Training: Track energy loss
+        if energy_use:
+            avg_losses["energy_loss_50"].append(loss_energy.detach())
+
+        if rank == 0 and global_step % 50 == 0:
+            scalar_dict = {
+                "grad_avg_50/norm_d": sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"]),
+                "grad_avg_50/norm_g": sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"]),
+                "loss_avg_50/d/adv": torch.stack(list(avg_losses["disc_loss_50"])).mean(),
+                "loss_avg_50/g/adv": torch.stack(list(avg_losses["adv_loss_50"])).mean(),
+                "loss_avg_50/g/fm": torch.stack(list(avg_losses["fm_loss_50"])).mean(),
+                "loss_avg_50/g/kl": torch.stack(list(avg_losses["kl_loss_50"])).mean(),
+                "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
+                "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean()
+            }
             
-            # Combine all information in postfix
-            pbar.set_postfix_str(f"{loss_str}, {epoch_str}, {step_str}")
+            # CUDA Optimizer Training: Add energy loss to logging
+            if energy_use and len(avg_losses["energy_loss_50"]) > 0:
+                scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
+
+            summarize(
+                writer=writer, 
+                global_step=global_step, 
+                scalars=scalar_dict
+            )
+
+        # Update progress bar with current loss information
+        current_progress = batch_idx + 1
+        current_epoch_progress = epoch - 1 + (current_progress / total_steps)
+        
+        # Format the postfix with loss information
+        loss_str = f"Loss: {loss_gen_all.item():.4f}"
+        epoch_label = f"Epoch: {current_epoch_progress:.2f}/{custom_total_epoch}"
+        step_str = f"Step: {global_step}"
+        
+        # Combine all information in postfix
+        if pbar is not None:
+            pbar.set_postfix_str(f"{loss_str}, {epoch_label}, {step_str}")
             pbar.update(1)
 
     with torch.no_grad():
