@@ -241,7 +241,7 @@ elif argv_is_allows[15] in argv:
             - `--checkpointing` (default: `False`): Enable/disable checkpointing to save RAM.
             - `--deterministic` (default: `False`): When enabled, uses highly deterministic algorithms, ensuring the same input yields the same result each run.
             - `--benchmark` (default: `False`): When enabled, tests and selects the most optimal algorithm for specific hardware and size.
-            - `--optimizer` (default: `AdamW`): Optimizer to use (`AdamW`, `RAdam`, `AnyPrecisionAdamW`).
+            - `--optimizer` (default: `AdamW`): Optimizer to use. 43 optimizers available including AdamW, ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam, RAdam, Adan, AnyPrecisionAdamW, Ranger21, AdaFactor, DAdaptAdam, Adam, PAdam, Apollo, CAME, NovoGrad, ScheduleFreeAdam, DAdaptAdaGrad, SGD, RMSprop, AdaBelief, AdaBeliefV2, LAMB, LARS, Adagrad, Adadelta, Adamax, ASGD, DAdaptSGD, QHAdam, SWATS, Shampoo, SOAP, A2Grad, AggMo, PID, Yogi, Fromage, SM3, ScheduleFreeSGD, Nero.
             - `--multiscale_mel_loss` (default: `False`): Compare Mel spectrograms of real and fake audio at multiple scales. Helps model learn better timbre details, brightness, and frequency structure, improving output voice quality and naturalness.
 
         9. Reference set:
