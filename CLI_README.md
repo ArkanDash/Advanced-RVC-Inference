@@ -305,7 +305,7 @@ rvc-cli train <model_name> [options]
 - `--pitch_guidance`: Use pitch guidance (default: True)
 - `--pretrained_g`: Path to pre-trained G weights
 - `--pretrained_d`: Path to pre-trained D weights
-- `--vocoder`: Vocoder - Default, MRF-HiFi-GAN, or RefineGAN (default: Default)
+- `--vocoder`: Vocoder - Default, MRF-HiFi-GAN, RefineGAN, BigVGAN, RingFormer, PCPH-GAN, Vocos, HiFi-GAN-v3, JVSF-HiFi-GAN, WaveGlow, NSF-APNet, FullBand-MRF (default: Default)
 - `--energy`: Use RMS energy
 - `--overtrain_detect`: Enable overtraining detection
 - `--optimizer`: Optimizer - 43 optimizers available (default: AdamW). Top rated: ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam. Full list: AdamW, ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam, RAdam, Adan, AnyPrecisionAdamW, Ranger21, AdaFactor, DAdaptAdam, Adam, PAdam, Apollo, CAME, NovoGrad, ScheduleFreeAdam, DAdaptAdaGrad, SGD, RMSprop, AdaBelief, AdaBeliefV2, LAMB, LARS, Adagrad, Adadelta, Adamax, ASGD, DAdaptSGD, QHAdam, SWATS, Shampoo, SOAP, A2Grad, AggMo, PID, Yogi, Fromage, SM3, ScheduleFreeSGD, Nero
@@ -316,7 +316,7 @@ rvc-cli train <model_name> [options]
 **Example:**
 ```bash
 rvc-cli train mymodel --version v2 --epochs 500 --batch_size 8 \
-    --gpu 0 --save_every 100 --vocoder "MRF-HiFi-GAN"
+    --gpu 0 --save_every 100 --vocoder "BigVGAN"
 ```
 
 ### create-ref - Create Reference Set

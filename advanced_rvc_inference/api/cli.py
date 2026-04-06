@@ -864,7 +864,7 @@ For more information, visit:
     p.add_argument("--pitch_guidance", action="store_true", default=True, help="Use pitch guidance (default: True)")
     p.add_argument("--pretrained_g", help="Path to pre-trained G weights")
     p.add_argument("--pretrained_d", help="Path to pre-trained D weights")
-    p.add_argument("--vocoder", choices=["Default", "MRF-HiFi-GAN", "RefineGAN"], default="Default", help="Vocoder (default: Default)")
+    p.add_argument("--vocoder", default="Default", help="Vocoder (default: Default). Choices: Default, MRF-HiFi-GAN, RefineGAN, BigVGAN, RingFormer, PCPH-GAN, Vocos, HiFi-GAN-v3, JVSF-HiFi-GAN, WaveGlow, NSF-APNet, FullBand-MRF")
     p.add_argument("--energy", action="store_true", help="Use RMS energy")
     p.add_argument("--overtrain_detect", action="store_true", help="Enable overtraining detection")
     p.add_argument("--optimizer", default="AdamW", help="Optimizer (default: AdamW)")
