@@ -10,6 +10,7 @@ from advanced_rvc_inference.core.training import preprocess, extract, create_ind
 from advanced_rvc_inference.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
 from advanced_rvc_inference.core.ui import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
 from advanced_rvc_inference.library.optimizers import get_optimizer_choices, get_optimizer_info
+from advanced_rvc_inference.library.generators import get_vocoder_choices
 
 def training_model_tab():
     with gr.Row():
@@ -103,7 +104,7 @@ def training_model_tab():
                                 train_batch_size = gr.Slider(label=translations["batch_size"], info=translations["batch_size_info"], minimum=1, maximum=64, value=8, step=1, interactive=True)
                     with gr.Group():
                         multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
-                        vocoders = gr.Radio(label=translations["vocoder"], info=translations["vocoder_info"], choices=["Default", "MRF-HiFi-GAN", "RefineGAN", "RingFormer", "PCPH-GAN", "BigVGAN"], value="Default", interactive=True) 
+                        vocoders = gr.Dropdown(label=translations["vocoder"], info=translations["vocoder_info"], choices=get_vocoder_choices(), value="Default", interactive=True, allow_custom_value=True) 
                     with gr.Row():
                         deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
                         benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
