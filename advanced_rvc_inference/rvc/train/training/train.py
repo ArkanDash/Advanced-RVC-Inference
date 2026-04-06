@@ -340,46 +340,47 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 
     net_g, net_d = (net_g.cuda(device_id), net_d.cuda(device_id)) if torch.cuda.is_available() else (net_g.to(device), net_d.to(device))
 
-    if optimizer_choice == "AnyPrecisionAdamW" and main_config.brain:
-        from advanced_rvc_inference.rvc.train.training.anyprecision_optimizer import AnyPrecisionAdamW
-        optimizer_optim = AnyPrecisionAdamW
-    elif optimizer_choice == "RAdam":
-        optimizer_optim = torch.optim.RAdam
-    else:
-        optimizer_optim = torch.optim.AdamW
+    # Use the optimizer registry to get the optimizer class
+    from advanced_rvc_inference.library.optimizers import get_optimizer_class, get_optimizer_info
 
-    # CUDA Optimizer Training: Use fused AdamW for better CUDA performance
-    # fused=True provides significant speedup on CUDA devices by fusing the optimizer step kernel
-    use_fused_optimizer = device.type == "cuda" and hasattr(torch.optim.AdamW, "fused")
+    try:
+        optimizer_optim = get_optimizer_class(optimizer_choice)
+        optimizer_meta = get_optimizer_info(optimizer_choice)
+    except ValueError:
+        logger.warning(f"Unknown optimizer '{optimizer_choice}', falling back to AdamW")
+        optimizer_choice = "AdamW"
+        optimizer_optim = get_optimizer_class("AdamW")
+        optimizer_meta = get_optimizer_info("AdamW")
+
+    if rank == 0:
+        logger.info(f"Optimizer: {optimizer_choice} (Rating: {optimizer_meta['rating']}/5 - {optimizer_meta['category']})")
+        logger.info(f"  {optimizer_meta['description']}")
+
+    # CUDA Optimizer Training: Use fused kernels when available and supported
+    use_fused_optimizer = (
+        device.type == "cuda"
+        and optimizer_meta.get("supports_fused", False)
+        and hasattr(optimizer_optim, "fused")
+    )
     
     if rank == 0 and use_fused_optimizer:
-        logger.info("CUDA Optimizer Training: Using fused AdamW optimizer for enhanced CUDA performance")
-    
-    optim_g = optimizer_optim(
-        net_g.parameters(), 
-        config.train.learning_rate * g_lr_coeff, 
-        betas=config.train.betas, 
-        eps=config.train.eps,
-        fused=use_fused_optimizer if use_fused_optimizer else None
-    ) if use_fused_optimizer else optimizer_optim(
-        net_g.parameters(), 
-        config.train.learning_rate * g_lr_coeff, 
-        betas=config.train.betas, 
-        eps=config.train.eps
-    )
-    
-    optim_d = optimizer_optim(
-        net_d.parameters(), 
-        config.train.learning_rate * d_lr_coeff, 
-        betas=config.train.betas, 
-        eps=config.train.eps,
-        fused=use_fused_optimizer if use_fused_optimizer else None
-    ) if use_fused_optimizer else optimizer_optim(
-        net_d.parameters(), 
-        config.train.learning_rate * d_lr_coeff, 
-        betas=config.train.betas, 
-        eps=config.train.eps
-    )
+        logger.info(f"CUDA Optimizer Training: Using fused {optimizer_choice} for enhanced CUDA performance")
+
+    # Build optimizer kwargs based on what the optimizer supports
+    def _build_optimizer_kwargs(lr_coeff):
+        kwargs = {"lr": config.train.learning_rate * lr_coeff}
+        if optimizer_meta.get("supports_betas"):
+            kwargs["betas"] = config.train.betas
+        if optimizer_meta.get("supports_eps"):
+            kwargs["eps"] = config.train.eps
+        if optimizer_meta.get("supports_weight_decay"):
+            kwargs["weight_decay"] = 0.0
+        if use_fused_optimizer:
+            kwargs["fused"] = True
+        return kwargs
+
+    optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
+    optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
     if not device.type.startswith(("privateuseone", "ocl")): 

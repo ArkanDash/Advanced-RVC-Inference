@@ -308,7 +308,7 @@ rvc-cli train <model_name> [options]
 - `--vocoder`: Vocoder - Default, MRF-HiFi-GAN, or RefineGAN (default: Default)
 - `--energy`: Use RMS energy
 - `--overtrain_detect`: Enable overtraining detection
-- `--optimizer`: Optimizer - AdamW, RAdam, or AnyPrecisionAdamW (default: AdamW)
+- `--optimizer`: Optimizer - 43 optimizers available (default: AdamW). Top rated: ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam. Full list: AdamW, ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam, RAdam, Adan, AnyPrecisionAdamW, Ranger21, AdaFactor, DAdaptAdam, Adam, PAdam, Apollo, CAME, NovoGrad, ScheduleFreeAdam, DAdaptAdaGrad, SGD, RMSprop, AdaBelief, AdaBeliefV2, LAMB, LARS, Adagrad, Adadelta, Adamax, ASGD, DAdaptSGD, QHAdam, SWATS, Shampoo, SOAP, A2Grad, AggMo, PID, Yogi, Fromage, SM3, ScheduleFreeSGD, Nero
 - `--multiscale_loss`: Use multi-scale mel loss
 - `--use_reference`: Use custom reference set
 - `--reference_path`: Path to reference set
