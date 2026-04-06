@@ -227,7 +227,7 @@ elif argv_is_allows[15] in argv:
             - `--pitch_guidance` (default: `True`): Use pitch guidance.
             - `--g_pretrained_path` (default: ``): Path to pre-trained G weights.
             - `--d_pretrained_path` (default: ``): Path to pre-trained D weights.
-            - `--vocoder` (default: `Default`): Vocoder to use (`Default`, `MRF-HiFi-GAN`, `RefineGAN`).
+            - `--vocoder` (default: `HiFi-GAN`): Vocoder to use (`HiFi-GAN`, `Default`, `MRF-HiFi-GAN`, `RefineGAN`, `BigVGAN`, `RingFormer`, `PCPH-GAN`, `Vocos`, `HiFi-GAN-v3`, `JVSF-HiFi-GAN`, `WaveGlow`, `NSF-APNet`, `FullBand-MRF`).
             - `--energy_use` (default: `False`): Use RMS energy.
 
         6. Over-training detection:

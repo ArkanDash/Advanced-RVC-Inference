@@ -172,9 +172,17 @@ class Synthesizer(torch.nn.Module):
                     checkpointing=checkpointing
                 )
                 print("    ██████  Vocoder: FullBand-MRF")
-            else:
+            elif vocoder == "HiFi-GAN":
+                from advanced_rvc_inference.library.generators.hifigan import HiFiGANGenerator
+                self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
+                print("    ██████  Vocoder: HiFi-GAN")
+            elif vocoder in ("Default", "Default (HiFi-GAN NSF)"):
                 from advanced_rvc_inference.library.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
+                print("    ██████  Vocoder: Default (HiFi-GAN NSF)")
+            else:
+                from advanced_rvc_inference.library.generators.hifigan import HiFiGANGenerator
+                self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
         else: 
             from advanced_rvc_inference.library.generators.hifigan import HiFiGANGenerator
             self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
