@@ -1,13 +1,14 @@
 # Vocoder Reference Guide
 
-> Advanced RVC Inference supports **12 vocoders** for audio synthesis, each with different architectures, strengths, and quality characteristics. This guide provides detailed descriptions, ratings, and recommendations.
+> Advanced RVC Inference supports **13 vocoders** for audio synthesis, each with different architectures, strengths, and quality characteristics. This guide provides detailed descriptions, ratings, and recommendations.
 
 ## Quick Reference
 
 | Rating | Vocoder | Category | Key Feature |
 |--------|---------|----------|-------------|
+| ⭐⭐⭐⭐⭐ | **HiFi-GAN** *(default)* | HiFi-GAN | Standard HiFi-GAN, lightweight & fast |
 | ⭐⭐⭐⭐⭐ | **BigVGAN** | Anti-Aliased GAN | SnakeBeta + AMP blocks, highest quality |
-| ⭐⭐⭐⭐⭐ | **Default (HiFi-GAN NSF)** | HiFi-GAN | Most compatible, best tested |
+| ⭐⭐⭐⭐⭐ | **Default (HiFi-GAN NSF)** | HiFi-GAN | Neural Sine Filter, harmonic injection |
 | ⭐⭐⭐⭐½ | **HiFi-GAN-v3** | Enhanced HiFi-GAN | SnakeBeta activations, wider dilations |
 | ⭐⭐⭐⭐½ | **MRF-HiFi-GAN** | Multi-Receptive Field | MRF blocks for richer features |
 | ⭐⭐⭐⭐½ | **Vocos** | Fourier-based | ISTFT output, lightweight |
@@ -22,6 +23,24 @@
 ---
 
 ## Tier 1: Best Quality (⭐⭐⭐⭐⭐)
+
+### HiFi-GAN *(Default)*
+- **Rating:** ⭐⭐⭐⭐⭐ (5.0/5)
+- **Category:** HiFi-GAN
+- **Source:** `library/generators/hifigan.py`
+
+HiFi-GAN is the standard and default vocoder for Advanced RVC Inference. It uses a clean architecture of transposed convolution upsampling layers with weight-normalized residual blocks (Multi-Receptive Field fusion). Each upsampling layer is followed by multiple residual blocks with different kernel sizes and dilation rates, allowing the network to capture features at multiple temporal scales. This is the lightweight, no-frills version without the Neural Sine Filter, making it faster and simpler while still producing high-quality audio output. It works with both pitch-guided and non-pitch-guided training modes.
+
+**Key Features:**
+- Standard transposed convolution upsampling
+- Weight-normalized residual blocks with MRF fusion
+- Works with and without pitch guidance (f0)
+- Lightweight and fast inference
+- Most broadly compatible vocoder
+
+**Recommended for:** Default choice for all training. Best for users who want a balance of quality, speed, and compatibility.
+
+---
 
 ### BigVGAN
 - **Rating:** ⭐⭐⭐⭐⭐ (5.0/5)
@@ -46,16 +65,16 @@ BigVGAN is the highest-quality vocoder available in the system. It introduces tw
 - **Category:** HiFi-GAN
 - **Source:** `library/generators/nsf_hifigan.py`
 
-The Default vocoder is the HiFi-GAN with Neural Sine Filter (NSF). This is the most widely tested and compatible vocoder in the RVC ecosystem. It combines HiFi-GAN's transposed convolution upsampling with a Neural Sine Filter that injects harmonic information directly into each upsampling layer. The NSF source module generates sine waves conditioned on F0, which are mixed with the upsampled features through noise convolution layers. This vocoder strikes the best balance between audio quality, training stability, and compatibility with existing pre-trained models.
+The Default (HiFi-GAN NSF) vocoder is the HiFi-GAN with Neural Sine Filter (NSF). It combines HiFi-GAN's transposed convolution upsampling with a Neural Sine Filter that injects harmonic information directly into each upsampling layer. The NSF source module generates sine waves conditioned on F0, which are mixed with the upsampled features through noise convolution layers. This vocoder provides improved pitch accuracy compared to standard HiFi-GAN due to the explicit harmonic conditioning, but requires pitch guidance (f0) to be enabled.
 
 **Key Features:**
-- Most compatible with existing RVC models
 - Neural Sine Filter for harmonic injection
 - Noise convolutions at each upsampling layer
+- Improved pitch accuracy from explicit harmonic conditioning
 - Supports gradient checkpointing
-- Well-tested across thousands of models
+- Requires pitch guidance (f0)
 
-**Recommended for:** Default choice for all training. Best compatibility with existing pre-trained weights and community models.
+**Recommended for:** Users who need improved pitch accuracy. The explicit harmonic injection helps with singing voice and tonal languages.
 
 ---
 
@@ -248,10 +267,10 @@ Phase-Corrected Parallel HiFi-GAN uses PCHIP (Piecewise Cubic Hermite Interpolat
 ## Recommendations for RVC Training
 
 ### Beginner
-Use **Default (HiFi-GAN NSF)**. It's the most tested, most compatible, and provides excellent quality. Works with all pre-trained weights and community models.
+Use **HiFi-GAN** (the default). It's lightweight, fast, and works with both pitch-guided and non-pitch-guided training. The best starting point for all users.
 
 ### Intermediate
-Try **BigVGAN** for the highest quality, or **HiFi-GAN-v3** for a lighter upgrade. Both provide noticeable quality improvements over the default.
+Try **BigVGAN** for the highest quality, **Default (HiFi-GAN NSF)** for improved pitch accuracy, or **HiFi-GAN-v3** for a lighter upgrade. All provide noticeable quality improvements over the standard HiFi-GAN.
 
 ### Advanced
 Experiment with **RingFormer** for attention-based synthesis, **Vocos** for lightweight inference, or **MRF-HiFi-GAN** for multi-scale feature extraction.
@@ -266,9 +285,9 @@ Use **BigVGAN** — it consistently achieves the highest objective and subjectiv
 
 ## Technical Notes
 
-- All non-Default vocoders require **v2 + pitch guidance** (enforced by UI)
-- Non-Default vocoders use **fp32** at inference (fp16 disabled for stability)
+- Non-Default/HiFi-GAN vocoders require **v2 + pitch guidance** (enforced by UI)
+- Non-Default/HiFi-GAN vocoders use **fp32** at inference (fp16 disabled for stability)
 - Vocoder choice is saved in the model checkpoint and used automatically during inference
-- Pre-trained weights for non-Default vocoders follow the naming pattern: `{VocoderName}_f0G48k.pth`
+- Pre-trained weights for non-HiFi-GAN vocoders follow the naming pattern: `{VocoderName}_f0G48k.pth`
 - All vocoders support gradient checkpointing except BigVGAN and WaveGlow
 - The vocoder registry is in `advanced_rvc_inference/library/generators/__init__.py`
