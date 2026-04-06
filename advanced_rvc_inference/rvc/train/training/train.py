@@ -76,7 +76,7 @@ def parse_arguments():
     parser.add_argument("--cleanup", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--cache_data_in_gpu", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--model_author", type=str)
-    parser.add_argument("--vocoder", type=str, default="Default")
+    parser.add_argument("--vocoder", type=str, default="HiFi-GAN")
     parser.add_argument("--checkpointing", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--deterministic", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=False)
@@ -187,7 +187,7 @@ def main():
     }
 
     if model_author: log_data[translations["model_author"].format(model_author=model_author)] = ""
-    if vocoder != "Default": log_data[translations['vocoder']] = vocoder
+    if vocoder not in ("HiFi-GAN", "Default"): log_data[translations['vocoder']] = vocoder
 
     for key, value in log_data.items():
         logger.debug(f"{key}: {value}" if value != "" else f"{key} {value}")

@@ -10,15 +10,25 @@ from typing import Dict, List, Optional, Any
 
 
 VOCODER_REGISTRY: Dict[str, Dict[str, Any]] = {
+    "HiFi-GAN": {
+        "module": "advanced_rvc_inference.library.generators.hifigan",
+        "class": "HiFiGANGenerator",
+        "display_name": "HiFi-GAN",
+        "rating": 100,
+        "category": "HiFi-GAN",
+        "description": "Standard HiFi-GAN vocoder. The classic neural vocoder using transposed convolution upsampling with weight-normalized residual blocks. Lightweight, fast, and well-tested.",
+        "requires_f0": False,
+        "is_default": True,
+    },
     "Default": {
         "module": "advanced_rvc_inference.library.generators.nsf_hifigan",
         "class": "HiFiGANNRFGenerator",
         "display_name": "Default (HiFi-GAN NSF)",
-        "rating": 100,
+        "rating": 98,
         "category": "HiFi-GAN",
-        "description": "Default HiFi-GAN with Neural Sine Filter (NSF). A well-tested and balanced vocoder suitable for most voice conversion tasks.",
+        "description": "HiFi-GAN with Neural Sine Filter (NSF). Adds harmonic sine wave injection at each upsampling layer for improved pitch accuracy.",
         "requires_f0": True,
-        "is_default": True,
+        "is_default": False,
     },
     "MRF-HiFi-GAN": {
         "module": "advanced_rvc_inference.library.generators.mrf_hifigan",
@@ -162,7 +172,7 @@ def get_default_vocoder() -> str:
     for name, info in VOCODER_REGISTRY.items():
         if info.get("is_default", False):
             return name
-    return "Default"
+    return "HiFi-GAN"
 
 
 def get_f0_vocoders() -> List[str]:
