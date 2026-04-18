@@ -109,11 +109,14 @@ gui = _GUIModule()
 def _check_dependencies():
     """Check if all required dependencies are installed."""
     missing = []
-    for package in ["gradio"]:
-        try:
-            __import__(package)
-        except ImportError:
-            missing.append(package)
+    # Only warn about gradio if we're NOT in CLI-only mode
+    _is_cli_mode = any(arg in sys.argv for arg in ["cli", "--help", "info", "infer", "uvr", "download", "version"])
+    if not _is_cli_mode:
+        for package in ["gradio"]:
+            try:
+                __import__(package)
+            except ImportError:
+                missing.append(package)
 
     if missing:
         import warnings
