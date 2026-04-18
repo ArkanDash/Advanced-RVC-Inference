@@ -584,7 +584,7 @@
     "extract_path": "advanced_rvc_inference/rvc/train/extracting/extract.py",
     "create_index_path": "advanced_rvc_inference/rvc/train/create_index.py",
     "train_path": "advanced_rvc_inference/rvc/train/training/train.py",
-    "create_reference_path": "advanced_rvc_inference/core/create_reference.py",
+    "create_reference_path": "advanced_rvc_inference/rvc/infer/create_reference.py",
     "csv_path": "advanced_rvc_inference/assets/spreadsheet.csv",
     "weights_path": "advanced_rvc_inference/assets/weights",
     "logs_path": "advanced_rvc_inference/assets/logs",

@@ -1,117 +1,282 @@
 """
-Downloads tab for Advanced RVC Inference.
+Downloads Tab for Advanced RVC Inference.
 
-Provides model download, pretrained model download, and search functionality.
+Provides UI for downloading voice models, pre-trained models,
+searching model repositories, and uploading models.
 """
 
-import gradio as gr
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+import gradio as gr
 
-from advanced_rvc_inference.utils.variables import translations, configs, model_options
-from advanced_rvc_inference.core.downloads import download_model, download_pretrained_model, search_models
+sys.path.append(os.getcwd())
+
+from advanced_rvc_inference.utils.variables import (
+    translations,
+    configs,
+    models,
+    model_options,
+    method_f0,
+    export_format_choices,
+)
+from advanced_rvc_inference.core.downloads import (
+    download_model,
+    download_pretrained_model,
+    search_models,
+)
+from advanced_rvc_inference.core.ui import (
+    change_download_choices,
+    change_download_pretrained_choices,
+    change_models_choices,
+)
 
 
 def download_tab():
-    """Create the downloads tab UI."""
-    with gr.TabItem(translations.get("downloads", "Downloads"), visible=configs.get("downloads_tab", True)):
-        gr.Markdown(f"## {translations.get('downloads', 'Downloads')}")
+    """Build the Downloads tab UI."""
+    with gr.Column():
+        gr.Markdown(translations["download_markdown"])
+        gr.Markdown(translations["download_markdown_2"])
 
-        with gr.TabItem(translations.get("download_models", "Download Models")):
+        # --- Voice Model Download ---
+        with gr.Group():
+            gr.Markdown(f"### {translations['model_download']}")
+
             with gr.Row():
-                download_url_input = gr.Textbox(
-                    label=translations.get("model_url", "Model URL"),
+                model_download_method = gr.Dropdown(
+                    label=translations["model_download_select"],
+                    choices=[
+                        translations["download_url"],
+                        translations["download_from_csv"],
+                        translations["search_models"],
+                        translations["upload"],
+                    ],
+                    value=translations["download_url"],
+                    interactive=True,
+                )
+
+            # Download from URL
+            with gr.Row(visible=True) as url_row:
+                model_url_input = gr.Textbox(
+                    label=translations["model_url"],
                     placeholder="https://huggingface.co/...",
                     interactive=True,
+                    show_label=True,
                 )
-                model_name_input = gr.Textbox(
-                    label=translations.get("model_name", "Model Name (optional)"),
-                    placeholder="model_name",
-                    interactive=True,
-                )
-            download_btn = gr.Button(translations.get("download", "Download"), variant="primary")
-            download_result = gr.Textbox(label=translations.get("result", "Result"), interactive=False)
 
-            download_btn.click(
-                fn=download_model,
-                inputs=[download_url_input, model_name_input],
-                outputs=[download_result],
+            with gr.Row(visible=True) as url_name_row:
+                model_name_input = gr.Textbox(
+                    label=translations["modelname"],
+                    placeholder=translations["provide_name_is_save"],
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=True) as url_btn_row:
+                download_url_btn = gr.Button(
+                    translations["download"], variant="primary"
+                )
+
+            # Download from CSV
+            with gr.Row(visible=False) as csv_row:
+                csv_model_select = gr.Dropdown(
+                    label=translations["model_warehouse"],
+                    choices=list(models.keys()),
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=False) as csv_btn_row:
+                download_csv_btn = gr.Button(
+                    translations["get_model"], variant="primary"
+                )
+
+            # Search models
+            with gr.Row(visible=False) as search_row:
+                search_name_input = gr.Textbox(
+                    label=translations["name_to_search"],
+                    placeholder="e.g. Gumi, Hatsune",
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=False) as search_btn_row:
+                search_btn = gr.Button(
+                    f"🔍 {translations['search_2']}", variant="secondary"
+                )
+
+            with gr.Row(visible=False) as search_result_row:
+                search_result_select = gr.Dropdown(
+                    label=translations["select_download_model"],
+                    choices=[],
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=False) as search_dl_row:
+                download_search_btn = gr.Button(
+                    translations["download"], variant="primary"
+                )
+
+            # Upload model
+            with gr.Row(visible=False) as upload_row:
+                model_upload = gr.File(
+                    label=translations["upload"],
+                    file_types=[".pth", ".onnx", ".index", ".zip"],
+                    interactive=True,
+                    show_label=True,
+                )
+
+            model_download_method.change(
+                fn=change_download_choices,
+                inputs=[model_download_method],
+                outputs=[
+                    url_row,
+                    url_name_row,
+                    url_btn_row,
+                    csv_row,
+                    csv_btn_row,
+                    search_row,
+                    search_result_row,
+                    search_dl_row,
+                    upload_row,
+                ],
             )
 
-        with gr.TabItem(translations.get("search_models", "Search Models")):
-            with gr.Row():
-                search_input = gr.Textbox(
-                    label=translations.get("search_name", "Model Name"),
-                    placeholder=translations.get("search_placeholder", "Enter model name to search..."),
-                    interactive=True,
-                )
-                search_btn = gr.Button(translations.get("search", "Search"), variant="primary")
-            with gr.Row():
-                search_results = gr.Dropdown(
-                    label=translations.get("search_results", "Results"),
-                    interactive=True,
-                )
-                download_selected_btn = gr.Button(
-                    translations.get("download", "Download"),
-                    variant="primary",
-                )
-            download_selected_result = gr.Textbox(
-                label=translations.get("result", "Result"), interactive=False
+            download_url_btn.click(
+                fn=download_model,
+                inputs=[model_url_input, model_name_input],
+                outputs=[download_url_btn],
+            )
+
+            download_csv_btn.click(
+                fn=download_model,
+                inputs=[csv_model_select, gr.Textbox(value="", visible=False)],
+                outputs=[download_csv_btn],
             )
 
             search_btn.click(
-                fn=lambda name: search_models(name) if name else [None, None],
-                inputs=[search_input],
-                outputs=[search_results, download_selected_result],
-            )
-            download_selected_btn.click(
-                fn=lambda name: download_model(url=model_options.get(name, "")) if name else None,
-                inputs=[search_results],
-                outputs=[download_selected_result],
+                fn=search_models,
+                inputs=[search_name_input],
+                outputs=[search_result_select, search_dl_row],
             )
 
-        with gr.TabItem(translations.get("download_pretrained", "Download Pretrained Models")):
+            download_search_btn.click(
+                fn=download_model,
+                inputs=[
+                    search_result_select,
+                    gr.Textbox(value="", visible=False),
+                ],
+                outputs=[download_search_btn],
+            )
+
+        # --- Pre-trained Model Download ---
+        with gr.Group():
+            gr.Markdown(f"### {translations['download_pretrained_2']}")
+
             with gr.Row():
-                pretrained_choice = gr.Dropdown(
+                pretrained_download_method = gr.Dropdown(
+                    label=translations["select_pretrain"],
                     choices=[
-                        translations.get("list_model", "List Models"),
-                        translations.get("download_url", "Download from URL"),
+                        translations["download_url"],
+                        translations["list_model"],
+                        translations["upload"],
                     ],
-                    label=translations.get("download_type", "Download Type"),
-                    value=translations.get("list_model", "List Models"),
+                    value=translations["list_model"],
                     interactive=True,
                 )
-            with gr.Row():
-                pretrained_model = gr.Dropdown(
-                    label=translations.get("pretrained_model", "Pretrained Model"),
+
+            # Pretrained: list model
+            with gr.Row(visible=True) as pretrained_list_row:
+                pretrained_model_select = gr.Dropdown(
+                    label=translations["select_pretrain_info"],
+                    choices=["D", "G"],
+                    value="D",
                     interactive=True,
                 )
-                pretrained_sr = gr.Dropdown(
-                    label=translations.get("sample_rate", "Sample Rate"),
+
+            with gr.Row(visible=True) as pretrained_sr_row:
+                pretrained_sr_select = gr.Dropdown(
+                    label=translations["pretrain_sr"],
+                    choices=["32000", "40000", "48000"],
+                    value="40000",
                     interactive=True,
                 )
-            with gr.Row():
-                pretrained_url_d = gr.Textbox(
-                    label=translations.get("d_model_url", "D Model URL"),
-                    interactive=True,
-                    visible=False,
+
+            with gr.Row(visible=True) as pretrained_list_btn_row:
+                pretrained_list_btn = gr.Button(
+                    f"⬇️ {translations['download_pretrained']}", variant="primary"
                 )
-                pretrained_url_g = gr.Textbox(
-                    label=translations.get("g_model_url", "G Model URL"),
+
+            # Pretrained: URL
+            with gr.Row(visible=False) as pretrained_url_d_row:
+                pretrained_d_url = gr.Textbox(
+                    label=translations["pretrained_url"].format(dg="D"),
+                    placeholder="https://huggingface.co/...",
                     interactive=True,
-                    visible=False,
+                    show_label=True,
                 )
-            pretrained_btn = gr.Button(
-                translations.get("download_pretrain", "Download Pretrained"), variant="primary"
-            )
-            pretrained_result = gr.Textbox(
-                label=translations.get("result", "Result"), interactive=False
+
+            with gr.Row(visible=False) as pretrained_url_g_row:
+                pretrained_g_url = gr.Textbox(
+                    label=translations["pretrained_url"].format(dg="G"),
+                    placeholder="https://huggingface.co/...",
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=False) as pretrained_url_btn_row:
+                pretrained_url_btn = gr.Button(
+                    f"⬇️ {translations['download_pretrained']}", variant="primary"
+                )
+
+            # Pretrained: Upload
+            with gr.Row(visible=False) as pretrained_upload_d_row:
+                pretrained_d_upload = gr.File(
+                    label=translations["drop_pretrain"].format(dg="D"),
+                    file_types=[".pth"],
+                    interactive=True,
+                    show_label=True,
+                )
+
+            with gr.Row(visible=False) as pretrained_upload_g_row:
+                pretrained_g_upload = gr.File(
+                    label=translations["drop_pretrain"].format(dg="G"),
+                    file_types=[".pth"],
+                    interactive=True,
+                    show_label=True,
+                )
+
+            pretrained_download_method.change(
+                fn=change_download_pretrained_choices,
+                inputs=[pretrained_download_method],
+                outputs=[
+                    pretrained_url_d_row,
+                    pretrained_url_g_row,
+                    pretrained_url_btn_row,
+                    pretrained_list_row,
+                    pretrained_sr_row,
+                    pretrained_list_btn_row,
+                    pretrained_upload_d_row,
+                ],
             )
 
-            pretrained_btn.click(
+            pretrained_list_btn.click(
                 fn=download_pretrained_model,
-                inputs=[pretrained_choice, pretrained_url_d, pretrained_url_g],
-                outputs=[pretrained_result, pretrained_result],
+                inputs=[
+                    pretrained_download_method,
+                    pretrained_model_select,
+                    pretrained_sr_select,
+                ],
+                outputs=[pretrained_list_btn],
+            )
+
+            pretrained_url_btn.click(
+                fn=download_pretrained_model,
+                inputs=[
+                    pretrained_download_method,
+                    pretrained_d_url,
+                    pretrained_g_url,
+                ],
+                outputs=[pretrained_url_btn],
             )
