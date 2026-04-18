@@ -39,7 +39,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio @ git+https://github.com/BF667-IDLE/gradio.git@main
+gradio
 requests>=2.32.3
 aiohttp
 pysrt
