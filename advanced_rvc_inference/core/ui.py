@@ -7,13 +7,39 @@ import shutil
 import logging
 from typing import Dict, List, Any, Optional, Tuple, Union
 
-import gradio as gr
-import sounddevice as sd
+# Lazy imports for optional GUI dependencies (gradio, sounddevice)
+# These are only imported when the GUI is actually launched,
+# so headless/CLI/Colab-no-UI mode works without them.
+gr = None
+sd = None
+
+
+def _ensure_gradio():
+    """Lazily import gradio. Returns None if not available."""
+    global gr
+    if gr is None:
+        try:
+            import gradio as _gr
+            gr = _gr
+        except ImportError:
+            pass
+    return gr
+
+
+def _ensure_sounddevice():
+    """Lazily import sounddevice. Returns None if not available."""
+    global sd
+    if sd is None:
+        try:
+            import sounddevice as _sd
+            sd = _sd
+        except ImportError:
+            pass
+    return sd
+
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.library.backends import directml, opencl
-from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
 from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 
     edgetts, google_tts_voice, method_f0, method_f0_full, 
@@ -34,29 +60,53 @@ MODEL_TYPES = {
 # Constants for F0 methods that require hop length
 HOPLENGTH_METHODS = ["mangio-crepe", "fcpe", "yin", "piptrack", "mangio-penn"]
 
-# Helper functions for UI updates
+# Helper functions for UI updates (work with or without gradio)
 def gr_info(message: str) -> None:
-    """Display info message in UI and log it"""
-    gr.Info(message, duration=2)
+    """Display info message in UI and log it. Falls back to logger only in headless mode."""
+    _gr = _ensure_gradio()
+    if _gr is not None:
+        try:
+            _gr.Info(message, duration=2)
+        except Exception:
+            pass
     logger.info(message)
 
 def gr_warning(message: str) -> None:
-    """Display warning message in UI and log it"""
-    gr.Warning(message, duration=2)
+    """Display warning message in UI and log it. Falls back to logger only in headless mode."""
+    _gr = _ensure_gradio()
+    if _gr is not None:
+        try:
+            _gr.Warning(message, duration=2)
+        except Exception:
+            pass
     logger.warning(message)
 
-def gr_error(message: str) -> None:
-    """Display error message in UI and log it"""
-    try:
-        gr.Error(message=message, duration=6)
-    except TypeError:
-        gr.Error(message)
+def gr_error(message: str, **kwargs) -> None:
+    """Display error message in UI and log it. Falls back to logger only in headless mode."""
+    _gr = _ensure_gradio()
+    if _gr is not None:
+        try:
+            _gr.Error(message=message, duration=6)
+        except (TypeError, AttributeError):
+            try:
+                _gr.Error(message)
+            except Exception:
+                pass
     logger.error(message)
+
+def _get_backends():
+    """Lazily import backends (avoids import errors in headless environments)."""
+    try:
+        from advanced_rvc_inference.library.backends import directml, opencl
+        return directml, opencl
+    except ImportError:
+        return None, None
+
 
 def get_gpu_info() -> str:
     """Get information about available GPUs"""
     if config.cpu_mode:
-        return translations["no_support_gpu"]
+        return translations.get("no_support_gpu", "No GPU support")
     
     gpu_infos = []
     
@@ -68,35 +118,33 @@ def get_gpu_info() -> str:
             for i in range(ngpu)
         ]
     
-    # Check DirectML GPUs if CUDA not available
-    if not gpu_infos and directml.torch_available and directml.is_available():
+    # Check DirectML / OpenCL GPUs
+    directml, opencl = _get_backends()
+    if not gpu_infos and directml is not None and directml.torch_available and directml.is_available():
         ngpu = directml.device_count()
         gpu_infos = [f"{i}: {directml.device_name(i)}" for i in range(ngpu)]
     
-    # Check OpenCL GPUs if others not available
-    if not gpu_infos and opencl.torch_available and opencl.is_available():
+    if not gpu_infos and opencl is not None and opencl.torch_available and opencl.is_available():
         ngpu = opencl.device_count()
         gpu_infos = [f"{i}: {opencl.device_name(i)}" for i in range(ngpu)]
     
-    return "\n".join(gpu_infos) if gpu_infos else translations["no_support_gpu"]
+    return "\n".join(gpu_infos) if gpu_infos else translations.get("no_support_gpu", "No GPU support")
 
 def gpu_number_str() -> str:
     """Get a string representation of available GPU count"""
     if config.cpu_mode:
         return "-"
     
-    # Check CUDA GPUs
     if torch.cuda.is_available():
         ngpu = torch.cuda.device_count()
         return str("-".join(map(str, range(ngpu))))
     
-    # Check DirectML GPUs if CUDA not available
-    if directml.torch_available and directml.is_available():
+    directml, opencl = _get_backends()
+    if directml is not None and directml.torch_available and directml.is_available():
         ngpu = directml.device_count()
         return str("-".join(map(str, range(ngpu))))
     
-    # Check OpenCL GPUs if others not available
-    if opencl.torch_available and opencl.is_available():
+    if opencl is not None and opencl.torch_available and opencl.is_available():
         ngpu = opencl.device_count()
         return str("-".join(map(str, range(ngpu))))
     
@@ -296,19 +344,19 @@ def change_backing_choices(backing: bool, merge: bool) -> Dict[str, Any]:
 
 def change_download_choices(select: str) -> List[Dict[str, Any]]:
     """Update download UI based on selected option"""
-    selects = [False] * 10
-    
+    selects = [False] * 9
+
     if select == translations["download_url"]:
         selects[0] = selects[1] = selects[2] = True
     elif select == translations["download_from_csv"]:
         selects[3] = selects[4] = True
     elif select == translations["search_models"]:
-        selects[5] = selects[6] = True
+        selects[5] = selects[6] = selects[7] = True
     elif select == translations["upload"]:
-        selects[9] = True
+        selects[8] = True
     else:
         gr_warning(translations["option_not_valid"])
-    
+
     return [{"visible": selects[i], "__type__": "update"} for i in range(len(selects))]
 
 def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
@@ -584,6 +632,7 @@ def create_dataset_change(model_name: str, reverb_model: str,
 def audio_device() -> Tuple[Dict[str, List], Dict[str, List]]:
     """Get available input and output audio devices"""
     try:
+        from advanced_rvc_inference.rvc.realtime.audio import list_audio_device
         input_devices, output_devices = list_audio_device()
         
         # Priority function to sort devices
@@ -670,6 +719,7 @@ def change_audio_device_choices() -> List[Dict[str, Any]]:
         logger.error(f"Error changing audio device choices: {str(e)}")
         return [{"choices": [], "value": "", "__type__": "update"}] * 3
 
+
 def replace_punctuation(filename: str) -> str:
     """Sanitize filename by removing/replacing problematic characters"""
     try:
@@ -746,18 +796,28 @@ def update_dropdowns_from_json(data: Dict[str, Any]) -> List[Dict[str, Any]]:
         ]
     except Exception as e:
         logger.error(f"Error updating dropdowns from JSON: {str(e)}")
-        return [gr.update(choices=[], value=None)] * 3
+        return [{"choices": [], "value": None, "__type__": "update"}] * 3
 
 def update_button_from_json(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Update button states from JSON data"""
+    _gr = _ensure_gradio()
     try:
         if not data:
-            return [gr.update(interactive=True), gr.update(interactive=False)]
+            if _gr is not None:
+                return [_gr.update(interactive=True), _gr.update(interactive=False)]
+            return [{"interactive": True, "__type__": "update"}, {"interactive": False, "__type__": "update"}]
         
+        if _gr is not None:
+            return [
+                _gr.update(interactive=data.get("start_button", True)),
+                _gr.update(interactive=data.get("stop_button", False))
+            ]
         return [
-            gr.update(interactive=data.get("start_button", True)),
-            gr.update(interactive=data.get("stop_button", False))
+            {"interactive": data.get("start_button", True), "__type__": "update"},
+            {"interactive": data.get("stop_button", False), "__type__": "update"}
         ]
     except Exception as e:
         logger.error(f"Error updating buttons from JSON: {str(e)}")
-        return [gr.update(interactive=False)] * 2
+        if _gr is not None:
+            return [_gr.update(interactive=False)] * 2
+        return [{"interactive": False, "__type__": "update"}] * 2
