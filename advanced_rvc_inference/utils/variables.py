@@ -93,11 +93,12 @@ class Config:
     def _load_translations(self) -> Dict[str, Any]:
         """Load language translations."""
         try:
-            lang = self.configs.get("language", "vi-VN")
-            lang_path = CONFIGS_PATH / "languages" / f"{lang}.json"
+            lang = self.configs.get("language", "en-US")
+            # Languages are stored under assets/languages/, not configs/languages/
+            lang_path = ASSETS_PATH / "languages" / f"{lang}.json"
 
             if not lang_path.exists():
-                lang_path = CONFIGS_PATH / "languages" / "vi-VN.json"
+                lang_path = ASSETS_PATH / "languages" / "en-US.json"
 
             if lang_path.exists():
                 return self._load_json(lang_path)
