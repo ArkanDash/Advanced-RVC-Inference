@@ -190,7 +190,6 @@ def launch(
 
         try:
             app.launch(
-                theme=theme,
                 server_name=server_name,
                 server_port=port,
                 show_error=show_error,
