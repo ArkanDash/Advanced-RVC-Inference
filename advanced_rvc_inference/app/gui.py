@@ -196,8 +196,6 @@ def launch(
                 show_error=show_error,
                 inbrowser=inbrowser or "--open" in sys.argv,
                 share=share,
-                ssr_mode=True,
-                prevent_thread_lock=prevent_thread_lock,
                 allowed_paths=allowed_paths_list,
             )
 
@@ -225,8 +223,6 @@ def launch(
                     show_error=show_error,
                     inbrowser=False,
                     share=False,
-                    ssr_mode=True,
-                    prevent_thread_lock=prevent_thread_lock,
                     allowed_paths=allowed_paths_list,
                 )
 
