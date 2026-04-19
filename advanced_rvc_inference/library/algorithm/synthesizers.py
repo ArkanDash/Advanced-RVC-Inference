@@ -28,6 +28,7 @@ class Synthesizer(torch.nn.Module):
         self.gin_channels = gin_channels
         self.spk_embed_dim = spk_embed_dim
         self.use_f0 = use_f0
+        self.vocoder = vocoder
         self.enc_p = TextEncoder(inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, float(p_dropout), text_enc_hidden_dim, f0=use_f0, energy=energy, onnx=onnx)
 
         if use_f0:
@@ -204,7 +205,12 @@ class Synthesizer(torch.nn.Module):
             z, m_q, logs_q, y_mask = self.enc_q(y, y_lengths, g=g)
             z_slice, ids_slice = rand_slice_segments(z, y_lengths, self.segment_size)
 
-            return (self.dec(z_slice, slice_segments(pitchf, ids_slice, self.segment_size, 2), g=g) if self.use_f0 else self.dec(z_slice, g=g)), ids_slice, x_mask, y_mask, (z, self.flow(z, y_mask, g=g), m_p, logs_p, m_q, logs_q)
+            pitch_slice = slice_segments(pitchf, ids_slice, self.segment_size, 2) if self.use_f0 else None
+            if self.use_f0 and self.vocoder != "HiFi-GAN":
+                dec_out = self.dec(z_slice, pitch_slice, g=g)
+            else:
+                dec_out = self.dec(z_slice, g=g)
+            return dec_out, ids_slice, x_mask, y_mask, (z, self.flow(z, y_mask, g=g), m_p, logs_p, m_q, logs_q)
         else: return None, None, x_mask, None, (None, None, m_p, logs_p, None, None)
 
     @torch.jit.export
@@ -214,7 +220,10 @@ class Synthesizer(torch.nn.Module):
         z_p = (m_p + logs_p.exp() * torch.randn_like(m_p) * 0.66666) * x_mask
 
         z = self.flow(z_p, x_mask, g=g, reverse=True)
-        o = self.dec(z * x_mask, nsff0, g=g) if self.use_f0 else self.dec(z * x_mask, g=g)
+        if self.use_f0 and self.vocoder != "HiFi-GAN":
+            o = self.dec(z * x_mask, nsff0, g=g)
+        else:
+            o = self.dec(z * x_mask, g=g)
 
         return o, x_mask, (z, z_p, m_p, logs_p)
     
@@ -229,11 +238,14 @@ class SynthesizerONNX(Synthesizer):
 
         z = self.flow(z_p, x_mask, g=g, reverse=True)
 
-        return self.dec(
-            (z * x_mask)[:, :, :None], 
-            nsff0, 
-            g=g
-        ) if self.use_f0 else self.dec(
-            (z * x_mask)[:, :, :None], 
-            g=g
-        )
+        if self.use_f0 and self.vocoder != "HiFi-GAN":
+            return self.dec(
+                (z * x_mask)[:, :, :None], 
+                nsff0, 
+                g=g
+            )
+        else:
+            return self.dec(
+                (z * x_mask)[:, :, :None], 
+                g=g
+            )
