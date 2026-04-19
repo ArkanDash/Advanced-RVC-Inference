@@ -111,10 +111,10 @@ def download_pretrained_model(choices, model, sample_rate):
         paths = fetch_pretrained_data()[model][sample_rate]
 
         if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
-        url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cergenvarq_phfgbz/", "rot13") + paths
+        url = f"https://github.com/PhamHuynhAnh16/Vietnamese-RVC/raw/main/assets/models/pretrained_custom/" + paths
 
         gr_info(translations["download_pretrain"])
-        file = huggingface.HF_download_file(replace_url(url), os.path.join(pretraineds_custom_path, paths))
+        file = huggingface.HF_download_file(url, os.path.join(pretraineds_custom_path, paths))
 
         if file.endswith(".zip"): 
             shutil.unpack_archive(file, pretraineds_custom_path)

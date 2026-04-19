@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import shutil
-import codecs
 import zipfile
 import requests
 
@@ -123,7 +122,7 @@ def zip_file(name, pth, index):
 
 def fetch_pretrained_data():
     try:
-        url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/wfba/phfgbz_cergenvarq.wfba", "rot13").replace("/tree/", "/resolve/")
+        url = "https://raw.githubusercontent.com/PhamHuynhAnh16/Vietnamese-RVC/main/assets/models/pretrained_custom/custom_pretrained.json"
         response = requests.get(url)
         response.raise_for_status()
 
