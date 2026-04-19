@@ -123,7 +123,8 @@ def zip_file(name, pth, index):
 
 def fetch_pretrained_data():
     try:
-        response = requests.get(codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/wfba/phfgbz_cergenvarq.wfba", "rot13"))
+        url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/wfba/phfgbz_cergenvarq.wfba", "rot13").replace("/tree/", "/resolve/")
+        response = requests.get(url)
         response.raise_for_status()
 
         return response.json()
