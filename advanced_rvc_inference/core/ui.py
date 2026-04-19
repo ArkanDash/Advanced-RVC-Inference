@@ -748,7 +748,7 @@ def replace_punctuation(filename: str) -> str:
 def replace_url(url: str) -> str:
     """Sanitize URL for downloading"""
     try:
-        return url.replace("/blob/", "/resolve/").replace("?download=true", "").strip()
+        return url.replace("/blob/", "/resolve/").replace("/tree/", "/resolve/").replace("?download=true", "").strip()
     except Exception as e:
         logger.error(f"Error replacing URL in {url}: {str(e)}")
         return url
