@@ -8,7 +8,7 @@ except:
     wget = None
 
 def HF_download_file(url, output_path=None):
-    url = url.replace("/blob/", "/resolve/").replace("?download=true", "").strip()
+    url = url.replace("/blob/", "/resolve/").replace("/tree/", "/resolve/").replace("?download=true", "").strip()
     output_path = os.path.basename(url) if output_path is None else (os.path.join(output_path, os.path.basename(url)) if os.path.isdir(output_path) else output_path)
 
     if wget != None: wget.download(url, out=output_path)
