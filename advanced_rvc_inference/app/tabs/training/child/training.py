@@ -17,7 +17,7 @@ def training_model_tab():
         gr.Markdown(translations["training_markdown"])
 
         # ── Step 1: Dataset Preprocessing ──
-        with gr.Accordion("### Step 1: Dataset Preprocessing", open=True):
+        with gr.Accordion("Step 1: Dataset Preprocessing", open=True):
             training_name = gr.Textbox(
                 label=translations["modelname"],
                 info=translations["training_model_name"],
@@ -100,7 +100,7 @@ def training_model_tab():
             preprocess_info = gr.Textbox(label=translations["preprocess_info"], value="", interactive=False, lines=2)
 
         # ── Step 2: Feature Extraction ──
-        with gr.Accordion("### Step 2: Feature Extraction", open=False):
+        with gr.Accordion("Step 2: Feature Extraction", open=False):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=1):
                     gr.Markdown(f"**{translations['f0_method']}**")
@@ -153,7 +153,7 @@ def training_model_tab():
             extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
 
         # ── Step 3: Index Creation ──
-        with gr.Accordion("### Step 3: Index Creation", open=False):
+        with gr.Accordion("Step 3: Index Creation", open=False):
             index_algorithm = gr.Radio(
                 label=translations["index_algorithm"], info=translations["index_algorithm_info"],
                 choices=["Auto", "Faiss", "KMeans"], value="Auto", interactive=True,
@@ -161,7 +161,7 @@ def training_model_tab():
             index_button = gr.Button(f"3. {translations['create_index']}", variant="secondary")
 
         # ── Step 4: Model Training ──
-        with gr.Accordion("### Step 4: Model Training", open=False):
+        with gr.Accordion("Step 4: Model Training", open=False):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=1):
                     total_epochs = gr.Slider(
@@ -249,7 +249,7 @@ def training_model_tab():
             training_info = gr.Textbox(label=translations["train_info"], value="", interactive=False, lines=4)
 
         # ── Export Model ──
-        with gr.Accordion("### Export Model", open=False):
+        with gr.Accordion("Export Model", open=False):
             with gr.Row():
                 model_file = gr.Dropdown(
                     label=translations["model_name"], choices=model_name,
