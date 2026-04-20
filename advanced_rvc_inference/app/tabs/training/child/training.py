@@ -1,6 +1,5 @@
 import os
 import sys
-
 import gradio as gr
 
 sys.path.append(os.getcwd())
