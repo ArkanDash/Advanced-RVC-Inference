@@ -68,7 +68,9 @@ class Config:
 
         self.gpu_mem = None
         self.per_preprocess = 3.7
+        self.is_zluda = zluda.is_available()
         self.device = self.get_default_device()
+        self.gpu_name = self._get_gpu_name()
         self.providers = self.get_providers()
         self.is_half = self.is_fp16()
         self.x_pad, self.x_query, self.x_center, self.x_max = self.device_config()
@@ -132,6 +134,29 @@ class Config:
         if not fp16: self.per_preprocess = 3.0
         return fp16
 
+    def _get_gpu_name(self) -> str:
+        """Get the GPU device name for diagnostics."""
+        try:
+            if torch.cuda.is_available() and self.device.startswith("cuda"):
+                return torch.cuda.get_device_name(0)
+        except Exception:
+            pass
+        return ""
+
+    def is_low_vram(self) -> bool:
+        """Check if the GPU has low VRAM (T4 = 15GB, V100 = 16GB thresholds)."""
+        return self.gpu_mem is not None and self.gpu_mem <= 16
+
+    def is_colab_t4(self) -> bool:
+        """Detect Google Colab T4 environment."""
+        if not torch.cuda.is_available():
+            return False
+        try:
+            name = torch.cuda.get_device_name(0).lower()
+            return "t4" in name or "tesla t4" in name
+        except Exception:
+            return False
+
     def load_config_json(self):
         configs = {}
         package_dir = os.path.dirname(os.path.abspath(__file__))
@@ -184,7 +209,13 @@ class Config:
     def get_providers(self):
         ort_providers = onnxruntime.get_available_providers()
 
-        if "CUDAExecutionProvider" in ort_providers and self.device.startswith("cuda"): 
+        # ZLUDA: CUDA EP may not work with AMD hardware, prefer CPU/ROCm
+        if self.is_zluda:
+            if "ROCMExecutionProvider" in ort_providers:
+                providers = ["ROCMExecutionProvider"]
+            else:
+                providers = ["CPUExecutionProvider"]
+        elif "CUDAExecutionProvider" in ort_providers and self.device.startswith("cuda"): 
             providers = ["CUDAExecutionProvider"]
         elif "ROCMExecutionProvider" in ort_providers and self.device.startswith("cuda"):
             providers = ["ROCMExecutionProvider"]
