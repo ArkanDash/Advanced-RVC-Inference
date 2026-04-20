@@ -95,7 +95,7 @@ pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
 
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
-**CLI Only (No UI)** — lightweight headless mode using `pip install`. No web UI, no repo clone — just `rvc-cli` commands. Paths are resolved automatically from the installed package:
+**CLI Only (No UI)** — lightweight headless mode using `git clone`. No web UI, just `rvc-cli` commands from the local repo:
 
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/colab-noui.ipynb)
 
