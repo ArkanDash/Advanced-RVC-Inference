@@ -5,7 +5,7 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.process import zip_file
+from advanced_rvc_inference.core.process import zip_file, fetch_pretrained_data
 from advanced_rvc_inference.core.training import preprocess, extract, create_index, training
 from advanced_rvc_inference.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
 from advanced_rvc_inference.core.ui import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
@@ -217,6 +217,21 @@ def training_model_tab():
             pretrain_setting = gr.Group(visible=False)
             with pretrain_setting:
                 with gr.Accordion(translations["custom_pretrain_info"], open=True):
+                    gr.Markdown(f"**{translations.get('select_pretrain', 'Select from pretrained list')}**")
+                    pretrained_data = fetch_pretrained_data()
+                    pretrained_model_select = gr.Dropdown(
+                        label=translations.get("select_pretrain_info", "Choose a pretrained model"),
+                        choices=list(pretrained_data.keys()) if pretrained_data else [],
+                        value=list(pretrained_data.keys())[0] if pretrained_data else '',
+                        interactive=True, allow_custom_value=True,
+                    )
+                    pretrained_sr_select = gr.Dropdown(
+                        label=translations.get("pretrain_sr", "Sample rate"),
+                        choices=list(pretrained_data[pretrained_model_select.value].keys()) if pretrained_data and pretrained_model_select.value in pretrained_data else ["48k", "40k", "32k"],
+                        value=list(pretrained_data[pretrained_model_select.value].keys())[0] if pretrained_data and pretrained_model_select.value in pretrained_data else "48k",
+                        interactive=True,
+                    )
+                    gr.Markdown(f"**{translations.get('custom_pretrain_info', 'Or select files manually')}**")
                     with gr.Row():
                         pretrained_D = gr.Dropdown(
                             label=translations["pretrain_file"].format(dg="D"),
@@ -228,7 +243,34 @@ def training_model_tab():
                             choices=pretrainedG, value=pretrainedG[0] if len(pretrainedG) > 0 else '',
                             interactive=True, allow_custom_value=True,
                         )
-                    refresh_pretrain = gr.Button(translations["refresh"])
+                    with gr.Row():
+                        refresh_pretrain = gr.Button(translations["refresh"])
+
+            def on_pretrained_model_select(model):
+                data = fetch_pretrained_data()
+                if not data or model not in data:
+                    return gr.update(), gr.update()
+                sr_choices = list(data[model].keys())
+                return gr.update(choices=sr_choices, value=sr_choices[0]), gr.update()
+
+            def on_pretrained_sr_select(model, sr):
+                data = fetch_pretrained_data()
+                if not data or model not in data or sr not in data[model]:
+                    return gr.update(), gr.update()
+                paths = data[model][sr]
+                # paths can be a string like "D_file.pth, G_file.pth" or a dict
+                if isinstance(paths, str):
+                    parts = [p.strip() for p in paths.split(",")]
+                    g_val = parts[-1] if len(parts) > 1 else ''
+                    d_val = parts[0] if len(parts) > 1 else parts[0]
+                elif isinstance(paths, dict):
+                    g_val = paths.get("G", '')
+                    d_val = paths.get("D", '')
+                elif isinstance(paths, list) and len(paths) >= 2:
+                    d_val, g_val = paths[0], paths[1]
+                else:
+                    g_val = d_val = str(paths)
+                return gr.update(value=d_val), gr.update(value=g_val)
 
             with gr.Accordion(translations["setting_cpu_gpu"], open=False):
                 with gr.Row():
@@ -289,6 +331,8 @@ def training_model_tab():
     reference_refresh.click(fn=change_reference_choices, inputs=[], outputs=[reference_name])
     not_use_pretrain.change(fn=lambda a, b: visible(a and not b), inputs=[custom_pretrain, not_use_pretrain], outputs=[pretrain_setting])
     custom_pretrain.change(fn=lambda a, b: visible(a and not b), inputs=[custom_pretrain, not_use_pretrain], outputs=[pretrain_setting])
+    pretrained_model_select.change(fn=on_pretrained_model_select, inputs=[pretrained_model_select], outputs=[pretrained_sr_select, pretrained_D])
+    pretrained_sr_select.change(fn=on_pretrained_sr_select, inputs=[pretrained_model_select, pretrained_sr_select], outputs=[pretrained_D, pretrained_G])
     refresh_pretrain.click(fn=change_pretrained_choices, inputs=[], outputs=[pretrained_D, pretrained_G])
     upload_dataset.upload(
         fn=lambda files, folder: [shutil_move(f.name, os.path.join(folder, os.path.split(f.name)[1])) for f in files] if folder != "" else gr_warning(translations["dataset_folder1"]),
