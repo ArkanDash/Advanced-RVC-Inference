@@ -28,7 +28,23 @@ sys.path.append(os.getcwd())
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
 from advanced_rvc_inference.library.utils import clear_gpu_cache
-from advanced_rvc_inference.library.backends import directml, opencl
+from advanced_rvc_inference.library.backends import directml, opencl, zluda
+
+# ZLUDA detection: True when running on AMD GPU via CUDA compatibility layer
+_is_zluda = zluda.is_available()
+
+# T4 / low-VRAM detection for Colab-friendly defaults
+_is_low_vram = False
+try:
+    if torch.cuda.is_available():
+        _gpu_mem_gb = torch.cuda.get_device_properties(0).total_memory // (1024 ** 3)
+        _is_low_vram = _gpu_mem_gb <= 16
+        _gpu_name = torch.cuda.get_device_name(0).lower()
+        _is_t4 = "t4" in _gpu_name or "tesla t4" in _gpu_name
+    else:
+        _is_t4 = False
+except Exception:
+    _is_t4 = False
 from advanced_rvc_inference.utils.variables import logger, translations
 
 from advanced_rvc_inference.library.algorithm import commons
@@ -89,6 +105,7 @@ def parse_arguments():
     parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
+    parser.add_argument("--use_8bit_adam", type=lambda x: bool(strtobool(x)), default=False, help="Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)")
 
     return parser.parse_args()
 
@@ -97,7 +114,7 @@ g_lr_coeff = 1.0
 d_step_per_g_step = 1
 
 args = parse_arguments()
-model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model
+model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model, use_8bit_adam = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model, args.use_8bit_adam
 
 experiment_dir = os.path.join(main_configs["logs_path"], model_name)
 training_file_path = os.path.join(experiment_dir, "training_data.json")
@@ -137,11 +154,14 @@ if not os.path.exists(config_save_path):
     else:
         raise FileNotFoundError(f"Config template not found at: {config_template_path}")
 
-torch.backends.cudnn.deterministic = args.deterministic if not main_config.device.startswith("ocl") else False
-torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.startswith("ocl") else False
+# cuDNN settings — skip for ZLUDA (uses HIP MIOpen, not NVIDIA cuDNN)
+_cudnn_safe = not main_config.device.startswith("ocl") and not _is_zluda
+torch.backends.cudnn.deterministic = args.deterministic if _cudnn_safe else False
+torch.backends.cudnn.benchmark = args.benchmark if _cudnn_safe else False
 
 # CUDA Optimizer Training: Enable additional CUDA optimizations
-if torch.cuda.is_available():
+# ZLUDA: TF32 and fp16 reduction are NVIDIA-specific, skip for ZLUDA
+if torch.cuda.is_available() and not _is_zluda:
     torch.backends.cuda.matmul.allow_tf32 = True
     torch.backends.cudnn.allow_tf32 = True
     torch.backends.cuda.matmul.allow_fp16_reduced_precision_reduction = True
@@ -211,8 +231,15 @@ def main():
             sys.exit(1)
 
         if torch.cuda.is_available() and main_config.device.startswith("cuda"):
-            device, gpus = torch.device("cuda"), [int(item) for item in gpus.split("-")]
-            n_gpus = len(gpus)
+            if _is_zluda:
+                # ZLUDA (AMD GPU): single GPU only, no multi-GPU NCCL support
+                device = torch.device("cuda")
+                gpus = [0]
+                n_gpus = 1
+                logger.info("ZLUDA detected (AMD GPU) — using single GPU mode with gloo backend")
+            else:
+                device, gpus = torch.device("cuda"), [int(item) for item in gpus.split("-")]
+                n_gpus = len(gpus)
         elif opencl.is_available() and main_config.device.startswith("ocl"):
             device, gpus = torch.device("ocl"), [int(item) for item in gpus.split("-")]
             n_gpus = len(gpus)
@@ -298,13 +325,23 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     global global_step, smoothed_value_gen, smoothed_value_disc, optimizer_choice
 
     smoothed_value_gen, smoothed_value_disc = 0, 0
-    dist.init_process_group(backend="gloo" if sys.platform == "win32" or device.type != "cuda" else "nccl", init_method="env://", world_size=n_gpus if device.type == "cuda" else 1, rank=rank if device.type == "cuda" else 0)
+    # ZLUDA: no NCCL support, must use gloo backend
+    _ddp_backend = "gloo" if (sys.platform == "win32" or device.type != "cuda" or _is_zluda) else "nccl"
+    dist.init_process_group(backend=_ddp_backend, init_method="env://", world_size=n_gpus if device.type == "cuda" else 1, rank=rank if device.type == "cuda" else 0)
 
     torch.manual_seed(config.train.seed)
     if device.type == "cuda": torch.cuda.manual_seed(config.train.seed)
     elif device.type == "ocl": opencl.pytorch_ocl.manual_seed_all(config.train.seed)
 
     if torch.cuda.is_available(): torch.cuda.set_device(device_id)
+
+    if rank == 0:
+        if _is_zluda:
+            logger.info(f"Training on ZLUDA (AMD GPU): {zluda.device_name(0)}")
+        elif _is_t4:
+            logger.info(f"Training on T4 GPU — using T4-optimized defaults (FP16, grad accumulation)")
+        elif _is_low_vram:
+            logger.info(f"Training on low-VRAM GPU ({_gpu_mem_gb}GB) — reduced memory defaults active")
 
     writer_eval = SummaryWriter(log_dir=os.path.join(experiment_dir, "eval")) if rank == 0 else None
 
@@ -315,7 +352,12 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     )
 
     train_dataset = TextAudioLoader(config.data, pitch_guidance=pitch_guidance, energy=energy_use)
-    train_loader = DataLoader(train_dataset, num_workers=4, shuffle=False, pin_memory=True, collate_fn=TextAudioCollate(pitch_guidance=pitch_guidance, energy=energy_use), batch_sampler=DistributedBucketSampler(train_dataset, batch_size * n_gpus, [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], num_replicas=n_gpus, rank=rank, shuffle=True), persistent_workers=True, prefetch_factor=8)
+    # ZLUDA: pin_memory=False (non-pinned transfers are more reliable on HIP)
+    # T4 / low-VRAM: reduce num_workers and prefetch to save RAM
+    _pin_mem = not _is_zluda
+    _num_workers = 2 if (_is_low_vram or _is_zluda) else 4
+    _prefetch = 2 if (_is_low_vram or _is_zluda) else 8
+    train_loader = DataLoader(train_dataset, num_workers=_num_workers, shuffle=False, pin_memory=_pin_mem, collate_fn=TextAudioCollate(pitch_guidance=pitch_guidance, energy=energy_use), batch_sampler=DistributedBucketSampler(train_dataset, batch_size * n_gpus, [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], num_replicas=n_gpus, rank=rank, shuffle=True), persistent_workers=True, prefetch_factor=_prefetch)
 
     if len(train_loader) < 3:
         logger.warning(translations["not_enough_data"])
@@ -361,11 +403,37 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         logger.info(f"  {optimizer_meta['description']}")
 
     # CUDA Optimizer Training: Use fused kernels when available and supported
+    # ZLUDA: fused kernels are NVIDIA-specific, skip
     use_fused_optimizer = (
         device.type == "cuda"
+        and not _is_zluda
         and optimizer_meta.get("supports_fused", False)
         and hasattr(optimizer_optim, "fused")
     )
+
+    # T4 / low-VRAM: auto-enable gradient accumulation if not explicitly set
+    _effective_grad_accum = grad_accum_steps
+    if rank == 0 and grad_accum_steps == 1 and (_is_t4 or _is_low_vram) and batch_size >= 4:
+        _effective_grad_accum = 2
+        logger.info(f"T4/Low-VRAM optimization: auto-enabling gradient accumulation (2 steps) to reduce VRAM usage")
+
+    # 8-bit Adam for low VRAM (requires bitsandbytes)
+    if use_8bit_adam and device.type == "cuda":
+        try:
+            import bitsandbytes as bnb
+            if rank == 0:
+                logger.info(f"Using 8-bit {optimizer_choice} via bitsandbytes for reduced VRAM usage")
+            optim_g = bnb.optim.AdamW8bit(net_g.parameters(), lr=config.train.learning_rate * g_lr_coeff, betas=config.train.betas)
+            optim_d = bnb.optim.AdamW8bit(net_d.parameters(), lr=config.train.learning_rate * d_lr_coeff, betas=config.train.betas)
+            use_fused_optimizer = False  # 8-bit and fused are incompatible
+        except ImportError:
+            if rank == 0:
+                logger.warning("bitsandbytes not installed, falling back to standard optimizer")
+            optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
+            optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
+    else:
+        optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
+        optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
     
     if rank == 0 and use_fused_optimizer:
         logger.info(f"CUDA Optimizer Training: Using fused {optimizer_choice} for enhanced CUDA performance")
@@ -383,17 +451,21 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             kwargs["fused"] = True
         return kwargs
 
-    optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
-    optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
-    if not device.type.startswith(("privateuseone", "ocl")): 
+    if device.type.startswith(("privateuseone", "ocl")):
+        pass  # Skip DDP for non-CUDA backends
+    elif _is_zluda:
+        # ZLUDA: DDP without device_ids (gloo backend, no NCCL)
+        net_g, net_d = DDP(net_g), DDP(net_d)
+    else: 
         # Optimization: increase gradient bucket size for faster all-reduce communication
         ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25} if torch.cuda.is_available() else {}
         net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
 
     # Optimization: torch.compile for PyTorch 2.x+ (significant speedup on CUDA)
-    if compile_model and device.type == "cuda" and hasattr(torch, "compile"):
+    # ZLUDA: torch.compile is not supported
+    if compile_model and device.type == "cuda" and not _is_zluda and hasattr(torch, "compile"):
         if rank == 0:
             logger.info("Optimization: Applying torch.compile() to generator for faster training")
         try:
@@ -402,8 +474,8 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             if rank == 0:
                 logger.warning(f"torch.compile() failed, falling back to eager mode: {e}")
 
-    if rank == 0 and grad_accum_steps > 1:
-        logger.info(f"Optimization: Gradient accumulation enabled ({grad_accum_steps} steps, effective batch size: {batch_size * n_gpus * grad_accum_steps})")
+    if rank == 0 and _effective_grad_accum > 1:
+        logger.info(f"Optimization: Gradient accumulation enabled ({_effective_grad_accum} steps, effective batch size: {batch_size * n_gpus * _effective_grad_accum})")
 
     scaler_dict = {}
     try:
@@ -536,18 +608,31 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     # - growth_factor: Controls how fast the loss scale grows during training
     # - backoff_factor: Controls how fast the loss scale decreases when NaN is detected
     # - growth_interval: Number of successful steps before increasing loss scale
+    # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
+    # T4: FP16 is well-supported on Turing architecture
+    _scaler_enabled = main_config.is_half and device.type == "cuda"
     scaler = GradScaler(
         device=device, 
-        enabled=main_config.is_half and device.type == "cuda",
+        enabled=_scaler_enabled,
         growth_factor=2.0,
         backoff_factor=0.5,
         growth_interval=100
     )
     
-    # CUDA Optimizer Training: Enable CUDA memory caching for better performance
+    # CUDA memory optimization
     if device.type == "cuda":
         torch.cuda.empty_cache()
-        torch.cuda.memory._set_allocator_settings("max_split_size_mb:512")
+        # ZLUDA: skip allocator settings (CUDA-specific C++ API, may crash on HIP)
+        if not _is_zluda:
+            torch.cuda.memory._set_allocator_settings("max_split_size_mb:512")
+        # T4 / low-VRAM: enable CUDA memory efficient attention
+        if _is_low_vram and not _is_zluda:
+            try:
+                torch.backends.cuda.enable_mem_efficient_sdp(True)
+                if rank == 0:
+                    logger.info("T4/Low-VRAM: enabled memory-efficient scaled dot product attention")
+            except Exception:
+                pass
     
     cache = []
 
@@ -587,7 +672,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=grad_accum_steps)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
@@ -597,10 +682,11 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
-    cuda_stream = torch.cuda.Stream() if device.type == "cuda" else None
+    # ZLUDA: CUDA streams may not work reliably with HIP
+    cuda_stream = torch.cuda.Stream() if (device.type == "cuda" and not _is_zluda) else None
 
     # Optimization: scale loss by accumulation steps for correct gradient averaging
-    loss_scale_factor = 1.0 / grad_accum_steps
+    loss_scale_factor = 1.0 / _effective_grad_accum
     
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
@@ -628,7 +714,9 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     epoch_recorder = EpochRecorder()
 
     autocast_enabled = main_config.is_half and device.type == "cuda"
-    autocast_dtype = torch.float32 if not autocast_enabled else (torch.bfloat16 if main_config.brain else torch.float16)
+    # ZLUDA: force float16 (bfloat16 not reliably supported on HIP)
+    # T4: Turing arch supports both fp16 and bf16, use configured preference
+    autocast_dtype = torch.float32 if not autocast_enabled else (torch.float16 if _is_zluda else (torch.bfloat16 if main_config.brain else torch.float16))
     autocasts = autocast(device.type, enabled=autocast_enabled, dtype=autocast_dtype) if not device.type.startswith("ocl") else nullcontext()
     
     # Calculate total steps for this epoch
@@ -748,14 +836,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         if autocast_enabled:
             scaler.scale(loss_gen_all_scaled).backward()
             # Optimization: only step optimizer on last accumulation step
-            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
+            if (batch_idx + 1) % _effective_grad_accum == 0 or (batch_idx + 1) == total_steps:
                 scaler.unscale_(optim_g)
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
                 scaler.step(optim_g)
                 scaler.update()
         else:
             loss_gen_all_scaled.backward()
-            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
+            if (batch_idx + 1) % _effective_grad_accum == 0 or (batch_idx + 1) == total_steps:
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
                 optim_g.step()
 
