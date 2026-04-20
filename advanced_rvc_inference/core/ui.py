@@ -343,17 +343,26 @@ def change_backing_choices(backing: bool, merge: bool) -> Dict[str, Any]:
         return {"interactive": True, "__type__": "update"}
 
 def change_download_choices(select: str) -> List[Dict[str, Any]]:
-    """Update download UI based on selected option"""
-    selects = [False] * 9
+    """Update download UI based on selected option.
+
+    Returns 10 visibility updates matching the download tab components:
+    [0] download_model_url, [1] download_model_name, [2] download_url_button,
+    [3] download_csv_model, [4] download_csv_button,
+    [5] search_model_name, [6] search_button,
+    [7] search_dropdown, [8] search_download_model,
+    [9] upload_model_files
+    Ported from Vietnamese-RVC.
+    """
+    selects = [False] * 10
 
     if select == translations["download_url"]:
         selects[0] = selects[1] = selects[2] = True
     elif select == translations["download_from_csv"]:
         selects[3] = selects[4] = True
     elif select == translations["search_models"]:
-        selects[5] = selects[6] = selects[7] = True
+        selects[5] = selects[6] = True
     elif select == translations["upload"]:
-        selects[8] = True
+        selects[9] = True
     else:
         gr_warning(translations["option_not_valid"])
 
