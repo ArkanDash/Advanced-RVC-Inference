@@ -2,6 +2,7 @@ import os
 import sys
 import glob
 import json
+import gc
 import torch
 import logging
 import argparse
@@ -85,6 +86,8 @@ def parse_arguments():
     parser.add_argument("--use_custom_reference", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--reference_path", type=str, default="")
     parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
+    parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
 
     return parser.parse_args()
 
@@ -93,7 +96,7 @@ g_lr_coeff = 1.0
 d_step_per_g_step = 1
 
 args = parse_arguments()
-model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss
+model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model
 
 experiment_dir = os.path.join(main_configs["logs_path"], model_name)
 training_file_path = os.path.join(experiment_dir, "training_data.json")
@@ -235,7 +238,7 @@ def main():
 
             with open(config_save_path, "w") as pid_file:
                 for rank, device_id in enumerate(gpus):
-                    subproc = mp.Process(target=run, args=(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, total_epoch, save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use))
+                    subproc = mp.Process(target=run, args=(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, total_epoch, save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, grad_accum_steps, compile_model))
                     children.append(subproc)
                     subproc.start()
                     pid_data["process_pids"].append(subproc.pid)
@@ -290,7 +293,7 @@ class EpochRecorder:
         self.last_time = now_time
         return translations["time_or_speed_training"].format(current_time=datetime.datetime.now().strftime("%H:%M:%S"), elapsed_time_str=str(datetime.timedelta(seconds=int(round(elapsed_time, 1)))))
 
-def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, custom_total_epoch, custom_save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use):
+def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, custom_total_epoch, custom_save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, grad_accum_steps, compile_model):
     global global_step, smoothed_value_gen, smoothed_value_disc, optimizer_choice
 
     smoothed_value_gen, smoothed_value_disc = 0, 0
@@ -384,7 +387,22 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
     if not device.type.startswith(("privateuseone", "ocl")): 
-        net_g, net_d = (DDP(net_g, device_ids=[device_id]), DDP(net_d, device_ids=[device_id])) if torch.cuda.is_available() else (DDP(net_g), DDP(net_d))
+        # Optimization: increase gradient bucket size for faster all-reduce communication
+        ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25} if torch.cuda.is_available() else {}
+        net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
+
+    # Optimization: torch.compile for PyTorch 2.x+ (significant speedup on CUDA)
+    if compile_model and device.type == "cuda" and hasattr(torch, "compile"):
+        if rank == 0:
+            logger.info("Optimization: Applying torch.compile() to generator for faster training")
+        try:
+            net_g = torch.compile(net_g, mode="reduce-overhead")
+        except Exception as e:
+            if rank == 0:
+                logger.warning(f"torch.compile() failed, falling back to eager mode: {e}")
+
+    if rank == 0 and grad_accum_steps > 1:
+        logger.info(f"Optimization: Gradient accumulation enabled ({grad_accum_steps} steps, effective batch size: {batch_size * n_gpus * grad_accum_steps})")
 
     scaler_dict = {}
     try:
@@ -508,17 +526,20 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=grad_accum_steps)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
     cuda_stream = torch.cuda.Stream() if device.type == "cuda" else None
+
+    # Optimization: scale loss by accumulation steps for correct gradient averaging
+    loss_scale_factor = 1.0 / grad_accum_steps
     
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
@@ -583,7 +604,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
                 loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
 
-            optim_d.zero_grad()
+            # Optimization: set_to_none=True is faster than zeroing gradients
+            optim_d.zero_grad(set_to_none=True)
 
             if autocast_enabled:
                 scaler.scale(loss_disc).backward()
@@ -657,17 +679,24 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
         if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
 
-        optim_g.zero_grad()
+        # Optimization: scale loss by accumulation steps for correct gradient averaging
+        loss_gen_all_scaled = loss_gen_all * loss_scale_factor
+
+        # Optimization: set_to_none=True is faster than zeroing gradients
+        optim_g.zero_grad(set_to_none=True)
         if autocast_enabled:
-            scaler.scale(loss_gen_all).backward()
-            scaler.unscale_(optim_g)
-            grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
-            scaler.step(optim_g)
-            scaler.update()
+            scaler.scale(loss_gen_all_scaled).backward()
+            # Optimization: only step optimizer on last accumulation step
+            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
+                scaler.unscale_(optim_g)
+                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
+                scaler.step(optim_g)
+                scaler.update()
         else:
-            loss_gen_all.backward()
-            grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
-            optim_g.step()
+            loss_gen_all_scaled.backward()
+            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
+                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
+                optim_g.step()
 
         global_step += 1
 
