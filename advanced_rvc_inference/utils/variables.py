@@ -58,6 +58,7 @@ class Config:
         self.gpu_mem = None
         self.per_preprocess = 3.7
         self.device = self._get_default_device()
+        self.gpu_name = self._get_gpu_name()
         self.providers = self._get_providers()
         self.is_half = self._is_fp16()
         self.x_pad, self.x_query, self.x_center, self.x_max = self._device_config()
@@ -119,6 +120,42 @@ class Config:
         if not fp16:
             self.per_preprocess = 3.0
         return fp16
+
+    @property
+    def is_zluda(self) -> bool:
+        """Check if running under ZLUDA (AMD GPU via CUDA compatibility layer)."""
+        try:
+            from advanced_rvc_inference.library.backends import zluda
+            return zluda.is_available()
+        except Exception:
+            return False
+
+    @property
+    def is_low_vram(self) -> bool:
+        """Check if GPU has low VRAM (<=16GB, e.g. T4 15GB, V100 16GB)."""
+        return self.gpu_mem is not None and self.gpu_mem <= 16
+
+    @property
+    def is_colab_t4(self) -> bool:
+        """Detect Google Colab T4 environment."""
+        import torch
+        if not torch.cuda.is_available():
+            return False
+        try:
+            name = torch.cuda.get_device_name(0).lower()
+            return "t4" in name or "tesla t4" in name
+        except Exception:
+            return False
+
+    def _get_gpu_name(self) -> str:
+        """Get the GPU device name for diagnostics."""
+        import torch
+        try:
+            if torch.cuda.is_available() and self.device.startswith("cuda"):
+                return torch.cuda.get_device_name(0)
+        except Exception:
+            pass
+        return ""
 
     def _device_config(self):
         """Get device-specific configuration."""
@@ -182,7 +219,12 @@ class Config:
 
             ort_providers = onnxruntime.get_available_providers()
 
-            if "CUDAExecutionProvider" in ort_providers and self.device.startswith(
+            # ZLUDA: CUDA EP may not work with AMD hardware, prefer CPU/ROCm
+            if self.is_zluda:
+                if "ROCMExecutionProvider" in ort_providers:
+                    return ["ROCMExecutionProvider"]
+                return ["CPUExecutionProvider"]
+            elif "CUDAExecutionProvider" in ort_providers and self.device.startswith(
                 "cuda"
             ):
                 return ["CUDAExecutionProvider"]
