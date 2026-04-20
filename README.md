@@ -91,9 +91,13 @@ pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
 
 ### Google Colab
 
-Click the badge below to open the notebook directly in Colab — everything installs and runs with a single click. T4 GPU optimizations (FP16, gradient accumulation, memory-efficient attention) are automatically enabled when a Tesla T4 is detected:
+**With Web UI** — full Gradio interface with a public share link. T4 GPU optimizations (FP16, gradient accumulation, memory-efficient attention) are automatically enabled when a Tesla T4 is detected:
 
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
+
+**CLI Only (No UI)** — lightweight headless mode using `pip install`. No web UI, no repo clone — just `rvc-cli` commands. Paths are resolved automatically from the installed package:
+
+[![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/colab-noui.ipynb)
 
 ---
 
