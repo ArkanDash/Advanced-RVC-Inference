@@ -103,6 +103,16 @@ def show_version():
             version_info.append(f"CUDA: {torch.version.cuda}")
             gpu_mem = torch.cuda.get_device_properties(0).total_memory // (1024**3)
             version_info.append(f"GPU Memory: {gpu_mem} GB")
+            # ZLUDA / T4 detection
+            try:
+                from advanced_rvc_inference.library.backends import zluda
+                if zluda.is_available():
+                    version_info.append(f"ZLUDA: Detected (AMD GPU via CUDA compatibility)")
+            except ImportError:
+                pass
+            gpu_name = torch.cuda.get_device_name(0).lower()
+            if "t4" in gpu_name or "tesla t4" in gpu_name:
+                version_info.append(f"GPU: Tesla T4 (T4 optimizations active)")
     except ImportError:
         version_info.append("PyTorch: Not installed")
 
@@ -142,8 +152,25 @@ def show_info():
             info.append(f"  CUDA Available: True")
             info.append(f"  CUDA Version: {torch.version.cuda}")
             gpu_mem = torch.cuda.get_device_properties(0).total_memory // (1024**3)
+            gpu_name = torch.cuda.get_device_name(0)
             info.append(f"  GPU Memory: {gpu_mem} GB")
-            info.append(f"  GPU Name: {torch.cuda.get_device_name(0)}")
+            info.append(f"  GPU Name: {gpu_name}")
+            # ZLUDA detection
+            try:
+                from advanced_rvc_inference.library.backends import zluda
+                if zluda.is_available():
+                    info.append("  ZLUDA: Detected (AMD GPU via CUDA compatibility layer)")
+                    info.append(f"  Backend: HIP/ROCm (via ZLUDA)")
+            except ImportError:
+                pass
+            # T4 / low-VRAM detection
+            gpu_name_lower = gpu_name.lower()
+            if "t4" in gpu_name_lower or "tesla t4" in gpu_name_lower:
+                info.append(f"  GPU Class: Tesla T4 (T4-optimized training defaults)")
+            elif gpu_mem <= 16:
+                info.append(f"  GPU Class: Low VRAM ({gpu_mem}GB, reduced memory defaults)")
+            else:
+                info.append(f"  GPU Class: High VRAM ({gpu_mem}GB, full optimizations)")
         else:
             info.append("  CUDA Available: False")
     except ImportError:
