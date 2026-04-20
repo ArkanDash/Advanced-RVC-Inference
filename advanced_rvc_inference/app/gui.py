@@ -60,6 +60,7 @@ def launch(
     show_error: bool = False,
     prevent_thread_lock: bool = True,
     keep_alive: bool = True,
+    easy: bool = False,
 ):
     """
     Launch the Gradio web interface.
@@ -72,6 +73,7 @@ def launch(
         show_error: Whether to show errors in the UI
         prevent_thread_lock: Whether to prevent thread locking
         keep_alive: Whether to keep the tunnel alive (useful for Colab)
+        easy: Whether to launch the simplified Easy GUI instead of the full GUI
     """
     setup_environment()
     _setup_signal_handlers()
@@ -97,42 +99,46 @@ def launch(
         # Start time tracking
         start_time = time.time()
 
-        # Build the UI
-        with gr.Blocks(
-            title=f"Advanced RVC Inference",
-            js=js_code if client_mode else None,
-        ) as app:
-            gr.HTML(
-                f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
-            )
+        # Build the UI — Easy mode or Full mode
+        if easy:
+            from advanced_rvc_inference.app.easy_gui import create_easy_app
+            app = create_easy_app(theme=theme)
+        else:
+            with gr.Blocks(
+                title=f"Advanced RVC Inference",
+                js=js_code if client_mode else None,
+            ) as app:
+                gr.HTML(
+                    f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
+                )
 
-            from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
-            from advanced_rvc_inference.app.tabs.realtime.realtime import realtime_tab
-            from advanced_rvc_inference.app.tabs.training.training import training_tab
-            from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
-            from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
+                from advanced_rvc_inference.app.tabs.inference.inference import inference_tab
+                from advanced_rvc_inference.app.tabs.realtime.realtime import realtime_tab
+                from advanced_rvc_inference.app.tabs.training.training import training_tab
+                from advanced_rvc_inference.app.tabs.downloads.downloads import download_tab
+                from advanced_rvc_inference.app.tabs.extra.extra import extra_tab
 
-            with gr.Tabs():
-                with gr.TabItem("Inference"):
-                    inference_tab()
-                    if client_mode:
-                        from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
-                            realtime_client_tab,
-                        )
-                        realtime_client_tab()
-                    else:
-                        realtime_tab()
-                
-                with gr.TabItem("Models"):
-                    download_tab()
-                    training_tab()
-                
-                extra_tab(app)
+                with gr.Tabs():
+                    with gr.TabItem("Inference"):
+                        inference_tab()
+                        if client_mode:
+                            from advanced_rvc_inference.app.tabs.realtime.realtime_client import (
+                                realtime_client_tab,
+                            )
+                            realtime_client_tab()
+                        else:
+                            realtime_tab()
+                    
+                    with gr.TabItem("Models"):
+                        download_tab()
+                        training_tab()
+                    
+                    extra_tab(app)
 
-            with gr.Row():
-                gr.Markdown(translations["terms_of_use"])
-            with gr.Row():
-                gr.Markdown(translations["exemption"])
+                with gr.Row():
+                    gr.Markdown(translations["terms_of_use"])
+                with gr.Row():
+                    gr.Markdown(translations["exemption"])
 
         # Log startup
         logger.info(f"Device: {config.device.replace('privateuseone', 'dml')}")
@@ -335,8 +341,10 @@ if __name__ == "__main__":
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
+    parser.add_argument("--easy", "-ez", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
 
     args = parser.parse_args()
+    easy_mode = args.easy is not None and args.easy.lower() in ("true", "1", "yes")
 
     sys.exit(
         launch(
@@ -345,5 +353,6 @@ if __name__ == "__main__":
             server_port=args.port,
             inbrowser=args.open,
             keep_alive=args.keep_alive,
+            easy=easy_mode,
         )
     )
