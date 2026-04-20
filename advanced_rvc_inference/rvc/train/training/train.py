@@ -54,6 +54,7 @@ from advanced_rvc_inference.rvc.train.training.utils import (
 
 from advanced_rvc_inference.utils.variables import config as main_config
 from advanced_rvc_inference.utils.variables import configs as main_configs
+from advanced_rvc_inference.utils.huggingface import HF_download_file
 
 warnings.filterwarnings("ignore")
 logging.getLogger("torch").setLevel(logging.ERROR)
@@ -417,6 +418,66 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         check = ["", "None"]
         epoch_str, global_step = 1, 0
         strict = main_configs.get("pretrain_strict", True)
+
+        # Auto-download default pretrained models if no custom pretrained paths provided
+        if pretrainG in check and pretrainD in check and rank == 0:
+            pretrained_base_url = f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
+            pretrained_save_dir = os.path.join(main_configs.get(f"pretrained_{version}_path", os.path.join(os.path.dirname(__file__), "../../assets/models", f"pretrained_{version}")))
+            os.makedirs(pretrained_save_dir, exist_ok=True)
+
+            pretrained_selector = {
+                True: {  # pitch_guidance (f0 models)
+                    32000: ("f0G32k.pth", "f0D32k.pth"),
+                    40000: ("f0G40k.pth", "f0D40k.pth"),
+                    48000: ("f0G48k.pth", "f0D48k.pth"),
+                },
+                False: {  # no pitch guidance (base models)
+                    32000: ("G32k.pth", "D32k.pth"),
+                    40000: ("G40k.pth", "D40k.pth"),
+                    48000: ("G48k.pth", "D48k.pth"),
+                }
+            }
+
+            sr = config.data.sample_rate
+            g_file, d_file = pretrained_selector.get(pitch_guidance, pretrained_selector[True]).get(sr, pretrained_selector[pitch_guidance][40000])
+
+            g_local = os.path.join(pretrained_save_dir, g_file)
+            d_local = os.path.join(pretrained_save_dir, d_file)
+
+            if not os.path.exists(g_local):
+                logger.info(f"Downloading default pretrained G ({g_file}) for {version.upper()} {sr}Hz...")
+                try:
+                    HF_download_file(pretrained_base_url + g_file, g_local)
+                    logger.info(f"Downloaded {g_file} to {g_local}")
+                except Exception as e:
+                    logger.warning(f"Failed to download default pretrained G: {e}")
+                    g_local = ""
+            else:
+                logger.info(f"Using cached default pretrained G: {g_local}")
+
+            if not os.path.exists(d_local):
+                logger.info(f"Downloading default pretrained D ({d_file}) for {version.upper()} {sr}Hz...")
+                try:
+                    HF_download_file(pretrained_base_url + d_file, d_local)
+                    logger.info(f"Downloaded {d_file} to {d_local}")
+                except Exception as e:
+                    logger.warning(f"Failed to download default pretrained D: {e}")
+                    d_local = ""
+            else:
+                logger.info(f"Using cached default pretrained D: {d_local}")
+
+            if g_local and d_local:
+                pretrainG = g_local
+                pretrainD = d_local
+            elif g_local:
+                pretrainG = g_local
+                logger.warning("Downloaded only pretrained G; pretrained D will be randomly initialized")
+            elif d_local:
+                pretrainD = d_local
+                logger.warning("Downloaded only pretrained D; pretrained G will be randomly initialized")
+            else:
+                logger.warning("Failed to download any pretrained models; training from scratch")
+
         try:
             if pretrainG not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
