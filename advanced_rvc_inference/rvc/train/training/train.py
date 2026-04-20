@@ -404,15 +404,47 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
 
                 ckptG = torch.load(pretrainG, map_location="cpu", weights_only=True)["model"]
-                net_g.module.load_state_dict(ckptG, strict=strict) if hasattr(net_g, "module") else net_g.load_state_dict(ckptG, strict=strict)
-                del ckptG
+
+                if strict:
+                    model_keys = set(net_g.module.state_dict().keys() if hasattr(net_g, "module") else net_g.state_dict().keys())
+                    ckpt_keys = set(ckptG.keys())
+                    unexpected_keys = ckpt_keys - model_keys
+                    missing_keys = model_keys - ckpt_keys
+
+                    if unexpected_keys:
+                        logger.warning(f"Pretrained G: ignoring {len(unexpected_keys)} unexpected key(s) in state_dict: {sorted(unexpected_keys)}")
+                    if missing_keys:
+                        logger.warning(f"Pretrained G: missing {len(missing_keys)} key(s) in state_dict: {sorted(missing_keys)}")
+
+                    filtered_ckptG = {k: v for k, v in ckptG.items() if k in model_keys}
+                else:
+                    filtered_ckptG = ckptG
+
+                net_g.module.load_state_dict(filtered_ckptG, strict=False) if hasattr(net_g, "module") else net_g.load_state_dict(filtered_ckptG, strict=False)
+                del ckptG, filtered_ckptG
 
             if pretrainD not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="D", pretrain=pretrainD))
 
                 ckptD = torch.load(pretrainD, map_location="cpu", weights_only=True)["model"]
-                net_d.module.load_state_dict(ckptD, strict=strict) if hasattr(net_d, "module") else net_d.load_state_dict(ckptD, strict=strict)
-                del ckptD
+
+                if strict:
+                    model_keys = set(net_d.module.state_dict().keys() if hasattr(net_d, "module") else net_d.state_dict().keys())
+                    ckpt_keys = set(ckptD.keys())
+                    unexpected_keys = ckpt_keys - model_keys
+                    missing_keys = model_keys - ckpt_keys
+
+                    if unexpected_keys:
+                        logger.warning(f"Pretrained D: ignoring {len(unexpected_keys)} unexpected key(s) in state_dict: {sorted(unexpected_keys)}")
+                    if missing_keys:
+                        logger.warning(f"Pretrained D: missing {len(missing_keys)} key(s) in state_dict: {sorted(missing_keys)}")
+
+                    filtered_ckptD = {k: v for k, v in ckptD.items() if k in model_keys}
+                else:
+                    filtered_ckptD = ckptD
+
+                net_d.module.load_state_dict(filtered_ckptD, strict=False) if hasattr(net_d, "module") else net_d.load_state_dict(filtered_ckptD, strict=False)
+                del ckptD, filtered_ckptD
         except Exception as e:
             logger.warning(translations["checkpointing_err"])
             logger.error(e)
@@ -470,13 +502,17 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     steps_per_epoch = len(train_loader)
     total_training_steps = (total_epoch - epoch_str + 1) * steps_per_epoch
     
-    with tqdm(total=total_training_steps, desc="Training", 
-              bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
-              postfix="") as pbar:
-        
-        for epoch in range(epoch_str, total_epoch + 1):
-            train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
-            scheduler_g.step(); scheduler_d.step()
+    try:
+        with tqdm(total=total_training_steps, desc="Training", 
+                  bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
+                  postfix="") as pbar:
+            
+            for epoch in range(epoch_str, total_epoch + 1):
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
+                scheduler_g.step(); scheduler_d.step()
+    finally:
+        if dist.is_initialized():
+            dist.destroy_process_group()
 
 def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
