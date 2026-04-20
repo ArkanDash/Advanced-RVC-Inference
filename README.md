@@ -23,6 +23,11 @@
 | **Audio Separation** | Vocal/instrumental isolation using UVR5 models (MDX-Net, Roformer, BS-Roformer), karaoke separation, reverb removal, and denoising |
 | **Real-Time Conversion** | Live microphone voice conversion with VAD (Voice Activity Detection) and low-latency processing |
 | **Training Pipeline** | End-to-end training from dataset creation (YouTube/local), preprocessing, feature extraction, and model training with overtraining detection |
+| **Easy GUI** | Simplified one-click interface for quick conversion and training — inspired by EasierGUI |
+| **Auto Pretrained Download** | Automatically downloads default pretrained models from HuggingFace when no custom paths are specified |
+| **ZLUDA Support** | Full AMD GPU support via ZLUDA (CUDA compatibility layer) for training and inference |
+| **T4 / Low-VRAM Optimizations** | Auto-detected GPU-class optimizations for Colab T4 and low-VRAM GPUs (FP16, gradient accumulation, memory-efficient attention) |
+| **Training Optimizations** | Gradient accumulation, torch.compile(), 8-bit Adam, set_to_none gradients, DDP tuning, CUDA cache cleanup |
 | **Model Management** | Download models from URLs (HuggingFace, direct links), create .index files, model format conversion, and reference set creation |
 | **Extra Tools** | F0 extraction, voice fusion, SRT subtitle generation, model info reader, and configurable settings |
 | **CLI** | Full command-line interface for all operations — `rvc-cli` with subcommands for inference, separation, training, and more |
@@ -74,9 +79,19 @@ cd Advanced-RVC-Inference
 pip install -r requirements.txt
 ```
 
+### ZLUDA (AMD GPU) Setup
+
+ZLUDA allows CUDA applications to run on AMD GPUs. No additional installation steps are needed — just install PyTorch with ZLUDA support and Advanced RVC will automatically detect and configure itself for AMD hardware.
+
+```bash
+# Follow the ZLUDA installation guide for your AMD GPU
+# Then install Advanced RVC normally — ZLUDA is auto-detected
+pip install git+https://github.com/ArkanDash/Advanced-RVC-Inference.git
+```
+
 ### Google Colab
 
-Click the badge below to open the notebook directly in Colab — everything installs and runs with a single click:
+Click the badge below to open the notebook directly in Colab — everything installs and runs with a single click. T4 GPU optimizations (FP16, gradient accumulation, memory-efficient attention) are automatically enabled when a Tesla T4 is detected:
 
 [![Open in Google Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/ArkanDash/Advanced-RVC-Inference/blob/master/Advanced-RVC.ipynb)
 
@@ -100,6 +115,23 @@ python -m advanced_rvc_inference.app.gui --share
 ```
 
 The web interface will be available at `http://localhost:7860` by default.
+
+### Easy GUI (Simplified Mode)
+
+Launch a streamlined interface designed for quick workflows — just convert or train with minimal configuration:
+
+```bash
+# Launch Easy GUI
+rvc-cli serve --easy true
+
+# Alternative shorthand
+rvc-cli serve -ez true
+```
+
+The Easy GUI includes three tabs:
+- **Quick Convert** — Simple voice conversion with model selection, pitch, and F0 settings
+- **One-Click Train** — Full training pipeline in a single button (Preprocess → Extract Features → Train → Create Index)
+- **Download** — Quick model download from URLs
 
 ### Command Line Interface
 
@@ -167,6 +199,12 @@ Complete training pipeline accessible from the web UI:
 - **Create Reference** — Generate reference audio sets for improved inference quality
 - **Train** — Train RVC models with configurable epochs, batch size, optimizer, overtraining detection, and more
 
+### Easy GUI Tabs
+A simplified interface accessible via `rvc-cli serve --easy true`:
+- **Quick Convert** — Simplified voice conversion with essential settings
+- **One-Click Train** — Train a new model in one click with automatic pretrained model download
+- **Download** — Quick model download from HuggingFace and other sources
+
 ### Downloads Tab
 Built-in model and asset downloader. Paste URLs from HuggingFace or other sources to download models directly into the correct directory.
 
@@ -181,6 +219,77 @@ Additional utilities:
 
 ---
 
+## Training Optimizations
+
+Advanced RVC Inference includes several training optimizations to improve speed and reduce memory usage:
+
+### Gradient Accumulation
+Simulate larger batch sizes without extra VRAM by accumulating gradients over multiple steps:
+
+```bash
+# Effective batch size = batch_size * grad_accum_steps
+rvc-cli train mymodel --batch_size 4 --grad_accum_steps 4
+```
+
+### torch.compile() (PyTorch 2.x+)
+Compile the generator model for faster training iterations (not compatible with ZLUDA):
+
+```bash
+rvc-cli train mymodel --compile_model True
+```
+
+### 8-bit Adam Optimizer
+Reduce optimizer memory by ~50% using 8-bit quantized Adam (requires `bitsandbytes`):
+
+```bash
+rvc-cli train mymodel --use_8bit_adam True
+```
+
+### Auto Pretrained Model Download
+When no custom pretrained paths are specified, the training script automatically downloads the appropriate default pretrained G and D models from HuggingFace (Vietnamese-RVC-Project). Models are selected based on RVC version, sample rate, and pitch guidance setting, then cached locally for reuse.
+
+### GPU-Auto-Detection
+The training system automatically detects your GPU hardware and applies appropriate optimizations:
+
+| GPU | Detection | Optimizations Applied |
+|-----|-----------|----------------------|
+| **Tesla T4** (Colab) | `tesla t4` in device name | FP16 AMP, gradient accumulation (auto), memory-efficient attention, reduced workers/prefetch |
+| **Low VRAM** (≤16 GB) | Memory size check | Reduced DataLoader workers/prefetch, memory-efficient attention |
+| **ZLUDA** (AMD) | CUDA version check, device name suffix, env vars | gloo DDP backend (no NCCL), FP16 AMP (no BF16), skip TF32/cuDNN/torch.compile, custom STFT |
+| **High VRAM CUDA** | Default | Full CUDA optimizations: TF32, cuDNN benchmark, torch.compile, CUDA streams |
+
+Run `rvc-cli info` to see your detected GPU class and active optimizations.
+
+---
+
+## ZLUDA (AMD GPU) Support
+
+ZLUDA is a CUDA compatibility layer that translates CUDA API calls to HIP/ROCm, allowing PyTorch CUDA applications to run on AMD GPUs without code changes. Advanced RVC Inference automatically detects ZLUDA and adjusts its behavior:
+
+### What Works
+- Model inference (single & batch)
+- Full training pipeline (single GPU)
+- Audio preprocessing and feature extraction
+- Easy GUI and web interface
+
+### ZLUDA-Specific Adaptations
+- **DDP Backend**: Uses `gloo` instead of `nccl` (no multi-GPU support)
+- **AMP Precision**: Forces FP16 instead of BF16 (not reliably supported on HIP)
+- **CUDA Features Disabled**: TF32, cuDNN benchmark/deterministic, torch.compile(), CUDA allocator settings, and CUDA streams are all automatically disabled
+- **STFT**: Custom ZLUDA-compatible STFT implementation for complex tensor operations
+- **ONNX Runtime**: Prefers ROCMExecutionProvider or CPUExecutionProvider over CUDAExecutionProvider
+- **DataLoader**: Disables pin_memory for more reliable HIP memory transfers
+
+### Detection
+ZLUDA is detected through multiple methods for reliability: CUDA version string check, GPU device name suffix `[ZLUDA]`, and the `DISABLE_ADDMM_CUDA_LT` environment variable. Check your setup:
+
+```bash
+rvc-cli info
+# Look for: "ZLUDA: Detected (AMD GPU via CUDA compatibility layer)"
+```
+
+---
+
 ## Project Structure
 
 ```
@@ -188,6 +297,7 @@ Advanced-RVC-Inference/
 ├── advanced_rvc_inference/
 │   ├── app/
 │   │   ├── gui.py              # Main entry point & Gradio app
+│   │   ├── easy_gui.py         # Simplified Easy GUI interface
 │   │   └── tabs/
 │   │       ├── inference/       # Inference, separation, TTS, Whisper
 │   │       ├── realtime/        # Real-time mic conversion
@@ -197,8 +307,15 @@ Advanced-RVC-Inference/
 │   ├── api/
 │   │   └── cli.py              # Full CLI interface (rvc-cli)
 │   ├── configs/                 # Model configs (v1, v2, ringformer, etc.)
-│   ├── core/                    # Core utilities (UI, process, restart)
-│   ├── library/                 # ML backends (predictors, embedders, ONNX)
+│   ├── core/                    # Core utilities (UI, process, training, restart)
+│   ├── library/
+│   │   ├── backends/            # GPU backends (CUDA, ZLUDA, DirectML, OpenCL)
+│   │   ├── algorithm/           # Model architectures and algorithms
+│   │   ├── generators/          # Vocoder implementations
+│   │   ├── optimizers/          # Training optimizers
+│   │   ├── predictors/          # F0 extraction algorithms
+│   │   ├── embedders/           # Speaker embedding models
+│   │   └── onnx/                # ONNX export utilities
 │   ├── rvc/
 │   │   ├── infer/               # Inference engine & audio conversion
 │   │   ├── realtime/            # Real-time voice conversion
@@ -249,11 +366,30 @@ brew install ffmpeg
 
 ### CUDA Out of Memory
 
-If you encounter OOM errors during inference or training, try enabling memory checkpointing:
+If you encounter OOM errors during inference or training, try these solutions:
 
-- **CLI:** Add `--checkpointing` to your command
-- **Web UI:** Enable the "Checkpointing" toggle in the inference tab
-- Reduce batch size during training
+- **Gradient accumulation**: Use `--grad_accum_steps 2` (or higher) to reduce VRAM usage
+- **8-bit Adam**: Use `--use_8bit_adam True` to reduce optimizer memory by ~50%
+- **Smaller batch size**: Reduce training batch size
+- **Checkpointing**: Add `--checkpointing` to your command
+- **Web UI**: Enable the "Checkpointing" toggle in the inference tab
+
+For T4/Colab users, most of these optimizations are applied automatically when the Tesla T4 GPU is detected.
+
+### ZLUDA Issues
+
+If you encounter problems running on AMD GPUs with ZLUDA:
+
+```bash
+# Verify ZLUDA is detected
+rvc-cli info
+
+# Check that torch.cuda reports your AMD GPU
+python -c "import torch; print(torch.cuda.get_device_name(0))"
+
+# If STFT issues occur, check that ZLUDA STFT override is loaded
+python -c "from advanced_rvc_inference.library.backends import zluda; print(f'ZLUDA: {zluda.is_available()}')"
+```
 
 ### Common Dependency Issues
 
@@ -266,6 +402,9 @@ pip install onnxruntime --upgrade
 
 # For NVIDIA GPUs, ensure the GPU variant of ONNX Runtime
 pip install onnxruntime-gpu
+
+# For 8-bit Adam optimizer support
+pip install bitsandbytes
 ```
 
 ---
@@ -295,11 +434,13 @@ This project builds upon the work of several open-source repositories and their 
 
 | Repository | Owner | Purpose |
 |------------|-------|---------|
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation |
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation & pretrained models |
 | [Applio](https://github.com/IAHispano/Applio) | IAHispano | UI/UX inspiration & components |
+| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | EasyGUI inspiration |
 | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke | UVR5 audio separation |
 | [whisper](https://github.com/openai/whisper) | OpenAI | Speech-to-text transcription |
 | [BigVGAN](https://github.com/NVIDIA/BigVGAN.git) | Nvidia | Vocoder implementation |
+| [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid | AMD GPU CUDA compatibility layer |
 
 ---
 
