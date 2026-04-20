@@ -157,7 +157,7 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
     if not not_pretrain:
         if not custom_pretrained: 
             pretrain_dir = configs["pretrained_v2_path"] if rvc_version == 'v2' else configs["pretrained_v1_path"]
-            download_version = codecs.decode(f"uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cergenvarq_", "rot13") + f"{rvc_version}/"
+            download_version = f"https://github.com/PhamHuynhAnh16/Vietnamese-RVC/raw/main/assets/models/pretrained_{rvc_version}/"
 
             pretrained_selector = {
                 True: {
