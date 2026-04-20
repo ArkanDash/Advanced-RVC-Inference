@@ -57,7 +57,7 @@ def download_url(url):
         gr_info(translations["success"])
         return [audio_output, audio_output, translations["success"]]
 
-def move_file(file, download_dir, model):
+def move_file(file, download_dir, model, use_orig_weight_name=False):
     weights_dir = configs["weights_path"]
     logs_dir = configs["logs_path"]
 
@@ -65,13 +65,27 @@ def move_file(file, download_dir, model):
     if not os.path.exists(logs_dir): os.makedirs(logs_dir, exist_ok=True)
 
     if file.endswith(".zip"): shutil.unpack_archive(file, download_dir)
-    move_files_from_directory(download_dir, weights_dir, logs_dir, model)
+    move_files_from_directory(download_dir, weights_dir, logs_dir, model, use_orig_weight_name)
 
 def download_model(url=None, model=None):
+    """Download an RVC voice model from a URL.
+
+    Supports HuggingFace, Google Drive, MediaFire, PixelDrain, and Mega links.
+    When no model name is provided, the original weight filename is preserved
+    (use_orig_weight_name=True behavior from Vietnamese-RVC).
+
+    Args:
+        url: Download URL for the model file.
+        model: Optional model name. If None, the original filename is used.
+
+    Returns:
+        Status message string.
+    """
     if not url: return gr_warning(translations["provide_url"])
 
     url = replace_url(url)
     download_dir = "download_model"
+    use_orig_weight_name = False
 
     os.makedirs(download_dir, exist_ok=True)
     
@@ -88,13 +102,20 @@ def download_model(url=None, model=None):
             return translations["not_support_url"]
         
         if not model: 
+            use_orig_weight_name = True
             modelname = os.path.basename(file)
-            model = extract_name_model(modelname) if modelname.endswith(".index") else os.path.splitext(modelname)[0]
+
+            model = (
+                extract_name_model(modelname) 
+                if modelname.endswith(".index") else 
+                os.path.splitext(modelname)[0]
+            )
+
             if model is None: model = os.path.splitext(modelname)[0]
 
         model = replace_modelname(model)
 
-        move_file(file, download_dir, model)
+        move_file(file, download_dir, model, use_orig_weight_name)
         gr_info(translations["success"])
 
         return translations["success"]

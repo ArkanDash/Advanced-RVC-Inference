@@ -42,7 +42,18 @@ def process_input(file_path):
     gr_info(translations["upload_success"].format(name=translations["text"]))
     return file_contents
 
-def move_files_from_directory(src_dir, dest_weights, dest_logs, model_name):
+def move_files_from_directory(src_dir, dest_weights, dest_logs, model_name, use_orig_weight_name=False):
+    """Move model files from a source directory to their proper destinations.
+
+    Args:
+        src_dir: Source directory containing downloaded/unpacked files.
+        dest_weights: Destination directory for model weights (.pth, .onnx).
+        dest_logs: Destination directory for index files and model logs.
+        model_name: Name to assign to the model.
+        use_orig_weight_name: If True, keep the original filename for weights
+            instead of renaming to model_name.pth/model_name.onnx.
+            Ported from Vietnamese-RVC.
+    """
     for root, _, files in os.walk(src_dir):
         for file in files:
             file_path = os.path.join(root, file)
@@ -56,11 +67,11 @@ def move_files_from_directory(src_dir, dest_weights, dest_logs, model_name):
             elif file.endswith(".pth") and not file.startswith("D_") and not file.startswith("G_"):
                 pth_path = process_output(os.path.join(dest_weights, model_name + ".pth"))
 
-                shutil.move(file_path, pth_path)
+                shutil.move(file_path, pth_path if not use_orig_weight_name else dest_weights)
             elif file.endswith(".onnx") and not file.startswith("D_") and not file.startswith("G_"):
                 pth_path = process_output(os.path.join(dest_weights, model_name + ".onnx"))
 
-                shutil.move(file_path, pth_path)
+                shutil.move(file_path, pth_path if not use_orig_weight_name else dest_weights)
 
 def extract_name_model(filename):
     match = re.search(r"_([A-Za-z0-9]+)(?=_v\d*)", replace_punctuation(filename))
