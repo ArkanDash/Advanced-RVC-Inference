@@ -11,6 +11,8 @@ sys.path.append(os.getcwd())
 from advanced_rvc_inference.utils import huggingface
 from advanced_rvc_inference.core.ui import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import python, translations, configs
+from advanced_rvc_inference.library.optimizers import get_optimizer_choices
+from advanced_rvc_inference.library.generators import get_vocoder_choices
 
 def if_done(done, p):
     while 1:
@@ -263,3 +265,156 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
         lines = log.splitlines()
         if len(lines) > 50: log = "\n".join(lines[-50:])
         yield log
+
+def one_click_train(
+    model_name, rvc_version, sample_rate, dataset_path,
+    pitch_guidance, f0_method, total_epoch, batch_size, save_every,
+    gpu, vocoder, optimizer, model_author=""
+):
+    """One-click training pipeline: preprocess → extract → train → create index.
+
+    This is a generator that yields progress log strings so the Gradio UI
+    can display real-time progress.
+
+    Args:
+        model_name: Name of the model to train.
+        rvc_version: RVC version ("v1" or "v2").
+        sample_rate: Sample rate string (e.g. "40k").
+        dataset_path: Path to the dataset folder.
+        pitch_guidance: Whether to use pitch guidance.
+        f0_method: F0 extraction method (e.g. "rmvpe").
+        total_epoch: Total training epochs.
+        batch_size: Training batch size.
+        save_every: Save checkpoint every N epochs.
+        gpu: GPU identifier string (e.g. "0" or "-").
+        vocoder: Vocoder name (e.g. "HiFi-GAN").
+        optimizer: Optimizer name (e.g. "AdamW").
+        model_author: Optional model author name.
+
+    Yields:
+        Progress log strings.
+    """
+    all_logs = ""
+
+    # ── Step 1: Preprocessing ──
+    gr_info(translations["start"].format(start="Preprocessing"))
+    step1_log = ""
+    for log in preprocess(
+        model_name=model_name,
+        sample_rate=sample_rate,
+        cpu_core=os.cpu_count() or 4,
+        cut_preprocess="Automatic",
+        process_effects=False,
+        dataset=dataset_path,
+        clean_dataset=False,
+        clean_strength=0.7,
+        chunk_len=3.0,
+        overlap_len=0.3,
+        normalization_mode="none",
+    ):
+        step1_log = log
+        all_logs += f"=== Step 1: Preprocessing ===\n{log}\n\n"
+        yield all_logs
+
+    if not step1_log:
+        gr_warning("Preprocessing did not produce any output.")
+        all_logs += "Preprocessing failed or produced no output.\n"
+        yield all_logs
+        return
+
+    # ── Step 2: Feature Extraction ──
+    gr_info(translations["start"].format(start="Feature Extraction"))
+    step2_log = ""
+    for log in extract(
+        model_name=model_name,
+        version=rvc_version,
+        method=f0_method,
+        pitch_guidance=pitch_guidance,
+        hop_length=128,
+        cpu_cores=os.cpu_count() or 4,
+        gpu=gpu,
+        sample_rate=sample_rate,
+        embedders="hubert_base",
+        custom_embedders="hubert_base",
+        onnx_f0_mode=False,
+        embedders_mode="fairseq",
+        f0_autotune=False,
+        f0_autotune_strength=1.0,
+        hybrid_method="hybrid[pm+crepe-tiny]",
+        rms_extract=False,
+        alpha=0.5,
+    ):
+        step2_log = log
+        all_logs += f"=== Step 2: Feature Extraction ===\n{log}\n\n"
+        yield all_logs
+
+    if not step2_log:
+        gr_warning("Feature extraction did not produce any output.")
+        all_logs += "Feature extraction failed or produced no output.\n"
+        yield all_logs
+        return
+
+    # ── Step 3: Training ──
+    gr_info(translations["start"].format(start="Training"))
+    step3_log = ""
+    for log in training(
+        model_name=model_name,
+        rvc_version=rvc_version,
+        save_every_epoch=save_every,
+        save_only_latest=True,
+        save_every_weights=True,
+        total_epoch=total_epoch,
+        sample_rate=sample_rate,
+        batch_size=batch_size,
+        gpu=gpu,
+        pitch_guidance=pitch_guidance,
+        not_pretrain=False,
+        custom_pretrained=False,
+        pretrain_g="",
+        pretrain_d="",
+        detector=False,
+        threshold=50,
+        clean_up=False,
+        cache=True,
+        model_author=model_author,
+        vocoder=vocoder,
+        checkpointing=False,
+        deterministic=False,
+        benchmark=False,
+        optimizer=optimizer,
+        energy_use=False,
+        custom_reference=False,
+        reference_name="",
+        multiscale_mel_loss=False,
+    ):
+        step3_log = log
+        all_logs += f"=== Step 3: Training ===\n{log}\n\n"
+        yield all_logs
+
+    if not step3_log:
+        gr_warning("Training did not produce any output.")
+        all_logs += "Training failed or produced no output.\n"
+        yield all_logs
+        return
+
+    # ── Step 4: Index Creation ──
+    gr_info(translations["start"].format(start="Index Creation"))
+    step4_log = ""
+    for log in create_index(
+        model_name=model_name,
+        rvc_version=rvc_version,
+        index_algorithm="Auto",
+    ):
+        step4_log = log
+        all_logs += f"=== Step 4: Index Creation ===\n{log}\n\n"
+        yield all_logs
+
+    if not step4_log:
+        gr_warning("Index creation did not produce any output.")
+        all_logs += "Index creation failed or produced no output.\n"
+        yield all_logs
+        return
+
+    gr_info("One-click training pipeline completed successfully!")
+    all_logs += "=== One-Click Training Complete ===\n"
+    yield all_logs
