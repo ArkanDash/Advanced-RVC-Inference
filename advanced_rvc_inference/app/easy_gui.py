@@ -116,7 +116,7 @@ def create_easy_app(theme=None):
                         )
                         input_audio_mic = gr.Audio(
                             label="OR Record audio.",
-                            source="microphone",
+                            sources="microphone",
                             type="filepath",
                             interactive=True,
                         )
