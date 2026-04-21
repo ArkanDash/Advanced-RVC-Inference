@@ -39,7 +39,11 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio
+gradio==4.36.0
+gradio_client==1.0.1
+huggingface-hub==0.24.6
+pydantic==2.8.2
+pydantic_core==2.20.1
 requests>=2.32.3
 aiohttp
 pysrt
