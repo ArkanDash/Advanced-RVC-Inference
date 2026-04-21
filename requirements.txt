@@ -21,7 +21,7 @@ faiss-cpu==1.7.3; python_version < "3.12"
 faiss-cpu>=1.7.3; python_version >= "3.12"
 
 # Machine learning, NLP and deep learning
-transformers>=4.49.0
+transformers==4.35.2
 scikit-learn
 einops>=0.8.0
 
