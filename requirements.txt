@@ -21,7 +21,7 @@ faiss-cpu==1.7.3; python_version < "3.12"
 faiss-cpu>=1.7.3; python_version >= "3.12"
 
 # Machine learning, NLP and deep learning
-transformers==4.35.2
+transformers>=4.49.0
 scikit-learn
 einops>=0.8.0
 
@@ -39,11 +39,7 @@ scipy>=1.15.0
 matplotlib>=3.7.2
 
 # Implementation and web framework
-gradio==4.36.0
-gradio_client==1.0.1
-huggingface-hub==0.24.6
-pydantic==2.8.2
-pydantic_core==2.20.1
+gradio>=5.23.3
 requests>=2.32.3
 aiohttp
 pysrt
