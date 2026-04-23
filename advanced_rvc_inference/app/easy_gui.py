@@ -14,6 +14,7 @@ import os
 import sys
 import time
 import logging
+from functools import partial
 from pathlib import Path
 from typing import Optional
 
@@ -116,7 +117,7 @@ def create_easy_app(theme=None):
                         )
                         input_audio_mic = gr.Audio(
                             label="OR Record audio.",
-                            sources="microphone",
+                            sources=["microphone"],
                             type="filepath",
                             interactive=True,
                         )
@@ -675,47 +676,63 @@ def create_easy_app(theme=None):
                 )
 
                 # ── Step-by-step event bindings ──
+                # Use partial() to bind constant args (Gradio 5 requires
+                # inputs to be Component instances, not plain values).
+                preprocess_fn = partial(
+                    preprocess,
+                    cut_preprocess="Automatic", process_effects=False,
+                    clean_dataset=False, clean_strength=0.7,
+                    chunk_len=3.0, overlap_len=0.3, normalization_mode="none",
+                )
                 preprocess_btn.click(
-                    fn=preprocess,
-                    inputs=[
-                        train_name, train_sr, cpu_cores,
-                        "Automatic", False, train_dataset,
-                        False, 0.7,
-                        3.0, 0.3, "none",
-                    ],
+                    fn=preprocess_fn,
+                    inputs=[train_name, train_sr, cpu_cores, train_dataset],
                     outputs=[preprocess_status],
                 )
 
+                extract_fn = partial(
+                    extract,
+                    hop_length=128, embedders="hubert_base",
+                    custom_embedders="hubert_base", onnx_f0_mode=False,
+                    embedders_mode="fairseq", f0_autotune=False,
+                    f0_autotune_strength=1.0, hybrid_method="hybrid[pm+crepe-tiny]",
+                    rms_extract=False, alpha=0.5,
+                )
                 extract_btn.click(
-                    fn=extract,
+                    fn=extract_fn,
                     inputs=[
                         train_name, train_version, train_f0,
-                        train_pitch, 128, cpu_cores, train_gpu,
-                        train_sr, "hubert_base", "hubert_base",
-                        False, "fairseq", False, 1.0,
-                        "hybrid[pm+crepe-tiny]", False, 0.5,
+                        train_pitch, cpu_cores, train_gpu, train_sr,
                     ],
                     outputs=[extract_status],
                 )
 
+                training_fn = partial(
+                    training,
+                    save_only_latest=True, save_every_weights=True,
+                    not_pretrain=False, custom_pretrained=False,
+                    pretrain_g="", pretrain_d="",
+                    detector=False, threshold=50, clean_up=False,
+                    cache=True, checkpointing=False,
+                    deterministic=False, benchmark=False,
+                    energy_use=False, custom_reference=False,
+                    reference_name="", multiscale_mel_loss=False,
+                )
                 train_btn.click(
-                    fn=training,
+                    fn=training_fn,
                     inputs=[
                         train_name, train_version, train_save_every,
-                        True, True, train_epochs, train_sr,
-                        train_batch, train_gpu, train_pitch,
-                        False, False, "", "",
-                        False, 50, False, True,
-                        train_author, train_vocoder,
-                        False, False, False, train_optimizer,
-                        False,
+                        train_epochs, train_sr, train_batch,
+                        train_gpu, train_pitch, train_author,
+                        train_vocoder, train_optimizer,
                     ],
                     outputs=[train_status],
                 )
 
+                index_fn = partial(create_index, index_algorithm="Auto")
                 index_btn.click(
-                    fn=create_index,
-                    inputs=[train_name, train_version, "Auto"],
+                    fn=index_fn,
+                    inputs=[train_name, train_version],
                     outputs=[train_status],
                 )
 
