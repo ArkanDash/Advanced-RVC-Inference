@@ -14,6 +14,9 @@ from scipy.io import wavfile
 from datetime import datetime
 from urllib.parse import urlparse
 from mega import Mega
+import matplotlib
+matplotlib.use('Agg') 
+
 
 now_dir = os.getcwd()
 tmp = os.path.join(now_dir, "TEMP")
