@@ -17,7 +17,7 @@ praat-parselmouth>=0.4.2
 httpx==0.23.0
 tensorboard
 tensorboardX
-torchcrepe
+torchcrepe==0.0.23
 onnxruntime
 asyncio
 demucs
@@ -26,3 +26,4 @@ yt_dlp
 rarfile
 mega.py
 gdown
+matplotlib-inline
