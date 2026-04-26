@@ -1,1 +1,0 @@
-"""Package initialization for assets.zluda module."""
