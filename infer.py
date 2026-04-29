@@ -624,9 +624,7 @@ with gr.Blocks() as app:
     gr.Markdown(
         "# <center> Advanced RVC Inference\n"
     )
-    gr.Markdown(
-        "[![Duplicate this Space](https://huggingface.co/datasets/huggingface/badges/raw/main/duplicate-this-space-sm-dark.svg)](https://huggingface.co/spaces/r3gm/Advanced-RVC-Inference?duplicate=true)\n\n"
-    )
+    
     with gr.Row():
         sid = gr.Dropdown(
             label="Weight",
