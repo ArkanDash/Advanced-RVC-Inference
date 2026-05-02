@@ -417,6 +417,19 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         _effective_grad_accum = 2
         logger.info(f"T4/Low-VRAM optimization: auto-enabling gradient accumulation (2 steps) to reduce VRAM usage")
 
+    # Build optimizer kwargs based on what the optimizer supports
+    def _build_optimizer_kwargs(lr_coeff):
+        kwargs = {"lr": config.train.learning_rate * lr_coeff}
+        if optimizer_meta.get("supports_betas"):
+            kwargs["betas"] = config.train.betas
+        if optimizer_meta.get("supports_eps"):
+            kwargs["eps"] = config.train.eps
+        if optimizer_meta.get("supports_weight_decay"):
+            kwargs["weight_decay"] = 0.0
+        if use_fused_optimizer:
+            kwargs["fused"] = True
+        return kwargs
+
     # 8-bit Adam for low VRAM (requires bitsandbytes)
     if use_8bit_adam and device.type == "cuda":
         try:
@@ -437,19 +450,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     
     if rank == 0 and use_fused_optimizer:
         logger.info(f"CUDA Optimizer Training: Using fused {optimizer_choice} for enhanced CUDA performance")
-
-    # Build optimizer kwargs based on what the optimizer supports
-    def _build_optimizer_kwargs(lr_coeff):
-        kwargs = {"lr": config.train.learning_rate * lr_coeff}
-        if optimizer_meta.get("supports_betas"):
-            kwargs["betas"] = config.train.betas
-        if optimizer_meta.get("supports_eps"):
-            kwargs["eps"] = config.train.eps
-        if optimizer_meta.get("supports_weight_decay"):
-            kwargs["weight_decay"] = 0.0
-        if use_fused_optimizer:
-            kwargs["fused"] = True
-        return kwargs
 
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
@@ -686,7 +686,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     cuda_stream = torch.cuda.Stream() if (device.type == "cuda" and not _is_zluda) else None
 
     # Optimization: scale loss by accumulation steps for correct gradient averaging
-    loss_scale_factor = 1.0 / _effective_grad_accum
+    loss_scale_factor = 1.0 / grad_accum_steps
     
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
@@ -820,7 +820,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             
             # Calculate energy loss (L1 loss)
             loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
-            loss_energy = loss_energy * config.train.get('c_energy', 1.0)
+            loss_energy = loss_energy * getattr(config.train, 'c_energy', 1.0)
 
         loss_fm = losses.feature_loss(fmap_r, fmap_g)
         loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
@@ -836,14 +836,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         if autocast_enabled:
             scaler.scale(loss_gen_all_scaled).backward()
             # Optimization: only step optimizer on last accumulation step
-            if (batch_idx + 1) % _effective_grad_accum == 0 or (batch_idx + 1) == total_steps:
+            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
                 scaler.unscale_(optim_g)
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
                 scaler.step(optim_g)
                 scaler.update()
         else:
             loss_gen_all_scaled.backward()
-            if (batch_idx + 1) % _effective_grad_accum == 0 or (batch_idx + 1) == total_steps:
+            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
                 optim_g.step()
 
@@ -996,7 +996,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     done = False
     
     if rank == 0:
-        if epoch % save_every_epoch == False:
+        if epoch % save_every_epoch == 0:
             checkpoint_suffix = f"{'latest' if save_only_latest else global_step}.pth"
 
             save_checkpoint(
