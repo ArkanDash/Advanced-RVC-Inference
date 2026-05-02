@@ -14,7 +14,8 @@ import os
 import sys
 import time
 import logging
-from functools import partial
+# functools.partial removed — replaced with explicit wrapper functions
+# to avoid positional/keyword argument conflicts with Gradio inputs
 from pathlib import Path
 from typing import Optional
 
@@ -676,30 +677,41 @@ def create_easy_app(theme=None):
                 )
 
                 # ── Step-by-step event bindings ──
-                # Use partial() to bind constant args (Gradio 5 requires
-                # inputs to be Component instances, not plain values).
-                preprocess_fn = partial(
-                    preprocess,
-                    cut_preprocess="Automatic", process_effects=False,
-                    clean_dataset=False, clean_strength=0.7,
-                    chunk_len=3.0, overlap_len=0.3, normalization_mode="none",
-                )
+                # Use wrapper functions instead of partial() to avoid
+                # positional/keyword argument conflicts (partial() causes
+                # "got multiple values for argument" TypeError when a
+                # keyword-bound param is also filled by a positional input).
+                def easy_preprocess(model_name, sample_rate, cpu_cores, dataset):
+                    return preprocess(
+                        model_name=model_name, sample_rate=sample_rate,
+                        cpu_core=cpu_cores, dataset=dataset,
+                        cut_preprocess="Automatic", process_effects=False,
+                        clean_dataset=False, clean_strength=0.7,
+                        chunk_len=3.0, overlap_len=0.3,
+                        normalization_mode="none",
+                    )
+
                 preprocess_btn.click(
-                    fn=preprocess_fn,
+                    fn=easy_preprocess,
                     inputs=[train_name, train_sr, cpu_cores, train_dataset],
                     outputs=[preprocess_status],
                 )
 
-                extract_fn = partial(
-                    extract,
-                    hop_length=128, embedders="hubert_base",
-                    custom_embedders="hubert_base", onnx_f0_mode=False,
-                    embedders_mode="fairseq", f0_autotune=False,
-                    f0_autotune_strength=1.0, hybrid_method="hybrid[pm+crepe-tiny]",
-                    rms_extract=False, alpha=0.5,
-                )
+                def easy_extract(model_name, version, method, pitch_guidance,
+                                 cpu_cores, gpu, sample_rate):
+                    return extract(
+                        model_name=model_name, version=version, method=method,
+                        pitch_guidance=pitch_guidance, hop_length=128,
+                        cpu_cores=cpu_cores, gpu=gpu, sample_rate=sample_rate,
+                        embedders="hubert_base", custom_embedders="hubert_base",
+                        onnx_f0_mode=False, embedders_mode="fairseq",
+                        f0_autotune=False, f0_autotune_strength=1.0,
+                        hybrid_method="hybrid[pm+crepe-tiny]",
+                        rms_extract=False, alpha=0.5,
+                    )
+
                 extract_btn.click(
-                    fn=extract_fn,
+                    fn=easy_extract,
                     inputs=[
                         train_name, train_version, train_f0,
                         train_pitch, cpu_cores, train_gpu, train_sr,
@@ -707,19 +719,30 @@ def create_easy_app(theme=None):
                     outputs=[extract_status],
                 )
 
-                training_fn = partial(
-                    training,
-                    save_only_latest=True, save_every_weights=True,
-                    not_pretrain=False, custom_pretrained=False,
-                    pretrain_g="", pretrain_d="",
-                    detector=False, threshold=50, clean_up=False,
-                    cache=True, checkpointing=False,
-                    deterministic=False, benchmark=False,
-                    energy_use=False, custom_reference=False,
-                    reference_name="", multiscale_mel_loss=False,
-                )
+                def easy_training(model_name, rvc_version, save_every_epoch,
+                                  total_epoch, sample_rate, batch_size,
+                                  gpu, pitch_guidance, model_author,
+                                  vocoder, optimizer):
+                    return training(
+                        model_name=model_name, rvc_version=rvc_version,
+                        save_every_epoch=save_every_epoch,
+                        save_only_latest=True, save_every_weights=True,
+                        total_epoch=total_epoch, sample_rate=sample_rate,
+                        batch_size=batch_size, gpu=gpu,
+                        pitch_guidance=pitch_guidance,
+                        not_pretrain=False, custom_pretrained=False,
+                        pretrain_g="", pretrain_d="",
+                        detector=False, threshold=50, clean_up=False,
+                        cache=True, model_author=model_author,
+                        vocoder=vocoder, checkpointing=False,
+                        deterministic=False, benchmark=False,
+                        optimizer=optimizer, energy_use=False,
+                        custom_reference=False, reference_name="",
+                        multiscale_mel_loss=False,
+                    )
+
                 train_btn.click(
-                    fn=training_fn,
+                    fn=easy_training,
                     inputs=[
                         train_name, train_version, train_save_every,
                         train_epochs, train_sr, train_batch,
@@ -729,9 +752,14 @@ def create_easy_app(theme=None):
                     outputs=[train_status],
                 )
 
-                index_fn = partial(create_index, index_algorithm="Auto")
+                def easy_index(model_name, rvc_version):
+                    return create_index(
+                        model_name=model_name, rvc_version=rvc_version,
+                        index_algorithm="Auto",
+                    )
+
                 index_btn.click(
-                    fn=index_fn,
+                    fn=easy_index,
                     inputs=[train_name, train_version],
                     outputs=[train_status],
                 )
