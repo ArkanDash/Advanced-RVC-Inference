@@ -247,21 +247,21 @@ def create_easy_app(theme=None):
 
                     index_path_arg = ""
                     if index_file and os.path.exists(index_file):
-                        index_path_arg = f' --index "{index_file}"'
+                        index_path_arg = f' --index_path "{index_file}"'
 
                     cmd = (
                         f'{python} {configs["convert_path"]}'
-                        f' -i "{input_audio}"'
-                        f' -m "{model_path}"'
-                        f' -p {int(pitch)}'
+                        f' --input_path "{input_audio}"'
+                        f' --pth_path "{model_path}"'
+                        f' --pitch {int(pitch)}'
                         f' --f0_method {f0_method_val}'
                         f' --index_rate {index_rate_val}'
                         f' --filter_radius {filter_radius_val}'
                         f' --rms_mix_rate {rms_mix_val}'
                         f' --protect {protect_val}'
                         f'{index_path_arg}'
-                        f' -f {export_format_val}'
-                        f' -o "{output_path}"'
+                        f' --export_format {export_format_val}'
+                        f' --output_path "{output_path}"'
                     )
 
                     _gr.Info("Starting voice conversion...")
@@ -394,7 +394,7 @@ def create_easy_app(theme=None):
 
                         index_path_arg = ""
                         if index_file and os.path.exists(index_file):
-                            index_path_arg = f' --index "{index_file}"'
+                            index_path_arg = f' --index_path "{index_file}"'
 
                         results = []
                         for i, audio_file in enumerate(audio_files, 1):
@@ -403,15 +403,15 @@ def create_easy_app(theme=None):
 
                             cmd = (
                                 f'{python} {configs["convert_path"]}'
-                                f' -i "{audio_file}"'
-                                f' -m "{model_path}"'
-                                f' -p {int(pitch)}'
+                                f' --input_path "{audio_file}"'
+                                f' --pth_path "{model_path}"'
+                                f' --pitch {int(pitch)}'
                                 f' --f0_method {f0_method_val}'
                                 f' --index_rate {index_rate_val}'
                                 f' --filter_radius {filter_radius_val}'
                                 f'{index_path_arg}'
-                                f' -f {export_format_val}'
-                                f' -o "{output_path}"'
+                                f' --export_format {export_format_val}'
+                                f' --output_path "{output_path}"'
                             )
 
                             result = subprocess.run(
