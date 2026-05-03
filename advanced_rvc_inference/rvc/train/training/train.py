@@ -831,6 +831,9 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         # Optimization: scale loss by accumulation steps for correct gradient averaging
         loss_gen_all_scaled = loss_gen_all * loss_scale_factor
 
+        # Initialize grad_norm_g so it's always defined (needed for gradient accumulation)
+        grad_norm_g = 0.0
+
         # Optimization: set_to_none=True is faster than zeroing gradients
         optim_g.zero_grad(set_to_none=True)
         if autocast_enabled:
