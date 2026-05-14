@@ -332,7 +332,7 @@ class VoiceConverter:
 
                 try:
                     sf.write(audio_output_path, audio_output, self.tgt_sr, format=export_format)
-                except (Exception) as e:
+                except Exception as e:
                     logger.warning(f"Direct audio write failed ({e}), trying with resampling to 48kHz")
                     sf.write(audio_output_path, librosa.resample(audio_output, orig_sr=self.tgt_sr, target_sr=48000, res_type="soxr_vhq"), 48000, format=export_format)
 
@@ -341,11 +341,11 @@ class VoiceConverter:
             import traceback
             logger.debug(traceback.format_exc())
             logger.error(translations["error_convert"].format(e=e))
-
     def get_vc(self, weight_root, sid):
         if sid == "" or sid == []:
             self.cleanup()
             clear_gpu_cache()
+            return
 
         if not self.loaded_model or self.loaded_model != weight_root:
             self.loaded_model = weight_root
@@ -354,13 +354,25 @@ class VoiceConverter:
 
     def cleanup(self):
         if self.hubert_model is not None:
-            del self.net_g, self.n_spk, self.vc, self.hubert_model, self.tgt_sr
-            self.hubert_model = self.net_g = self.n_spk = self.vc = self.tgt_sr = None
-            clear_gpu_cache()
+            del self.hubert_model
+            self.hubert_model = None
 
-        del self.net_g, self.cpt
+        if self.net_g is not None:
+            del self.net_g
+            self.net_g = None
+
+        if self.vc is not None:
+            del self.vc
+            self.vc = None
+
+        self.n_spk = None
+        self.tgt_sr = None
+
+        if self.cpt is not None:
+            del self.cpt
+            self.cpt = None
+
         clear_gpu_cache()
-        self.cpt = None
 
     def setup(self):
         if self.cpt is not None:

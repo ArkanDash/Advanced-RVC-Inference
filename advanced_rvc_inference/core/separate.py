@@ -42,35 +42,42 @@ def separate_music(
     
     gr_info(translations["start"].format(start=translations["separator_music"]))
 
-    result = subprocess.run([
-        python, configs["separate_path"], 
-        "--input_path", input_path,
-        "--output_dirs", output_dirs,
-        "--export_format", export_format,
-        "--model_name", model_name,
-        "--karaoke_model", karaoke_model,
-        "--reverb_model", reverb_model,
-        "--denoise_model", denoise_model,
-        "--sample_rate", str(sample_rate),
-        "--shifts", str(shifts),
-        "--batch_size", str(batch_size),
-        "--overlap", str(overlap),
-        "--aggression", str(aggression),
-        "--hop_length", str(hop_length),
-        "--window_size", str(window_size),
-        "--segments_size", str(segments_size),
-        "--post_process_threshold", str(post_process_threshold),
-        "--enable_tta", str(enable_tta),
-        "--enable_denoise", str(enable_denoise),
-        "--high_end_process", str(high_end_process),
-        "--enable_post_process", str(enable_post_process),
-        "--separate_backing", str(separate_backing),
-        "--separate_reverb", str(separate_reverb),
-    ], timeout=3600)  # 1 hour timeout
-    
-    if result.returncode != 0:
-        gr_error(translations["error_occurred"].format(e=f"Separation process exited with code {result.returncode}"))
-        return [None]*4
+    try:
+        result = subprocess.run([
+            python, configs["separate_path"],
+            "--input_path", input_path,
+            "--output_dirs", output_dirs,
+            "--export_format", export_format,
+            "--model_name", model_name,
+            "--karaoke_model", karaoke_model,
+            "--reverb_model", reverb_model,
+            "--denoise_model", denoise_model,
+            "--sample_rate", str(sample_rate),
+            "--shifts", str(shifts),
+            "--batch_size", str(batch_size),
+            "--overlap", str(overlap),
+            "--aggression", str(aggression),
+            "--hop_length", str(hop_length),
+            "--window_size", str(window_size),
+            "--segments_size", str(segments_size),
+            "--post_process_threshold", str(post_process_threshold),
+            "--enable_tta", str(enable_tta),
+            "--enable_denoise", str(enable_denoise),
+            "--high_end_process", str(high_end_process),
+            "--enable_post_process", str(enable_post_process),
+            "--separate_backing", str(separate_backing),
+            "--separate_reverb", str(separate_reverb),
+        ], timeout=3600)  # 1 hour timeout
+
+        if result.returncode != 0:
+            gr_error(translations["error_occurred"].format(e=f"Separation process exited with code {result.returncode}"))
+            return [None] * 4
+    except subprocess.TimeoutExpired:
+        gr_error(translations.get("timeout_error", "Separation process timed out after 1 hour"))
+        return [None] * 4
+    except FileNotFoundError:
+        gr_error(translations.get("separate_not_found", "Separation script not found"))
+        return [None] * 4
 
     gr_info(translations["success"])
     

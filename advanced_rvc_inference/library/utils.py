@@ -63,11 +63,7 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
         suffix = ".onnx" if f0_onnx else (".pt" if "crepe" not in f0_method else ".pth")
 
         if "rmvpe" in f0_method:
-            modelname = (
-                "hpa-rmvpe" 
-                if "previous" in f0_method else 
-                "hpa-rmvpe"
-            ) if "hpa" in f0_method else "rmvpe"
+            modelname = "hpa-rmvpe" if "hpa" in f0_method else "rmvpe"
         elif "fcpe" in f0_method:
             modelname = ("fcpe" + ("_legacy" if "legacy" in f0_method and "previous" not in f0_method else "")) if "previous" in f0_method else "ddsp_200k"
         elif "crepe" in f0_method:
@@ -133,7 +129,7 @@ def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=
 
         try:
             audio, sr = sf.read(file, dtype=np.float32)
-        except:
+        except Exception:
             audio, sr = librosa.load(file, sr=None)
 
         if len(audio.shape) > 1: audio = librosa.to_mono(audio.T)
@@ -155,7 +151,7 @@ def pydub_load(input_path, volume = None):
         elif input_path.endswith(".mp3"): audio = AudioSegment.from_mp3(input_path)
         elif input_path.endswith(".ogg"): audio = AudioSegment.from_ogg(input_path)
         else: audio = AudioSegment.from_file(input_path)
-    except:
+    except Exception:
         audio = AudioSegment.from_file(input_path)
         
     return audio if volume is None else (audio + volume)
@@ -300,8 +296,12 @@ def load_faiss_index(index_path):
 def load_model(model_path, weights_only=True, log_severity_level=3):
     if not os.path.isfile(model_path): return None
 
-    if model_path.endswith(".pth"): 
-        return torch.load(model_path, map_location="cpu", weights_only=weights_only)
-    else: 
+    if model_path.endswith(".pth"):
+        try:
+            return torch.load(model_path, map_location="cpu", weights_only=weights_only)
+        except TypeError:
+            # Older PyTorch versions don't support weights_only
+            return torch.load(model_path, map_location="cpu")
+    else:
         from advanced_rvc_inference.library.onnx.wrapper import ONNXRVC
         return ONNXRVC(model_path, config.providers, log_severity_level=log_severity_level)

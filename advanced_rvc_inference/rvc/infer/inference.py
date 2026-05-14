@@ -63,7 +63,7 @@ def convert(
     alpha=0.5,
     sid=0
 ):    
-    subprocess.run([
+    result = subprocess.run([
         python, 
         configs["convert_path"], 
         "--pitch", str(pitch), 
@@ -98,6 +98,9 @@ def convert(
         "--alpha", str(alpha),
         "--sid", str(sid)
     ])
+
+    if result.returncode != 0:
+        logger.error(f"Conversion subprocess failed with return code {result.returncode}")
 
 def convert_audio(
     clean_audio, 
@@ -194,7 +197,7 @@ def convert_audio(
         output_merge_backup = os.path.join(output_audio, f"Vocals+Backing.{format}")
         output_merge_instrument = os.path.join(output_audio, f"Vocals+Instruments.{format}")
 
-        if os.path.exists(output_audio): os.makedirs(output_audio, exist_ok=True)
+        os.makedirs(output_audio, exist_ok=True)
         output_path = process_output(output_path)
 
         if use_original:
@@ -837,7 +840,7 @@ def convert_with_whisper(
     try:
         try:
             mp.set_start_method("spawn")
-        except:
+        except RuntimeError:
             pass
 
         whisper_queue = mp.Queue()

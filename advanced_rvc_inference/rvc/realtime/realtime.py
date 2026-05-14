@@ -49,12 +49,12 @@ class RVC_Realtime:
         check_assets(self.f0_method, self.embedder_model, f0_onnx=self.f0_onnx, embedders_mode=self.embedders_mode)
 
         if self.vad_enabled:
-            from main.inference.realtime.vad_utils import VADProcessor
+            from advanced_rvc_inference.rvc.realtime.vad_utils import VADProcessor
             self.vad = VADProcessor(sensitivity_mode=self.vad_sensitivity, sample_rate=self.sample_rate, frame_duration_ms=self.vad_frame_ms)
         else: self.vad = None
 
         if self.clean_audio:
-            from main.tools.noisereduce import TorchGate
+            from advanced_rvc_inference.utils.noisereduce import TorchGate
             self.tg = TorchGate(self.sample_rate, prop_decrease=self.clean_strength).to(config.device)
         else: self.tg = None
 

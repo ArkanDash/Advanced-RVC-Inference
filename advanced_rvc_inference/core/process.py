@@ -123,6 +123,9 @@ def zip_file(name, pth, index):
     if not pth or not os.path.exists(pth_path) or not pth.endswith((".pth", ".onnx")): return gr_warning(translations["provide_file"].format(filename=translations["model"]))
 
     zip_file_path = os.path.join(configs["logs_path"], name, name + ".zip")
+    zip_dir = os.path.dirname(zip_file_path)
+    if not os.path.exists(zip_dir): os.makedirs(zip_dir, exist_ok=True)
+
     gr_info(translations["start"].format(start=translations["zip"]))
 
     with zipfile.ZipFile(zip_file_path, 'w') as zipf:
@@ -135,7 +138,7 @@ def zip_file(name, pth, index):
 def fetch_pretrained_data():
     try:
         url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/wfba/phfgbz_cergenvarq.wfba", "rot13").replace("/tree/", "/resolve/")
-        response = requests.get(url)
+        response = requests.get(url, timeout=15)
         response.raise_for_status()
 
         return response.json()
@@ -145,4 +148,6 @@ def fetch_pretrained_data():
 
 def update_sample_rate_dropdown(model):
     data = fetch_pretrained_data()
+    if not data or model not in data:
+        return {"choices": [], "value": None, "__type__": "update"}
     if model != translations["success"]: return {"choices": list(data[model].keys()), "value": list(data[model].keys())[0], "__type__": "update"}

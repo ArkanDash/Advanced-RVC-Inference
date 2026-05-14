@@ -35,8 +35,8 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
         return opt
     
     try:
-        ckpt1 = torch.load(pth_1, map_location="cpu", weights_only=True)
-        ckpt2 = torch.load(pth_2, map_location="cpu", weights_only=True)
+        ckpt1 = torch.load(pth_1, map_location="cpu", weights_only=False)
+        ckpt2 = torch.load(pth_2, map_location="cpu", weights_only=False)
 
         if ckpt1["sr"] != ckpt2["sr"]: 
             gr_warning(translations["sr_not_same"])
@@ -124,7 +124,7 @@ def model_info(path):
             logger.debug(e)
             return translations["format_not_valid"]
     
-    if path.endswith(".pth"): model_data = torch.load(path, map_location="cpu")
+    if path.endswith(".pth"): model_data = torch.load(path, map_location="cpu", weights_only=False)
     else:        
         import onnx
 
@@ -139,13 +139,15 @@ def model_info(path):
     gr_info(translations["read_info"])
 
     epochs = model_data.get("epoch", None)
-    if epochs is None: 
+    if epochs is None:
         epochs = model_data.get("info", None)
-        try:
-            epoch = epochs.replace("epoch", "").replace("e", "").isdigit()
-            if epoch and epochs is None: epochs = translations["not_found"].format(name=translations["epoch"])
-        except: 
-            pass
+        if epochs is not None:
+            try:
+                epoch = epochs.replace("epoch", "").replace("e", "").isdigit()
+                if not epoch:
+                    epochs = translations["not_found"].format(name=translations["epoch"])
+            except (AttributeError, ValueError):
+                epochs = translations["not_found"].format(name=translations["epoch"])
 
     steps = model_data.get("step", translations["not_found"].format(name=translations["step"]))
     sr = model_data.get("sr", translations["not_found"].format(name=translations["sr"]))

@@ -704,8 +704,13 @@ def update_audio_device(input_device: str, output_device: str,
 def change_audio_device_choices() -> List[Dict[str, Any]]:
     """Refresh audio device list and return updates for dropdowns"""
     try:
-        sd._terminate()
-        sd._initialize()
+        _sd = _ensure_sounddevice()
+        if _sd is not None:
+            _sd._terminate()
+            _sd._initialize()
+        else:
+            logger.warning("sounddevice not available, cannot refresh audio devices")
+            return [{"choices": [], "value": "", "__type__": "update"}] * 3
         
         input_devices, output_devices = audio_device()
         input_choices = list(input_devices.keys())
@@ -732,24 +737,17 @@ def change_audio_device_choices() -> List[Dict[str, Any]]:
 def replace_punctuation(filename: str) -> str:
     """Sanitize filename by removing/replacing problematic characters"""
     try:
-        return (filename.replace(" ", "_")
-                       .replace("-", "")
-                       .replace("(", "")
-                       .replace(")", "")
-                       .replace("[", "")
-                       .replace("]", "")
-                       .replace(",", "")
-                       .replace('"', "")
-                       .replace("'", "")
-                       .replace("|", "_")
-                       .replace("{", "")
-                       .replace("}", "")
-                       .replace("-_-", "_")
-                       .replace("_-_", "_")
-                       .replace("-", "_")
-                       .replace("---", "_")
-                       .replace("___", "_")
-                       .strip())
+        result = filename
+        # First handle compound replacements
+        result = result.replace("-_-", "_").replace("_-_", "_")
+        # Then remove specific characters
+        for ch in ["(", ")", "[", "]", ",", '"', "'", "{", "}"]:
+            result = result.replace(ch, "")
+        # Replace space and pipe with underscore
+        result = result.replace(" ", "_").replace("|", "_")
+        # Collapse multiple underscores/dashes into single underscore
+        result = re.sub(r'[-_]+', '_', result)
+        return result.strip('_').strip()
     except Exception as e:
         logger.error(f"Error replacing punctuation in {filename}: {str(e)}")
         return filename
