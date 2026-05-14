@@ -10,7 +10,6 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch.nn.utils.parametrizations import weight_norm
 
-sys.path.append(os.getcwd())
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 
 from advanced_rvc_inference.models.predictors.FCPE.wav2mel import Wav2Mel

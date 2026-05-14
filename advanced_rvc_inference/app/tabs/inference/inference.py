@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.app.tabs.inference.child.convert import convert_tab

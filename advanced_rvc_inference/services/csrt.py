@@ -1,11 +1,11 @@
 import os
 import sys
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.engine.inference.inference import whisper_process
 from advanced_rvc_inference.models.utils import check_spk_diarization
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning, process_output
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
+from advanced_rvc_inference.utils.feedback import process_output
 from advanced_rvc_inference.utils.variables import config, translations, configs, logger
 
 def create_srt(model_size, input_audio, output_file, word_timestamps):

@@ -2,7 +2,6 @@ import os
 import sys
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.process import zip_file, fetch_pretrained_data
 from advanced_rvc_inference.services.training import preprocess, extract, create_index, training

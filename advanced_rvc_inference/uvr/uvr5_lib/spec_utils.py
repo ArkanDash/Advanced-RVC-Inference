@@ -12,7 +12,6 @@ import soundfile as sf
 
 from scipy.signal import correlate, hilbert
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, logger
 

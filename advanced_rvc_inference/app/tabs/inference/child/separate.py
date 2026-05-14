@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.downloads import download_url
 from advanced_rvc_inference.services.separate import separate_music

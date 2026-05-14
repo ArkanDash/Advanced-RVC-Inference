@@ -4,7 +4,6 @@ import torch
 
 from torch.nn.functional import conv1d, conv2d
 
-sys.path.append(os.getcwd())
 
 @torch.no_grad()
 def temperature_sigmoid(x, x0, temp_coeff):

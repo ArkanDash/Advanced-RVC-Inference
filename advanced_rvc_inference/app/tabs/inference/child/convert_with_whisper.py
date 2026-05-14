@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.engine.inference.inference import convert_with_whisper
 from advanced_rvc_inference.ui.feedback import visible, change_audios_choices, unlock_f0, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, shutil_move

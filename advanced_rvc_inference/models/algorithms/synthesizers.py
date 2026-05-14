@@ -2,7 +2,6 @@ import os
 import sys
 import torch
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.algorithms.residuals import ResidualCouplingBlock
 from advanced_rvc_inference.models.algorithms.encoders import TextEncoder, PosteriorEncoder

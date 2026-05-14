@@ -32,11 +32,14 @@ _config_instance = None
 
 
 def get_config():
-    """Get the singleton Config instance."""
+    """Get the singleton Config instance.
+
+    Uses the local Config class which has lazy backend imports,
+    making it safe for headless/CLI/Colab-no-UI mode where
+    onnxruntime or GPU backends may not be installed.
+    """
     global _config_instance
     if _config_instance is None:
-        from advanced_rvc_inference.configs.config import Config
-
         _config_instance = Config()
     return _config_instance
 

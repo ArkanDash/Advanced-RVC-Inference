@@ -6,7 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.algorithms.commons import convert_pad_shape
 

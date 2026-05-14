@@ -24,7 +24,6 @@ from torch.utils.tensorboard import SummaryWriter
 from time import time as ttime
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-sys.path.append(os.getcwd())
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
 from advanced_rvc_inference.models.utils import clear_gpu_cache

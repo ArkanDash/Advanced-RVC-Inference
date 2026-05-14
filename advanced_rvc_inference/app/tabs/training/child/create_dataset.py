@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.training import create_dataset
 from advanced_rvc_inference.ui.feedback import visible, valueFalse_interactive, create_dataset_change

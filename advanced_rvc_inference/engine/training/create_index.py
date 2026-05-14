@@ -8,7 +8,6 @@ import numpy as np
 from multiprocessing import cpu_count
 from sklearn.cluster import MiniBatchKMeans
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations, configs
 

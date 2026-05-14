@@ -4,7 +4,6 @@ import torch
 
 import torch.nn.utils.parametrize as parametrize
 
-sys.path.append(os.getcwd())
 
 from .commons import fused_add_tanh_sigmoid_multiply
 

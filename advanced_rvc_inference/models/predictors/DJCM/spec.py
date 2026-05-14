@@ -5,7 +5,6 @@ import torch
 import numpy as np
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 class Spectrogram(nn.Module):
     def __init__(self, hop_length, win_length, n_fft=None, clamp=1e-10):

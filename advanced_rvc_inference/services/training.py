@@ -6,10 +6,9 @@ import codecs
 import threading
 import subprocess
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils import huggingface
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import python, translations, configs
 from advanced_rvc_inference.models.optimizers import get_optimizer_choices
 from advanced_rvc_inference.models.generators import get_vocoder_choices

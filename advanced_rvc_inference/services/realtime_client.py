@@ -4,9 +4,13 @@ import json
 
 import numpy as np
 
-from fastapi import FastAPI, WebSocketDisconnect, WebSocket
+try:
+    from fastapi import FastAPI, WebSocketDisconnect, WebSocket
+except ImportError:
+    FastAPI = None
+    WebSocketDisconnect = None
+    WebSocket = None
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.utils import clear_gpu_cache
 from advanced_rvc_inference.utils.variables import configs, translations, logger

@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.realtime import realtime_start, realtime_stop
 from advanced_rvc_inference.utils.variables import translations, configs, model_name, index_path, method_f0, embedders_mode, embedders_model

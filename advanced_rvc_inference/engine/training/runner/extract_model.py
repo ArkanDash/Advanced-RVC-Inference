@@ -6,7 +6,6 @@ import datetime
 
 from collections import OrderedDict
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations, config
 from advanced_rvc_inference.engine.training.runner.utils import replace_keys_in_dict

@@ -5,7 +5,6 @@ import torch
 
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.RMVPE.yolo import YOLO13Encoder, YOLO13FullPADDecoder, HyperACE
 

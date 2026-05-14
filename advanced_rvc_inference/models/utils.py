@@ -11,7 +11,6 @@ import numpy as np
 
 from pydub import AudioSegment
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils import huggingface
 from advanced_rvc_inference.models.backends import directml, opencl

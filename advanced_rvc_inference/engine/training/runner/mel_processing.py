@@ -3,7 +3,6 @@ import sys
 import torch
 import librosa
 
-sys.path.append(os.getcwd())
 
 def dynamic_range_compression_torch(x, C=1, clip_val=1e-5):
     return (x.clamp(min=clip_val) * C).log()

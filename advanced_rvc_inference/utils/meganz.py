@@ -14,7 +14,6 @@ import tempfile
 from Crypto.Cipher import AES
 from Crypto.Util import Counter
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
 

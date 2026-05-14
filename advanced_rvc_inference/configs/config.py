@@ -1,20 +1,21 @@
 import os
 import sys
 import json
-import torch
-import onnxruntime
+import logging
 
-from advanced_rvc_inference.models.backends import directml, opencl, zluda
+logger = logging.getLogger(__name__)
+
 
 def get_package_dir():
     """Get the package directory (where the installed package files are located)."""
-    # Get the directory where this config.py file is located
     return os.path.dirname(os.path.abspath(__file__))
+
 
 def get_package_config_path(filename):
     """Get the path to a config file within the installed package."""
     package_dir = get_package_dir()
     return os.path.join(package_dir, filename)
+
 
 def resolve_path(relative_path, fallback_path=None):
     """
@@ -22,31 +23,40 @@ def resolve_path(relative_path, fallback_path=None):
     First tries the package directory, then falls back to cwd if provided.
     """
     package_dir = get_package_dir()
-    package_path = os.path.join(package_dir, "..", "..", relative_path)
-    package_path = os.path.normpath(package_path)
-    
+    package_path = os.path.normpath(os.path.join(package_dir, "..", "..", relative_path))
+
     if os.path.exists(package_path):
         return package_path
-    
+
     if fallback_path and os.path.exists(fallback_path):
         return fallback_path
-    
+
     return package_path
+
 
 version_config_paths = [os.path.join(version, size) for version in ["v1", "v2"] for size in ["32000.json", "40000.json", "48000.json"]]
 
-def singleton(cls):
-    instances = {}
 
-    def get_instance(*args, **kwargs):
-        if cls not in instances: instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return get_instance
-
-@singleton
 class Config:
+    """Configuration manager for Advanced RVC Inference.
+
+    Uses lazy imports for heavy dependencies (onnxruntime, GPU backends)
+    so headless/CLI mode works without them installed.
+    """
+
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        """Singleton pattern that preserves constructor arguments."""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+
     def __init__(self):
+        # Avoid re-initializing the singleton
+        if hasattr(self, "_initialized") and self._initialized:
+            return
+
         self.configs_path = get_package_config_path("config.json")
         try:
             with open(self.configs_path, "r", encoding="utf-8") as f:
@@ -60,7 +70,7 @@ class Config:
         self.brain = self.configs.get("brain", False)
         self.debug_mode = self.configs.get("debug_mode", False)
 
-        # Resolve all paths from config.json to use package directory (before other methods that need paths)
+        # Resolve all paths from config.json to use package directory
         self.resolve_config_paths()
 
         self.json_config = self.load_config_json()
@@ -68,29 +78,52 @@ class Config:
 
         self.gpu_mem = None
         self.per_preprocess = 3.7
-        self.is_zluda = zluda.is_available()
+
+        # Lazy backend detection
+        self._is_zluda = None
         self.device = self.get_default_device()
         self.gpu_name = self._get_gpu_name()
         self.providers = self.get_providers()
         self.is_half = self.is_fp16()
         self.x_pad, self.x_query, self.x_center, self.x_max = self.device_config()
-    
+
+        self._initialized = True
+
+    @property
+    def is_zluda(self):
+        """Lazy ZLUDA detection."""
+        if self._is_zluda is None:
+            try:
+                from advanced_rvc_inference.models.backends import zluda
+                self._is_zluda = zluda.is_available()
+            except Exception:
+                self._is_zluda = False
+        return self._is_zluda
+
     def multi_language(self):
         try:
             lang = self.configs.get("language", "vi-VN")
-            if len([l for l in os.listdir(self.configs["language_path"]) if l.endswith(".json")]) < 1: raise FileNotFoundError("Không tìm thấy bất cứ gói ngôn ngữ nào(No package languages found)")
+            lang_dir = self.configs.get("language_path", "")
+            if lang_dir and os.path.isdir(lang_dir):
+                lang_files = [l for l in os.listdir(lang_dir) if l.endswith(".json")]
+                if len(lang_files) < 1:
+                    raise FileNotFoundError("No language packages found")
 
-            if not lang: lang = "vi-VN"
-            if lang not in self.configs["support_language"]: raise ValueError("Language not supported.")
+            if not lang:
+                lang = "vi-VN"
+            if lang not in self.configs.get("support_language", [lang]):
+                import warnings
+                warnings.warn(f"Language '{lang}' not in supported list, using it anyway.")
 
-            lang_path = os.path.join(self.configs["language_path"], f"{lang}.json")
-            if not os.path.exists(lang_path): lang_path = os.path.join(self.configs["language_path"], "vi-VN.json")
+            lang_path = os.path.join(self.configs.get("language_path", ""), f"{lang}.json")
+            if not os.path.exists(lang_path):
+                lang_path = os.path.join(self.configs.get("language_path", ""), "vi-VN.json")
 
             with open(lang_path, encoding="utf-8") as f:
                 translations = json.load(f)
         except json.JSONDecodeError:
             import warnings
-            warnings.warn(f"Could not load language file: {lang}")
+            warnings.warn(f"Could not parse language file: {lang}")
             translations = {}
         except Exception as e:
             import warnings
@@ -98,7 +131,7 @@ class Config:
             translations = {}
 
         return translations
-    
+
     def resolve_config_paths(self):
         """Resolve all relative paths in config.json to absolute paths."""
         package_dir = get_package_dir()
@@ -111,14 +144,13 @@ class Config:
             "speaker_diarization_path", "uvr5_path", "audios_path", "uvr_path",
             "reference_path"
         ]
-        
+
         for key in path_keys:
             if key in self.configs:
                 relative_path = self.configs[key]
-                # Resolve relative to package directory
                 resolved = os.path.normpath(os.path.join(package_dir, "..", "..", relative_path))
                 self.configs[key] = resolved
-    
+
     def is_fp16(self):
         fp16 = self.configs.get("fp16", False)
 
@@ -130,13 +162,15 @@ class Config:
                     json.dump(self.configs, f, indent=4)
             except OSError:
                 pass
-        
-        if not fp16: self.per_preprocess = 3.0
+
+        if not fp16:
+            self.per_preprocess = 3.0
         return fp16
 
     def _get_gpu_name(self) -> str:
         """Get the GPU device name for diagnostics."""
         try:
+            import torch
             if torch.cuda.is_available() and self.device.startswith("cuda"):
                 return torch.cuda.get_device_name(0)
         except Exception:
@@ -149,9 +183,10 @@ class Config:
 
     def is_colab_t4(self) -> bool:
         """Detect Google Colab T4 environment."""
-        if not torch.cuda.is_available():
-            return False
         try:
+            import torch
+            if not torch.cuda.is_available():
+                return False
             name = torch.cuda.get_device_name(0).lower()
             return "t4" in name or "tesla t4" in name
         except Exception:
@@ -163,13 +198,10 @@ class Config:
 
         for config_file in version_config_paths:
             try:
-                # package_dir is already .../advanced_rvc_inference/configs/
-                # config_file is like "v1/32000.json", so join directly
                 config_path = os.path.join(package_dir, config_file)
-                # Fallback to cwd path if running from source
                 if not os.path.exists(config_path):
                     config_path = os.path.join(os.getcwd(), "advanced_rvc_inference", "configs", config_file)
-                
+
                 with open(config_path, "r") as f:
                     configs[config_file] = json.load(f)
             except json.JSONDecodeError:
@@ -181,33 +213,59 @@ class Config:
         return configs
 
     def device_config(self):
-        if self.gpu_mem is not None and self.gpu_mem <= 4: 
+        if self.gpu_mem is not None and self.gpu_mem <= 4:
             self.per_preprocess = 3.0
             return 1, 5, 30, 32
-        
+
         return (3, 10, 60, 65) if self.is_half else (1, 6, 38, 41)
-    
+
     def get_default_device(self):
+        """Determine the best available device with lazy backend imports."""
+        try:
+            import torch
+        except ImportError:
+            return "cpu"
+
         if not self.cpu_mode:
             if torch.cuda.is_available():
                 device = "cuda:0"
-                self.gpu_mem = torch.cuda.get_device_properties(int(device.split(":")[-1])).total_memory // (1024**3)
-            elif directml.is_available(): 
-                device = "privateuseone:0"
-            elif opencl.is_available(): 
-                device = "ocl:0"
-            elif torch.backends.mps.is_available(): 
-                device = "mps"
-            else: 
-                device = "cpu"
-        else:
-            # Fallback to CPU
-            device = "cpu"
+                try:
+                    self.gpu_mem = torch.cuda.get_device_properties(
+                        int(device.split(":")[-1])
+                    ).total_memory // (1024**3)
+                except Exception:
+                    self.gpu_mem = None
+                return device
 
-        return device 
+            # Check alternative backends lazily
+            try:
+                from advanced_rvc_inference.models.backends import directml
+                if directml.is_available():
+                    return "privateuseone:0"
+            except Exception:
+                pass
+
+            try:
+                from advanced_rvc_inference.models.backends import opencl
+                if opencl.is_available():
+                    return "ocl:0"
+            except Exception:
+                pass
+
+            if torch.backends.mps.is_available():
+                return "mps"
+
+        return "cpu"
 
     def get_providers(self):
-        ort_providers = onnxruntime.get_available_providers()
+        """Get ONNX runtime providers with lazy import."""
+        try:
+            import onnxruntime
+            ort_providers = onnxruntime.get_available_providers()
+        except ImportError:
+            return ["CPUExecutionProvider"]
+        except Exception:
+            return ["CPUExecutionProvider"]
 
         # ZLUDA: CUDA EP may not work with AMD hardware, prefer CPU/ROCm
         if self.is_zluda:
@@ -215,15 +273,15 @@ class Config:
                 providers = ["ROCMExecutionProvider"]
             else:
                 providers = ["CPUExecutionProvider"]
-        elif "CUDAExecutionProvider" in ort_providers and self.device.startswith("cuda"): 
+        elif "CUDAExecutionProvider" in ort_providers and self.device.startswith("cuda"):
             providers = ["CUDAExecutionProvider"]
         elif "ROCMExecutionProvider" in ort_providers and self.device.startswith("cuda"):
             providers = ["ROCMExecutionProvider"]
-        elif "DmlExecutionProvider" in ort_providers and self.device.startswith(("ocl", "privateuseone")): 
+        elif "DmlExecutionProvider" in ort_providers and self.device.startswith(("ocl", "privateuseone")):
             providers = ["DmlExecutionProvider"]
-        elif "CoreMLExecutionProvider" in ort_providers and self.device.startswith("mps"): 
+        elif "CoreMLExecutionProvider" in ort_providers and self.device.startswith("mps"):
             providers = ["CoreMLExecutionProvider"]
-        else: 
+        else:
             providers = ["CPUExecutionProvider"]
 
         return providers

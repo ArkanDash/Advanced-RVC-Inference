@@ -7,7 +7,6 @@ import torch
 import onnxslim
 import warnings
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger
 from advanced_rvc_inference.models.algorithms.synthesizers import SynthesizerONNX

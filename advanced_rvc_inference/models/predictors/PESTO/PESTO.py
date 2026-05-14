@@ -2,7 +2,6 @@ import os
 import sys
 import torch
 
-sys.path.append(os.getcwd())
 
 class PESTO:
     def __init__(self, model_path, step_size=10, reduction="alwa", num_chunks=1, sample_rate=16000, device=None, providers=None, onnx=False):

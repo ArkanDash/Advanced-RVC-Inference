@@ -4,7 +4,6 @@ import torch
 
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.RMVPE.deepunet import DeepUnet
 
