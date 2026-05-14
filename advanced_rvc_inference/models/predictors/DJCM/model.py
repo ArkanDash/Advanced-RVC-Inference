@@ -3,7 +3,6 @@ import sys
 
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.DJCM.decoder import PE_Decoder
 from advanced_rvc_inference.models.predictors.DJCM.utils import init_bn, WINDOW_LENGTH

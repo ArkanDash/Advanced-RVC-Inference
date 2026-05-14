@@ -3,7 +3,6 @@ import sys
 import math
 import torch
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.algorithms.modules import WaveNet
 from advanced_rvc_inference.models.algorithms.commons import sequence_mask

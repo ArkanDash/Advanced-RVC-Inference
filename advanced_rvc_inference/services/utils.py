@@ -6,9 +6,8 @@ import signal
 import requests
 from typing import Optional, List
 
-sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import translations, configs
 
 def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = False) -> None:

@@ -9,7 +9,6 @@ try:
 except:
     pytorch_ocl = None
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.backends.utils import GRU
 

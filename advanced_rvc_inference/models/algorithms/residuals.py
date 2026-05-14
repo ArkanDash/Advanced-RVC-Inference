@@ -7,7 +7,6 @@ import torch.nn.utils.parametrize as parametrize
 from torch.nn.utils import remove_weight_norm
 from torch.nn.utils.parametrizations import weight_norm
 
-sys.path.append(os.getcwd())
 
 from .modules import WaveNet
 from .commons import get_padding, init_weights

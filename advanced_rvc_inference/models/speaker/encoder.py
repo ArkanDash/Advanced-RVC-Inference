@@ -5,7 +5,6 @@ import torch
 import itertools
 import collections
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.speaker.speechbrain import if_main_process, ddp_barrier
 from advanced_rvc_inference.models.speaker.features import register_checkpoint_hooks, mark_as_saver, mark_as_loader

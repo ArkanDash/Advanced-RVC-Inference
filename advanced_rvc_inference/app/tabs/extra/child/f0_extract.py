@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.f0_extract import f0_extract
 from advanced_rvc_inference.ui.feedback import change_audios_choices, unlock_f0, shutil_move

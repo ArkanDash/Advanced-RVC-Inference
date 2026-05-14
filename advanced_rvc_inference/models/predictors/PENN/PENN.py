@@ -8,7 +8,6 @@ import torchaudio
 import numpy as np
 import torch.nn.functional as F
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.PENN.core import bins_to_cents, cents_to_frequency
 from advanced_rvc_inference.models.predictors.PENN.core import PITCH_BINS, CENTS_PER_BIN, OCTAVE, frequency_to_bins, seconds_to_samples, entropy, interpolate

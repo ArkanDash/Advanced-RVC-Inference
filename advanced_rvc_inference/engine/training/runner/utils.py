@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, translations
 

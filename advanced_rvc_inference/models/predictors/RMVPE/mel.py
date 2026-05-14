@@ -8,7 +8,6 @@ import torch.nn.functional as F
 
 from librosa.filters import mel
 
-sys.path.append(os.getcwd())
 
 class MelSpectrogram(nn.Module):
     def __init__(

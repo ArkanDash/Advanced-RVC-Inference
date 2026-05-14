@@ -3,7 +3,6 @@ import sys
 
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.DJCM.utils import ResConvBlock
 

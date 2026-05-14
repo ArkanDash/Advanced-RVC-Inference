@@ -2,7 +2,6 @@ import os
 import sys
 import torch
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.speaker.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
 

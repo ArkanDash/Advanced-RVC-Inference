@@ -4,9 +4,7 @@ import sys
 import torch
 import subprocess
 
-sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.models.embedders import fairseq
 from advanced_rvc_inference.models.backends.utils import GRU
 
 try:
@@ -15,6 +13,17 @@ except:
     torch_directml = None
 
 torch_available = torch_directml != None
+
+# Lazy import of fairseq - only needed when DirectML is actually used
+_fairseq = None
+
+def _get_fairseq():
+    """Lazily import fairseq module when needed."""
+    global _fairseq
+    if _fairseq is None:
+        from advanced_rvc_inference.models.embedders import fairseq
+        _fairseq = fairseq
+    return _fairseq
 
 def device_count():
     return torch_directml.device_count() if torch_available else 0
@@ -39,4 +48,4 @@ def forward_dml(ctx, x, scale):
 
 if torch_available: 
     torch.nn.GRU = GRU
-    fairseq.GradMultiply.forward = forward_dml
+    _get_fairseq().GradMultiply.forward = forward_dml

@@ -5,7 +5,6 @@ import torch
 import inspect
 import functools
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.speaker.speechbrain import MAIN_PROC_ONLY, is_distributed_initialized, main_process_only
 

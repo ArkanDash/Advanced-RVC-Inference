@@ -9,7 +9,6 @@ import numpy as np
 
 from tqdm import tqdm
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import configs
 from advanced_rvc_inference.uvr.uvr5_lib import spec_utils

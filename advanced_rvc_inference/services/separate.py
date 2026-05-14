@@ -1,9 +1,8 @@
 import os, sys
 import subprocess
 
-sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning, gr_error
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning, gr_error
 from advanced_rvc_inference.utils.variables import python, translations, configs
 
 def separate_music(

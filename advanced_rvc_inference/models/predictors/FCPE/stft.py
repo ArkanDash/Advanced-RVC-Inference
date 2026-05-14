@@ -7,7 +7,6 @@ import torch.nn.functional as F
 
 from librosa.filters import mel
 
-sys.path.append(os.getcwd())
 
 class STFT:
     def __init__(self, sr=22050, n_mels=80, n_fft=1024, win_size=1024, hop_length=256, fmin=20, fmax=11025, clip_val=1e-5):

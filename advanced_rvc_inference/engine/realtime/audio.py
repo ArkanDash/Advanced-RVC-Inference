@@ -1,14 +1,20 @@
 import os
 import sys
-import librosa
 import traceback
 
 import numpy as np
-import sounddevice as sd
+
+try:
+    import sounddevice as sd
+except ImportError:
+    sd = None
+
+try:
+    import librosa
+except ImportError:
+    librosa = None
 
 from queue import Queue
-
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations
 
@@ -22,6 +28,8 @@ class ServerAudioDevice:
         self.default_samplerate = default_samplerate
 
 def check_the_device(device, type = "input"):
+    if sd is None:
+        return False
     stream_device = sd.InputStream if type == "input" else sd.OutputStream
     try:
         with stream_device(device=device["index"], dtype=np.float32, samplerate=device["default_samplerate"]):
@@ -30,6 +38,9 @@ def check_the_device(device, type = "input"):
         return False
 
 def list_audio_device():
+    if sd is None:
+        logger.warning("sounddevice not available, cannot list audio devices")
+        return [], []
     try:
         audio_device_list = sd.query_devices()
     except Exception as e:
@@ -117,6 +128,8 @@ class Audio:
         return serverAudioDevice[0] if len(serverAudioDevice) > 0 else None
     
     def process_data(self, indata):
+        if librosa is None:
+            raise RuntimeError("librosa is required for audio processing but not installed")
         indata = indata * self.input_audio_gain
         unpacked_data = librosa.to_mono(indata.T)
 
@@ -203,6 +216,9 @@ class Audio:
             self.monitor = None
 
     def start(self, input_device_id, output_device_id, output_monitor_id, exclusive_mode, asio_input_channel, asio_output_channel, asio_output_monitor_channel, read_chunk_size, input_audio_sample_rate, output_monitor_sample_rate):
+        if sd is None:
+            raise RuntimeError("sounddevice is required for realtime audio but not installed")
+
         self.stop()
 
         input_audio_device, output_audio_device = self.get_input_audio_device(input_device_id), self.get_output_audio_device(output_device_id)

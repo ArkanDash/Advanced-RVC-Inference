@@ -4,7 +4,6 @@ import sys
 import torch.nn as nn
 import torch.nn.functional as F
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.FCPE.attentions import SelfAttention
 from advanced_rvc_inference.models.predictors.FCPE.utils import calc_same_padding, Transpose, GLU, Swish

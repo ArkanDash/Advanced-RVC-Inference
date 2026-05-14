@@ -2,7 +2,6 @@ import os
 import sys
 import inspect
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.speaker.speechbrain import fetch, run_on_main
 from advanced_rvc_inference.models.speaker.features import DEFAULT_TRANSFER_HOOKS, DEFAULT_LOAD_HOOKS

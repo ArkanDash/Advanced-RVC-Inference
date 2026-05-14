@@ -9,7 +9,6 @@ import concurrent.futures
 
 import numpy as np
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations, config
 from advanced_rvc_inference.engine.training.extract.setup_path import setup_paths

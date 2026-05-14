@@ -5,7 +5,6 @@ import torch
 import numpy as np
 import torch.nn.functional as F
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.RMVPE.mel import MelSpectrogram
 

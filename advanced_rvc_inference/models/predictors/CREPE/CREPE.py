@@ -6,7 +6,6 @@ import scipy.stats
 
 import numpy as np
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.CREPE.model import MODEL
 

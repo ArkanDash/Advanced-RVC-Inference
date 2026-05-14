@@ -6,7 +6,6 @@ import librosa
 import numpy as np
 import scipy.signal as signal
 
-sys.path.append(os.getcwd())
 
 stft = None
 

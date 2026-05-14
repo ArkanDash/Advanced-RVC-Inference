@@ -7,7 +7,6 @@ import soundfile as sf
 
 from pydub import AudioSegment
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.uvr.uvr5_lib.spec_utils import normalize
 

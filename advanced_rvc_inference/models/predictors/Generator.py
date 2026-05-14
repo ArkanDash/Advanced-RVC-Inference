@@ -11,7 +11,6 @@ import numpy as np
 from scipy.signal import medfilt
 from librosa import yin, pyin, piptrack
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.CREPE.filter import mean, median
 from advanced_rvc_inference.models.predictors.WORLD.SWIPE import swipe, stonemask
