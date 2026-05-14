@@ -5,8 +5,8 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.core.ui import shutil_move
-from advanced_rvc_inference.core.model_utils import model_info
+from advanced_rvc_inference.ui.feedback import shutil_move
+from advanced_rvc_inference.services.model_utils import model_info
 from advanced_rvc_inference.utils.variables import translations, configs
 
 def read_model_tab():

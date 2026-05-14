@@ -12,19 +12,19 @@ from advanced_rvc_inference.utils.variables import (
     model_options
 )
 
-from advanced_rvc_inference.core.downloads import (
+from advanced_rvc_inference.services.downloads import (
     search_models, 
     download_model, 
     download_pretrained_model
 )
 
-from advanced_rvc_inference.core.ui import (
+from advanced_rvc_inference.ui.feedback import (
     shutil_move,
     change_download_choices, 
     change_download_pretrained_choices 
 )
 
-from advanced_rvc_inference.core.process import (
+from advanced_rvc_inference.services.process import (
     save_drop_model, 
     fetch_pretrained_data, 
     update_sample_rate_dropdown

@@ -125,7 +125,7 @@ class Config:
     def is_zluda(self) -> bool:
         """Check if running under ZLUDA (AMD GPU via CUDA compatibility layer)."""
         try:
-            from advanced_rvc_inference.library.backends import zluda
+            from advanced_rvc_inference.models.backends import zluda
             return zluda.is_available()
         except Exception:
             return False
@@ -180,7 +180,7 @@ class Config:
 
             # Check for other accelerators
             try:
-                from advanced_rvc_inference.library.backends import directml, opencl
+                from advanced_rvc_inference.models.backends import directml, opencl
 
                 if directml.is_available():
                     return "privateuseone:0"

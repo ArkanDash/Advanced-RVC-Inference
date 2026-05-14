@@ -14,8 +14,8 @@ from importlib import import_module
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from advanced_rvc_inference.library.utils import clear_gpu_cache
-from advanced_rvc_inference.library.backends import directml, opencl
+from advanced_rvc_inference.models.utils import clear_gpu_cache
+from advanced_rvc_inference.models.backends import directml, opencl
 from advanced_rvc_inference.utils.huggingface import HF_download_file
 from advanced_rvc_inference.utils.variables import config, translations
 

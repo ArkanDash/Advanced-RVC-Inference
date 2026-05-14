@@ -35,14 +35,14 @@ if argv not in argv_is_allows:
 
 # Map subcommands to the correct module paths
 _CMD_MAP = {
-    "--convert": "advanced_rvc_inference.rvc.infer.convert",
-    "--create_dataset": "advanced_rvc_inference.rvc.train.create_dataset",
-    "--create_index": "advanced_rvc_inference.rvc.train.create_index",
-    "--extract": "advanced_rvc_inference.rvc.train.extracting.extract",
-    "--preprocess": "advanced_rvc_inference.rvc.train.preprocess.preprocess",
+    "--convert": "advanced_rvc_inference.engine.inference.convert",
+    "--create_dataset": "advanced_rvc_inference.engine.training.create_dataset",
+    "--create_index": "advanced_rvc_inference.engine.training.create_index",
+    "--extract": "advanced_rvc_inference.engine.training.extract.extract",
+    "--preprocess": "advanced_rvc_inference.engine.training.preprocess.preprocess",
     "--separator_music": "advanced_rvc_inference.uvr.separate_music",
-    "--train": "advanced_rvc_inference.rvc.train.training.train",
-    "--create_reference": "advanced_rvc_inference.rvc.infer.create_reference",
+    "--train": "advanced_rvc_inference.engine.training.runner.train",
+    "--create_reference": "advanced_rvc_inference.engine.inference.create_reference",
 }
 
 

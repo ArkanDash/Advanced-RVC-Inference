@@ -55,22 +55,22 @@ def create_easy_app(theme=None):
         index_path as index_paths,
         paths_for_files,
     )
-    from advanced_rvc_inference.core.training import (
+    from advanced_rvc_inference.services.training import (
         one_click_train,
         preprocess,
         extract,
         training,
         create_index,
     )
-    from advanced_rvc_inference.core.downloads import download_model
-    from advanced_rvc_inference.core.ui import (
+    from advanced_rvc_inference.services.downloads import download_model
+    from advanced_rvc_inference.ui.feedback import (
         change_models_choices,
         get_index,
         gr_info,
         gr_warning,
     )
-    from advanced_rvc_inference.library.optimizers import get_optimizer_choices
-    from advanced_rvc_inference.library.generators import get_vocoder_choices
+    from advanced_rvc_inference.models.optimizers import get_optimizer_choices
+    from advanced_rvc_inference.models.generators import get_vocoder_choices
 
     # F0 methods for the easy UI (simplified subset)
     easy_f0_methods = ["rmvpe", "crepe", "crepe-full", "harvest", "fcpe"]
