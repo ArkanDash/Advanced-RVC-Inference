@@ -167,9 +167,9 @@ class Config:
 
     def _get_default_device(self) -> str:
         """Determine the best available device."""
-        if not self.cpu_mode:
-            import torch
+        import torch
 
+        if not self.cpu_mode:
             if torch.cuda.is_available():
                 device = "cuda:0"
                 self.gpu_mem = (
@@ -192,24 +192,8 @@ class Config:
             if torch.backends.mps.is_available():
                 return "mps"
 
-        # Fallback to CPU
-        import torch
-
-        torch.cuda.is_available = lambda: False
-        try:
-            from advanced_rvc_inference.library.backends import directml, opencl
-
-            directml.is_available = lambda: False
-            opencl.is_available = lambda: False
-        except ImportError:
-            pass
-        try:
-            import torch
-
-            torch.backends.mps.is_available = lambda: False
-        except AttributeError:
-            pass
-
+        # Fallback to CPU - note: we just return "cpu" without monkey-patching
+        # torch.cuda.is_available, as that can cause unpredictable behavior
         return "cpu"
 
     def _get_providers(self):
