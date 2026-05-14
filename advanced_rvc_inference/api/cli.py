@@ -105,7 +105,7 @@ def show_version():
             version_info.append(f"GPU Memory: {gpu_mem} GB")
             # ZLUDA / T4 detection
             try:
-                from advanced_rvc_inference.library.backends import zluda
+                from advanced_rvc_inference.models.backends import zluda
                 if zluda.is_available():
                     version_info.append(f"ZLUDA: Detected (AMD GPU via CUDA compatibility)")
             except ImportError:
@@ -157,7 +157,7 @@ def show_info():
             info.append(f"  GPU Name: {gpu_name}")
             # ZLUDA detection
             try:
-                from advanced_rvc_inference.library.backends import zluda
+                from advanced_rvc_inference.models.backends import zluda
                 if zluda.is_available():
                     info.append("  ZLUDA: Detected (AMD GPU via CUDA compatibility layer)")
                     info.append(f"  Backend: HIP/ROCm (via ZLUDA)")
@@ -275,7 +275,7 @@ def cmd_infer(args):
     logger.info("Starting voice conversion inference...")
 
     try:
-        from advanced_rvc_inference.rvc.infer.inference import convert
+        from advanced_rvc_inference.engine.inference.inference import convert
 
         # Validate inputs
         if not args.input or not Path(args.input).exists():
@@ -658,7 +658,7 @@ def cmd_download(args):
     logger.info("Downloading from: %s", args.link)
 
     try:
-        from advanced_rvc_inference.core.downloads import download_model
+        from advanced_rvc_inference.services.downloads import download_model
 
         result = download_model(url=args.link, model=args.name)
         if result:

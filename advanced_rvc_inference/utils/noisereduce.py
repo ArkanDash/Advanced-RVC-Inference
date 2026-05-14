@@ -67,7 +67,7 @@ class TorchGate(torch.nn.Module):
 
         if str(x.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from main.library.backends.utils import STFT
+                from advanced_rvc_inference.models.backends.utils import STFT
                 self.stft = STFT(filter_length=self.n_fft, hop_length=self.hop_length, win_length=self.win_length, pad_mode="constant").to(x.device)
             X, phase = self.stft.transform(x, eps=1e-9, return_phase=True)
         else:
