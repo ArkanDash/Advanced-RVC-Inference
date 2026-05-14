@@ -19,39 +19,48 @@ from advanced_rvc_inference.core.ui import gr_info, gr_warning, gr_error, proces
 from advanced_rvc_inference.utils.variables import logger, translations, model_options, configs
 
 def download_url(url):
-    if not url: 
+    if not url:
         gr_warning(translations["provide_url"])
-        return [None]*3
+        return [None] * 3
 
     if not os.path.exists(configs["audios_path"]): os.makedirs(configs["audios_path"], exist_ok=True)
 
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore")
         ydl_opts = {
-            "format": "bestaudio/best", 
+            "format": "bestaudio/best",
             "cookies": "advanced_rvc_inference/assets/config.txt",
             "postprocessors": [{
-                "key": "FFmpegExtractAudio", 
-                "preferredcodec": "wav", 
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "wav",
                 "preferredquality": "192"
-            }], 
-            "quiet": True, 
-            "no_warnings": True, 
-            "noplaylist": True, 
+            }],
+            "quiet": True,
+            "no_warnings": True,
+            "noplaylist": True,
             "verbose": False
         }
 
         gr_info(translations["start"].format(start=translations["download_music"]))
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            audio_output = os.path.join(configs["audios_path"], re.sub(r'\s+', '-', re.sub(r'[^\w\s\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u1100-\u11FF]', '', ydl.extract_info(url, download=False).get('title', 'video')).strip()))
-            if os.path.exists(audio_output): shutil.rmtree(audio_output, ignore_errors=True)
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                if info is None:
+                    gr_warning(translations.get("not_found", "Not found"))
+                    return [None] * 3
+                title = info.get('title', 'video')
+                audio_output = os.path.join(configs["audios_path"], re.sub(r'\s+', '-', re.sub(r'[^\w\s\u4e00-\u9fff\uac00-\ud7af\u0400-\u04FF\u1100-\u11FF]', '', title)).strip())
+                if os.path.isdir(audio_output): shutil.rmtree(audio_output, ignore_errors=True)
 
-            ydl_opts['outtmpl'] = audio_output
-            
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl: 
+                ydl_opts['outtmpl'] = audio_output
+        except Exception as e:
+            gr_error(translations["error_occurred"].format(e=e))
+            return [None] * 3
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             audio_output = process_output(audio_output + ".wav")
-            
+
             ydl.download([url])
 
         gr_info(translations["success"])
@@ -129,7 +138,15 @@ def download_pretrained_model(choices, model, sample_rate):
     pretraineds_custom_path = configs["pretrained_custom_path"]
 
     if choices == translations["list_model"]:
-        paths = fetch_pretrained_data()[model][sample_rate]
+        pretrained_data = fetch_pretrained_data()
+        if not pretrained_data or model not in pretrained_data:
+            gr_warning(translations.get("not_found", "Not found"))
+            return translations.get("not_found", "Not found")
+        if sample_rate not in pretrained_data[model]:
+            gr_warning(translations.get("not_found", "Not found"))
+            return translations.get("not_found", "Not found")
+
+        paths = pretrained_data[model][sample_rate]
 
         if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
         url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cergenvarq_phfgbz/", "rot13") + paths

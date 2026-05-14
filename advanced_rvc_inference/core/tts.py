@@ -87,11 +87,11 @@ def TTS(prompt, voice, speed, output, pitch, google, srt_input):
         gr_warning(translations["output_not_valid"])
         return None
     
-    if os.path.isdir(output): output = os.path.join(output, f"tts.wav")
+    if os.path.isdir(output): output = os.path.join(output, "tts.wav")
     gr_info(translations["convert"].format(name=translations["text"]))
 
-    output_dir = os.path.dirname(output) or output
-    if not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
+    output_dir = os.path.dirname(output)
+    if output_dir and not os.path.exists(output_dir): os.makedirs(output_dir, exist_ok=True)
 
     if srt_input.endswith(".srt"): srt_tts(srt_input, output, voice, 0, 24000, google)
     else: synthesize_tts(prompt, voice, speed, output, pitch, google)

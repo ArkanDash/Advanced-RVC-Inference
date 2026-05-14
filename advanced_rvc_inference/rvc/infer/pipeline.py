@@ -35,8 +35,8 @@ class Pipeline:
         self.tgt_sr = tgt_sr
 
     def voice_conversion(self, model, net_g, sid, audio0, pitch, pitchf, index, big_npy, index_rate, version, protect, energy):
-        pitch_guidance = pitch != None and pitchf != None
-        energy_use = energy != None
+        pitch_guidance = pitch is not None and pitchf is not None
+        energy_use = energy is not None
 
         feats = torch.from_numpy(audio0).to(self.device).to(torch.float16 if self.is_half else torch.float32)
         feats = feats.mean(-1) if feats.dim() == 2 else feats
@@ -46,7 +46,7 @@ class Pipeline:
             feats = extract_features(model, feats.view(1, -1), version, self.device)
             feats0 = feats.clone() if protect < 0.5 and pitch_guidance else None
 
-            if (not isinstance(index, type(None)) and not isinstance(big_npy, type(None)) and index_rate != 0):
+            if index is not None and big_npy is not None and index_rate != 0:
                 npy = feats[0].cpu().numpy()
                 if self.is_half: npy = npy.astype(np.float32)
 
@@ -89,7 +89,10 @@ class Pipeline:
                 ).data.cpu().float().numpy()
             )
 
-        del feats, feats0, p_len
+        del feats
+        if feats0 is not None:
+            del feats0
+        del p_len
 
         clear_gpu_cache()
         return audio1
@@ -129,8 +132,8 @@ class Pipeline:
                             inp_f0.append([float(i) for i in line.split(",")])
 
                         inp_f0 = np.array(inp_f0, dtype=np.float32)
-            except:
-                logger.error(translations["error_readfile"])
+            except Exception as e:
+                logger.error(f"{translations.get('error_readfile', 'Error reading file')}: {e}")
                 inp_f0 = None
 
         if pbar: pbar.update(1)
@@ -200,7 +203,10 @@ class Pipeline:
         audio_max = np.abs(audio_opt).max() / 0.99
         if audio_max > 1: audio_opt /= audio_max
 
-        if pitch_guidance: del pitch, pitchf
+        if pitch_guidance:
+            del pitch, pitchf
+        if energy_use:
+            del energy
         del sid
 
         clear_gpu_cache()
