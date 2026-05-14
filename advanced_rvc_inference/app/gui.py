@@ -106,6 +106,7 @@ def launch(
         else:
             with gr.Blocks(
                 title=f"Advanced RVC Inference",
+                theme=theme,
                 js=js_code if client_mode else None,
             ) as app:
                 gr.HTML(

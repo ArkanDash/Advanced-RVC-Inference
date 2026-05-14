@@ -313,19 +313,20 @@ Advanced-RVC-Inference/
 │   ├── api/
 │   │   └── cli.py              # Full CLI interface (rvc-cli)
 │   ├── configs/                 # Model configs (v1, v2, ringformer, etc.)
-│   ├── core/                    # Core utilities (UI, process, training, restart)
-│   ├── library/
+│   ├── services/                # Core utilities (process, training, restart)
+│   ├── ui/                      # UI package
+│   ├── models/
 │   │   ├── backends/            # GPU backends (CUDA, ZLUDA, DirectML, OpenCL)
-│   │   ├── algorithm/           # Model architectures and algorithms
+│   │   ├── algorithms/          # Model architectures and algorithms
 │   │   ├── generators/          # Vocoder implementations
 │   │   ├── optimizers/          # Training optimizers
 │   │   ├── predictors/          # F0 extraction algorithms
 │   │   ├── embedders/           # Speaker embedding models
 │   │   └── onnx/                # ONNX export utilities
-│   ├── rvc/
-│   │   ├── infer/               # Inference engine & audio conversion
+│   ├── engine/
+│   │   ├── inference/           # Inference engine & audio conversion
 │   │   ├── realtime/            # Real-time voice conversion
-│   │   └── train/               # Preprocessing, extraction, training
+│   │   └── training/            # Preprocessing, extraction, training
 │   ├── uvr/                     # UVR5 audio separation library
 │   └── utils/                   # Shared variables & utilities
 ├── Advanced-RVC.ipynb           # Google Colab notebook
@@ -394,7 +395,7 @@ rvc-cli info
 python -c "import torch; print(torch.cuda.get_device_name(0))"
 
 # If STFT issues occur, check that ZLUDA STFT override is loaded
-python -c "from advanced_rvc_inference.library.backends import zluda; print(f'ZLUDA: {zluda.is_available()}')"
+python -c "from advanced_rvc_inference.models.backends import zluda; print(f'ZLUDA: {zluda.is_available()}')"
 ```
 
 ### Common Dependency Issues
