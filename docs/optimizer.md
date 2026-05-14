@@ -480,9 +480,9 @@ Use **LAMB** or **LARS** for their per-layer adaptive learning rate scaling, whi
 
 ## Technical Notes
 
-- All custom optimizers are implemented in `advanced_rvc_inference/library/optimizers/`
+- All custom optimizers are implemented in `advanced_rvc_inference/models/optimizers/`
 - The central registry in `__init__.py` maps optimizer names to their classes
-- The training engine (`rvc/train/training/train.py`) uses the registry for dynamic optimizer selection
+- The training engine (`engine/training/runner/train.py`) uses the registry for dynamic optimizer selection
 - Each optimizer automatically receives appropriate kwargs (betas, eps, weight_decay) based on its capabilities
 - Fused CUDA kernels are automatically enabled when supported (currently only AdamW)
 - For optimizers that don't support `betas` or `eps`, these parameters are silently omitted
