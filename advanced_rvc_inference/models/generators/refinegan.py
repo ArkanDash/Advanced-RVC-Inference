@@ -12,7 +12,6 @@ from torch.utils.checkpoint import checkpoint
 from torch.nn.utils import remove_weight_norm
 from torch.nn.utils.parametrizations import weight_norm
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.algorithms.commons import init_weights, get_padding
 

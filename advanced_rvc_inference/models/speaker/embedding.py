@@ -8,7 +8,6 @@ import torch.nn.functional as F
 from functools import cached_property
 from torch.nn.utils.rnn import pad_sequence
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.speaker.speechbrain import EncoderClassifier
 

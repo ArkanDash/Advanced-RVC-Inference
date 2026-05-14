@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.ui.feedback import shutil_move
 from advanced_rvc_inference.services.model_utils import model_info

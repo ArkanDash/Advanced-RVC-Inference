@@ -11,7 +11,6 @@ import onnxruntime as ort
 
 from tqdm import tqdm
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.uvr.uvr5_lib import spec_utils
 from advanced_rvc_inference.uvr.uvr5_lib.common_separator import CommonSeparator

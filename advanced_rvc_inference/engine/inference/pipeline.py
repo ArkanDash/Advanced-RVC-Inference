@@ -7,7 +7,6 @@ import torch.nn.functional as F
 
 from scipy import signal
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
 from advanced_rvc_inference.models.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index

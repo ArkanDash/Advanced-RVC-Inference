@@ -3,9 +3,8 @@ import sys
 import shutil
 from random import shuffle
 
-sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.ui.feedback import configs, config
+from advanced_rvc_inference.utils.variables import configs, config
 from advanced_rvc_inference.engine.training.extract.embedding import create_mute_file
 
 def mute_file(embedders_mode, embedder_model, mute_base_path, rvc_version):

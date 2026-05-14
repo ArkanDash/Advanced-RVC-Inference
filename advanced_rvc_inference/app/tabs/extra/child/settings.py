@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.ui.feedback import change_fp
 from advanced_rvc_inference.services.utils import stop_pid

@@ -5,7 +5,6 @@ import torch
 import numpy as np
 import torch.utils.data as tdata
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
 from advanced_rvc_inference.engine.training.runner.mel_processing import spectrogram_torch

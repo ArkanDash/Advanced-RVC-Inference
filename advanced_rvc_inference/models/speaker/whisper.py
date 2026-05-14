@@ -18,7 +18,6 @@ from dataclasses import replace
 from torch.distributions import Categorical
 from functools import cached_property, lru_cache
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import configs, logger
 from advanced_rvc_inference.models.backends import directml, opencl

@@ -19,14 +19,11 @@ try:
 except ImportError:
     np = None
 
-# Path setup
-PACKAGE_ROOT = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(PACKAGE_ROOT))
-
 
 from advanced_rvc_inference.utils.variables import logger, config, configs, translations, python, file_types
 
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning, gr_error, process_output, replace_export_format
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning, gr_error
+from advanced_rvc_inference.ui.feedback import process_output, replace_export_format
 
 
 

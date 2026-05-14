@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.DJCM.encoder import ResEncoderBlock
 from advanced_rvc_inference.models.predictors.DJCM.utils import ResConvBlock, BiGRU, init_bn, init_layer, N_CLASS, WINDOW_LENGTH

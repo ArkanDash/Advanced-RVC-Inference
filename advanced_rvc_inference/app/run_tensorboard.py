@@ -7,7 +7,6 @@ import webbrowser
 
 from tensorboard import program
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, translations, logger
 

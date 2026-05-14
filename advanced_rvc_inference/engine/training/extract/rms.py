@@ -10,7 +10,6 @@ import concurrent.futures
 import numpy as np
 import torch.nn as nn
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.utils import load_audio
 from advanced_rvc_inference.utils.variables import logger, translations

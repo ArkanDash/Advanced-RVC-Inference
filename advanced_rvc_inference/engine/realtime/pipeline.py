@@ -6,7 +6,6 @@ import numpy as np
 import torch.nn.functional as F
 import torchaudio.transforms as tat
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config
 from advanced_rvc_inference.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model

@@ -7,7 +7,6 @@ import traceback
 
 from distutils.util import strtobool
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.utils import pydub_load
 from advanced_rvc_inference.uvr.uvr5_lib.separator import Separator

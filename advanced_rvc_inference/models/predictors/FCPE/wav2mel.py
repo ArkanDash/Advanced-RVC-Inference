@@ -4,7 +4,6 @@ import torch
 
 from torchaudio.transforms import Resample
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.FCPE.stft import STFT
 

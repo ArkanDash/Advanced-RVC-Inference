@@ -6,10 +6,9 @@ import codecs
 import zipfile
 import requests
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations, configs
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning, gr_error, process_output, replace_punctuation
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning, gr_error, process_output, replace_punctuation
 
 def read_docx_text(path):
     import xml.etree.ElementTree

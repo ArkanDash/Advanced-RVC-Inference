@@ -26,7 +26,6 @@ def strtobool(val):
         raise ValueError(f"Invalid truth value: {val!r}")
 
 warnings.filterwarnings("ignore")
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.ui.feedback import replace_export_format
 from advanced_rvc_inference.engine.inference.pipeline import Pipeline

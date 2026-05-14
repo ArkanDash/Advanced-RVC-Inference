@@ -38,7 +38,6 @@ def _ensure_sounddevice():
     return sd
 
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import (
     config, configs, configs_json, logger, translations, 
@@ -693,9 +692,9 @@ def update_audio_device(input_device: str, output_device: str,
             visible(monitor),
             visible(monitor_is_asio),
             visible(input_is_asio or output_is_asio or monitor_is_asio),
-            gr.update(visible=input_is_asio, maximum=input_max_ch),
-            gr.update(visible=output_is_asio, maximum=output_max_ch),
-            gr.update(visible=monitor_is_asio, maximum=monitor_max_ch)
+            {"visible": input_is_asio, "maximum": input_max_ch, "__type__": "update"},
+            {"visible": output_is_asio, "maximum": output_max_ch, "__type__": "update"},
+            {"visible": monitor_is_asio, "maximum": monitor_max_ch, "__type__": "update"}
         ]
     except Exception as e:
         logger.error(f"Error updating audio device UI: {str(e)}")
@@ -788,18 +787,18 @@ def update_dropdowns_from_json(data: Dict[str, Any]) -> List[Dict[str, Any]]:
     try:
         if not data:
             return [
-                gr.update(choices=[], value=None), 
-                gr.update(choices=[], value=None), 
-                gr.update(choices=[], value=None)
+                {"choices": [], "value": None, "__type__": "update"},
+                {"choices": [], "value": None, "__type__": "update"},
+                {"choices": [], "value": None, "__type__": "update"}
             ]
         
         inputs = list(data.get("inputs", {}).keys())
         outputs = list(data.get("outputs", {}).keys())
         
         return [
-            gr.update(choices=inputs, value=inputs[0] if inputs else None),
-            gr.update(choices=outputs, value=outputs[0] if outputs else None),
-            gr.update(choices=outputs, value=outputs[0] if outputs else None),
+            {"choices": inputs, "value": inputs[0] if inputs else None, "__type__": "update"},
+            {"choices": outputs, "value": outputs[0] if outputs else None, "__type__": "update"},
+            {"choices": outputs, "value": outputs[0] if outputs else None, "__type__": "update"},
         ]
     except Exception as e:
         logger.error(f"Error updating dropdowns from JSON: {str(e)}")

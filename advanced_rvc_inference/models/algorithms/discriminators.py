@@ -6,7 +6,6 @@ import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 from torch.nn.utils.parametrizations import spectral_norm, weight_norm
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.algorithms.commons import get_padding
 from advanced_rvc_inference.models.algorithms.residuals import LRELU_SLOPE

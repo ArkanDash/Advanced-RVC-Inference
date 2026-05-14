@@ -9,7 +9,6 @@ import requests
 
 from urllib.parse import urlparse, parse_qs, unquote
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations
 

@@ -7,7 +7,6 @@ import numpy as np
 import torch.nn.functional as F
 import torchaudio.transforms as tat
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, translations
 from advanced_rvc_inference.models.utils import circular_write, check_assets

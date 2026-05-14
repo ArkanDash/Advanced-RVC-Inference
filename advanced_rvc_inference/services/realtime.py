@@ -2,10 +2,10 @@ import os
 import sys
 import time
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
-from advanced_rvc_inference.ui.feedback import gr_info, gr_warning, audio_device
+from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
+from advanced_rvc_inference.ui.feedback import audio_device
 
 running, callbacks, audio_manager = False, None, None
 

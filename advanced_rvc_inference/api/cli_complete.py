@@ -12,7 +12,6 @@ Usage:
 import os
 import sys
 
-sys.path.append(os.getcwd())
 
 try:
     argv = sys.argv[1]

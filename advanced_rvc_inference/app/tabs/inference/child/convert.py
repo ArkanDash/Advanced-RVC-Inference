@@ -3,7 +3,6 @@ import sys
 
 import gradio as gr
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.services.presets import load_presets, save_presets
 from advanced_rvc_inference.engine.inference.inference import convert_audio, convert_selection

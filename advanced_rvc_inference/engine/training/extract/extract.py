@@ -8,7 +8,6 @@ import torch.multiprocessing as mp
 
 from distutils.util import strtobool
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.utils import check_assets
 from advanced_rvc_inference.engine.training.extract.rms import run_rms_extraction

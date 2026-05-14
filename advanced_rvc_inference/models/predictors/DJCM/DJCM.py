@@ -6,7 +6,6 @@ import numpy as np
 
 from scipy.signal import medfilt
 
-sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.models.predictors.DJCM.model import DJCMM
 from advanced_rvc_inference.models.predictors.DJCM.spec import Spectrogram
