@@ -30,6 +30,7 @@ logger.propagate = False
 # Create singleton config instance
 _config_instance = None
 
+sys.path.append(os.gecwd())
 
 def get_config():
     """Get the singleton Config instance.
