@@ -94,7 +94,7 @@ class Config:
         """Lazy ZLUDA detection."""
         if self._is_zluda is None:
             try:
-                from advanced_rvc_inference.models.backends import zluda
+                from advanced_rvc_inference.engine.models.backends import zluda
                 self._is_zluda = zluda.is_available()
             except Exception:
                 self._is_zluda = False
@@ -239,14 +239,14 @@ class Config:
 
             # Check alternative backends lazily
             try:
-                from advanced_rvc_inference.models.backends import directml
+                from advanced_rvc_inference.engine.models.backends import directml
                 if directml.is_available():
                     return "privateuseone:0"
             except Exception:
                 pass
 
             try:
-                from advanced_rvc_inference.models.backends import opencl
+                from advanced_rvc_inference.engine.models.backends import opencl
                 if opencl.is_available():
                     return "ocl:0"
             except Exception:

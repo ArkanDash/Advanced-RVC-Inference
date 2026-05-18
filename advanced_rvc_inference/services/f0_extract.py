@@ -2,6 +2,8 @@ import os
 import sys
 
 
+sys.path.append(os.getcwd())
+
 from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import config, translations, configs
 
@@ -14,8 +16,8 @@ def f0_extract(audio, f0_method, f0_onnx):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from advanced_rvc_inference.models.utils import check_assets, load_audio
-    from advanced_rvc_inference.models.predictors.Generator import Generator
+    from advanced_rvc_inference.engine.models.utils import check_assets, load_audio
+    from advanced_rvc_inference.engine.models.predictors.Generator import Generator
 
     check_assets(f0_method, "", f0_onnx, "")
 

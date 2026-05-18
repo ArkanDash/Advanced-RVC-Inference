@@ -13,6 +13,8 @@ import subprocess
 from pathlib import Path
 from typing import Optional, List, Tuple, Dict, Any
 
+sys.path.append(os.getcwd())
+
 # Import heavy dependencies lazily
 try:
     import numpy as np
@@ -181,7 +183,7 @@ def convert_audio(
     if use_audio:
         output_audio = os.path.join(configs["audios_path"], input_audio_name)
 
-        from advanced_rvc_inference.models.utils import pydub_load
+        from advanced_rvc_inference.engine.models.utils import pydub_load
         
         def get_audio_file(label):
             matching_files = [f for f in os.listdir(output_audio) if label in f]
@@ -727,7 +729,7 @@ def whisper_process(
     out_queue, 
     word_timestamps=True
 ):
-    from advanced_rvc_inference.models.speaker.whisper import load_model
+    from advanced_rvc_inference.engine.speaker.whisper import load_model
 
     try:
         segments = load_model(
@@ -794,11 +796,11 @@ def convert_with_whisper(
     from pydub import AudioSegment
     from sklearn.cluster import AgglomerativeClustering
 
-    from advanced_rvc_inference.models.utils import clear_gpu_cache
-    from advanced_rvc_inference.models.speaker.audio import Audio
-    from advanced_rvc_inference.models.speaker.segment import Segment
-    from advanced_rvc_inference.models.utils import check_spk_diarization, pydub_load
-    from advanced_rvc_inference.models.speaker.embedding import SpeechBrainPretrainedSpeakerEmbedding
+    from advanced_rvc_inference.engine.models.utils import clear_gpu_cache
+    from advanced_rvc_inference.engine.speaker.audio import Audio
+    from advanced_rvc_inference.engine.speaker.segment import Segment
+    from advanced_rvc_inference.engine.models.utils import check_spk_diarization, pydub_load
+    from advanced_rvc_inference.engine.speaker.embedding import SpeechBrainPretrainedSpeakerEmbedding
     
     check_spk_diarization(model_size)
     model_pth_1, model_pth_2 = (

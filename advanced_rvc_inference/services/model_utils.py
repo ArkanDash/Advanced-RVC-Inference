@@ -4,6 +4,7 @@ import json
 import torch
 import datetime
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.feedback import gr_info, gr_warning, gr_error
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
@@ -103,7 +104,7 @@ def onnx_export(model_path):
     try:
         gr_info(translations["start_onnx_export"])
 
-        from advanced_rvc_inference.models.onnx.onnx_export import onnx_exporter
+        from advanced_rvc_inference.engine.models.onnx.onnx_export import onnx_exporter
         output = onnx_exporter(model_path, model_path.replace(".pth", ".onnx"), is_half=config.is_half, device=config.device)
 
         gr_info(translations["success"])

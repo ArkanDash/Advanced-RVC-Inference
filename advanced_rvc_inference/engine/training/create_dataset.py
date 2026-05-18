@@ -13,10 +13,10 @@ import soundfile as sf
 
 from urllib.parse import urlparse
 from distutils.util import strtobool
-sys.path.append(os.gecwd())
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, logger, translations
-from advanced_rvc_inference.uvr.separate_music import _separate, vr_models
+from advanced_rvc_inference.engine.uvr.separate_music import _separate, vr_models
 
 dataset_temp = "dataset_temp"
 DATASET_DIR = os.path.join("advanced_rvc_inference", "assets", "dataset")

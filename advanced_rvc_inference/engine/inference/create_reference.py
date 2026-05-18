@@ -11,9 +11,10 @@ import numpy as np
 from tqdm import tqdm
 from distutils.util import strtobool
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
-from advanced_rvc_inference.models.utils import load_audio, load_embedders_model, extract_features
+from advanced_rvc_inference.engine.models.utils import load_audio, load_embedders_model, extract_features
 
 warnings.filterwarnings("ignore")
 
@@ -124,7 +125,7 @@ def create_reference(
         pbar.update(1)
 
         if pitch_guidance:
-            from advanced_rvc_inference.models.predictors.Generator import Generator
+            from advanced_rvc_inference.engine.models.predictors.Generator import Generator
 
             generator = Generator(
                 sample_rate=SAMPLE_RATE, 

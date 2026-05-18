@@ -335,6 +335,11 @@ def create_app():
 if __name__ == "__main__":
     import argparse
 
+# Fix import errors by ensuring cwd is in sys.path
+import os
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
+
     parser = argparse.ArgumentParser(description="Launch Advanced RVC Inference GUI")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=7860, help="Port to bind to")

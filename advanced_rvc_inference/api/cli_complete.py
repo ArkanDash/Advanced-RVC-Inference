@@ -12,6 +12,8 @@ Usage:
 import os
 import sys
 
+sys.path.append(os.getcwd())
+
 
 try:
     argv = sys.argv[1]
@@ -39,7 +41,7 @@ _CMD_MAP = {
     "--create_index": "advanced_rvc_inference.engine.training.create_index",
     "--extract": "advanced_rvc_inference.engine.training.extract.extract",
     "--preprocess": "advanced_rvc_inference.engine.training.preprocess.preprocess",
-    "--separator_music": "advanced_rvc_inference.uvr.separate_music",
+    "--separator_music": "advanced_rvc_inference.engine.uvr.separate_music",
     "--train": "advanced_rvc_inference.engine.training.runner.train",
     "--create_reference": "advanced_rvc_inference.engine.inference.create_reference",
 }
