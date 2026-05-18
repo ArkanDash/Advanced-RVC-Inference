@@ -335,9 +335,35 @@ def create_app():
 if __name__ == "__main__":
     import argparse
 
-    # Handle shorthand launch args (ez, easygui -> --easy)
-    if len(sys.argv) > 1 and sys.argv[1].lower() in ("ez", "easygui"):
-        sys.argv[1] = "--easy"
+    # Normalize shorthand args before argparse sees them.
+    # The notebook / CLI uses "-ez True" or "-ez False" which is invalid for
+    # argparse (short flags must be a single letter).  Rewrite them to
+    # "--easy true" / "--easy false" (or drop entirely when false).
+    _normalized = []
+    skip_next = False
+    for i, arg in enumerate(sys.argv):
+        if skip_next:
+            skip_next = False
+            continue
+        if arg.lower() in ("-ez", "--ez"):
+            if i + 1 < len(sys.argv) and not sys.argv[i + 1].startswith("-"):
+                val = sys.argv[i + 1].lower()
+                if val in ("true", "1", "yes"):
+                    _normalized.append("--easy")
+                    _normalized.append("true")
+                # false-ish -> omit entirely (easy stays disabled)
+                skip_next = True
+            else:
+                # No value after -ez -> default to true
+                _normalized.append("--easy")
+                _normalized.append("true")
+            continue
+        if arg.lower() in ("ez", "easygui"):
+            _normalized.append("--easy")
+            _normalized.append("true")
+            continue
+        _normalized.append(arg)
+    sys.argv = _normalized
 
     parser = argparse.ArgumentParser(description="Launch Advanced RVC Inference GUI")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
@@ -346,9 +372,10 @@ if __name__ == "__main__":
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
-    parser.add_argument("--easy", action="store_true", help="Launch Easy GUI (simplified mode)")
+    parser.add_argument("--easy", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
 
     args, _unknown = parser.parse_known_args()
+    easy_mode = args.easy is not None and args.easy.lower() in ("true", "1", "yes")
 
     sys.exit(
         launch(
@@ -357,6 +384,6 @@ if __name__ == "__main__":
             server_port=args.port,
             inbrowser=args.open,
             keep_alive=args.keep_alive,
-            easy=args.easy,
+            easy=easy_mode,
         )
     )
