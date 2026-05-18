@@ -92,7 +92,8 @@ def gdown_download(url=None, output=None):
 
         if gdrive_file_id and is_gdrive_download_link:
             content_disposition = unquote(res.headers["Content-Disposition"])
-            filename_from_url = (re.search(r"filename\*=UTF-8''(.*)", content_disposition) or re.search(r'filename=["\']?(.*?)["\']?$', content_disposition)).group(1).replace(os.path.sep, "_")
+            match = re.search(r"filename\*=UTF-8''(.*)", content_disposition) or re.search(r'filename=["\']?(.*?)["\']?$', content_disposition)
+            filename_from_url = (match.group(1).replace(os.path.sep, "_") if match else os.path.basename(url))
         else: filename_from_url = os.path.basename(url)
 
         output = os.path.join(output or ".", filename_from_url)
@@ -108,9 +109,12 @@ def gdown_download(url=None, output=None):
                     pbar.update(len(chunk))
 
                 pbar.close()
-                if tmp_file: f.close()
         finally:
-            os.rename(tmp_file, output)
+            f.close()
+            try:
+                os.rename(tmp_file, output)
+            except OSError:
+                pass
             sess.close()
 
         return output

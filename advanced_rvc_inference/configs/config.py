@@ -159,7 +159,7 @@ class Config:
             fp16 = False
             try:
                 with open(self.configs_path, "w", encoding="utf-8") as f:
-                    json.dump(self.configs, f, indent=4)
+                    json.dump({"fp16": False}, f)
             except OSError:
                 pass
 

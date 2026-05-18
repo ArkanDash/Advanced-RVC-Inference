@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "advanced-rvc-inference"
 version = "2.1.0"
 description = "Advanced RVC Inference - A comprehensive tool for RVC (Retrieval-based Voice Conversion) inference, training, and more"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [

@@ -254,7 +254,7 @@ def launch(
         return 1
     except OSError as e:
         if "Address already in use" in str(e):
-            logger.error(f"Port {server_port} is already in use")
+            logger.error(f"Port {port} is already in use")
             logger.info("Try using a different port with: rvc-cli serve --port 7861")
         else:
             logger.error(f"Failed to start server: {e}")
@@ -335,11 +335,6 @@ def create_app():
 if __name__ == "__main__":
     import argparse
 
-# Fix import errors by ensuring cwd is in sys.path
-import os
-if os.getcwd() not in sys.path:
-    sys.path.append(os.getcwd())
-
     parser = argparse.ArgumentParser(description="Launch Advanced RVC Inference GUI")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=7860, help="Port to bind to")
@@ -347,7 +342,7 @@ if os.getcwd() not in sys.path:
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
-    parser.add_argument("--easy", "-ez", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
+    parser.add_argument("--easy", "-E", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
 
     args = parser.parse_args()
     easy_mode = args.easy is not None and args.easy.lower() in ("true", "1", "yes")
