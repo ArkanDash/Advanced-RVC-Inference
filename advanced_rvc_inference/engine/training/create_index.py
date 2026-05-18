@@ -46,7 +46,7 @@ def main():
         if big_npy.shape[0] > 2e5 and (index_algorithm == "Auto" or index_algorithm == "KMeans"): big_npy = (MiniBatchKMeans(n_clusters=10000, verbose=True, batch_size=256 * cpu_count(), compute_labels=False, init="random").fit(big_npy).cluster_centers_)
         np.save(os.path.join(exp_dir, "total_fea.npy"), big_npy)
 
-        n_ivf = min(int(16 * np.sqrt(big_npy.shape[0])), big_npy.shape[0] // 39)
+        n_ivf = max(1, min(int(16 * np.sqrt(big_npy.shape[0])), big_npy.shape[0] // 39))
         index_trained = faiss.index_factory(256 if version == "v1" else 768, f"IVF{n_ivf},Flat")
         index_ivf_trained = faiss.extract_index_ivf(index_trained)
         index_ivf_trained.nprobe = 1

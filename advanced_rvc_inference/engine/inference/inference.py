@@ -745,7 +745,10 @@ def whisper_process(
     except Exception as e:
         out_queue.put(e)
     finally:
-        del segments
+        try:
+            del segments
+        except NameError:
+            pass
         gc.collect()
 
 def convert_with_whisper(
@@ -925,6 +928,7 @@ def convert_with_whisper(
 
         merged_segments, current_text = [], []
         current_speaker, current_start = None, None
+        end_time = 0.0
 
         for i, segment in enumerate(segments):
             speaker = segment["speaker"]

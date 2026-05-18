@@ -4,7 +4,7 @@ Configuration modules for Advanced RVC Inference.
 This package contains configuration files and settings.
 """
 
-__all__ = ["config", "config_settings"]
+__all__ = ["config"]
 
 from .config import Config
 from . import config as config_module

@@ -26,7 +26,7 @@ argv_is_allows = [
     "--help_audio_effects", "--help_convert", "--help_create_dataset",
     "--help_create_index", "--help_extract", "--help_preprocess",
     "--help_separate_music", "--help_train", "--help",
-    "--create_reference", "help_create_reference",
+    "--create_reference", "--help_create_reference",
 ]
 
 if argv not in argv_is_allows:
@@ -331,5 +331,3 @@ if __name__ == "__main__":
         mp.set_start_method("spawn")
     if "--preprocess" in argv or "--extract" in argv:
         mp.set_start_method("spawn", force=True)
-
-    main()

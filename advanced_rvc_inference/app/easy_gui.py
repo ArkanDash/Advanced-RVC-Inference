@@ -655,10 +655,6 @@ def create_easy_app(theme=None):
                 def get_gpu_info():
                     import torch
 
-# Fix import errors by ensuring cwd is in sys.path
-import os
-if os.getcwd() not in sys.path:
-    sys.path.append(os.getcwd())
                     if torch.cuda.is_available():
                         name = torch.cuda.get_device_name(0)
                         mem = torch.cuda.get_device_properties(0).total_memory / (1024**3)

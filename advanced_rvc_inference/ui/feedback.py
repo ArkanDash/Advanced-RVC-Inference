@@ -277,7 +277,7 @@ def change_choices_del() -> List[Dict[str, Any]]:
         if os.path.exists(configs["weights_path"]):
             models = sorted([
                 model for model in os.listdir(configs["weights_path"]) 
-                if model.endswith(".pth") and not model.startswith("G_") and not model.startswith("D_")
+                if model.endswith((".pth", ".onnx")) and not model.startswith("G_") and not model.startswith("D_")
             ])
         
         directories = []

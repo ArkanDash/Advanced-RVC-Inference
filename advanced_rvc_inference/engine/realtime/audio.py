@@ -237,7 +237,7 @@ class Audio:
 
         if output_audio_device and "WASAPI" in output_audio_device.host_api:
             output_extra_setting = sd.WasapiSettings(exclusive=wasapi_exclusive_mode, auto_convert=not wasapi_exclusive_mode)
-        elif input_audio_device and "ASIO" in input_audio_device.host_api and asio_output_channel != -1:
+        elif output_audio_device and "ASIO" in output_audio_device.host_api and asio_output_channel != -1:
             output_extra_setting = sd.AsioSettings(channel_selectors=[asio_output_channel])
             output_channels = 1
 
