@@ -9,6 +9,7 @@ This module allows the package to be run as a module:
 """
 
 import sys
+import os
 from pathlib import Path
 
 
@@ -18,6 +19,9 @@ def main():
     parent_dir = Path(__file__).parent.parent
     if str(parent_dir) not in sys.path:
         sys.path.insert(0, str(parent_dir))
+
+    # Also add current working directory for imports
+    sys.path.append(os.getcwd())
 
     # Import and run CLI
     from advanced_rvc_inference import cli

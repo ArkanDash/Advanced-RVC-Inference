@@ -40,7 +40,7 @@ def spectrogram_torch(
 
     if str(y.device).startswith(("ocl", "privateuseone")):
         if stft is None: 
-            from advanced_rvc_inference.models.backends.utils import STFT
+            from advanced_rvc_inference.engine.models.backends.utils import STFT
 
             stft = STFT(
                 filter_length=n_fft, 

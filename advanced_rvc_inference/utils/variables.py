@@ -30,7 +30,7 @@ logger.propagate = False
 # Create singleton config instance
 _config_instance = None
 
-sys.path.append(os.gecwd())
+sys.path.append(os.getcwd())
 
 def get_config():
     """Get the singleton Config instance.
@@ -129,7 +129,7 @@ class Config:
     def is_zluda(self) -> bool:
         """Check if running under ZLUDA (AMD GPU via CUDA compatibility layer)."""
         try:
-            from advanced_rvc_inference.models.backends import zluda
+            from advanced_rvc_inference.engine.models.backends import zluda
             return zluda.is_available()
         except Exception:
             return False
@@ -184,7 +184,7 @@ class Config:
 
             # Check for other accelerators
             try:
-                from advanced_rvc_inference.models.backends import directml, opencl
+                from advanced_rvc_inference.engine.models.backends import directml, opencl
 
                 if directml.is_available():
                     return "privateuseone:0"

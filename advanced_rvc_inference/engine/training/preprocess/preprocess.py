@@ -15,8 +15,9 @@ from scipy.io import wavfile
 from distutils.util import strtobool
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.models.utils import load_audio
+from advanced_rvc_inference.engine.models.utils import load_audio
 from advanced_rvc_inference.engine.training.preprocess.slicer2 import Slicer
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
 

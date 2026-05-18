@@ -11,8 +11,9 @@ except ImportError:
     WebSocketDisconnect = None
     WebSocket = None
 
+sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.models.utils import clear_gpu_cache
+from advanced_rvc_inference.engine.models.utils import clear_gpu_cache
 from advanced_rvc_inference.utils.variables import configs, translations, logger
 from advanced_rvc_inference.engine.realtime.realtime import VoiceChanger, RVC_Realtime
 

@@ -16,6 +16,8 @@ except ImportError:
 
 from queue import Queue
 
+sys.path.append(os.getcwd())
+
 from advanced_rvc_inference.utils.variables import logger, translations
 
 class ServerAudioDevice:

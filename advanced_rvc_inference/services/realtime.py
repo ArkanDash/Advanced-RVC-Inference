@@ -2,6 +2,7 @@ import os
 import sys
 import time
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
@@ -164,7 +165,7 @@ def realtime_stop():
         audio_manager = callbacks = None
         gr_info(translations["realtime_has_stop"])
 
-        from advanced_rvc_inference.models.utils import clear_gpu_cache
+        from advanced_rvc_inference.engine.models.utils import clear_gpu_cache
         clear_gpu_cache()
 
         return translations["realtime_has_stop"], interactive_true, interactive_false
