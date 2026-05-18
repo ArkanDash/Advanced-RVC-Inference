@@ -68,7 +68,8 @@ def format_timestamp(seconds):
     hours = int(seconds // 3600)
     minutes = int((seconds % 3600) // 60)
 
-    seconds = int(seconds % 60)
-    miliseconds = int((seconds - int(seconds)) * 1000)
+    fractional = seconds % 60
+    seconds = int(fractional)
+    milliseconds = int((fractional - seconds) * 1000)
 
-    return f"{hours:02}:{minutes:02}:{seconds:02},{miliseconds:03}"
+    return f"{hours:02}:{minutes:02}:{seconds:02},{milliseconds:03}"

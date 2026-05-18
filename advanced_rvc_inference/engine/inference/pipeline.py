@@ -182,7 +182,7 @@ class Pipeline:
                 model, 
                 net_g, 
                 sid, 
-                audio_pad[t:], 
+                audio_pad[t if t is not None else 0:], 
                 (pitch[:, t // self.window :] if t is not None else pitch) if pitch_guidance else None, 
                 (pitchf[:, t // self.window :] if t is not None else pitchf) if pitch_guidance else None, 
                 index, 

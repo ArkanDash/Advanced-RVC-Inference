@@ -90,6 +90,8 @@ class Pipeline:
     def execute(self, audio, pitch = None, pitchf = None, f0_up_key = 0, index_rate = 0.5, audio_feats_len = 0, silence_front = 0, skip_head = None, return_length = None, protect = 0.5, filter_radius = 3, rms_mix_rate = 1, f0_autotune = False, f0_autotune_strength = 1, proposal_pitch = False, proposal_pitch_threshold = 255.0):
         with torch.no_grad():     
             assert audio.dim() == 1, audio.dim()
+            if return_length is None or return_length == 0:
+                return_length = audio_feats_len if audio_feats_len > 0 else 1
             formant_length = int(np.ceil(return_length * 1.0))
 
             pitch, pitchf = self.predictor.realtime_calculator(audio[silence_front:], self.f0_method, pitch, pitchf, f0_up_key, filter_radius, f0_autotune, f0_autotune_strength, proposal_pitch, proposal_pitch_threshold) if self.use_f0 else (None, None)

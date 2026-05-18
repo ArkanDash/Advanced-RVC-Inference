@@ -50,8 +50,8 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
         vocoder = ckpt1.get("vocoder", "Default")
         rms_extract = ckpt1.get("energy", False)
 
-        ckpt1 = extract(ckpt1) if "model" in ckpt1 else ckpt1["weight"]
-        ckpt2 = extract(ckpt2) if "model" in ckpt2 else ckpt2["weight"]
+        ckpt1 = extract(ckpt1)["weight"] if "model" in ckpt1 else ckpt1["weight"]
+        ckpt2 = extract(ckpt2)["weight"] if "model" in ckpt2 else ckpt2["weight"]
 
         if sorted(list(ckpt1.keys())) != sorted(list(ckpt2.keys())): 
             gr_warning(translations["architectures_not_same"])
@@ -135,6 +135,9 @@ def model_info(path):
             if prop.key == "model_info":
                 model_data = json.loads(prop.value)
                 break
+
+        if model_data is None:
+            return gr_warning(translations.get("model_info_not_found", "No model info found in ONNX metadata"))
 
     gr_info(translations["read_info"])
 

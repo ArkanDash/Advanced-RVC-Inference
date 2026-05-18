@@ -90,7 +90,7 @@ def create_reference(
         sys.exit(1)
 
     output_reference = os.path.join(configs["reference_path"], f"{reference_name}_{version}_{embedder_model}_{pitch_guidance}_{use_energy}")
-    if os.path.exists(output_reference): shutil.rmtree(reference_name, ignore_errors=True)
+    if os.path.exists(output_reference): shutil.rmtree(output_reference, ignore_errors=True)
 
     os.makedirs(output_reference)
     logger.info(translations["start_create_reference"])

@@ -682,11 +682,6 @@ def cmd_serve(args):
     try:
         from advanced_rvc_inference.app.gui import launch
 
-# Fix import errors by ensuring cwd is in sys.path
-import os
-if os.getcwd() not in sys.path:
-    sys.path.append(os.getcwd())
-
         launch(
             share=args.share,
             server_name=args.host,

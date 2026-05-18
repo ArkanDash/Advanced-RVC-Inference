@@ -561,7 +561,7 @@
     "tts_tab": true,
     "create_dataset_tab": true,
     "training_tab": true,
-    "fushion_tab": true,
+    "fusion_tab": true,
     "read_tab": true,
     "onnx_tab": true,
     "downloads_tab": true,

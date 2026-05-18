@@ -18,7 +18,7 @@ def extra_tab(app):
             gr.Markdown(translations["settings_markdown"])
             settings_tab(app)
             
-        with gr.TabItem(translations["fushion"], visible=configs.get("fushion_tab", True)):
+        with gr.TabItem(translations["fushion"], visible=configs.get("fusion_tab", True)):
             gr.Markdown(translations["fushion_markdown"])
             fushion_tab()
 
