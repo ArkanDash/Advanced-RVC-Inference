@@ -342,10 +342,9 @@ if __name__ == "__main__":
     parser.add_argument("--no-share", action="store_true", help="Disable public URL, use local access only")
     parser.add_argument("--open", action="store_true", help="Open in browser")
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
-    parser.add_argument("--easy", "-E", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
+    parser.add_argument("--easy", action="store_true", help="Launch Easy GUI (simplified mode)")
 
     args = parser.parse_args()
-    easy_mode = args.easy is not None and args.easy.lower() in ("true", "1", "yes")
 
     sys.exit(
         launch(
@@ -354,6 +353,6 @@ if __name__ == "__main__":
             server_port=args.port,
             inbrowser=args.open,
             keep_alive=args.keep_alive,
-            easy=easy_mode,
+            easy=args.easy,
         )
     )
