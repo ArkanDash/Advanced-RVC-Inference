@@ -675,7 +675,7 @@ def cmd_download(args):
 
 def cmd_serve(args):
     """Launch the web interface."""
-    easy_mode = args.easy is not None and args.easy.lower() in ("true", "1", "yes")
+    easy_mode = getattr(args, 'easy', False)
     mode_str = "Easy GUI" if easy_mode else "Full GUI"
     logger.info("Starting web interface (%s)...", mode_str)
 
@@ -936,7 +936,7 @@ For more information, visit:
     p.add_argument("--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)")
     p.add_argument("--port", type=int, default=7860, help="Port to bind (default: 7860)")
     p.add_argument("--share", action="store_true", help="Create public share URL")
-    p.add_argument("--easy", "-ez", type=str, default=None, help="Launch Easy GUI (simplified mode). Use 'true' to enable.")
+    p.add_argument("--easy", action="store_true", help="Launch Easy GUI (simplified mode)")
     p.set_defaults(func=cmd_serve)
 
     # ----- info -----
