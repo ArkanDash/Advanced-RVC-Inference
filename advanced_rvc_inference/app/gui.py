@@ -335,6 +335,10 @@ def create_app():
 if __name__ == "__main__":
     import argparse
 
+    # Handle shorthand launch args (ez, easygui -> --easy)
+    if len(sys.argv) > 1 and sys.argv[1].lower() in ("ez", "easygui"):
+        sys.argv[1] = "--easy"
+
     parser = argparse.ArgumentParser(description="Launch Advanced RVC Inference GUI")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=7860, help="Port to bind to")
@@ -344,7 +348,7 @@ if __name__ == "__main__":
     parser.add_argument("--keep-alive", action="store_true", default=True, help="Keep tunnel alive (default: True)")
     parser.add_argument("--easy", action="store_true", help="Launch Easy GUI (simplified mode)")
 
-    args = parser.parse_args()
+    args, _unknown = parser.parse_known_args()
 
     sys.exit(
         launch(
