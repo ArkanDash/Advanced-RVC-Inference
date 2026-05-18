@@ -10,6 +10,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils import huggingface, gdown, meganz, mediafire, pixeldrain
 from advanced_rvc_inference.services.process import move_files_from_directory, fetch_pretrained_data, extract_name_model

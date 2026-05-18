@@ -105,7 +105,7 @@ def show_version():
             version_info.append(f"GPU Memory: {gpu_mem} GB")
             # ZLUDA / T4 detection
             try:
-                from advanced_rvc_inference.models.backends import zluda
+                from advanced_rvc_inference.engine.models.backends import zluda
                 if zluda.is_available():
                     version_info.append(f"ZLUDA: Detected (AMD GPU via CUDA compatibility)")
             except ImportError:
@@ -157,7 +157,7 @@ def show_info():
             info.append(f"  GPU Name: {gpu_name}")
             # ZLUDA detection
             try:
-                from advanced_rvc_inference.models.backends import zluda
+                from advanced_rvc_inference.engine.models.backends import zluda
                 if zluda.is_available():
                     info.append("  ZLUDA: Detected (AMD GPU via CUDA compatibility layer)")
                     info.append(f"  Backend: HIP/ROCm (via ZLUDA)")
@@ -681,6 +681,11 @@ def cmd_serve(args):
 
     try:
         from advanced_rvc_inference.app.gui import launch
+
+# Fix import errors by ensuring cwd is in sys.path
+import os
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
 
         launch(
             share=args.share,

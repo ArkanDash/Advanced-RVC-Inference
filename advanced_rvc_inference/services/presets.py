@@ -2,6 +2,7 @@ import os
 import sys
 import json
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import translations, configs
 from advanced_rvc_inference.utils.feedback import gr_info, gr_warning

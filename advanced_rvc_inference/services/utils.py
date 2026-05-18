@@ -6,6 +6,7 @@ import signal
 import requests
 from typing import Optional, List
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.feedback import gr_info, gr_warning
 from advanced_rvc_inference.utils.variables import translations, configs

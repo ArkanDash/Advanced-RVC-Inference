@@ -6,16 +6,17 @@ import numpy as np
 import torch.nn.functional as F
 import torchaudio.transforms as tat
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import config
-from advanced_rvc_inference.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
+from advanced_rvc_inference.engine.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
 
 class Inference:
     def get_synthesizer(self, model_path):
         model = load_model(model_path)
 
         if model_path.endswith(".pth"):
-            from advanced_rvc_inference.models.algorithms.synthesizers import Synthesizer
+            from advanced_rvc_inference.engine.models.algorithms.synthesizers import Synthesizer
 
             self.tgt_sr = model["config"][-1]
             model["config"][-3] = model["weight"]["emb_g.weight"].shape[0]
@@ -150,7 +151,7 @@ def create_pipeline(model_path=None, index_path=None, f0_method="rmvpe", f0_onnx
     inference = inference.get_synthesizer(model_path)
 
     if inference.use_f0:
-        from advanced_rvc_inference.models.predictors.Generator import Generator
+        from advanced_rvc_inference.engine.models.predictors.Generator import Generator
         predictor = Generator(sample_rate=sample_rate, hop_length=hop_length, f0_min=50.0, f0_max=1100.0, alpha=0.5, is_half=config.is_half, device=config.device, f0_onnx_mode=f0_onnx, del_onnx_model=False) 
     else: predictor = None
 

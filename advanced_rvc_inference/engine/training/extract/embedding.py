@@ -9,10 +9,11 @@ import concurrent.futures
 
 import numpy as np
 
+sys.path.append(os.getcwd())
 
 from advanced_rvc_inference.utils.variables import logger, translations, config
 from advanced_rvc_inference.engine.training.extract.setup_path import setup_paths
-from advanced_rvc_inference.models.utils import load_audio, load_embedders_model, extract_features
+from advanced_rvc_inference.engine.models.utils import load_audio, load_embedders_model, extract_features
 
 def process_file_embedding(files, embedder_model, embedders_mode, device, version, is_half, threads):
     model = load_embedders_model(embedder_model, embedders_mode)

@@ -13,6 +13,8 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from tqdm import tqdm
+
+sys.path.append(os.getcwd())
 from collections import deque
 from contextlib import nullcontext
 from random import randint, shuffle
@@ -26,8 +28,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
-from advanced_rvc_inference.models.utils import clear_gpu_cache
-from advanced_rvc_inference.models.backends import directml, opencl, zluda
+from advanced_rvc_inference.engine.models.utils import clear_gpu_cache
+from advanced_rvc_inference.engine.models.backends import directml, opencl, zluda
 
 # ZLUDA detection: True when running on AMD GPU via CUDA compatibility layer
 _is_zluda = zluda.is_available()
@@ -46,7 +48,7 @@ except Exception:
     _is_t4 = False
 from advanced_rvc_inference.utils.variables import logger, translations
 
-from advanced_rvc_inference.models.algorithms import commons
+from advanced_rvc_inference.engine.models.algorithms import commons
 from advanced_rvc_inference.engine.training.runner import losses
 
 from advanced_rvc_inference.engine.training.runner.extract_model import extract_model
@@ -362,8 +364,8 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         logger.warning(translations["not_enough_data"])
         sys.exit(1)
 
-    from advanced_rvc_inference.models.algorithms.synthesizers import Synthesizer
-    from advanced_rvc_inference.models.algorithms.discriminators import MultiPeriodDiscriminator
+    from advanced_rvc_inference.engine.models.algorithms.synthesizers import Synthesizer
+    from advanced_rvc_inference.engine.models.algorithms.discriminators import MultiPeriodDiscriminator
 
     net_g, net_d = (
         Synthesizer(
@@ -386,7 +388,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     net_g, net_d = (net_g.cuda(device_id), net_d.cuda(device_id)) if torch.cuda.is_available() else (net_g.to(device), net_d.to(device))
 
     # Use the optimizer registry to get the optimizer class
-    from advanced_rvc_inference.models.optimizers import get_optimizer_class, get_optimizer_info
+    from advanced_rvc_inference.engine.models.optimizers import get_optimizer_class, get_optimizer_info
 
     try:
         optimizer_optim = get_optimizer_class(optimizer_choice)

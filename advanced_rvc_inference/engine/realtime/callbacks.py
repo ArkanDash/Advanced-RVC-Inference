@@ -4,6 +4,8 @@ import threading
 
 import numpy as np
 
+sys.path.append(os.getcwd())
+
 
 from advanced_rvc_inference.engine.realtime.audio import Audio
 from advanced_rvc_inference.utils.variables import logger, translations

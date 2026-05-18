@@ -8,8 +8,9 @@ import torch.multiprocessing as mp
 
 from distutils.util import strtobool
 
+sys.path.append(os.getcwd())
 
-from advanced_rvc_inference.models.utils import check_assets
+from advanced_rvc_inference.engine.models.utils import check_assets
 from advanced_rvc_inference.engine.training.extract.rms import run_rms_extraction
 from advanced_rvc_inference.engine.training.extract.feature import run_pitch_extraction
 from advanced_rvc_inference.utils.variables import config, logger, translations, configs
