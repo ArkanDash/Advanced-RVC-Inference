@@ -749,7 +749,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
             wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
 
-        for _ in range(d_step_per_g_step):
+        for d_step_i in range(d_step_per_g_step):
             with autocasts:
                 y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
                 loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
@@ -759,13 +759,18 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
 
             if autocast_enabled:
                 scaler.scale(loss_disc).backward()
-                scaler.unscale_(optim_d)
-                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                scaler.step(optim_d)
+                # Only step optimizer on last d_step to avoid
+                # scaler.unscale_() after step() on subsequent iterations
+                if d_step_i == d_step_per_g_step - 1:
+                    scaler.unscale_(optim_d)
+                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                    scaler.step(optim_d)
+                    scaler.update()
             else:
                 loss_disc.backward()
-                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                optim_d.step()
+                if d_step_i == d_step_per_g_step - 1:
+                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                    optim_d.step()
 
         with autocasts:
             y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
