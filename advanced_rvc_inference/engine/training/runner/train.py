@@ -170,6 +170,10 @@ if torch.cuda.is_available() and not _is_zluda:
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
 global_step, last_loss_gen_all, overtrain_save_epoch = 0, 0, 0
 loss_gen_history, smoothed_loss_gen_history, loss_disc_history, smoothed_loss_disc_history = [], [], [], []
+# Initialise overtraining counters so they exist even when resuming from a
+# checkpoint at epoch > 1 with overtraining_detector enabled.
+consecutive_increases_gen = 0
+consecutive_increases_disc = 0
 avg_losses = {
     "grad_d_50": deque(maxlen=50), 
     "grad_g_50": deque(maxlen=50), 
@@ -612,8 +616,19 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
     # T4: FP16 is well-supported on Turing architecture
     _scaler_enabled = main_config.is_half and device.type == "cuda"
-    scaler = GradScaler(
-        device=device, 
+    # Use separate GradScalers for D and G to avoid interference:
+    # When D calls scaler.update() every batch (even during G's gradient
+    # accumulation), it resets the internal state. A shared scaler causes
+    # "unscale_() after step()" errors and incorrect loss-scale factors.
+    scaler_g = GradScaler(
+        device=device,
+        enabled=_scaler_enabled,
+        growth_factor=2.0,
+        backoff_factor=0.5,
+        growth_interval=100
+    )
+    scaler_d = GradScaler(
+        device=device,
         enabled=_scaler_enabled,
         growth_factor=2.0,
         backoff_factor=0.5,
@@ -637,7 +652,14 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     
     cache = []
 
-    if len(scaler_dict) > 0: scaler.load_state_dict(scaler_dict)
+    # Restore scaler states from checkpoint (backward-compatible: single dict → both scalers)
+    if len(scaler_dict) > 0:
+        if isinstance(scaler_dict, dict) and "scaler_g" in scaler_dict:
+            scaler_g.load_state_dict(scaler_dict["scaler_g"])
+            scaler_d.load_state_dict(scaler_dict.get("scaler_d", scaler_dict["scaler_g"]))
+        else:
+            scaler_g.load_state_dict(scaler_dict)
+            scaler_d.load_state_dict(scaler_dict)
 
     if use_custom_reference and os.path.isfile(os.path.join(reference_path, "feats.npy")):
         import numpy as np
@@ -673,13 +695,13 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler_g, scaler_d, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
@@ -749,28 +771,31 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
             wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
 
+        # Initialize grad_norm_d so it is always defined (needed for logging
+        # even when the batch is skipped by gradient accumulation).
+        grad_norm_d = 0.0
+
+        # ── Discriminator step ──────────────────────────────────────────
+        # Each D sub-step is independent: zero_grad → forward → backward → step.
+        # This avoids the bug where zero_grad inside the loop cleared gradients
+        # accumulated by earlier iterations while step() only fired on the last.
         for d_step_i in range(d_step_per_g_step):
             with autocasts:
                 y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
                 loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
 
-            # Optimization: set_to_none=True is faster than zeroing gradients
             optim_d.zero_grad(set_to_none=True)
 
             if autocast_enabled:
-                scaler.scale(loss_disc).backward()
-                # Only step optimizer on last d_step to avoid
-                # scaler.unscale_() after step() on subsequent iterations
-                if d_step_i == d_step_per_g_step - 1:
-                    scaler.unscale_(optim_d)
-                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                    scaler.step(optim_d)
-                    scaler.update()
+                scaler_d.scale(loss_disc).backward()
+                scaler_d.unscale_(optim_d)
+                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                scaler_d.step(optim_d)
+                scaler_d.update()
             else:
                 loss_disc.backward()
-                if d_step_i == d_step_per_g_step - 1:
-                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
-                    optim_d.step()
+                grad_norm_d = commons.clip_grad_value(net_d.parameters(), None)
+                optim_d.step()
 
         with autocasts:
             y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
@@ -834,25 +859,27 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
         if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
 
-        # Optimization: scale loss by accumulation steps for correct gradient averaging
+        # ── Generator step (with gradient accumulation) ──────────────────
         loss_gen_all_scaled = loss_gen_all * loss_scale_factor
 
-        # Initialize grad_norm_g so it's always defined (needed for gradient accumulation)
         grad_norm_g = 0.0
 
-        # Optimization: set_to_none=True is faster than zeroing gradients
-        optim_g.zero_grad(set_to_none=True)
+        # Only zero gradients at the start of an accumulation cycle so that
+        # gradients from previous micro-batches are preserved.
+        is_accum_step = (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps
+        if is_accum_step or (batch_idx + 1) % grad_accum_steps == 1:
+            optim_g.zero_grad(set_to_none=True)
+
         if autocast_enabled:
-            scaler.scale(loss_gen_all_scaled).backward()
-            # Optimization: only step optimizer on last accumulation step
-            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
-                scaler.unscale_(optim_g)
+            scaler_g.scale(loss_gen_all_scaled).backward()
+            if is_accum_step:
+                scaler_g.unscale_(optim_g)
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
-                scaler.step(optim_g)
-                scaler.update()
+                scaler_g.step(optim_g)
+                scaler_g.update()
         else:
             loss_gen_all_scaled.backward()
-            if (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps:
+            if is_accum_step:
                 grad_norm_g = commons.clip_grad_value(net_g.parameters(), None)
                 optim_g.step()
 
@@ -1015,7 +1042,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "G_" + checkpoint_suffix), 
-                scaler
+                scaler_g
             )
             save_checkpoint(
                 logger, 
@@ -1024,7 +1051,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "D_" + checkpoint_suffix), 
-                scaler
+                scaler_d
             )
 
             if custom_save_every_weights: model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))
