@@ -84,7 +84,7 @@ def parse_arguments():
     parser.add_argument("--save_every_epoch", type=int, required=True)
     parser.add_argument("--save_only_latest", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--save_every_weights", type=lambda x: bool(strtobool(x)), default=True)
-    parser.add_argument("--total_epoch", type=int, default=300)
+    parser.add_argument("--total_epoch", type=int, default=60)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--gpu", type=str, default="0")
     parser.add_argument("--pitch_guidance", type=lambda x: bool(strtobool(x)), default=True)
