@@ -578,7 +578,7 @@
     "app_show_error": true,
     "delete_exists_file": false,
     "convert_path": "advanced_rvc_inference/engine/inference/convert.py",
-    "separate_path": "advanced_rvc_inference/uvr/separate_music.py",
+    "separate_path": "advanced_rvc_inference/engine/uvr/separate_music.py",
     "create_dataset_path": "advanced_rvc_inference/engine/training/create_dataset.py",
     "preprocess_path": "advanced_rvc_inference/engine/training/preprocess/preprocess.py",
     "extract_path": "advanced_rvc_inference/engine/training/extract/extract.py",
