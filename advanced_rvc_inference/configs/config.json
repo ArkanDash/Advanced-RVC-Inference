@@ -602,6 +602,7 @@
     "audios_path": "advanced_rvc_inference/assets/audios",
     "uvr_path": "advanced_rvc_inference/assets/audios/uvr",
     "reference_path": "advanced_rvc_inference/assets/logs/reference",
+    "configs_path": "advanced_rvc_inference/configs",
     "limit_f0": 8,
     "debug_mode": false,
     "pretrain_verify_shape": true,
