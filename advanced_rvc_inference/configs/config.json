@@ -5,7 +5,7 @@
         "id-ID",
         "vi-VN"
     ],
-    "theme": "NoCrypt/miku",
+    "theme": "nuttea/Softblue",
     "themes": [
         "NeoPy/Soft",
         "NoCrypt/miku",
@@ -14,7 +14,6 @@
         "ParityError/Interstellar",
         "earneleh/paris",
         "shivi/calm_seafoam",
-        "Hev832/Applio",
         "YTheme/Minecraft",
         "gstaff/sketch",
         "SebastianBravo/simci_css",
