@@ -2,7 +2,7 @@
     "train": {
         "log_interval": 200,
         "seed": 1234,
-        "learning_rate": 5e-05,
+        "learning_rate": 1e-4,
         "betas": [0.8, 0.99],
         "eps": 1e-09,
         "lr_decay": 0.999875,

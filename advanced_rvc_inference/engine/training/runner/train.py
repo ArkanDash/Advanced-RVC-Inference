@@ -84,8 +84,8 @@ def parse_arguments():
     parser.add_argument("--save_every_epoch", type=int, required=True)
     parser.add_argument("--save_only_latest", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--save_every_weights", type=lambda x: bool(strtobool(x)), default=True)
-    parser.add_argument("--total_epoch", type=int, default=60)
-    parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--total_epoch", type=int, default=300)
+    parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--gpu", type=str, default="0")
     parser.add_argument("--pitch_guidance", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--g_pretrained_path", type=str, default="")
@@ -608,12 +608,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 
     scheduler_g, scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=config.train.lr_decay, last_epoch=epoch_str - 2), torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
     
-    # Warmup scheduler: linearly warm up learning rate for the first few epochs
-    # to stabilize early training and prevent gradient explosion
-    warmup_epochs = min(3, custom_total_epoch // 10) if custom_total_epoch >= 10 else 1
-    if epoch_str <= warmup_epochs and rank == 0:
-        logger.info(f"LR warmup active for first {warmup_epochs} epochs")
-    
     # CUDA Optimizer Training: Enhanced GradScaler settings for better CUDA performance
     # Using dynamic loss scaling for better mixed precision training stability
     # - growth_factor: Controls how fast the loss scale grows during training
@@ -701,16 +695,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                # Apply learning rate warmup for the first few epochs
-                if epoch <= warmup_epochs:
-                    warmup_factor = epoch / warmup_epochs
-                    for pg in optim_g.param_groups:
-                        pg['lr'] = config.train.learning_rate * g_lr_coeff * warmup_factor
-                    for pg in optim_d.param_groups:
-                        pg['lr'] = config.train.learning_rate * d_lr_coeff * warmup_factor
-                    if rank == 0:
-                        logger.info(f"Warmup epoch {epoch}/{warmup_epochs}: lr scale={warmup_factor:.2f}")
-                
                 train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler_g, scaler_d, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
                 scheduler_g.step(); scheduler_d.step()
     finally:
@@ -805,12 +789,12 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             if autocast_enabled:
                 scaler_d.scale(loss_disc).backward()
                 scaler_d.unscale_(optim_d)
-                grad_norm_d = commons.clip_grad_value(net_d.parameters(), 1.0)
+                grad_norm_d = commons.grad_norm(net_d.parameters())
                 scaler_d.step(optim_d)
                 scaler_d.update()
             else:
                 loss_disc.backward()
-                grad_norm_d = commons.clip_grad_value(net_d.parameters(), 1.0)
+                grad_norm_d = commons.grad_norm(net_d.parameters())
                 optim_d.step()
 
         with autocasts:
@@ -889,13 +873,13 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             scaler_g.scale(loss_gen_all_scaled).backward()
             if is_accum_step:
                 scaler_g.unscale_(optim_g)
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), 1.0)
+                grad_norm_g = commons.grad_norm(net_g.parameters())
                 scaler_g.step(optim_g)
                 scaler_g.update()
         else:
             loss_gen_all_scaled.backward()
             if is_accum_step:
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), 1.0)
+                grad_norm_g = commons.grad_norm(net_g.parameters())
                 optim_g.step()
 
         global_step += 1

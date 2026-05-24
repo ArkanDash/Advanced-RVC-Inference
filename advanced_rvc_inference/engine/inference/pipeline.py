@@ -199,8 +199,14 @@ class Pipeline:
         audio_opt = np.concatenate(audio_opt)
         if rms_mix_rate != 1: audio_opt = change_rms(audio, self.sample_rate, audio_opt, self.tgt_sr, rms_mix_rate)
 
-        audio_max = np.abs(audio_opt).max() / 0.99
-        if audio_max > 1: audio_opt /= audio_max
+        # Always normalize output to a healthy level (-1 dB peak)
+        # This fixes extremely quiet output that the neural network can produce
+        audio_max = np.abs(audio_opt).max()
+        if audio_max > 1e-6:
+            target_peak = 10 ** (-1 / 20)  # -1 dB ≈ 0.891
+            audio_opt *= target_peak / audio_max
+        elif audio_max > 0:
+            audio_opt /= audio_max  # prevent division issues with very small values
 
         if pitch_guidance:
             del pitch, pitchf
