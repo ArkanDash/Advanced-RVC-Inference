@@ -41,6 +41,15 @@ def sequence_mask(length, max_length = None):
     if max_length is None: max_length = length.max()
     return torch.arange(max_length, dtype=length.dtype, device=length.device).unsqueeze(0) < length.unsqueeze(1)
 
+def grad_norm(parameters, norm_type=2.0):
+    """Compute the total gradient norm of an iterable of parameters (numerically stable)."""
+    if isinstance(parameters, torch.Tensor):
+        parameters = [parameters]
+    parameters = [p for p in parameters if p.grad is not None]
+    if not parameters:
+        return 0.0
+    return torch.linalg.vector_norm(torch.stack([p.grad.norm(norm_type) for p in parameters]), ord=norm_type).item()
+
 def clip_grad_value(parameters, clip_value, norm_type=2):
     if isinstance(parameters, torch.Tensor): parameters = [parameters]
     norm_type = float(norm_type)

@@ -591,6 +591,8 @@ def cmd_train(args):
             cmd.extend(["--use_custom_reference", "--reference_path", args.reference_path])
         if args.checkpointing:
             cmd.append("--checkpointing")
+        if args.cosine_lr:
+            cmd.append("--use_cosine_annealing_lr")
 
         logger.info("Training started. This may take a while...")
 
@@ -905,6 +907,7 @@ For more information, visit:
     p.add_argument("--use_reference", action="store_true", help="Use custom reference set")
     p.add_argument("--reference_path", help="Path to reference set")
     p.add_argument("--checkpointing", action="store_true", help="Enable checkpointing")
+    p.add_argument("--cosine_lr", action="store_true", help="Use CosineAnnealingLR scheduler for better training quality")
     p.set_defaults(func=cmd_train)
 
     # ----- create-ref -----

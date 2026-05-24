@@ -107,6 +107,7 @@ def parse_arguments():
     parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
     parser.add_argument("--use_8bit_adam", type=lambda x: bool(strtobool(x)), default=False, help="Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)")
+    parser.add_argument("--use_cosine_annealing_lr", type=lambda x: bool(strtobool(x)), default=False, help="Use CosineAnnealingLR scheduler instead of ExponentialLR")
 
     return parser.parse_args()
 
@@ -115,7 +116,10 @@ g_lr_coeff = 1.0
 d_step_per_g_step = 1
 
 args = parse_arguments()
-model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model, use_8bit_adam = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model, args.use_8bit_adam
+model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model, use_8bit_adam, use_cosine_annealing_lr = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model, args.use_8bit_adam, args.use_cosine_annealing_lr
+
+# Discriminator version: use v3 discriminator for non-HiFi-GAN vocoders (matches Vietnamese-RVC)
+disc_version = version if vocoder not in ["RefineGAN", "BigVGAN"] else "v3"
 
 experiment_dir = os.path.join(main_configs["logs_path"], model_name)
 training_file_path = os.path.join(experiment_dir, "training_data.json")
@@ -362,7 +366,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     _pin_mem = not _is_zluda
     _num_workers = 2 if (_is_low_vram or _is_zluda) else 4
     _prefetch = 2 if (_is_low_vram or _is_zluda) else 8
-    train_loader = DataLoader(train_dataset, num_workers=_num_workers, shuffle=False, pin_memory=_pin_mem, collate_fn=TextAudioCollate(pitch_guidance=pitch_guidance, energy=energy_use), batch_sampler=DistributedBucketSampler(train_dataset, batch_size * n_gpus, [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], num_replicas=n_gpus, rank=rank, shuffle=True), persistent_workers=True, prefetch_factor=_prefetch)
+    train_loader = DataLoader(train_dataset, num_workers=_num_workers, shuffle=False, pin_memory=_pin_mem, collate_fn=TextAudioCollate(pitch_guidance=pitch_guidance, energy=energy_use), batch_sampler=DistributedBucketSampler(train_dataset, batch_size, [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], num_replicas=n_gpus, rank=rank, shuffle=True), persistent_workers=True, prefetch_factor=_prefetch)
 
     if len(train_loader) < 3:
         logger.warning(translations["not_enough_data"])
@@ -383,7 +387,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             energy=energy_use
         ), 
         MultiPeriodDiscriminator(
-            version, 
+            disc_version, 
             config.model.use_spectral_norm, 
             checkpointing=checkpointing
         )
@@ -606,7 +610,17 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             logger.error(e)
             sys.exit(1)
 
-    scheduler_g, scheduler_d = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=config.train.lr_decay, last_epoch=epoch_str - 2), torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
+    # Scheduler selection: CosineAnnealingLR or ExponentialLR (matches Vietnamese-RVC)
+    if use_cosine_annealing_lr:
+        scheduler_g, scheduler_d = (
+            torch.optim.lr_scheduler.CosineAnnealingLR(optim_g, T_max=total_epoch, eta_min=1e-6, last_epoch=epoch_str - 2),
+            torch.optim.lr_scheduler.CosineAnnealingLR(optim_d, T_max=total_epoch, eta_min=1e-6, last_epoch=epoch_str - 2)
+        )
+    else:
+        scheduler_g, scheduler_d = (
+            torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=config.train.lr_decay, last_epoch=epoch_str - 2),
+            torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
+        )
     
     # CUDA Optimizer Training: Enhanced GradScaler settings for better CUDA performance
     # Using dynamic loss scaling for better mixed precision training stability
@@ -616,23 +630,12 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
     # T4: FP16 is well-supported on Turing architecture
     _scaler_enabled = main_config.is_half and device.type == "cuda"
-    # Use separate GradScalers for D and G to avoid interference:
-    # When D calls scaler.update() every batch (even during G's gradient
-    # accumulation), it resets the internal state. A shared scaler causes
-    # "unscale_() after step()" errors and incorrect loss-scale factors.
-    scaler_g = GradScaler(
+    # Use a single shared GradScaler (matches Vietnamese-RVC reference).
+    # Separate scalers with growth_interval=100 caused unstable training
+    # because the loss scale grew too aggressively.
+    scaler = GradScaler(
         device=device,
-        enabled=_scaler_enabled,
-        growth_factor=2.0,
-        backoff_factor=0.5,
-        growth_interval=100
-    )
-    scaler_d = GradScaler(
-        device=device,
-        enabled=_scaler_enabled,
-        growth_factor=2.0,
-        backoff_factor=0.5,
-        growth_interval=100
+        enabled=_scaler_enabled
     )
     
     # CUDA memory optimization
@@ -652,14 +655,9 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     
     cache = []
 
-    # Restore scaler states from checkpoint (backward-compatible: single dict → both scalers)
+    # Restore scaler state from checkpoint
     if len(scaler_dict) > 0:
-        if isinstance(scaler_dict, dict) and "scaler_g" in scaler_dict:
-            scaler_g.load_state_dict(scaler_dict["scaler_g"])
-            scaler_d.load_state_dict(scaler_dict.get("scaler_d", scaler_dict["scaler_g"]))
-        else:
-            scaler_g.load_state_dict(scaler_dict)
-            scaler_d.load_state_dict(scaler_dict)
+        scaler.load_state_dict(scaler_dict)
 
     if use_custom_reference and os.path.isfile(os.path.join(reference_path, "feats.npy")):
         import numpy as np
@@ -695,13 +693,13 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler_g, scaler_d, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
@@ -787,11 +785,10 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             optim_d.zero_grad(set_to_none=True)
 
             if autocast_enabled:
-                scaler_d.scale(loss_disc).backward()
-                scaler_d.unscale_(optim_d)
+                scaler.scale(loss_disc).backward()
+                scaler.unscale_(optim_d)
                 grad_norm_d = commons.grad_norm(net_d.parameters())
-                scaler_d.step(optim_d)
-                scaler_d.update()
+                scaler.step(optim_d)
             else:
                 loss_disc.backward()
                 grad_norm_d = commons.grad_norm(net_d.parameters())
@@ -848,7 +845,8 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             
             # Calculate energy loss (L1 loss)
             loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
-            loss_energy = loss_energy * getattr(config.train, 'c_energy', 1.0)
+            # Use a small default weight for energy loss to avoid dominating total loss
+            loss_energy = loss_energy * getattr(config.train, 'c_energy', 0.1)
 
         loss_fm = losses.feature_loss(fmap_r, fmap_g)
         loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
@@ -870,12 +868,11 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             optim_g.zero_grad(set_to_none=True)
 
         if autocast_enabled:
-            scaler_g.scale(loss_gen_all_scaled).backward()
+            scaler.scale(loss_gen_all_scaled).backward()
             if is_accum_step:
-                scaler_g.unscale_(optim_g)
+                scaler.unscale_(optim_g)
                 grad_norm_g = commons.grad_norm(net_g.parameters())
-                scaler_g.step(optim_g)
-                scaler_g.update()
+                scaler.step(optim_g)
         else:
             loss_gen_all_scaled.backward()
             if is_accum_step:
@@ -1041,7 +1038,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "G_" + checkpoint_suffix), 
-                scaler_g
+                scaler
             )
             save_checkpoint(
                 logger, 
@@ -1050,7 +1047,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "D_" + checkpoint_suffix), 
-                scaler_d
+                scaler
             )
 
             if custom_save_every_weights: model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))

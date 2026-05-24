@@ -206,6 +206,7 @@ def training_model_tab():
                 custom_dataset = gr.Checkbox(label=translations["custom_dataset"], info=translations["custom_dataset_info"], value=False, interactive=True)
             with gr.Row():
                 multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
+                cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
                 deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
                 benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
 
@@ -372,7 +373,7 @@ def training_model_tab():
             not_use_pretrain, custom_pretrain, pretrained_G, pretrained_D, overtraining_detector,
             threshold, clean_up, cache_in_gpu, model_author, vocoders, checkpointing1,
             deterministic, benchmark, optimizer, rms_extract, custom_reference, reference_name,
-            multiscale_mel_loss
+            multiscale_mel_loss, cosine_lr
         ],
         outputs=[training_info],
         api_name="training_model"
