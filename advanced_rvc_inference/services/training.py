@@ -304,13 +304,13 @@ def one_click_train(
         sample_rate=sample_rate,
         cpu_core=os.cpu_count() or 4,
         cut_preprocess="Automatic",
-        process_effects=False,
+        process_effects=True,
         dataset=dataset_path,
         clean_dataset=False,
         clean_strength=0.7,
         chunk_len=3.0,
         overlap_len=0.3,
-        normalization_mode="none",
+        normalization_mode="post",
     ):
         step1_log = log
         all_logs += f"=== Step 1: Preprocessing ===\n{log}\n\n"

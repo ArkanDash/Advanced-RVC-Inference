@@ -45,7 +45,7 @@ def parse_arguments():
 
 class PreProcess:
     def __init__(self, sr, exp_dir, per):
-        self.slicer = Slicer(sr=sr, threshold=-42, min_length=1500, min_interval=400, hop_size=15, max_sil_kept=500)
+        self.slicer = Slicer(sr=sr, threshold=-40, min_length=4000, min_interval=300, hop_size=20, max_sil_kept=500)
         self.sr = sr
         self.b_high, self.a_high = signal.butter(N=5, Wn=HIGH_PASS_CUTOFF, btype="high", fs=self.sr)
         self.per = per
@@ -59,7 +59,7 @@ class PreProcess:
     def _normalize_audio(self, audio):
         tmp_max = np.abs(audio).max()
         if tmp_max > 2.5: return None
-        return (audio / tmp_max * (MAX_AMPLITUDE * ALPHA)) + (1 - ALPHA) * audio
+        return audio / tmp_max * MAX_AMPLITUDE
 
     def process_audio_segment(self, normalized_audio, sid, idx0, idx1, normalization_mode):
         if normalized_audio is None:
