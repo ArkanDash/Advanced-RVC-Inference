@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.npmjs.com)",
+      "WebSearch",
+      "Bash(node -e \"const pptx = require\\('pptxgenjs'\\); console.log\\(Object.keys\\(pptx.prototype || pptx\\).slice\\(0,5\\)\\); const p = new pptx\\(\\); console.log\\(p.presLayout\\); console.log\\(typeof p.ShapeType\\);\")",
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(ls /share/hc/utils/superz/test_beam6/ppt_normal_zh_66/download/ppt-workspace/*.html)",
+      "Bash(sort -t_ -k4 -n)",
+      "Bash(ls /share/hc/utils/superz/test_beam6/ppt_normal_zh_79/download/ppt-workspace/*.html)",
+      "Bash(ls /share/hc/utils/superz/test_beam6/ppt_normal_zh_78/download/ppt-workspace/*.html)",
+      "Bash(xargs -I{} head -3 {})",
+      "Bash(npm root:*)",
+      "Read(//root/.nvm/versions/node/v24.14.1/lib/node_modules/**)",
+      "Read(//usr/**)",
+      "Bash(NODE_PATH=/share/hc/utils/superz/p-p-p-x/ppt0403/node_modules node:*)"
+    ]
+  }
+}

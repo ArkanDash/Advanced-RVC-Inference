@@ -1,0 +1,151 @@
+% ========================================================================
+% Progress Navigation Bar for Beamer
+% ========================================================================
+% Usage: \input{progress-navbar.tex} in the preamble (after \usetheme)
+%
+% Features:
+%   - Dynamic equal-width boxes: each box = (paperwidth - 50pt) / total frames
+%   - Three-level symbols: ≡ (home), 1/2/3 (section), ◆ (subsection), - (slide)
+%   - Teal progress coloring: visited = teal!60 fill, unvisited = hollow
+%   - Clickable hyperlinks on every box
+%   - Automatic section/subsection title pages
+%   - Requires --runs 2 for correct width calculation
+%
+% Customization:
+%   - Change "teal!60" to any color (e.g. myblue!60) for different themes
+%   - Change "teal" in \color{teal}\hrule for the top separator line
+% ========================================================================
+
+\makeatletter
+
+% ── Auto section/subsection title pages ─────────────────────────────────
+\AtBeginSection[]{\frame{\sectionpage}}
+\AtBeginSubsection[]{\frame{\subsectionpage}}
+
+% ── Lengths and counters ────────────────────────────────────────────────
+\newlength{\my@unitwidth}
+\newlength{\my@tempsize}
+\newcounter{my@sectnum}
+
+% ── Helper: extract last digit of section number ────────────────────────
+\newcommand{\my@lastdigit}[1]{%
+  \loop\ifnum\value{#1}>9\addtocounter{#1}{-10}\repeat
+  {\normalfont\arabic{#1}}%
+}
+
+% ── Box primitives ──────────────────────────────────────────────────────
+\newcommand\my@fixedbox[2]{%
+  \makebox[#1]{\rule[-1ex]{0pt}{3.25ex}#2}%
+}
+
+\newcommand\my@colorbox[3]{%
+  {\setlength{\fboxsep}{0pt}\colorbox{#1}{\my@fixedbox{#2}{#3}}}%
+}
+
+% ── Level marker: b=section, m=subsection, s=slide ─────────────────────
+\def\my@temptext{}
+\def\my@level{s}
+
+\newcommand{\my@navbox}[1][]{%
+  \if\relax\detokenize{#1}\relax
+    \def\my@tempbox{\my@fixedbox}%
+  \else
+    \def\my@tempbox{\my@colorbox{#1}}%
+  \fi
+  \if b\my@level
+    \def\my@temptext{\my@lastdigit{my@sectnum}}%
+  \fi
+  \if m\my@level
+    \def\my@temptext{$\diamond$}%
+  \fi
+  \if s\my@level
+    \def\my@temptext{$-$}%
+  \fi
+  \my@tempbox{\my@unitwidth}{\my@temptext}%
+}
+
+% ── Navigation box templates (home / done / todo) ──────────────────────
+\defbeamertemplate{navigation box}{home}{%
+  \my@colorbox{teal!60}{\my@unitwidth}{$\equiv$}%
+}
+
+\defbeamertemplate{navigation box}{done}{%
+  \my@navbox[teal!60]%
+}
+
+\defbeamertemplate{navigation box}{todo}{%
+  \my@navbox
+}
+
+% ── Box dispatch commands ──────────────────────────────────────────────
+\newcommand{\my@bigbox}{\gdef\my@level{b}\usebeamertemplate{navigation box}}
+\newcommand{\my@medbox}{\gdef\my@level{m}\usebeamertemplate{navigation box}}
+\newcommand{\my@smallbox}{\gdef\my@level{s}\usebeamertemplate{navigation box}}
+
+% ── Hook into Beamer's navigation infrastructure ──────────────────────
+\renewcommand{\sectionentry}[5]{\gdef\my@currentbox{big}\setcounter{my@sectnum}{#1}}
+\renewcommand{\beamer@subsectionentry}[5]{\gdef\my@currentbox{med}}
+
+\renewcommand{\slideentry}[6]{%
+  \def\my@temp@i{1/1}%
+  \def\my@temp@ii{#4}%
+  % Default: assume done
+  \ifx\my@temp@i\my@temp@ii
+    \setbeamertemplate{navigation box}[home]%
+  \else
+    \setbeamertemplate{navigation box}[done]%
+  \fi
+  % Override to todo if this slide is ahead of current position
+  \ifnum\c@section<#1%
+    \setbeamertemplate{navigation box}[todo]%
+  \else
+    \ifnum\c@section=#1\ifnum\c@subsection<#2%
+      \setbeamertemplate{navigation box}[todo]%
+    \else
+      \ifnum\c@subsection=#2\ifnum\c@subsectionslide<#3%
+        \setbeamertemplate{navigation box}[todo]%
+      \fi\fi
+    \fi\fi
+  \fi
+  % Dispatch to correct level box
+  \def\my@test@big{big}%
+  \def\my@test@med{med}%
+  \ifx\my@temp@i\my@temp@ii
+    \beamer@link(#4){\my@bigbox}%
+  \else
+    \ifx\my@currentbox\my@test@big
+      \beamer@link(#4){\my@bigbox}%
+    \else\ifx\my@currentbox\my@test@med
+      \beamer@link(#4){\my@medbox}%
+    \else
+      \beamer@link(#4){\my@smallbox}%
+    \fi\fi
+  \fi
+  \gdef\my@currentbox{small}%
+}
+
+% ── Footline template ─────────────────────────────────────────────────
+\defbeamertemplate{footline}{progress}
+{%
+  % Dynamic width: divide available space equally among all frames
+  \ifnum\inserttotalframenumber>0
+    \setlength{\my@unitwidth}{\dimexpr(\paperwidth - 50pt)/\inserttotalframenumber\relax}%
+  \else
+    \setlength{\my@unitwidth}{20pt}%
+  \fi
+  {\color{teal}\hrule}%
+  \hbox to \paperwidth{%
+    \hbox to \dimexpr\paperwidth - 50pt\relax{%
+      \kern2pt{\normalfont\dohead}\hfill
+    }%
+    \hbox to 50pt{%
+      \hfill{\normalfont\insertframenumber{}/\inserttotalframenumber}\kern4pt
+    }%
+  }%
+}
+
+% ── Activate ──────────────────────────────────────────────────────────
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[progress]
+
+\makeatother
