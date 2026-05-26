@@ -159,17 +159,14 @@ if not os.path.exists(config_save_path):
     else:
         raise FileNotFoundError(f"Config template not found at: {config_template_path}")
 
-# cuDNN settings — skip for ZLUDA (uses HIP MIOpen, not NVIDIA cuDNN)
-_cudnn_safe = not main_config.device.startswith("ocl") and not _is_zluda
-torch.backends.cudnn.deterministic = args.deterministic if _cudnn_safe else False
-torch.backends.cudnn.benchmark = args.benchmark if _cudnn_safe else False
+# cuDNN / TF32 — matches Vietnamese-RVC: controlled by config, not forced ON
+torch.backends.cudnn.deterministic = args.deterministic if not main_config.device.startswith(("ocl", "privateuseone")) and not _is_zluda else False
+torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.startswith(("ocl", "privateuseone")) and not _is_zluda else False
 
-# CUDA Optimizer Training: Enable additional CUDA optimizations
-# ZLUDA: TF32 and fp16 reduction are NVIDIA-specific, skip for ZLUDA
+tf32_enabled = getattr(main_config, 'tf32', False)
 if torch.cuda.is_available() and not _is_zluda:
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
-    torch.backends.cuda.matmul.allow_fp16_reduced_precision_reduction = True
+    torch.backends.cuda.matmul.allow_tf32 = tf32_enabled
+    torch.backends.cudnn.allow_tf32 = tf32_enabled
 
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
 global_step, last_loss_gen_all, overtrain_save_epoch = 0, 0, 0
@@ -187,7 +184,6 @@ avg_losses = {
     "kl_loss_50": deque(maxlen=50), 
     "mel_loss_50": deque(maxlen=50), 
     "gen_loss_50": deque(maxlen=50),
-    "energy_loss_50": deque(maxlen=50)
 }
 
 with open(config_save_path, "r") as f:
@@ -613,34 +609,15 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
         )
     
-    # CUDA Optimizer Training: Enhanced GradScaler settings for better CUDA performance
-    # Using dynamic loss scaling for better mixed precision training stability
-    # - growth_factor: Controls how fast the loss scale grows during training
-    # - backoff_factor: Controls how fast the loss scale decreases when NaN is detected
-    # - growth_interval: Number of successful steps before increasing loss scale
-    # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
-    # T4: FP16 is well-supported on Turing architecture
+    # is_half logic — matches Vietnamese-RVC exactly
+    is_half = main_config.is_half
+    if getattr(main_config, 'brain', False): is_half = True
+
     # Single shared GradScaler — matches Vietnamese-RVC and Applio exactly.
     # Pattern: D step (scale→backward→unscale→step, NO update),
     #          G step (scale→backward→unscale→step→update).
     # scaler.update() is called ONLY once per iteration, after the G step.
-    scaler = GradScaler(device=device, enabled=main_config.is_half and device.type == "cuda")
-    
-    # CUDA memory optimization
-    if device.type == "cuda":
-        torch.cuda.empty_cache()
-        # ZLUDA: skip allocator settings (CUDA-specific C++ API, may crash on HIP)
-        if not _is_zluda:
-            torch.cuda.memory._set_allocator_settings("max_split_size_mb:512")
-        # T4 / low-VRAM: enable CUDA memory efficient attention
-        if _is_low_vram and not _is_zluda:
-            try:
-                torch.backends.cuda.enable_mem_efficient_sdp(True)
-                if rank == 0:
-                    logger.info("T4/Low-VRAM: enabled memory-efficient scaled dot product attention")
-            except Exception:
-                pass
-    
+    scaler = GradScaler(device=device, enabled=is_half and device.type == "cuda")
     cache = []
 
     # Restore scaler state from checkpoint
@@ -690,10 +667,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
-    # CUDA Optimizer Training: Create CUDA stream for async operations
-    # ZLUDA: CUDA streams may not work reliably with HIP
-    cuda_stream = torch.cuda.Stream() if (device.type == "cuda" and not _is_zluda) else None
-    
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
         consecutive_increases_gen, consecutive_increases_disc = 0, 0
@@ -720,9 +693,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     epoch_recorder = EpochRecorder()
 
     autocast_enabled = main_config.is_half and device.type == "cuda"
-    # ZLUDA: force float16 (bfloat16 not reliably supported on HIP)
-    # T4: Turing arch supports both fp16 and bf16, use configured preference
-    autocast_dtype = torch.float32 if not autocast_enabled else (torch.float16 if _is_zluda else (torch.bfloat16 if main_config.brain else torch.float16))
+    autocast_dtype = torch.float32 if not autocast_enabled else (torch.bfloat16 if getattr(main_config, 'brain', False) else torch.float16)
     autocasts = autocast(device.type, enabled=autocast_enabled, dtype=autocast_dtype) if not device.type.startswith("ocl") else nullcontext()
     
     # Calculate total steps for this epoch
@@ -730,15 +701,12 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
     
     for batch_idx, info in data_iterator:
         # CUDA Optimizer Training: Use non-blocking data transfer for faster data loading
-        if device.type == "cuda" and not cache_data_in_gpu: 
-            if cuda_stream is not None:
-                with torch.cuda.stream(cuda_stream):
-                    info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
-                torch.cuda.current_stream().wait_stream(cuda_stream)
-            else:
-                info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
-        elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]  
-        else: info = [tensor.to(device) for tensor in info]
+        if device.type == "cuda" and not cache_data_in_gpu:
+            info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
+        elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu:
+            info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]
+        else:
+            info = [tensor.to(device) for tensor in info]
 
         phone, phone_lengths = info[0], info[1]
         if pitch_guidance:
@@ -864,7 +832,6 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         avg_losses["mel_loss_50"].append(loss_mel.detach())
         avg_losses["gen_loss_50"].append(loss_gen_all.detach())
         
-        # CUDA Optimizer Training: Track energy loss
         if energy_use:
             avg_losses["energy_loss_50"].append(loss_energy.detach())
 
@@ -880,8 +847,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean()
             }
             
-            # CUDA Optimizer Training: Add energy loss to logging
-            if energy_use and len(avg_losses["energy_loss_50"]) > 0:
+            if energy_use and len(avg_losses.get("energy_loss_50", [])) > 0:
                 scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
 
             summarize(
