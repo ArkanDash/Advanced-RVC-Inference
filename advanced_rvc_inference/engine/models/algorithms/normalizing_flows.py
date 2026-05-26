@@ -1,7 +1,6 @@
 import torch
 from typing import Optional, Tuple
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import weight_norm, remove_weight_norm
 
 import torch.nn as nn
 #import torch.nn.functional as F
@@ -97,10 +96,10 @@ class ResidualCouplingLayer(nn.Module):
     def __prepare_scriptable__(self):
         for hook in self.enc._forward_pre_hooks.values():
             if (
-                hook.__module__ == "torch.nn.utils.parametrizations.weight_norm"
+                hook.__module__ == "torch.nn.utils.weight_norm"
                 and hook.__class__.__name__ == "WeightNorm"
             ):
-                torch.nn.utils.remove_weight_norm(self.enc)
+                remove_weight_norm(self.enc)
         return self
 
 class ResidualCouplingBlock(nn.Module):
@@ -161,10 +160,10 @@ class ResidualCouplingBlock(nn.Module):
         for i in range(self.n_flows):
             for hook in self.flows[i * 2]._forward_pre_hooks.values():
                 if (
-                    hook.__module__ == "torch.nn.utils.parametrizations.weight_norm"
+                    hook.__module__ == "torch.nn.utils.weight_norm"
                     and hook.__class__.__name__ == "WeightNorm"
                 ):
-                    torch.nn.utils.remove_weight_norm(self.flows[i * 2])
+                    remove_weight_norm(self.flows[i * 2])
 
         return self
 
@@ -246,10 +245,10 @@ class ResidualCouplingTransformersLayer2(nn.Module):  # VITS2
     def __prepare_scriptable__(self):
         for hook in self.enc._forward_pre_hooks.values():
             if (
-                hook.__module__ == "torch.nn.utils.parametrizations.weight_norm"
+                hook.__module__ == "torch.nn.utils.weight_norm"
                 and hook.__class__.__name__ == "WeightNorm"
             ):
-                torch.nn.utils.remove_weight_norm(self.enc)
+                remove_weight_norm(self.enc)
         return self
 
 class ResidualCouplingTransformersBlock(nn.Module):  # vits2
@@ -321,9 +320,9 @@ class ResidualCouplingTransformersBlock(nn.Module):  # vits2
         for i in range(self.n_flows):
             for hook in self.flows[i * 2]._forward_pre_hooks.values():
                 if (
-                    hook.__module__ == "torch.nn.utils.parametrizations.weight_norm"
+                    hook.__module__ == "torch.nn.utils.weight_norm"
                     and hook.__class__.__name__ == "WeightNorm"
                 ):
-                    torch.nn.utils.remove_weight_norm(self.flows[i * 2])
+                    remove_weight_norm(self.flows[i * 2])
 
         return self

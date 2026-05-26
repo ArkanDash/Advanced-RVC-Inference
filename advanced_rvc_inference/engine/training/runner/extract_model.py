@@ -29,6 +29,6 @@ def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, versi
         opt["vocoder"] = vocoder
         opt["energy"] = energy_use
 
-        torch.save(replace_keys_in_dict(replace_keys_in_dict(opt, ".parametrizations.weight.original1", ".weight_v"), ".parametrizations.weight.original0", ".weight_g"), model_path)
+        torch.save(opt, model_path)
     except Exception as e:
         logger.error(f"{translations['extract_model_error']}: {e}")

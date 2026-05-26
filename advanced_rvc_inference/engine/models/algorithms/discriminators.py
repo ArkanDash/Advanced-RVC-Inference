@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional as F
 
 from torch.utils.checkpoint import checkpoint
-from torch.nn.utils.parametrizations import spectral_norm, weight_norm
+from torch.nn.utils import spectral_norm, weight_norm
 
 
 from advanced_rvc_inference.engine.models.algorithms.commons import get_padding

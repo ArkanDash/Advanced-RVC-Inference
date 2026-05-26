@@ -2,7 +2,7 @@ import os
 import sys
 import torch
 
-import torch.nn.utils.parametrize as parametrize
+from torch.nn.utils import weight_norm, remove_weight_norm
 
 
 from .commons import fused_add_tanh_sigmoid_multiply
@@ -20,17 +20,17 @@ class WaveNet(torch.nn.Module):
         self.in_layers = torch.nn.ModuleList()
         self.res_skip_layers = torch.nn.ModuleList()
         self.drop = torch.nn.Dropout(p_dropout)
-        if gin_channels != 0: self.cond_layer = torch.nn.utils.parametrizations.weight_norm(torch.nn.Conv1d(gin_channels, 2 * hidden_channels * n_layers, 1), name="weight")
+        if gin_channels != 0: self.cond_layer = weight_norm(torch.nn.Conv1d(gin_channels, 2 * hidden_channels * n_layers, 1), name="weight")
         dilations = [dilation_rate ** i for i in range(n_layers)]
         paddings = [(kernel_size * d - d) // 2 for d in dilations]
 
         for i in range(n_layers):
             in_layer = torch.nn.Conv1d(hidden_channels, 2 * hidden_channels, kernel_size, dilation=dilations[i], padding=paddings[i])
-            in_layer = torch.nn.utils.parametrizations.weight_norm(in_layer, name="weight")
+            in_layer = weight_norm(in_layer, name="weight")
             self.in_layers.append(in_layer)
             res_skip_channels = (hidden_channels if i == n_layers - 1 else 2 * hidden_channels)
             res_skip_layer = torch.nn.Conv1d(hidden_channels, res_skip_channels, 1)
-            res_skip_layer = torch.nn.utils.parametrizations.weight_norm(res_skip_layer, name="weight")
+            res_skip_layer = weight_norm(res_skip_layer, name="weight")
             self.res_skip_layers.append(res_skip_layer)
 
     def forward(self, x, x_mask, g=None):
@@ -52,14 +52,10 @@ class WaveNet(torch.nn.Module):
         return output * x_mask
 
     def remove_weight_norm(self):
-        if self.gin_channels != 0: 
-            if hasattr(self.cond_layer, "parametrizations") and "weight" in self.cond_layer.parametrizations: parametrize.remove_parametrizations(self.cond_layer, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(self.cond_layer)
+        if self.gin_channels != 0: remove_weight_norm(self.cond_layer)
 
         for l in self.in_layers:
-            if hasattr(l, "parametrizations") and "weight" in l.parametrizations: parametrize.remove_parametrizations(l, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(l)
+            remove_weight_norm(l)
 
         for l in self.res_skip_layers:
-            if hasattr(l, "parametrizations") and "weight" in l.parametrizations: parametrize.remove_parametrizations(l, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(l)
+            remove_weight_norm(l)

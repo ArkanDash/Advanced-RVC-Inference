@@ -6,11 +6,8 @@ import torchaudio
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.nn.utils.parametrize as parametrize
-
 from torch.utils.checkpoint import checkpoint
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import remove_weight_norm, weight_norm
 
 
 from advanced_rvc_inference.engine.models.algorithms.commons import init_weights, get_padding
@@ -32,11 +29,8 @@ class ResBlock(nn.Module):
 
     def remove_weight_norm(self):
         for c1, c2 in zip(self.convs1, self.convs2):
-            if hasattr(c1, "parametrizations") and "weight" in c1.parametrizations: parametrize.remove_parametrizations(c1, "weight", leave_parametrized=True)
-            else: remove_weight_norm(c1)
-
-            if hasattr(c2, "parametrizations") and "weight" in c2.parametrizations: parametrize.remove_parametrizations(c2, "weight", leave_parametrized=True)
-            else: remove_weight_norm(c2)
+            remove_weight_norm(c1)
+            remove_weight_norm(c2)
 
 class AdaIN(nn.Module):
     def __init__(self, *, channels, leaky_relu_slope = 0.2):
@@ -175,14 +169,9 @@ class RefineGANGenerator(nn.Module):
         return self.conv_post(F.leaky_relu(x, self.leaky_relu_slope)).tanh()
 
     def remove_weight_norm(self):
-        if hasattr(self.pre_conv, "parametrizations") and "weight" in self.pre_conv.parametrizations: parametrize.remove_parametrizations(self.pre_conv, "weight", leave_parametrized=True)
-        else: remove_weight_norm(self.pre_conv)
-
-        if hasattr(self.mel_conv, "parametrizations") and "weight" in self.mel_conv.parametrizations: parametrize.remove_parametrizations(self.mel_conv, "weight", leave_parametrized=True)
-        else: remove_weight_norm(self.mel_conv)
-
-        if hasattr(self.conv_post, "parametrizations") and "weight" in self.conv_post.parametrizations: parametrize.remove_parametrizations(self.conv_post, "weight", leave_parametrized=True)
-        else: remove_weight_norm(self.conv_post)
+        remove_weight_norm(self.pre_conv)
+        remove_weight_norm(self.mel_conv)
+        remove_weight_norm(self.conv_post)
 
         for block in self.downsample_blocks:
             block.remove_weight_norm()

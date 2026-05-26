@@ -8,7 +8,7 @@ import onnxruntime as ort
 import torch.nn.functional as F
 
 from einops import rearrange
-from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import weight_norm
 
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 

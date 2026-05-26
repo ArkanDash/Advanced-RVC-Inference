@@ -2,10 +2,7 @@ import os
 import sys
 import torch
 
-import torch.nn.utils.parametrize as parametrize
-
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import weight_norm, remove_weight_norm
 
 
 from .modules import WaveNet
@@ -37,8 +34,7 @@ class ResBlockBase(torch.nn.Module):
 
     def remove_weight_norm(self):
         for conv in self.convs1 + self.convs2:
-            if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
-            else: remove_weight_norm(conv)
+            remove_weight_norm(conv)
 
 class ResBlock(ResBlockBase):
     def __init__(self, channels, kernel_size=3, dilation=(1, 3, 5)):

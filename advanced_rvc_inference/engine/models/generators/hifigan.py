@@ -2,10 +2,7 @@ import os
 import sys
 import torch
 
-import torch.nn.utils.parametrize as parametrize
-
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from torch.nn.utils import remove_weight_norm, weight_norm
 
 
 from advanced_rvc_inference.engine.models.algorithms.commons import init_weights
@@ -48,8 +45,7 @@ class HiFiGANGenerator(torch.nn.Module):
     
     def remove_weight_norm(self):
         for l in self.ups:
-            if hasattr(l, "parametrizations") and "weight" in l.parametrizations: parametrize.remove_parametrizations(l, "weight", leave_parametrized=True)
-            else: remove_weight_norm(l)
+            remove_weight_norm(l)
 
         for l in self.resblocks:
             l.remove_weight_norm()
