@@ -275,7 +275,7 @@ def main():
 
             with open(config_save_path, "w") as pid_file:
                 for rank, device_id in enumerate(gpus):
-                    subproc = mp.Process(target=run, args=(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, total_epoch, save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, grad_accum_steps, compile_model))
+                    subproc = mp.Process(target=run, args=(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, total_epoch, save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, compile_model))
                     children.append(subproc)
                     subproc.start()
                     pid_data["process_pids"].append(subproc.pid)
@@ -330,7 +330,7 @@ class EpochRecorder:
         self.last_time = now_time
         return translations["time_or_speed_training"].format(current_time=datetime.datetime.now().strftime("%H:%M:%S"), elapsed_time_str=str(datetime.timedelta(seconds=int(round(elapsed_time, 1)))))
 
-def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, custom_total_epoch, custom_save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, grad_accum_steps, compile_model):
+def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, custom_total_epoch, custom_save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, compile_model):
     global global_step, smoothed_value_gen, smoothed_value_disc, optimizer_choice
 
     smoothed_value_gen, smoothed_value_disc = 0, 0
@@ -420,12 +420,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         and hasattr(optimizer_optim, "fused")
     )
 
-    # T4 / low-VRAM: auto-enable gradient accumulation if not explicitly set
-    _effective_grad_accum = grad_accum_steps
-    if rank == 0 and grad_accum_steps == 1 and (_is_t4 or _is_low_vram) and batch_size >= 4:
-        _effective_grad_accum = 2
-        logger.info(f"T4/Low-VRAM optimization: auto-enabling gradient accumulation (2 steps) to reduce VRAM usage")
-
     # Build optimizer kwargs based on what the optimizer supports
     def _build_optimizer_kwargs(lr_coeff):
         kwargs = {"lr": config.train.learning_rate * lr_coeff}
@@ -482,9 +476,6 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         except Exception as e:
             if rank == 0:
                 logger.warning(f"torch.compile() failed, falling back to eager mode: {e}")
-
-    if rank == 0 and _effective_grad_accum > 1:
-        logger.info(f"Optimization: Gradient accumulation enabled ({_effective_grad_accum} steps, effective batch size: {batch_size * n_gpus * _effective_grad_accum})")
 
     scaler_dict = {}
     try:
@@ -629,15 +620,11 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     # - growth_interval: Number of successful steps before increasing loss scale
     # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
     # T4: FP16 is well-supported on Turing architecture
-    _scaler_enabled = main_config.is_half and device.type == "cuda"
-    # Use separate GradScalers for D and G with PyTorch defaults.
-    # Vietnamese-RVC uses a single scaler but has NO gradient accumulation.
-    # With grad accumulation, a shared scaler breaks because D steps every
-    # batch while G only steps on accumulation boundaries, leaving the
-    # scaler in a "stepped" state between iterations.
-    # Previous growth_interval=100 was too aggressive (default is 2000).
-    scaler_g = GradScaler(device=device, enabled=_scaler_enabled)
-    scaler_d = GradScaler(device=device, enabled=_scaler_enabled)
+    # Single shared GradScaler — matches Vietnamese-RVC and Applio exactly.
+    # Pattern: D step (scale→backward→unscale→step, NO update),
+    #          G step (scale→backward→unscale→step→update).
+    # scaler.update() is called ONLY once per iteration, after the G step.
+    scaler = GradScaler(device=device, enabled=main_config.is_half and device.type == "cuda")
     
     # CUDA memory optimization
     if device.type == "cuda":
@@ -656,14 +643,9 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     
     cache = []
 
-    # Restore scaler states from checkpoint
+    # Restore scaler state from checkpoint
     if len(scaler_dict) > 0:
-        if isinstance(scaler_dict, dict) and "scaler_g" in scaler_dict:
-            scaler_g.load_state_dict(scaler_dict["scaler_g"])
-            scaler_d.load_state_dict(scaler_dict.get("scaler_d", scaler_dict["scaler_g"]))
-        else:
-            scaler_g.load_state_dict(scaler_dict)
-            scaler_d.load_state_dict(scaler_dict)
+        scaler.load_state_dict(scaler_dict)
 
     if use_custom_reference and os.path.isfile(os.path.join(reference_path, "feats.npy")):
         import numpy as np
@@ -699,21 +681,18 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler_g, scaler_d, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
     # ZLUDA: CUDA streams may not work reliably with HIP
     cuda_stream = torch.cuda.Stream() if (device.type == "cuda" and not _is_zluda) else None
-
-    # Optimization: scale loss by accumulation steps for correct gradient averaging
-    loss_scale_factor = 1.0 / grad_accum_steps
     
     if epoch == 1:
         lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
@@ -775,35 +754,34 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
             y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
             wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
 
-        # Initialize grad_norm_d so it is always defined (needed for logging
-        # even when the batch is skipped by gradient accumulation).
-        grad_norm_d = 0.0
-
         # ── Discriminator step ──────────────────────────────────────────
-        # Each D sub-step is independent: zero_grad → forward → backward → step.
-        # This avoids the bug where zero_grad inside the loop cleared gradients
-        # accumulated by earlier iterations while step() only fired on the last.
+        # Matches Vietnamese-RVC / Applio exactly:
+        #   zero_grad → forward → scale→backward → unscale_ → grad_norm → step
+        #   NO scaler.update() after D step — update is only after G step.
         for d_step_i in range(d_step_per_g_step):
             with autocasts:
                 y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
                 loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
 
-            optim_d.zero_grad(set_to_none=True)
+            optim_d.zero_grad()
 
             if autocast_enabled:
-                scaler_d.scale(loss_disc).backward()
-                scaler_d.unscale_(optim_d)
+                scaler.scale(loss_disc).backward()
+                scaler.unscale_(optim_d)
                 grad_norm_d = commons.grad_norm(net_d.parameters())
-                scaler_d.step(optim_d)
-                scaler_d.update()
+                scaler.step(optim_d)
+                # NO scaler.update() here — only after G step
             else:
                 loss_disc.backward()
                 grad_norm_d = commons.grad_norm(net_d.parameters())
                 optim_d.step()
 
+        # ── Generator step ──────────────────────────────────────────────
+        # Forward through D again (y_hat NOT detached) for feature matching + adversarial
         with autocasts:
             y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
 
+        # Mel loss
         if multiscale_mel_loss: 
             loss_mel = fn_mel_loss(wave, y_hat) * config.train.c_mel / 3.0
         else:
@@ -831,61 +809,49 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
                 y_hat_mel
             ) * config.train.c_mel
 
+        # KL divergence loss
         loss_kl = losses.kl_loss(z_p.float(), logs_q.float(), m_p.float(), logs_p.float(), z_mask.float()) * config.train.c_kl
 
-        # CUDA Optimizer Training: Add energy loss for better energy training
+        # Feature matching loss
+        loss_fm = losses.feature_loss(fmap_r, fmap_g)
+        # Adversarial generator loss
+        loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
+
+        # Total generator loss — matches Vietnamese-RVC / Applio
+        loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
+
+        # Energy loss (optional, off by default)
         loss_energy = torch.tensor(0.0, device=device)
         if energy_use and energy is not None:
-            # Compute energy from target waveform
             energy_target = energy.float()
-            # Slice energy to match the generated audio length
             energy_slice = commons.slice_segments(
                 energy_target.unsqueeze(1), 
                 ids_slice, 
                 config.train.segment_size // config.data.hop_length, 
                 dim=2
             ).squeeze(1)
-            
-            # Compute energy from generated waveform (using RMS)
             wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
             energy_pred = wave_rms.squeeze(-1)
-            
-            # Calculate energy loss (L1 loss)
             loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
-            # Use a small default weight for energy loss to avoid dominating total loss
             loss_energy = loss_energy * getattr(config.train, 'c_energy', 0.1)
+            loss_gen_all = loss_gen_all + loss_energy
 
-        loss_fm = losses.feature_loss(fmap_r, fmap_g)
-        loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
-
-        loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl + loss_energy
         if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
 
-        # ── Generator step (with gradient accumulation) ──────────────────
-        loss_gen_all_scaled = loss_gen_all * loss_scale_factor
-
-        grad_norm_g = 0.0
-
-        # Only zero gradients at the START of an accumulation cycle so that
-        # gradients from previous micro-batches are preserved across steps.
-        is_accum_start = batch_idx % grad_accum_steps == 0
-        is_accum_step = (batch_idx + 1) % grad_accum_steps == 0 or (batch_idx + 1) == total_steps
-
-        if is_accum_start:
-            optim_g.zero_grad(set_to_none=True)
+        # G optimizer step — matches Vietnamese-RVC / Applio exactly:
+        #   zero_grad → scale→backward → unscale_ → grad_norm → step → update
+        optim_g.zero_grad()
 
         if autocast_enabled:
-            scaler_g.scale(loss_gen_all_scaled).backward()
-            if is_accum_step:
-                scaler_g.unscale_(optim_g)
-                grad_norm_g = commons.grad_norm(net_g.parameters())
-                scaler_g.step(optim_g)
-                scaler_g.update()
+            scaler.scale(loss_gen_all).backward()
+            scaler.unscale_(optim_g)
+            grad_norm_g = commons.grad_norm(net_g.parameters())
+            scaler.step(optim_g)
+            scaler.update()  # ONLY update after G step
         else:
-            loss_gen_all_scaled.backward()
-            if is_accum_step:
-                grad_norm_g = commons.grad_norm(net_g.parameters())
-                optim_g.step()
+            loss_gen_all.backward()
+            grad_norm_g = commons.grad_norm(net_g.parameters())
+            optim_g.step()
 
         global_step += 1
 
@@ -1046,7 +1012,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "G_" + checkpoint_suffix), 
-                scaler_g
+                scaler
             )
             save_checkpoint(
                 logger, 
@@ -1055,7 +1021,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "D_" + checkpoint_suffix), 
-                scaler_d
+                scaler
             )
 
             if custom_save_every_weights: model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))
