@@ -873,6 +873,9 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 scaler.unscale_(optim_g)
                 grad_norm_g = commons.grad_norm(net_g.parameters())
                 scaler.step(optim_g)
+                # Single shared scaler: update() resets internal state for next iteration.
+                # Must be called exactly once per step after ALL optimizer steps (D + G).
+                scaler.update()
         else:
             loss_gen_all_scaled.backward()
             if is_accum_step:
