@@ -630,13 +630,14 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     # ZLUDA: AMP with float16 only (bfloat16 not reliably supported)
     # T4: FP16 is well-supported on Turing architecture
     _scaler_enabled = main_config.is_half and device.type == "cuda"
-    # Use a single shared GradScaler (matches Vietnamese-RVC reference).
-    # Separate scalers with growth_interval=100 caused unstable training
-    # because the loss scale grew too aggressively.
-    scaler = GradScaler(
-        device=device,
-        enabled=_scaler_enabled
-    )
+    # Use separate GradScalers for D and G with PyTorch defaults.
+    # Vietnamese-RVC uses a single scaler but has NO gradient accumulation.
+    # With grad accumulation, a shared scaler breaks because D steps every
+    # batch while G only steps on accumulation boundaries, leaving the
+    # scaler in a "stepped" state between iterations.
+    # Previous growth_interval=100 was too aggressive (default is 2000).
+    scaler_g = GradScaler(device=device, enabled=_scaler_enabled)
+    scaler_d = GradScaler(device=device, enabled=_scaler_enabled)
     
     # CUDA memory optimization
     if device.type == "cuda":
@@ -655,9 +656,14 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
     
     cache = []
 
-    # Restore scaler state from checkpoint
+    # Restore scaler states from checkpoint
     if len(scaler_dict) > 0:
-        scaler.load_state_dict(scaler_dict)
+        if isinstance(scaler_dict, dict) and "scaler_g" in scaler_dict:
+            scaler_g.load_state_dict(scaler_dict["scaler_g"])
+            scaler_d.load_state_dict(scaler_dict.get("scaler_d", scaler_dict["scaler_g"]))
+        else:
+            scaler_g.load_state_dict(scaler_dict)
+            scaler_d.load_state_dict(scaler_dict)
 
     if use_custom_reference and os.path.isfile(os.path.join(reference_path, "feats.npy")):
         import numpy as np
@@ -693,13 +699,13 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                   postfix="") as pbar:
             
             for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
+                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler_g, scaler_d, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar, grad_accum_steps=_effective_grad_accum)
                 scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
+def train_and_evaluate(rank, epoch, hps, nets, optims, scaler_g, scaler_d, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None, grad_accum_steps=1):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     # CUDA Optimizer Training: Create CUDA stream for async operations
@@ -785,10 +791,11 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             optim_d.zero_grad(set_to_none=True)
 
             if autocast_enabled:
-                scaler.scale(loss_disc).backward()
-                scaler.unscale_(optim_d)
+                scaler_d.scale(loss_disc).backward()
+                scaler_d.unscale_(optim_d)
                 grad_norm_d = commons.grad_norm(net_d.parameters())
-                scaler.step(optim_d)
+                scaler_d.step(optim_d)
+                scaler_d.update()
             else:
                 loss_disc.backward()
                 grad_norm_d = commons.grad_norm(net_d.parameters())
@@ -868,14 +875,12 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             optim_g.zero_grad(set_to_none=True)
 
         if autocast_enabled:
-            scaler.scale(loss_gen_all_scaled).backward()
+            scaler_g.scale(loss_gen_all_scaled).backward()
             if is_accum_step:
-                scaler.unscale_(optim_g)
+                scaler_g.unscale_(optim_g)
                 grad_norm_g = commons.grad_norm(net_g.parameters())
-                scaler.step(optim_g)
-                # Single shared scaler: update() resets internal state for next iteration.
-                # Must be called exactly once per step after ALL optimizer steps (D + G).
-                scaler.update()
+                scaler_g.step(optim_g)
+                scaler_g.update()
         else:
             loss_gen_all_scaled.backward()
             if is_accum_step:
@@ -1041,7 +1046,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "G_" + checkpoint_suffix), 
-                scaler
+                scaler_g
             )
             save_checkpoint(
                 logger, 
@@ -1050,7 +1055,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 config.train.learning_rate, 
                 epoch, 
                 os.path.join(experiment_dir, "D_" + checkpoint_suffix), 
-                scaler
+                scaler_d
             )
 
             if custom_save_every_weights: model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))
