@@ -29,7 +29,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils import remove_weight_norm, weight_norm
+import torch.nn.utils.parametrize as parametrize
+from torch.nn.utils import remove_weight_norm
+from torch.nn.utils.parametrizations import weight_norm
 from torch.utils.checkpoint import checkpoint
 
 LRELU_SLOPE = 0.1
@@ -66,7 +68,8 @@ class WNLayer(nn.Module):
 
     def remove_weight_norm(self):
         for conv in [self.in_conv, self.res_conv, self.skip_conv]:
-            remove_weight_norm(conv)
+            if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
+            else: remove_weight_norm(conv)
 
 
 class WaveNetBlock(nn.Module):
@@ -104,7 +107,8 @@ class Invertible1x1Conv(nn.Module):
         return self.conv(x)
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv)
+        if hasattr(self.conv, "parametrizations") and "weight" in self.conv.parametrizations: parametrize.remove_parametrizations(self.conv, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv)
 
 
 class SineGen(nn.Module):
@@ -306,10 +310,12 @@ class WaveGlowGenerator(nn.Module):
         return self.conv_post(F.leaky_relu(x, LRELU_SLOPE)).tanh()
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv_pre)
+        if hasattr(self.conv_pre, "parametrizations") and "weight" in self.conv_pre.parametrizations: parametrize.remove_parametrizations(self.conv_pre, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_pre)
 
         for up in self.ups:
-            remove_weight_norm(up)
+            if hasattr(up, "parametrizations") and "weight" in up.parametrizations: parametrize.remove_parametrizations(up, "weight", leave_parametrized=True)
+            else: remove_weight_norm(up)
 
         for inv_conv in self.inv_convs:
             inv_conv.remove_weight_norm()
@@ -318,4 +324,5 @@ class WaveGlowGenerator(nn.Module):
             for wn in wn_list:
                 wn.remove_weight_norm()
 
-        remove_weight_norm(self.conv_post)
+        if hasattr(self.conv_post, "parametrizations") and "weight" in self.conv_post.parametrizations: parametrize.remove_parametrizations(self.conv_post, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_post)

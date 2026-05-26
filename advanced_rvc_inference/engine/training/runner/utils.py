@@ -41,7 +41,15 @@ def replace_keys_in_dict(d, old_key_part, new_key_part):
 def load_checkpoint(logger, checkpoint_path, model, optimizer=None, load_opt=1):
     assert os.path.isfile(checkpoint_path), translations["not_found_checkpoint"].format(checkpoint_path=checkpoint_path)
 
-    checkpoint_dict = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+    checkpoint_dict = replace_keys_in_dict(
+        replace_keys_in_dict(
+            torch.load(checkpoint_path, map_location="cpu", weights_only=True), 
+            ".weight_v", 
+            ".parametrizations.weight.original1"
+        ), 
+        ".weight_g", 
+        ".parametrizations.weight.original0"
+    )
 
     new_state_dict = {
         k: checkpoint_dict["model"].get(k, v) 
@@ -71,13 +79,16 @@ def save_checkpoint(logger, model, optimizer, learning_rate, iteration, checkpoi
         model_optimizer = optimizer.state_dict()
 
     torch.save(
-        {
-            "model": model_state, 
-            "iteration": iteration, 
-            "optimizer": model_optimizer, 
-            "learning_rate": learning_rate, 
-            "scaler": scaler.state_dict()
-        }, 
+        replace_keys_in_dict(
+            replace_keys_in_dict({
+                "model": model_state, 
+                "iteration": iteration, 
+                "optimizer": model_optimizer, 
+                "learning_rate": learning_rate, 
+                "scaler": scaler.state_dict()
+            }, ".parametrizations.weight.original1", ".weight_v"), 
+            ".parametrizations.weight.original0", ".weight_g"
+        ), 
         checkpoint_path
     )
 

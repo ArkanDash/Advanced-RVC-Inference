@@ -62,7 +62,11 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
         suffix = ".onnx" if f0_onnx else (".pt" if "crepe" not in f0_method else ".pth")
 
         if "rmvpe" in f0_method:
-            modelname = "hpa-rmvpe" if "hpa" in f0_method else "rmvpe"
+            modelname = (
+                "hpa-rmvpe-76000" if "previous" in f0_method else "hpa-rmvpe-112000"
+            ) if "hpa" in f0_method else (
+                "rmvpe-mix" if "mix" in f0_method else "rmvpe"
+            )
         elif "fcpe" in f0_method:
             modelname = ("fcpe" + ("_legacy" if "legacy" in f0_method and "previous" not in f0_method else "")) if "previous" in f0_method else "ddsp_200k"
         elif "crepe" in f0_method:
@@ -70,7 +74,7 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
         elif "penn" in f0_method:
             modelname = "fcn"
         elif "djcm" in f0_method:
-            modelname = "djcm"
+            modelname = "djcm" + ("-svs" if "svs" in f0_method else "")
         elif "pesto" in f0_method:
             modelname = "pesto"
         elif "swift" in f0_method:

@@ -1,9 +1,10 @@
-import os
-import sys
 import torch
 
-from torch.nn.utils import weight_norm, remove_weight_norm
+import torch.nn.utils.parametrize as parametrize
 
+from itertools import chain
+from torch.nn.utils import remove_weight_norm
+from torch.nn.utils.parametrizations import weight_norm
 
 from .modules import WaveNet
 from .commons import get_padding, init_weights
@@ -11,34 +12,76 @@ from .commons import get_padding, init_weights
 LRELU_SLOPE = 0.1
 
 def create_conv1d_layer(channels, kernel_size, dilation):
-    return weight_norm(torch.nn.Conv1d(channels, channels, kernel_size, 1, dilation=dilation, padding=get_padding(kernel_size, dilation)))
+    return weight_norm(
+        torch.nn.Conv1d(
+            channels, 
+            channels, 
+            kernel_size, 
+            1, 
+            dilation=dilation, 
+            padding=get_padding(kernel_size, dilation)
+        )
+    )
 
 def apply_mask(tensor, mask):
     return tensor * mask if mask is not None else tensor
 
-class ResBlockBase(torch.nn.Module):
-    def __init__(self, channels, kernel_size, dilations):
-        super(ResBlockBase, self).__init__()
+class ResBlock(torch.nn.Module):
+    def __init__(
+        self, 
+        channels, 
+        kernel_size=3, 
+        dilations=(1, 3, 5)
+    ):
+        super().__init__()
+        self.convs1 = self._create_convs(channels, kernel_size, dilations)
+        self.convs2 = self._create_convs(channels, kernel_size, [1] * len(dilations))
 
-        self.convs1 = torch.nn.ModuleList([create_conv1d_layer(channels, kernel_size, d) for d in dilations])
-        self.convs1.apply(init_weights)
+    @staticmethod
+    def _create_convs(channels, kernel_size, dilations):
+        layers = torch.nn.ModuleList([
+            create_conv1d_layer(channels, kernel_size, d) 
+            for d in dilations
+        ])
+        layers.apply(init_weights)
 
-        self.convs2 = torch.nn.ModuleList([create_conv1d_layer(channels, kernel_size, 1) for _ in dilations])
-        self.convs2.apply(init_weights)
+        return layers
 
     def forward(self, x, x_mask=None):
-        for c1, c2 in zip(self.convs1, self.convs2):
-            x = c2(apply_mask(torch.nn.functional.leaky_relu(c1(apply_mask(torch.nn.functional.leaky_relu(x, LRELU_SLOPE), x_mask)), LRELU_SLOPE), x_mask)) + x
+        for conv1, conv2 in zip(self.convs1, self.convs2):
+            y = conv1(
+                apply_mask(
+                    torch.nn.functional.leaky_relu(x, LRELU_SLOPE),  
+                    x_mask
+                )
+            )
+
+            x = conv2(
+                apply_mask(
+                    torch.nn.functional.leaky_relu(y, LRELU_SLOPE), 
+                    x_mask
+                )
+            ) + x
 
         return apply_mask(x, x_mask)
 
     def remove_weight_norm(self):
-        for conv in self.convs1 + self.convs2:
-            remove_weight_norm(conv)
+        for conv in chain(self.convs1, self.convs2):
+            if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
+            else: remove_weight_norm(conv)
 
-class ResBlock(ResBlockBase):
-    def __init__(self, channels, kernel_size=3, dilation=(1, 3, 5)):
-        super(ResBlock, self).__init__(channels, kernel_size, dilation)
+class Flip(torch.nn.Module):
+    def forward(
+        self, 
+        x, 
+        *args, 
+        reverse=False, 
+        **kwargs
+    ):
+        x = x.flip([1])
+
+        if not reverse: return x, torch.zeros(x.size(0)).to(dtype=x.dtype, device=x.device)
+        else: return x
 
 class Log(torch.nn.Module):
     def forward(self, x, x_mask, reverse=False, **kwargs):
@@ -46,13 +89,6 @@ class Log(torch.nn.Module):
             y = x.clamp_min(1e-5).log() * x_mask
             return y, (-y).sum(dim=[1, 2])
         else: return x.exp() * x_mask
-
-class Flip(torch.nn.Module):
-    def forward(self, x, *args, reverse=False, **kwargs):
-        x = torch.flip(x, [1])
-
-        if not reverse: return x, torch.zeros(x.size(0)).to(dtype=x.dtype, device=x.device)
-        else: return x
 
 class ElementwiseAffine(torch.nn.Module):
     def __init__(self, channels):
@@ -66,7 +102,16 @@ class ElementwiseAffine(torch.nn.Module):
         else: return (x - self.m) * (-self.logs).exp() * x_mask
 
 class ResidualCouplingBlock(torch.nn.Module):
-    def __init__(self, channels, hidden_channels, kernel_size, dilation_rate, n_layers, n_flows=4, gin_channels=0):
+    def __init__(
+        self, 
+        channels, 
+        hidden_channels, 
+        kernel_size, 
+        dilation_rate, 
+        n_layers, 
+        n_flows=4, 
+        gin_channels=0
+    ):
         super(ResidualCouplingBlock, self).__init__()
         self.channels = channels
         self.hidden_channels = hidden_channels
@@ -78,7 +123,17 @@ class ResidualCouplingBlock(torch.nn.Module):
         self.flows = torch.nn.ModuleList()
 
         for _ in range(n_flows):
-            self.flows.append(ResidualCouplingLayer(channels, hidden_channels, kernel_size, dilation_rate, n_layers, gin_channels=gin_channels, mean_only=True))
+            self.flows.append(
+                ResidualCouplingLayer(
+                    channels, 
+                    hidden_channels, 
+                    kernel_size, 
+                    dilation_rate, 
+                    n_layers, 
+                    gin_channels=gin_channels, 
+                    mean_only=True
+                )
+            )
             self.flows.append(Flip())
 
     def forward(self, x, x_mask, g = None, reverse = False):
@@ -96,7 +151,17 @@ class ResidualCouplingBlock(torch.nn.Module):
             self.flows[i * 2].remove_weight_norm()
 
 class ResidualCouplingLayer(torch.nn.Module):
-    def __init__(self, channels, hidden_channels, kernel_size, dilation_rate, n_layers, p_dropout=0, gin_channels=0, mean_only=False):
+    def __init__(
+        self, 
+        channels, 
+        hidden_channels, 
+        kernel_size, 
+        dilation_rate, 
+        n_layers, 
+        p_dropout=0, 
+        gin_channels=0, 
+        mean_only=False
+    ):
         assert channels % 2 == 0, "Channels/2"
         super().__init__()
         self.channels = channels

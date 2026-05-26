@@ -4,7 +4,10 @@ from itertools import chain
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils import weight_norm, remove_weight_norm
+
+import torch.nn.utils.parametrize as parametrize
+from torch.nn.utils import remove_weight_norm
+from torch.nn.utils.parametrizations import weight_norm
 
 
 class LayerNorm(torch.nn.Module):
@@ -18,7 +21,14 @@ class LayerNorm(torch.nn.Module):
 
     def forward(self, x):
         x = x.transpose(1, -1)
-        return (F.layer_norm(x, (self.channels,), self.gamma, self.beta, self.eps) if self.onnx else F.layer_norm(x, (x.size(-1),), self.gamma, self.beta, self.eps)).transpose(1, -1)
+
+        return F.layer_norm(
+            x, 
+            (self.channels,) if self.onnx else (x.size(-1),), 
+            self.gamma, 
+            self.beta, 
+            self.eps
+        ).transpose(1, -1)
 
 
 # ---------------------------------------------------------------------------
@@ -105,7 +115,8 @@ class ResBlock(nn.Module):
 
     def remove_weight_norm(self):
         for conv in chain(self.convs1, self.convs2):
-            remove_weight_norm(conv)
+            if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
+            else: remove_weight_norm(conv)
 
 
 class ResBlock_SnakeBeta(nn.Module):
@@ -152,4 +163,5 @@ class ResBlock_SnakeBeta(nn.Module):
 
     def remove_weight_norm(self):
         for conv in chain(self.convs1, self.convs2):
-            remove_weight_norm(conv)
+            if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
+            else: remove_weight_norm(conv)

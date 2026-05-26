@@ -4,7 +4,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils import remove_weight_norm, weight_norm
+import torch.nn.utils.parametrize as parametrize
+from torch.nn.utils import remove_weight_norm
+from torch.nn.utils.parametrizations import weight_norm
 from torch.utils.checkpoint import checkpoint
 
 LRELU_SLOPE = 0.1
@@ -19,8 +21,10 @@ class MRFLayer(nn.Module):
         return x + self.conv2(F.leaky_relu(self.conv1(F.leaky_relu(x, LRELU_SLOPE)), LRELU_SLOPE))
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv1)
-        remove_weight_norm(self.conv2)
+        if hasattr(self.conv1, "parametrizations") and "weight" in self.conv1.parametrizations: parametrize.remove_parametrizations(self.conv1, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv1)
+        if hasattr(self.conv2, "parametrizations") and "weight" in self.conv2.parametrizations: parametrize.remove_parametrizations(self.conv2, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv2)
 
 class MRFBlock(nn.Module):
     def __init__(self, channels, kernel_size, dilations):
@@ -140,13 +144,16 @@ class HiFiGANMRFGenerator(nn.Module):
         return self.conv_post(F.leaky_relu(x)).tanh()
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv_pre)
+        if hasattr(self.conv_pre, "parametrizations") and "weight" in self.conv_pre.parametrizations: parametrize.remove_parametrizations(self.conv_pre, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_pre)
 
         for up in self.upsamples:
-            remove_weight_norm(up)
+            if hasattr(up, "parametrizations") and "weight" in up.parametrizations: parametrize.remove_parametrizations(up, "weight", leave_parametrized=True)
+            else: remove_weight_norm(up)
 
         for mrf in self.mrfs:
             for block in mrf:
                 block.remove_weight_norm()
 
-        remove_weight_norm(self.conv_post)
+        if hasattr(self.conv_post, "parametrizations") and "weight" in self.conv_post.parametrizations: parametrize.remove_parametrizations(self.conv_post, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_post)

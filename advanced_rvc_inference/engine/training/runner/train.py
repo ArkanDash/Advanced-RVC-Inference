@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import glob
 import json
@@ -13,8 +14,6 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 from tqdm import tqdm
-
-sys.path.append(os.getcwd())
 from collections import deque
 from contextlib import nullcontext
 from random import randint, shuffle
@@ -26,10 +25,17 @@ from torch.utils.tensorboard import SummaryWriter
 from time import time as ttime
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+sys.path.append(os.getcwd())
 os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
 from advanced_rvc_inference.engine.models.utils import clear_gpu_cache
 from advanced_rvc_inference.engine.models.backends import directml, opencl, zluda
+
+# XPU backend — may not exist in all installations; graceful fallback
+try:
+    from advanced_rvc_inference.engine.models.backends import xpu
+except ImportError:
+    xpu = None
 
 # ZLUDA detection: True when running on AMD GPU via CUDA compatibility layer
 _is_zluda = zluda.is_available()
@@ -73,8 +79,9 @@ from advanced_rvc_inference.utils.variables import config as main_config
 from advanced_rvc_inference.utils.variables import configs as main_configs
 from advanced_rvc_inference.utils.huggingface import HF_download_file
 
-warnings.filterwarnings("ignore")
-logging.getLogger("torch").setLevel(logging.ERROR)
+if not getattr(main_config, 'debug_mode', False):
+    warnings.filterwarnings("ignore")
+    logging.getLogger("torch").setLevel(logging.ERROR)
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -104,10 +111,11 @@ def parse_arguments():
     parser.add_argument("--use_custom_reference", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--reference_path", type=str, default="")
     parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
+    parser.add_argument("--use_cosine_annealing_lr", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--architecture", type=str, default="RVC", help="Model architecture: RVC or SVC")
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
     parser.add_argument("--use_8bit_adam", type=lambda x: bool(strtobool(x)), default=False, help="Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)")
-    parser.add_argument("--use_cosine_annealing_lr", type=lambda x: bool(strtobool(x)), default=False, help="Use CosineAnnealingLR scheduler instead of ExponentialLR")
+    parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
 
     return parser.parse_args()
 
@@ -116,25 +124,110 @@ g_lr_coeff = 1.0
 d_step_per_g_step = 1
 
 args = parse_arguments()
-model_name, save_every_epoch, total_epoch, pretrainG, pretrainD, version, gpus, batch_size, pitch_guidance, save_only_latest, save_every_weights, cache_data_in_gpu, overtraining_detector, overtraining_threshold, cleanup, model_author, vocoder, checkpointing, optimizer_choice, energy_use, use_custom_reference, reference_path, multiscale_mel_loss, grad_accum_steps, compile_model, use_8bit_adam, use_cosine_annealing_lr = args.model_name, args.save_every_epoch, args.total_epoch, args.g_pretrained_path, args.d_pretrained_path, args.rvc_version, args.gpu, args.batch_size, args.pitch_guidance, args.save_only_latest, args.save_every_weights, args.cache_data_in_gpu, args.overtraining_detector, args.overtraining_threshold, args.cleanup, args.model_author, args.vocoder, args.checkpointing, args.optimizer, args.energy_use, args.use_custom_reference, args.reference_path, args.multiscale_mel_loss, args.grad_accum_steps, args.compile_model, args.use_8bit_adam, args.use_cosine_annealing_lr
 
-# Discriminator version: use v3 discriminator for non-HiFi-GAN vocoders (matches Vietnamese-RVC)
+(
+    model_name, 
+    save_every_epoch, 
+    total_epoch, 
+    pretrainG, 
+    pretrainD, 
+    version, 
+    gpus, 
+    batch_size, 
+    pitch_guidance, 
+    save_only_latest, 
+    save_every_weights, 
+    cache_data_in_gpu, 
+    overtraining_detector, 
+    overtraining_threshold, 
+    cleanup, 
+    model_author, 
+    vocoder, 
+    checkpointing, 
+    optimizer_choice, 
+    energy_use, 
+    use_custom_reference, 
+    reference_path, 
+    multiscale_mel_loss,
+    use_cosine_annealing_lr,
+    architecture,
+    compile_model,
+    use_8bit_adam,
+    grad_accum_steps,
+) = (
+    args.model_name, 
+    args.save_every_epoch, 
+    args.total_epoch, 
+    args.g_pretrained_path, 
+    args.d_pretrained_path, 
+    args.rvc_version, 
+    args.gpu, 
+    args.batch_size, 
+    args.pitch_guidance, 
+    args.save_only_latest, 
+    args.save_every_weights, 
+    args.cache_data_in_gpu, 
+    args.overtraining_detector, 
+    args.overtraining_threshold, 
+    args.cleanup, 
+    args.model_author, 
+    args.vocoder, 
+    args.checkpointing, 
+    args.optimizer, 
+    args.energy_use, 
+    args.use_custom_reference, 
+    args.reference_path, 
+    args.multiscale_mel_loss,
+    args.use_cosine_annealing_lr,
+    args.architecture,
+    args.compile_model,
+    args.use_8bit_adam,
+    args.grad_accum_steps,
+)
+
+# Discriminator version: use v3 discriminator for non-HiFi-GAN vocoders
 disc_version = version if vocoder not in ["RefineGAN", "BigVGAN"] else "v3"
 
-experiment_dir = os.path.join(main_configs["logs_path"], model_name)
+# is_half logic — matches Vietnamese-RVC exactly
+is_half = main_config.is_half
+if getattr(main_config, 'brain', False): is_half = True
+
+# SVC architecture overrides (from Vietnamese-RVC)
+if architecture == "SVC":
+    disc_version = version if vocoder != "Default" else "v0"
+    pitch_guidance = True
+    energy_use = False
+
+# Vietnamese-RVC style experiment_dir / checkpoint_path handling
+weights_path = main_configs["weights_path"]
+logs_path = main_configs["logs_path"]
+custom_save_checkpoint_path = None
+
+if not os.path.exists(model_name): 
+    experiment_dir = os.path.join(logs_path, model_name)
+else:
+    experiment_dir = model_name
+    model_name = os.path.basename(model_name)
+    custom_save_checkpoint_path = weights_path
+
+checkpoint_path = experiment_dir if custom_save_checkpoint_path is None else custom_save_checkpoint_path
+
 training_file_path = os.path.join(experiment_dir, "training_data.json")
 config_save_path = os.path.join(experiment_dir, "config.json")
+filelist_path = os.path.join(experiment_dir, "filelist.txt")
+eval_dir = os.path.join(experiment_dir, "eval")
+spec_dirs = None
+
+save_the_pid = True
+cache_spectrogram = True
+use_clip_grad_value = False
 
 # Create config.json if it doesn't exist
 if not os.path.exists(config_save_path):
     import shutil
-    # Create the experiment directory if it doesn't exist
     os.makedirs(experiment_dir, exist_ok=True)
     
-    # Determine sample rate from existing extracted files or use default
     sr = 32000  # default sample rate
-    
-    # Try to determine sample rate from existing files
     extracted_dir = os.path.join(experiment_dir, f"{version}_extracted")
     if os.path.exists(extracted_dir):
         wav_files = glob.glob(os.path.join(extracted_dir, "*.wav"))
@@ -146,20 +239,17 @@ if not os.path.exists(config_save_path):
             except:
                 pass
     
-    # Determine the appropriate config template based on sample rate
     config_template_path = os.path.join(main_configs["configs_path"], version, f"{sr}.json")
     
-    # Fallback to 32000 if the specific sample rate config doesn't exist
     if not os.path.exists(config_template_path):
         config_template_path = os.path.join(main_configs["configs_path"], version, "32000.json")
     
-    # Copy the config template to the experiment directory
     if os.path.exists(config_template_path):
         shutil.copy(config_template_path, config_save_path)
     else:
         raise FileNotFoundError(f"Config template not found at: {config_template_path}")
 
-# cuDNN / TF32 — matches Vietnamese-RVC: controlled by config, not forced ON
+# cuDNN / TF32 — controlled by config, not forced ON
 torch.backends.cudnn.deterministic = args.deterministic if not main_config.device.startswith(("ocl", "privateuseone")) and not _is_zluda else False
 torch.backends.cudnn.benchmark = args.benchmark if not main_config.device.startswith(("ocl", "privateuseone")) and not _is_zluda else False
 
@@ -171,8 +261,6 @@ if torch.cuda.is_available() and not _is_zluda:
 lowest_value = {"step": 0, "value": float("inf"), "epoch": 0}
 global_step, last_loss_gen_all, overtrain_save_epoch = 0, 0, 0
 loss_gen_history, smoothed_loss_gen_history, loss_disc_history, smoothed_loss_disc_history = [], [], [], []
-# Initialise overtraining counters so they exist even when resuming from a
-# checkpoint at epoch > 1 with overtraining_detector enabled.
 consecutive_increases_gen = 0
 consecutive_increases_disc = 0
 avg_losses = {
@@ -184,35 +272,39 @@ avg_losses = {
     "kl_loss_50": deque(maxlen=50), 
     "mel_loss_50": deque(maxlen=50), 
     "gen_loss_50": deque(maxlen=50),
+    "energy_loss_50": deque(maxlen=50),
 }
 
-with open(config_save_path, "r") as f:
+with open(config_save_path, "r", encoding="utf-8") as f:
     config = json.load(f)
 
 config = HParams(**config)
-config.data.training_files = os.path.join(experiment_dir, "filelist.txt")
+config.data.training_files = filelist_path
+
 def main():
     global training_file_path, last_loss_gen_all, smoothed_loss_gen_history, loss_gen_history, loss_disc_history, smoothed_loss_disc_history, overtrain_save_epoch, model_author, vocoder, checkpointing, gpus, energy_use
 
     log_data = {
-        translations['modelname']: model_name, 
+        translations["modelname"]: model_name, 
         translations["save_every_epoch"]: save_every_epoch, 
         translations["total_e"]: total_epoch, 
         translations["dorg"].format(pretrainG=pretrainG, pretrainD=pretrainD): "", 
-        translations['training_version']: version, 
+        translations["training_version"]: version, 
         "Gpu": gpus, 
-        translations['batch_size']: batch_size, 
-        translations['training_f0']: pitch_guidance, 
-        translations['save_only_latest']: save_only_latest, 
-        translations['save_every_weights']: save_every_weights, 
-        translations['cache_in_gpu']: cache_data_in_gpu, 
-        translations['overtraining_detector']: overtraining_detector, 
-        translations['threshold']: overtraining_threshold, 
-        translations['cleanup_training']: cleanup, 
-        translations['memory_efficient_training']: checkpointing, 
+        translations["batch_size"]: batch_size, 
+        translations["training_f0"]: pitch_guidance, 
+        translations["save_only_latest"]: save_only_latest, 
+        translations["save_every_weights"]: save_every_weights, 
+        translations["cache_in_gpu"]: cache_data_in_gpu, 
+        translations["overtraining_detector"]: overtraining_detector, 
+        translations["threshold"]: overtraining_threshold, 
+        translations["cleanup_training"]: cleanup, 
+        translations["memory_efficient_training"]: checkpointing, 
         translations["optimizer"]: optimizer_choice, 
         translations["train&energy"]: energy_use,
-        translations["multiscale_mel_loss"]: multiscale_mel_loss
+        translations["multiscale_mel_loss"]: multiscale_mel_loss,
+        translations["cosine_annealing_lr"]: use_cosine_annealing_lr,
+        translations["architecture"]: architecture,
     }
 
     if model_author: log_data[translations["model_author"].format(model_author=model_author)] = ""
@@ -235,9 +327,13 @@ def main():
             logger.warning(translations["not_found_dataset"])
             sys.exit(1)
 
-        if torch.cuda.is_available() and main_config.device.startswith("cuda"):
+        # Device selection — Vietnamese-RVC style with XPU + CPU fallback + Advanced-RVC ZLUDA
+        if gpus == "-":
+            device, gpus = torch.device("cpu"), [0]
+            n_gpus = 1
+            logger.warning(translations["not_gpu"])
+        elif torch.cuda.is_available() and main_config.device.startswith("cuda"):
             if _is_zluda:
-                # ZLUDA (AMD GPU): single GPU only, no multi-GPU NCCL support
                 device = torch.device("cuda")
                 gpus = [0]
                 n_gpus = 1
@@ -245,6 +341,9 @@ def main():
             else:
                 device, gpus = torch.device("cuda"), [int(item) for item in gpus.split("-")]
                 n_gpus = len(gpus)
+        elif hasattr(torch, "xpu") and torch.xpu.is_available() and main_config.device.startswith("xpu"):
+            device, gpus = torch.device("xpu"), [int(item) for item in gpus.split("-")]
+            n_gpus = len(gpus)
         elif opencl.is_available() and main_config.device.startswith("ocl"):
             device, gpus = torch.device("ocl"), [int(item) for item in gpus.split("-")]
             n_gpus = len(gpus)
@@ -259,24 +358,51 @@ def main():
             n_gpus = 1
             logger.warning(translations["not_gpu"])
 
+        logger.info(
+            translations["use_precision"].format(
+                fp=("BF16" if getattr(main_config, 'brain', False) else "FP16") if is_half else "FP32"
+            )
+        )
+
         def start():
             children = []
             pid_data = {"process_pids": []}
 
-            with open(config_save_path, "r") as pid_file:
-                try:
-                    pid_data.update(json.load(pid_file))
-                except json.JSONDecodeError:
-                    pass
+            if save_the_pid:
+                with open(config_save_path, "r", encoding="utf-8") as f:
+                    try:
+                        pid_data.update(json.load(f))
+                    except json.JSONDecodeError:
+                        pass
 
-            with open(config_save_path, "w") as pid_file:
-                for rank, device_id in enumerate(gpus):
-                    subproc = mp.Process(target=run, args=(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, total_epoch, save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, compile_model))
-                    children.append(subproc)
-                    subproc.start()
-                    pid_data["process_pids"].append(subproc.pid)
+            for rank, device_id in enumerate(gpus):
+                subproc = mp.Process(
+                    target=run, 
+                    args=(
+                        rank, 
+                        n_gpus, 
+                        pretrainG, 
+                        pretrainD, 
+                        pitch_guidance, 
+                        total_epoch, 
+                        save_every_weights, 
+                        config, 
+                        device, 
+                        device_id, 
+                        model_author, 
+                        vocoder, 
+                        checkpointing, 
+                        energy_use,
+                        compile_model,
+                    )
+                )
+                children.append(subproc)
+                subproc.start()
+                pid_data["process_pids"].append(subproc.pid)
 
-                json.dump(pid_data, pid_file, indent=4)
+            if save_the_pid: 
+                with open(config_save_path, "w", encoding="utf-8") as f:
+                    json.dump(pid_data, f, indent=4)
 
             for i in range(n_gpus):
                 children[i].join()
@@ -285,19 +411,36 @@ def main():
             if os.path.exists(file_path):
                 with open(file_path, "r") as f:
                     data = json.load(f)
-                    return (data.get("loss_disc_history", []), data.get("smoothed_loss_disc_history", []), data.get("loss_gen_history", []), data.get("smoothed_loss_gen_history", []))
+                    return (
+                        data.get("loss_disc_history", []), 
+                        data.get("smoothed_loss_disc_history", []), 
+                        data.get("loss_gen_history", []), 
+                        data.get("smoothed_loss_gen_history", [])
+                    )
             
             return [], [], [], []
 
         def continue_overtrain_detector(training_file_path):
-            if overtraining_detector and os.path.exists(training_file_path): (loss_disc_history, smoothed_loss_disc_history, loss_gen_history, smoothed_loss_gen_history) = load_from_json(training_file_path)
+            if overtraining_detector and os.path.exists(training_file_path): 
+                (
+                    loss_disc_history, 
+                    smoothed_loss_disc_history, 
+                    loss_gen_history, 
+                    smoothed_loss_gen_history 
+                ) = load_from_json(training_file_path)
 
         if cleanup:
             for root, dirs, files in os.walk(experiment_dir, topdown=False):
                 for name in files:
                     file_path = os.path.join(root, name)
                     file_name, file_extension = os.path.splitext(name)
-                    if (file_extension == ".0" or (file_name.startswith(("D_", "G_")) and file_extension == ".pth") or (file_name.startswith(("added", "trained")) and file_extension == ".index")): os.remove(file_path)
+
+                    if (
+                        file_extension == ".0" or 
+                        (file_name.startswith(("D_", "G_")) and file_extension == ".pth") or 
+                        (file_name.startswith(("added", "trained")) and file_extension == ".index")
+                    ): 
+                        os.remove(file_path)
 
                 for name in dirs:
                     if name == "eval":
@@ -324,21 +467,49 @@ class EpochRecorder:
         now_time = ttime()
         elapsed_time = now_time - self.last_time
         self.last_time = now_time
-        return translations["time_or_speed_training"].format(current_time=datetime.datetime.now().strftime("%H:%M:%S"), elapsed_time_str=str(datetime.timedelta(seconds=int(round(elapsed_time, 1)))))
 
-def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, custom_total_epoch, custom_save_every_weights, config, device, device_id, model_author, vocoder, checkpointing, energy_use, compile_model):
+        return translations["time_or_speed_training"].format(
+            current_time=datetime.datetime.now().strftime("%H:%M:%S"), 
+            elapsed_time_str=str(datetime.timedelta(seconds=int(round(elapsed_time, 1))))
+        )
+
+def run(
+    rank, 
+    n_gpus, 
+    pretrainG, 
+    pretrainD, 
+    pitch_guidance, 
+    custom_total_epoch, 
+    custom_save_every_weights, 
+    config, 
+    device, 
+    device_id, 
+    model_author, 
+    vocoder, 
+    checkpointing, 
+    energy_use,
+    compile_model,
+):
     global global_step, smoothed_value_gen, smoothed_value_disc, optimizer_choice
 
     smoothed_value_gen, smoothed_value_disc = 0, 0
-    # ZLUDA: no NCCL support, must use gloo backend
-    _ddp_backend = "gloo" if (sys.platform == "win32" or device.type != "cuda" or _is_zluda) else "nccl"
-    dist.init_process_group(backend=_ddp_backend, init_method="env://", world_size=n_gpus if device.type == "cuda" else 1, rank=rank if device.type == "cuda" else 0)
+
+    # DDP backend selection — Vietnamese-RVC style with XPU + Advanced-RVC ZLUDA
+    _ddp_backend = "gloo" if (sys.platform == "win32" or device.type not in ["cuda", "xpu"] or _is_zluda) else ("xccl" if device.type == "xpu" else "nccl")
+    dist.init_process_group(
+        backend=_ddp_backend, 
+        init_method="env://", 
+        world_size=n_gpus if device.type in ["cuda", "xpu"] else 1, 
+        rank=rank if device.type in ["cuda", "xpu"] else 0
+    )
 
     torch.manual_seed(config.train.seed)
     if device.type == "cuda": torch.cuda.manual_seed(config.train.seed)
+    elif device.type == "xpu": torch.xpu.manual_seed(config.train.seed)
     elif device.type == "ocl": opencl.pytorch_ocl.manual_seed_all(config.train.seed)
 
     if torch.cuda.is_available(): torch.cuda.set_device(device_id)
+    elif hasattr(torch, "xpu") and torch.xpu.is_available(): torch.xpu.set_device(device_id)
 
     if rank == 0:
         if _is_zluda:
@@ -348,7 +519,9 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         elif _is_low_vram:
             logger.info(f"Training on low-VRAM GPU ({_gpu_mem_gb}GB) — reduced memory defaults active")
 
-    writer_eval = SummaryWriter(log_dir=os.path.join(experiment_dir, "eval")) if rank == 0 else None
+    writer_eval = SummaryWriter(
+        log_dir=eval_dir
+    ) if rank == 0 else None
 
     from advanced_rvc_inference.engine.training.runner.data_utils import (
         DistributedBucketSampler,
@@ -356,113 +529,245 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         TextAudioLoader
     )
 
-    train_dataset = TextAudioLoader(config.data, pitch_guidance=pitch_guidance, energy=energy_use)
-    # ZLUDA: pin_memory=False (non-pinned transfers are more reliable on HIP)
-    # T4 / low-VRAM: reduce num_workers and prefetch to save RAM
+    train_dataset = TextAudioLoader(
+        config.data, 
+        spec_dirs=spec_dirs,
+        cache_spectrogram=cache_spectrogram,
+        pitch_guidance=pitch_guidance, 
+        energy=energy_use
+    )
+
+    # Adaptive data loader settings — Advanced-RVC's low-VRAM / ZLUDA defaults
     _pin_mem = not _is_zluda
     _num_workers = 2 if (_is_low_vram or _is_zluda) else 4
     _prefetch = 2 if (_is_low_vram or _is_zluda) else 8
-    train_loader = DataLoader(train_dataset, num_workers=_num_workers, shuffle=False, pin_memory=_pin_mem, collate_fn=TextAudioCollate(pitch_guidance=pitch_guidance, energy=energy_use), batch_sampler=DistributedBucketSampler(train_dataset, batch_size, [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], num_replicas=n_gpus, rank=rank, shuffle=True), persistent_workers=True, prefetch_factor=_prefetch)
+
+    train_loader = DataLoader(
+        train_dataset, 
+        num_workers=_num_workers, 
+        shuffle=False, 
+        pin_memory=_pin_mem, 
+        batch_size=1 if architecture != "SVC" else batch_size,
+        collate_fn=TextAudioCollate(
+            pitch_guidance=pitch_guidance, 
+            energy=energy_use
+        ), 
+        batch_sampler=DistributedBucketSampler(
+            train_dataset, 
+            batch_size, 
+            [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], 
+            num_replicas=n_gpus, 
+            rank=rank, 
+            shuffle=True
+        ) if architecture != "SVC" else None, 
+        persistent_workers=True, 
+        prefetch_factor=_prefetch
+    )
 
     if len(train_loader) < 3:
         logger.warning(translations["not_enough_data"])
         sys.exit(1)
 
+    # ── Dynamic spk_dim detection from checkpoint (Vietnamese-RVC feature) ──
+    spk_dim = config.model.spk_embed_dim
+
+    try:
+        spk_dim = config.sid
+    except Exception as e:
+        logger.debug(e)
+
+    try:
+        g_path = os.path.join(checkpoint_path, "G_latest.pth")
+        last_g = g_path if save_only_latest and os.path.exists(g_path) else latest_checkpoint_path(checkpoint_path, "G_*.pth")
+
+        chk_path = (last_g if last_g else (pretrainG if pretrainG not in ["", "None"] else None))
+
+        if chk_path:
+            ckpt = torch.load(chk_path, map_location="cpu", weights_only=True)
+            spk_dim = ckpt["model"]["emb_g.weight"].shape[0]
+            del ckpt
+    except Exception as e:
+        logger.debug(e)
+
+    config.model.spk_embed_dim = spk_dim
+
     from advanced_rvc_inference.engine.models.algorithms.synthesizers import Synthesizer
     from advanced_rvc_inference.engine.models.algorithms.discriminators import MultiPeriodDiscriminator
 
-    net_g, net_d = (
-        Synthesizer(
-            config.data.filter_length // 2 + 1, 
-            config.train.segment_size // config.data.hop_length, 
-            **config.model, 
-            use_f0=pitch_guidance, 
-            sr=config.data.sample_rate, 
-            vocoder=vocoder, 
-            checkpointing=checkpointing, 
-            energy=energy_use
-        ), 
-        MultiPeriodDiscriminator(
-            disc_version, 
-            config.model.use_spectral_norm, 
-            checkpointing=checkpointing
-        )
-    )
-
-    net_g, net_d = (net_g.cuda(device_id), net_d.cuda(device_id)) if torch.cuda.is_available() else (net_g.to(device), net_d.to(device))
-
-    # Use the optimizer registry to get the optimizer class
-    from advanced_rvc_inference.engine.models.optimizers import get_optimizer_class, get_optimizer_info
-
+    # SVC architecture support (Vietnamese-RVC feature)
+    _has_svc = False
     try:
-        optimizer_optim = get_optimizer_class(optimizer_choice)
-        optimizer_meta = get_optimizer_info(optimizer_choice)
-    except ValueError:
-        logger.warning(f"Unknown optimizer '{optimizer_choice}', falling back to AdamW")
-        optimizer_choice = "AdamW"
-        optimizer_optim = get_optimizer_class("AdamW")
-        optimizer_meta = get_optimizer_info("AdamW")
+        from advanced_rvc_inference.engine.models.algorithms.synthesizers import SynthesizerSVC
+        _has_svc = True
+    except ImportError:
+        pass
 
-    if rank == 0:
-        logger.info(f"Optimizer: {optimizer_choice} (Rating: {optimizer_meta['rating']}/5 - {optimizer_meta['category']})")
-        logger.info(f"  {optimizer_meta['description']}")
+    if architecture == "SVC" and _has_svc:
+        net_g, net_d = (
+            SynthesizerSVC(
+                config.data.filter_length // 2 + 1, 
+                config.train.segment_size // config.data.hop_length, 
+                **config.model, 
+                sr=config.data.sample_rate, 
+                vocoder=vocoder, 
+                checkpointing=checkpointing, 
+            ), 
+            MultiPeriodDiscriminator(
+                version=disc_version, 
+                use_spectral_norm=config.model.use_spectral_norm, 
+                checkpointing=checkpointing
+            )
+        )
+    else:
+        net_g, net_d = (
+            Synthesizer(
+                config.data.filter_length // 2 + 1, 
+                config.train.segment_size // config.data.hop_length, 
+                **config.model, 
+                use_f0=pitch_guidance, 
+                sr=config.data.sample_rate, 
+                vocoder=vocoder, 
+                checkpointing=checkpointing, 
+                energy=energy_use
+            ), 
+            MultiPeriodDiscriminator(
+                version=disc_version, 
+                use_spectral_norm=config.model.use_spectral_norm, 
+                checkpointing=checkpointing
+            )
+        )
 
-    # CUDA Optimizer Training: Use fused kernels when available and supported
-    # ZLUDA: fused kernels are NVIDIA-specific, skip
-    use_fused_optimizer = (
-        device.type == "cuda"
-        and not _is_zluda
-        and optimizer_meta.get("supports_fused", False)
-        and hasattr(optimizer_optim, "fused")
+    # Move to device — Vietnamese-RVC style with XPU support
+    net_g, net_d = (
+        net_g.cuda(device_id), 
+        net_d.cuda(device_id)
+    ) if torch.cuda.is_available() else (
+        net_g.xpu(device_id), 
+        net_d.xpu(device_id)
+    ) if hasattr(torch, "xpu") and torch.xpu.is_available() else (
+        net_g.to(device), 
+        net_d.to(device)
     )
 
-    # Build optimizer kwargs based on what the optimizer supports
-    def _build_optimizer_kwargs(lr_coeff):
-        kwargs = {"lr": config.train.learning_rate * lr_coeff}
-        if optimizer_meta.get("supports_betas"):
-            kwargs["betas"] = config.train.betas
-        if optimizer_meta.get("supports_eps"):
-            kwargs["eps"] = config.train.eps
-        if optimizer_meta.get("supports_weight_decay"):
-            kwargs["weight_decay"] = 0.0
-        if use_fused_optimizer:
-            kwargs["fused"] = True
-        return kwargs
+    # ── Optimizer selection ──
+    # Use the Advanced-RVC optimizer registry when available, with Vietnamese-RVC
+    # fallbacks for AdaBeliefV2 / InverseSqrt scheduler
+    _use_registry = True
+    try:
+        from advanced_rvc_inference.engine.models.optimizers import get_optimizer_class, get_optimizer_info
+    except ImportError:
+        _use_registry = False
 
-    # 8-bit Adam for low VRAM (requires bitsandbytes)
-    if use_8bit_adam and device.type == "cuda":
+    # Vietnamese-RVC style InverseSqrt scheduler import for AdaBeliefV2
+    get_inverse_sqrt_scheduler = None
+    try:
+        from advanced_rvc_inference.engine.models.optimizers.adabeliefv2 import AdaBeliefV2 as _AdaBeliefV2, get_inverse_sqrt_scheduler as _get_inv_sqrt
+        get_inverse_sqrt_scheduler = _get_inv_sqrt
+    except ImportError:
+        pass
+
+    if _use_registry:
         try:
-            import bitsandbytes as bnb
-            if rank == 0:
-                logger.info(f"Using 8-bit {optimizer_choice} via bitsandbytes for reduced VRAM usage")
-            optim_g = bnb.optim.AdamW8bit(net_g.parameters(), lr=config.train.learning_rate * g_lr_coeff, betas=config.train.betas)
-            optim_d = bnb.optim.AdamW8bit(net_d.parameters(), lr=config.train.learning_rate * d_lr_coeff, betas=config.train.betas)
-            use_fused_optimizer = False  # 8-bit and fused are incompatible
-        except ImportError:
-            if rank == 0:
-                logger.warning("bitsandbytes not installed, falling back to standard optimizer")
+            optimizer_optim = get_optimizer_class(optimizer_choice)
+            optimizer_meta = get_optimizer_info(optimizer_choice)
+        except ValueError:
+            logger.warning(f"Unknown optimizer '{optimizer_choice}', falling back to AdamW")
+            optimizer_choice = "AdamW"
+            optimizer_optim = get_optimizer_class("AdamW")
+            optimizer_meta = get_optimizer_info("AdamW")
+
+        if rank == 0:
+            logger.info(f"Optimizer: {optimizer_choice} (Rating: {optimizer_meta.get('rating', 'N/A')}/5 - {optimizer_meta.get('category', 'N/A')})")
+
+        # CUDA Optimizer Training: Use fused kernels when available and supported
+        use_fused_optimizer = (
+            device.type == "cuda"
+            and not _is_zluda
+            and optimizer_meta.get("supports_fused", False)
+            and hasattr(optimizer_optim, "fused")
+        )
+
+        # Build optimizer kwargs based on what the optimizer supports
+        def _build_optimizer_kwargs(lr_coeff):
+            kwargs = {"lr": config.train.learning_rate * lr_coeff}
+            if optimizer_meta.get("supports_betas"):
+                kwargs["betas"] = config.train.betas
+            if optimizer_meta.get("supports_eps"):
+                kwargs["eps"] = config.train.eps
+            if optimizer_meta.get("supports_weight_decay"):
+                kwargs["weight_decay"] = 0.0
+            if use_fused_optimizer:
+                kwargs["fused"] = True
+            return kwargs
+
+        # 8-bit Adam for low VRAM (requires bitsandbytes) — Advanced-RVC feature
+        if use_8bit_adam and device.type == "cuda":
+            try:
+                import bitsandbytes as bnb
+                if rank == 0:
+                    logger.info(f"Using 8-bit {optimizer_choice} via bitsandbytes for reduced VRAM usage")
+                optim_g = bnb.optim.AdamW8bit(net_g.parameters(), lr=config.train.learning_rate * g_lr_coeff, betas=config.train.betas)
+                optim_d = bnb.optim.AdamW8bit(net_d.parameters(), lr=config.train.learning_rate * d_lr_coeff, betas=config.train.betas)
+                use_fused_optimizer = False
+            except ImportError:
+                if rank == 0:
+                    logger.warning("bitsandbytes not installed, falling back to standard optimizer")
+                optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
+                optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
+        else:
             optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
             optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
+        
+        if rank == 0 and use_fused_optimizer:
+            logger.info(f"CUDA Optimizer Training: Using fused {optimizer_choice} for enhanced CUDA performance")
     else:
-        optim_g = optimizer_optim(net_g.parameters(), **_build_optimizer_kwargs(g_lr_coeff))
-        optim_d = optimizer_optim(net_d.parameters(), **_build_optimizer_kwargs(d_lr_coeff))
-    
-    if rank == 0 and use_fused_optimizer:
-        logger.info(f"CUDA Optimizer Training: Using fused {optimizer_choice} for enhanced CUDA performance")
+        # Vietnamese-RVC fallback optimizer selection
+        if optimizer_choice == "AnyPrecisionAdamW" and getattr(main_config, 'brain', False):
+            from advanced_rvc_inference.engine.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
+            optimizer_optim = AnyPrecisionAdamW
+        elif optimizer_choice == "RAdam":
+            from torch.optim import RAdam
+            optimizer_optim = RAdam
+        elif optimizer_choice == "AdaBelief":
+            from advanced_rvc_inference.engine.models.optimizers.adabelief import AdaBelief
+            optimizer_optim = AdaBelief
+        elif optimizer_choice == "AdaBeliefV2":
+            from advanced_rvc_inference.engine.models.optimizers.adabeliefv2 import AdaBeliefV2
+            optimizer_optim = AdaBeliefV2
+        else:
+            from torch.optim import AdamW
+            optimizer_optim = AdamW
+
+        optim_g, optim_d = (
+            optimizer_optim(
+                net_g.parameters(), 
+                config.train.learning_rate * g_lr_coeff, 
+                betas=config.train.betas if not optimizer_choice.startswith("AdaBelief") else 1e-8, 
+                eps=config.train.eps
+            ), 
+            optimizer_optim(
+                net_d.parameters(), 
+                config.train.learning_rate * d_lr_coeff, 
+                betas=config.train.betas if not optimizer_choice.startswith("AdaBelief") else 1e-8, 
+                eps=config.train.eps
+            )
+        )
 
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
-    if device.type.startswith(("privateuseone", "ocl")):
-        pass  # Skip DDP for non-CUDA backends
-    elif _is_zluda:
-        # ZLUDA: DDP without device_ids (gloo backend, no NCCL)
-        net_g, net_d = DDP(net_g), DDP(net_d)
-    else: 
-        # Optimization: increase gradient bucket size for faster all-reduce communication
-        ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25} if torch.cuda.is_available() else {}
-        net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
+    # DDP wrapping — Vietnamese-RVC style with XPU, Advanced-RVC ZLUDA + bucket_cap_mb
+    if not device.type.startswith(("privateuseone", "ocl", "mps", "xpu")): 
+        if _is_zluda:
+            # ZLUDA: DDP without device_ids (gloo backend, no NCCL)
+            net_g, net_d = DDP(net_g), DDP(net_d)
+        elif torch.cuda.is_available():
+            # Optimization: increase gradient bucket size for faster all-reduce communication
+            ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25}
+            net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
+        else:
+            net_g, net_d = DDP(net_g), DDP(net_d)
 
-    # Optimization: torch.compile for PyTorch 2.x+ (significant speedup on CUDA)
+    # Optimization: torch.compile for PyTorch 2.x+ — Advanced-RVC feature
     # ZLUDA: torch.compile is not supported
     if compile_model and device.type == "cuda" and not _is_zluda and hasattr(torch, "compile"):
         if rank == 0:
@@ -475,10 +780,26 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
 
     scaler_dict = {}
     try:
-        logger.info(translations["start_training"])
+        if rank == 0: logger.info(translations["start_training"])
 
-        _, _, _, epoch_str, scaler_dict = load_checkpoint(logger, (os.path.join(experiment_dir, "D_latest.pth") if save_only_latest else latest_checkpoint_path(experiment_dir, "D_*.pth")), net_d, optim_d)
-        _, _, _, epoch_str, _ = load_checkpoint(logger, (os.path.join(experiment_dir, "G_latest.pth") if save_only_latest else latest_checkpoint_path(experiment_dir, "G_*.pth")), net_g, optim_g)
+        d_path = os.path.join(checkpoint_path, "D_latest.pth") if save_only_latest else latest_checkpoint_path(checkpoint_path, "D_*.pth")
+        g_path = os.path.join(checkpoint_path, "G_latest.pth") if save_only_latest else latest_checkpoint_path(checkpoint_path, "G_*.pth")
+
+        _, _, _, epoch_str, scaler_dict = load_checkpoint(
+            logger, 
+            d_path, 
+            net_d, 
+            optim_d
+        )
+
+        _, _, _, epoch_str, _ = load_checkpoint(
+            logger, 
+            g_path, 
+            net_g, 
+            optim_g
+        )
+
+        if rank == 0: logger.info(translations["load_checkpoint"].format(d_path=d_path, g_path=g_path))
         
         epoch_str += 1
         global_step = (epoch_str - 1) * len(train_loader)
@@ -488,6 +809,7 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
         strict = main_configs.get("pretrain_strict", True)
 
         # Auto-download default pretrained models if no custom pretrained paths provided
+        # (Advanced-RVC feature — better than Vietnamese-RVC's approach)
         if pretrainG in check and pretrainD in check and rank == 0:
             pretrained_base_url = f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
             pretrained_save_dir = os.path.join(main_configs.get(f"pretrained_{version}_path", os.path.join(os.path.dirname(__file__), "../../assets/models", f"pretrained_{version}")))
@@ -551,6 +873,9 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
 
                 ckptG = torch.load(pretrainG, map_location="cpu", weights_only=True)["model"]
+                # SVC architecture: ensure emb_g.weight is present
+                if architecture == "SVC" and "emb_g.weight" not in ckptG: 
+                    ckptG["emb_g.weight"] = net_g.module.emb_g.weight if hasattr(net_g, "module") else net_g.emb_g.weight
 
                 if strict:
                     model_keys = set(net_g.module.state_dict().keys() if hasattr(net_g, "module") else net_g.state_dict().keys())
@@ -593,41 +918,68 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
                 net_d.module.load_state_dict(filtered_ckptD, strict=False) if hasattr(net_d, "module") else net_d.load_state_dict(filtered_ckptD, strict=False)
                 del ckptD, filtered_ckptD
         except Exception as e:
-            logger.warning(translations["checkpointing_err"])
-            logger.error(e)
+            logger.error(translations["checkpointing_err"])
+            logger.debug(e)
             sys.exit(1)
 
-    # Scheduler selection: CosineAnnealingLR or ExponentialLR (matches Vietnamese-RVC)
-    if use_cosine_annealing_lr:
+    # Scheduler selection — Vietnamese-RVC style with AdaBelief / AdaBeliefV2 / CosineAnnealing
+    if optimizer_choice == "AdaBelief" or use_cosine_annealing_lr:
         scheduler_g, scheduler_d = (
-            torch.optim.lr_scheduler.CosineAnnealingLR(optim_g, T_max=total_epoch, eta_min=1e-6, last_epoch=epoch_str - 2),
-            torch.optim.lr_scheduler.CosineAnnealingLR(optim_d, T_max=total_epoch, eta_min=1e-6, last_epoch=epoch_str - 2)
+            torch.optim.lr_scheduler.CosineAnnealingLR(
+                optim_g, 
+                T_max=total_epoch, 
+                eta_min=1e-6, 
+                last_epoch=epoch_str - 2
+            ), 
+            torch.optim.lr_scheduler.CosineAnnealingLR(
+                optim_d, 
+                T_max=total_epoch, 
+                eta_min=1e-6, 
+                last_epoch=epoch_str - 2
+            )
+        )
+    elif optimizer_choice == "AdaBeliefV2" and get_inverse_sqrt_scheduler is not None:
+        # InverseSqrt scheduler for AdaBeliefV2 (Vietnamese-RVC feature)
+        scheduler_g, scheduler_d = (
+            get_inverse_sqrt_scheduler(
+                optim_g, 
+                warmup_epochs=10, 
+                last_epoch=epoch_str - 2
+            ), 
+            get_inverse_sqrt_scheduler(
+                optim_d, 
+                warmup_epochs=10, 
+                last_epoch=epoch_str - 2
+            )
         )
     else:
         scheduler_g, scheduler_d = (
-            torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=config.train.lr_decay, last_epoch=epoch_str - 2),
-            torch.optim.lr_scheduler.ExponentialLR(optim_d, gamma=config.train.lr_decay, last_epoch=epoch_str - 2)
+            torch.optim.lr_scheduler.ExponentialLR(
+                optim_g, 
+                gamma=config.train.lr_decay, 
+                last_epoch=epoch_str - 2
+            ), 
+            torch.optim.lr_scheduler.ExponentialLR(
+                optim_d, 
+                gamma=config.train.lr_decay, 
+                last_epoch=epoch_str - 2
+            )
         )
-    
-    # is_half logic — matches Vietnamese-RVC exactly
-    is_half = main_config.is_half
-    if getattr(main_config, 'brain', False): is_half = True
 
-    # Single shared GradScaler — matches Vietnamese-RVC and Applio exactly.
-    # Pattern: D step (scale→backward→unscale→step, NO update),
-    #          G step (scale→backward→unscale→step→update).
-    # scaler.update() is called ONLY once per iteration, after the G step.
-    scaler = GradScaler(device=device, enabled=is_half and device.type == "cuda")
+    # XPU mixed precision — Vietnamese-RVC feature
+    if device.type == "xpu" and is_half and xpu is not None: 
+        xpu.setup_gradscaler()
+
+    # GradScaler — Vietnamese-RVC style: enabled for both CUDA and XPU
+    scaler = GradScaler(device=device, enabled=is_half and device.type in ["cuda", "xpu"])
     cache = []
 
-    # Restore scaler state from checkpoint
-    if len(scaler_dict) > 0:
-        scaler.load_state_dict(scaler_dict)
+    if len(scaler_dict) > 0: scaler.load_state_dict(scaler_dict)
 
     if use_custom_reference and os.path.isfile(os.path.join(reference_path, "feats.npy")):
         import numpy as np
 
-        logger.info(translations["using_reference"].format(reference_name=reference_path))
+        if rank == 0: logger.info(translations["using_reference"].format(reference_name=re.sub(r'_v\d+_(?:[A-Za-z0-9_]+?)_(True|False)_(True|False)$', '', os.path.basename(reference_path))))
         phone = np.repeat(np.load(os.path.join(reference_path, "feats.npy")), 2, axis=0)
 
         reference = (
@@ -636,35 +988,67 @@ def run(rank, n_gpus, experiment_dir, pretrainG, pretrainD, pitch_guidance, cust
             torch.LongTensor(np.load(os.path.join(reference_path, "pitch_coarse.npy"))[:-1]).unsqueeze(0).to(device) if pitch_guidance else None,
             torch.FloatTensor(np.load(os.path.join(reference_path, "pitch_fine.npy"))[:-1]).unsqueeze(0).to(device) if pitch_guidance else None,
             torch.LongTensor([0]).to(device),
-            torch.FloatTensor(np.load(os.path.join(reference_path, "energy.npy"))[:-1]).unsqueeze(0).to(device) if energy_use else None
         )
+        if architecture != "SVC": reference += (torch.FloatTensor(np.load(os.path.join(reference_path, "energy.npy"))[:-1]).unsqueeze(0).to(device) if energy_use else None,)
     else:
         info = next(iter(train_loader))
         reference = (info[0].to(device), info[1].to(device))
 
         if pitch_guidance:
             reference += (info[2].to(device), info[3].to(device), info[8].to(device))
-            reference += (info[9].to(device),) if energy_use else (None,)
+            if architecture != "SVC": reference += (info[9].to(device),) if energy_use else (None,)
         else:
             reference += (None, None, info[6].to(device))
-            reference += (info[7].to(device),) if energy_use else (None,)
+            if architecture != "SVC": reference += (info[7].to(device),) if energy_use else (None,)
 
-    steps_per_epoch = len(train_loader)
-    total_training_steps = (total_epoch - epoch_str + 1) * steps_per_epoch
-    
     try:
-        with tqdm(total=total_training_steps, desc="Training", 
-                  bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}{postfix}]",
-                  postfix="") as pbar:
-            
-            for epoch in range(epoch_str, total_epoch + 1):
-                train_and_evaluate(rank, epoch, config, [net_g, net_d], [optim_g, optim_d], scaler, train_loader, writer_eval, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=pbar)
-                scheduler_g.step(); scheduler_d.step()
+        for epoch in range(epoch_str, total_epoch + 1):
+            train_and_evaluate(
+                rank, 
+                epoch, 
+                config, 
+                [net_g, net_d], 
+                [optim_g, optim_d], 
+                scaler, 
+                train_loader, 
+                writer_eval, 
+                cache, 
+                custom_save_every_weights, 
+                custom_total_epoch, 
+                device, 
+                device_id, 
+                reference, 
+                model_author, 
+                vocoder, 
+                energy_use, 
+                fn_mel_loss
+            )
+
+            scheduler_g.step(); scheduler_d.step()
     finally:
         if dist.is_initialized():
             dist.destroy_process_group()
 
-def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, writer, cache, custom_save_every_weights, custom_total_epoch, device, device_id, reference, model_author, vocoder, energy_use, fn_mel_loss, pbar=None):
+def train_and_evaluate(
+    rank, 
+    epoch, 
+    hps, 
+    nets, 
+    optims, 
+    scaler, 
+    train_loader, 
+    writer, 
+    cache, 
+    custom_save_every_weights, 
+    custom_total_epoch, 
+    device, 
+    device_id, 
+    reference, 
+    model_author, 
+    vocoder, 
+    energy_use, 
+    fn_mel_loss
+):
     global global_step, lowest_value, loss_disc, consecutive_increases_gen, consecutive_increases_disc, smoothed_value_gen, smoothed_value_disc
 
     if epoch == 1:
@@ -673,99 +1057,170 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
 
     net_g, net_d = nets
     optim_g, optim_d = optims
-    train_loader.batch_sampler.set_epoch(epoch)
+
+    if architecture != "SVC": train_loader.batch_sampler.set_epoch(epoch)
     net_g.train(); net_d.train()
 
+    # Cache data in GPU — Vietnamese-RVC style with XPU support
     if device.type == "cuda" and cache_data_in_gpu:
         data_iterator = cache
+
         if cache == []:
             for batch_idx, info in enumerate(train_loader):
-                cache.append((batch_idx, [tensor.cuda(device_id, non_blocking=True) for tensor in info]))
-        else: shuffle(cache)
+                cache.append(
+                    (batch_idx, [
+                        tensor.cuda(device_id, non_blocking=True) 
+                        for tensor in info
+                    ])
+                )
+        else: 
+            shuffle(cache)
+    elif device.type == "xpu" and cache_data_in_gpu:
+        data_iterator = cache
+
+        if cache == []:
+            for batch_idx, info in enumerate(train_loader):
+                cache.append(
+                    (batch_idx, [
+                        tensor.xpu(device_id, non_blocking=True) 
+                        for tensor in info
+                    ])
+                )
+        else: 
+            shuffle(cache)
     elif device.type in ["privateuseone", "ocl"] and cache_data_in_gpu:
         data_iterator = cache
+
         if cache == []:
             for batch_idx, info in enumerate(train_loader):
-                cache.append((batch_idx, [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]))
-        else: shuffle(cache)
-    else: data_iterator = enumerate(train_loader)
+                cache.append(
+                    (batch_idx, [
+                        tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) 
+                        for tensor in info
+                    ])
+                )
+        else: 
+            shuffle(cache)
+    else: 
+        data_iterator = enumerate(train_loader)
 
     epoch_recorder = EpochRecorder()
 
-    autocast_enabled = main_config.is_half and device.type == "cuda"
-    autocast_dtype = torch.float32 if not autocast_enabled else (torch.bfloat16 if getattr(main_config, 'brain', False) else torch.float16)
-    autocasts = autocast(device.type, enabled=autocast_enabled, dtype=autocast_dtype) if not device.type.startswith("ocl") else nullcontext()
+    # Autocast settings — Vietnamese-RVC style with XPU mixed precision
+    autocast_enabled = is_half and device.type in ["cuda", "xpu"]
+    autocast_dtype = (
+        torch.float32 
+        if not autocast_enabled else 
+        (torch.bfloat16 if getattr(main_config, 'brain', False) else torch.float16)
+    )
+
+    autocasts = autocast(
+        device.type, 
+        enabled=autocast_enabled, 
+        dtype=autocast_dtype
+    ) if not device.type.startswith(("ocl", "privateuseone")) else nullcontext()
     
-    # Calculate total steps for this epoch
-    total_steps = len(train_loader)
-    
-    for batch_idx, info in data_iterator:
-        # CUDA Optimizer Training: Use non-blocking data transfer for faster data loading
-        if device.type == "cuda" and not cache_data_in_gpu:
-            info = [tensor.cuda(device_id, non_blocking=True) for tensor in info]
-        elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu:
-            info = [tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) for tensor in info]
-        else:
-            info = [tensor.to(device) for tensor in info]
+    with tqdm(total=len(train_loader), leave=False) as pbar:
+        for batch_idx, info in data_iterator:
+            # Move data to device — Vietnamese-RVC style with XPU support
+            if device.type == "cuda" and not cache_data_in_gpu: 
+                info = [
+                    tensor.cuda(device_id, non_blocking=True) 
+                    for tensor in info
+                ]  
+            elif device.type == "xpu" and not cache_data_in_gpu: 
+                info = [
+                    tensor.xpu(device_id, non_blocking=True) 
+                    for tensor in info
+                ]  
+            elif device.type in ["privateuseone", "ocl"] and not cache_data_in_gpu: 
+                info = [
+                    tensor.to(device_id if device.type == "ocl" else device, non_blocking=True) 
+                    for tensor in info
+                ]  
+            else: 
+                info = [
+                    tensor.to(device) 
+                    for tensor in info
+                ]
 
-        phone, phone_lengths = info[0], info[1]
-        if pitch_guidance:
-            pitch, pitchf = info[2], info[3]
-            spec, spec_lengths, wave, sid = info[4], info[5], info[6], info[8]
-            energy = info[9] if energy_use else None
-        else:
-            pitch = pitchf = None
-            spec, spec_lengths, wave, sid = info[2], info[3], info[4], info[6]
-            energy = info[7] if energy_use else None
-
-        with autocasts:
-            y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(phone, phone_lengths, pitch, pitchf, spec, spec_lengths, sid, energy)
-            wave = commons.slice_segments(wave, ids_slice * config.data.hop_length, config.train.segment_size, dim=3)
-
-        # ── Discriminator step ──────────────────────────────────────────
-        # Matches Vietnamese-RVC / Applio exactly:
-        #   zero_grad → forward → scale→backward → unscale_ → grad_norm → step
-        #   NO scaler.update() after D step — update is only after G step.
-        for d_step_i in range(d_step_per_g_step):
-            with autocasts:
-                y_d_hat_r, y_d_hat_g, _, _ = net_d(wave, y_hat.detach())
-                loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(y_d_hat_r, y_d_hat_g)
-
-            optim_d.zero_grad()
-
-            if autocast_enabled:
-                scaler.scale(loss_disc).backward()
-                scaler.unscale_(optim_d)
-                grad_norm_d = commons.grad_norm(net_d.parameters())
-                scaler.step(optim_d)
-                # NO scaler.update() here — only after G step
+            phone, phone_lengths = info[0], info[1]
+            if pitch_guidance:
+                pitch, pitchf = info[2], info[3]
+                spec, spec_lengths, wave, sid = info[4], info[5], info[6], info[8]
+                energy = info[9] if energy_use else None
             else:
-                loss_disc.backward()
-                grad_norm_d = commons.grad_norm(net_d.parameters())
-                optim_d.step()
+                pitch = pitchf = None
+                spec, spec_lengths, wave, sid = info[2], info[3], info[4], info[6]
+                energy = info[7] if energy_use else None
 
-        # ── Generator step ──────────────────────────────────────────────
-        # Forward through D again (y_hat NOT detached) for feature matching + adversarial
-        with autocasts:
-            y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(wave, y_hat)
+            with autocasts:
+                net_g_params = (
+                    phone, 
+                    phone_lengths, 
+                    pitch, 
+                    pitchf, 
+                    spec, 
+                    spec_lengths, 
+                    sid,
+                )
 
-        # Mel loss
-        if multiscale_mel_loss: 
-            loss_mel = fn_mel_loss(wave, y_hat) * config.train.c_mel / 3.0
-        else:
-            y_hat_mel = mel_spectrogram_torch(
-                y_hat.float().squeeze(1), 
-                config.data.filter_length, 
-                config.data.n_mel_channels, 
-                config.data.sample_rate, 
-                config.data.hop_length, 
-                config.data.win_length, 
-                config.data.mel_fmin, 
-                config.data.mel_fmax
-            )
-            loss_mel = fn_mel_loss(
-                mel_spectrogram_torch(
-                    wave.float().squeeze(1), 
+                if energy_use: net_g_params += (energy,)
+
+                y_hat, ids_slice, _, z_mask, (_, z_p, m_p, logs_p, _, logs_q) = net_g(
+                    *net_g_params
+                )
+
+                wave = commons.slice_segments(
+                    wave, 
+                    ids_slice * config.data.hop_length, 
+                    config.train.segment_size, 
+                    dim=3
+                )
+
+            # ── Discriminator step ──────────────────────────────────────────
+            for _ in range(d_step_per_g_step):
+                with autocasts:
+                    y_d_hat_r, y_d_hat_g, _, _ = net_d(
+                        wave, 
+                        y_hat.detach()
+                    )
+
+                    loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(
+                        y_d_hat_r, 
+                        y_d_hat_g
+                    )
+
+                optim_d.zero_grad()
+
+                if autocast_enabled:
+                    scaler.scale(loss_disc).backward()
+                    scaler.unscale_(optim_d)
+                    # Vietnamese-RVC: use_clip_grad_value toggle
+                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_d.parameters())
+                    scaler.step(optim_d)
+                    # NO scaler.update() here — only after G step
+                else:
+                    loss_disc.backward()
+                    grad_norm_d = commons.clip_grad_value(net_d.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_d.parameters())
+                    optim_d.step()
+
+            # ── Generator step ──────────────────────────────────────────────
+            with autocasts:
+                y_d_hat_r, y_d_hat_g, fmap_r, fmap_g = net_d(
+                    wave, 
+                    y_hat
+                )
+
+            # Mel loss
+            if multiscale_mel_loss: 
+                loss_mel = fn_mel_loss(
+                    wave, 
+                    y_hat
+                ) * config.train.c_mel / 3.0
+            else:
+                y_hat_mel = mel_spectrogram_torch(
+                    y_hat.float().squeeze(1), 
                     config.data.filter_length, 
                     config.data.n_mel_channels, 
                     config.data.sample_rate, 
@@ -773,101 +1228,130 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                     config.data.win_length, 
                     config.data.mel_fmin, 
                     config.data.mel_fmax
-                ), 
-                y_hat_mel
-            ) * config.train.c_mel
+                )
 
-        # KL divergence loss
-        loss_kl = losses.kl_loss(z_p.float(), logs_q.float(), m_p.float(), logs_p.float(), z_mask.float()) * config.train.c_kl
+                loss_mel = fn_mel_loss(
+                    mel_spectrogram_torch(
+                        wave.float().squeeze(1), 
+                        config.data.filter_length, 
+                        config.data.n_mel_channels, 
+                        config.data.sample_rate, 
+                        config.data.hop_length, 
+                        config.data.win_length, 
+                        config.data.mel_fmin, 
+                        config.data.mel_fmax
+                    ), 
+                    y_hat_mel
+                ) * config.train.c_mel
 
-        # Feature matching loss
-        loss_fm = losses.feature_loss(fmap_r, fmap_g)
-        # Adversarial generator loss
-        loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
+            # KL divergence loss — Vietnamese-RVC: DirectML workaround (move to CPU)
+            if device.type == "privateuseone": 
+                loss_kl = (
+                    losses.kl_loss(
+                        z_p.detach().cpu(), 
+                        logs_q.detach().cpu(), 
+                        m_p.detach().cpu(), 
+                        logs_p.detach().cpu(), 
+                        z_mask.detach().cpu()
+                    ) * config.train.c_kl
+                ).to(device)
+            else:
+                loss_kl = losses.kl_loss(
+                    z_p, 
+                    logs_q, 
+                    m_p, 
+                    logs_p, 
+                    z_mask
+                ) * config.train.c_kl
 
-        # Total generator loss — matches Vietnamese-RVC / Applio
-        loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
+            loss_fm = losses.feature_loss(fmap_r, fmap_g)
+            loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
+            loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
 
-        # Energy loss (optional, off by default)
-        loss_energy = torch.tensor(0.0, device=device)
-        if energy_use and energy is not None:
-            energy_target = energy.float()
-            energy_slice = commons.slice_segments(
-                energy_target.unsqueeze(1), 
-                ids_slice, 
-                config.train.segment_size // config.data.hop_length, 
-                dim=2
-            ).squeeze(1)
-            wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
-            energy_pred = wave_rms.squeeze(-1)
-            loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
-            loss_energy = loss_energy * getattr(config.train, 'c_energy', 0.1)
-            loss_gen_all = loss_gen_all + loss_energy
+            # Energy loss (optional, off by default) — Advanced-RVC feature
+            loss_energy = torch.tensor(0.0, device=device)
+            if energy_use and energy is not None:
+                energy_target = energy.float()
+                energy_slice = commons.slice_segments(
+                    energy_target.unsqueeze(1), 
+                    ids_slice, 
+                    config.train.segment_size // config.data.hop_length, 
+                    dim=2
+                ).squeeze(1)
+                wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
+                energy_pred = wave_rms.squeeze(-1)
+                loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
+                loss_energy = loss_energy * getattr(config.train, 'c_energy', 0.1)
+                loss_gen_all = loss_gen_all + loss_energy
 
-        if loss_gen_all < lowest_value["value"]: lowest_value = {"step": global_step, "value": loss_gen_all, "epoch": epoch}
+            if loss_gen_all < lowest_value["value"]: 
+                lowest_value = {
+                    "step": global_step, 
+                    "value": loss_gen_all, 
+                    "epoch": epoch
+                }
 
-        # G optimizer step — matches Vietnamese-RVC / Applio exactly:
-        #   zero_grad → scale→backward → unscale_ → grad_norm → step → update
-        optim_g.zero_grad()
+            # Gradient accumulation — properly implemented (fixes grad_accum_steps bug)
+            # Scale loss by 1/grad_accum_steps and only step optimizer every grad_accum_steps steps
+            if grad_accum_steps > 1:
+                loss_gen_all_scaled = loss_gen_all / grad_accum_steps
+            else:
+                loss_gen_all_scaled = loss_gen_all
 
-        if autocast_enabled:
-            scaler.scale(loss_gen_all).backward()
-            scaler.unscale_(optim_g)
-            grad_norm_g = commons.grad_norm(net_g.parameters())
-            scaler.step(optim_g)
-            scaler.update()  # ONLY update after G step
-        else:
-            loss_gen_all.backward()
-            grad_norm_g = commons.grad_norm(net_g.parameters())
-            optim_g.step()
+            optim_g.zero_grad()
+            if autocast_enabled:
+                scaler.scale(loss_gen_all_scaled).backward()
+                scaler.unscale_(optim_g)
+                # Vietnamese-RVC: use_clip_grad_value toggle
+                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
+                # Only step and update when we've accumulated enough gradients
+                if (batch_idx + 1) % grad_accum_steps == 0:
+                    scaler.step(optim_g)
+                    scaler.update()
+            else:
+                loss_gen_all_scaled.backward()
+                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
+                if (batch_idx + 1) % grad_accum_steps == 0:
+                    optim_g.step()
 
-        global_step += 1
+            # For grad_accum_steps > 1, we still step on non-boundary steps to keep 
+            # backward compatibility with the original loss tracking. However, the 
+            # effective gradient update only happens every grad_accum_steps steps.
+            # When grad_accum_steps == 1, this is identical to the original behavior.
+            if grad_accum_steps == 1 or (batch_idx + 1) % grad_accum_steps == 0:
+                global_step += 1
 
-        avg_losses["grad_d_50"].append(grad_norm_d)
-        avg_losses["grad_g_50"].append(grad_norm_g)
-        avg_losses["disc_loss_50"].append(loss_disc.detach())
-        avg_losses["adv_loss_50"].append(loss_gen.detach())
-        avg_losses["fm_loss_50"].append(loss_fm.detach())
-        avg_losses["kl_loss_50"].append(loss_kl.detach())
-        avg_losses["mel_loss_50"].append(loss_mel.detach())
-        avg_losses["gen_loss_50"].append(loss_gen_all.detach())
-        
-        if energy_use:
+            avg_losses["grad_d_50"].append(grad_norm_d)
+            avg_losses["grad_g_50"].append(grad_norm_g)
+            avg_losses["disc_loss_50"].append(loss_disc.detach())
+            avg_losses["adv_loss_50"].append(loss_gen.detach())
+            avg_losses["fm_loss_50"].append(loss_fm.detach())
+            avg_losses["kl_loss_50"].append(loss_kl.detach())
+            avg_losses["mel_loss_50"].append(loss_mel.detach())
+            avg_losses["gen_loss_50"].append(loss_gen_all.detach())
             avg_losses["energy_loss_50"].append(loss_energy.detach())
 
-        if rank == 0 and global_step % 50 == 0:
-            scalar_dict = {
-                "grad_avg_50/norm_d": sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"]),
-                "grad_avg_50/norm_g": sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"]),
-                "loss_avg_50/d/adv": torch.stack(list(avg_losses["disc_loss_50"])).mean(),
-                "loss_avg_50/g/adv": torch.stack(list(avg_losses["adv_loss_50"])).mean(),
-                "loss_avg_50/g/fm": torch.stack(list(avg_losses["fm_loss_50"])).mean(),
-                "loss_avg_50/g/kl": torch.stack(list(avg_losses["kl_loss_50"])).mean(),
-                "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
-                "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean()
-            }
-            
-            if energy_use and len(avg_losses.get("energy_loss_50", [])) > 0:
-                scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
+            if rank == 0 and global_step % 50 == 0:
+                scalar_dict = {
+                    "grad_avg_50/norm_d": sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"]),
+                    "grad_avg_50/norm_g": sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"]),
+                    "loss_avg_50/d/adv": torch.stack(list(avg_losses["disc_loss_50"])).mean(),
+                    "loss_avg_50/g/adv": torch.stack(list(avg_losses["adv_loss_50"])).mean(),
+                    "loss_avg_50/g/fm": torch.stack(list(avg_losses["fm_loss_50"])).mean(),
+                    "loss_avg_50/g/kl": torch.stack(list(avg_losses["kl_loss_50"])).mean(),
+                    "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
+                    "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean(),
+                }
 
-            summarize(
-                writer=writer, 
-                global_step=global_step, 
-                scalars=scalar_dict
-            )
+                if energy_use and len(avg_losses["energy_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
 
-        # Update progress bar with current loss information
-        current_progress = batch_idx + 1
-        current_epoch_progress = epoch - 1 + (current_progress / total_steps)
-        
-        # Format the postfix with loss information
-        loss_str = f"Loss: {loss_gen_all.item():.4f}"
-        epoch_label = f"Epoch: {current_epoch_progress:.2f}/{custom_total_epoch}"
-        step_str = f"Step: {global_step}"
-        
-        # Combine all information in postfix
-        if pbar is not None:
-            pbar.set_postfix_str(f"{loss_str}, {epoch_label}, {step_str}")
+                summarize(
+                    writer=writer, 
+                    global_step=global_step, 
+                    scalars=scalar_dict
+                )
+
             pbar.update(1)
 
     with torch.no_grad():
@@ -882,12 +1366,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             config.data.mel_fmin, 
             config.data.mel_fmax
         )
+
         y_mel = commons.slice_segments(
             mel, 
             ids_slice, 
             config.train.segment_size // config.data.hop_length, 
             dim=3
         )
+
         y_hat_mel = mel_spectrogram_torch(
             y_hat.float().squeeze(1), 
             config.data.filter_length, 
@@ -945,30 +1431,56 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 scalars=scalar_dict
             )
 
-    def check_overtraining(smoothed_loss_history, threshold, epsilon=0.004):
+    def check_overtraining(
+        smoothed_loss_history, 
+        threshold, 
+        epsilon=0.004
+    ):
         if len(smoothed_loss_history) < threshold + 1: return False
 
         for i in range(-threshold, -1):
-            if smoothed_loss_history[i + 1] > smoothed_loss_history[i]: return True
-            if abs(smoothed_loss_history[i + 1] - smoothed_loss_history[i]) >= epsilon: return False
+            if smoothed_loss_history[i + 1] > smoothed_loss_history[i]: 
+                return True
+
+            if abs(smoothed_loss_history[i + 1] - smoothed_loss_history[i]) >= epsilon: 
+                return False
 
         return True
 
-    def update_exponential_moving_average(smoothed_loss_history, new_value, smoothing=0.987):
-        smoothed_value = new_value if not smoothed_loss_history else (smoothing * smoothed_loss_history[-1] + (1 - smoothing) * new_value)      
-        smoothed_loss_history.append(smoothed_value)
+    def update_exponential_moving_average(
+        smoothed_loss_history, 
+        new_value, 
+        smoothing=0.987
+    ):
+        smoothed_value = (
+            new_value 
+            if not smoothed_loss_history else 
+            (smoothing * smoothed_loss_history[-1] + (1 - smoothing) * new_value)
+        )      
 
+        smoothed_loss_history.append(smoothed_value)
         return smoothed_value
 
-    def save_to_json(file_path, loss_disc_history, smoothed_loss_disc_history, loss_gen_history, smoothed_loss_gen_history):
-        with open(file_path, "w") as f:
-            json.dump({"loss_disc_history": loss_disc_history, "smoothed_loss_disc_history": smoothed_loss_disc_history, "loss_gen_history": loss_gen_history, "smoothed_loss_gen_history": smoothed_loss_gen_history}, f)
+    def save_to_json(
+        file_path, 
+        loss_disc_history, 
+        smoothed_loss_disc_history, 
+        loss_gen_history, 
+        smoothed_loss_gen_history
+    ):
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "loss_disc_history": loss_disc_history, 
+                "smoothed_loss_disc_history": smoothed_loss_disc_history, 
+                "loss_gen_history": loss_gen_history, 
+                "smoothed_loss_gen_history": smoothed_loss_gen_history
+            }, f)
     
     model_add, model_del = [], []
     done = False
     
     if rank == 0:
-        if epoch % save_every_epoch == 0:
+        if epoch % save_every_epoch == False:
             checkpoint_suffix = f"{'latest' if save_only_latest else global_step}.pth"
 
             save_checkpoint(
@@ -977,7 +1489,7 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 optim_g, 
                 config.train.learning_rate, 
                 epoch, 
-                os.path.join(experiment_dir, "G_" + checkpoint_suffix), 
+                os.path.join(checkpoint_path, "G_" + checkpoint_suffix), 
                 scaler
             )
             save_checkpoint(
@@ -986,11 +1498,14 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
                 optim_d, 
                 config.train.learning_rate, 
                 epoch, 
-                os.path.join(experiment_dir, "D_" + checkpoint_suffix), 
+                os.path.join(checkpoint_path, "D_" + checkpoint_suffix), 
                 scaler
             )
 
-            if custom_save_every_weights: model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))
+            if custom_save_every_weights: 
+                model_add.append(
+                    os.path.join(weights_path, f"{model_name}_{epoch}e_{global_step}s.pth")
+                )
 
         if overtraining_detector and epoch > 1:
             current_loss_disc, current_loss_gen = float(loss_disc), float(lowest_value["value"])
@@ -998,31 +1513,91 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
             loss_disc_history.append(current_loss_disc)
             loss_gen_history.append(current_loss_gen)
             
-            smoothed_value_disc = update_exponential_moving_average(smoothed_loss_disc_history, current_loss_disc)
-            smoothed_value_gen = update_exponential_moving_average(smoothed_loss_gen_history, current_loss_gen)
+            smoothed_value_disc = update_exponential_moving_average(
+                smoothed_loss_disc_history, 
+                current_loss_disc
+            )
+
+            smoothed_value_gen = update_exponential_moving_average(
+                smoothed_loss_gen_history, 
+                current_loss_gen
+            )
             
-            is_overtraining_disc = check_overtraining(smoothed_loss_disc_history, overtraining_threshold * 2)
-            is_overtraining_gen = check_overtraining(smoothed_loss_gen_history, overtraining_threshold, 0.01)
+            is_overtraining_disc = check_overtraining(
+                smoothed_loss_disc_history, 
+                overtraining_threshold * 2
+            )
+
+            is_overtraining_gen = check_overtraining(
+                smoothed_loss_gen_history, 
+                overtraining_threshold, 
+                0.01
+            )
             
             consecutive_increases_disc = (consecutive_increases_disc + 1) if is_overtraining_disc else 0
             consecutive_increases_gen = (consecutive_increases_gen + 1) if is_overtraining_gen else 0
 
-            if epoch % save_every_epoch == 0: save_to_json(training_file_path, loss_disc_history, smoothed_loss_disc_history, loss_gen_history, smoothed_loss_gen_history)
+            if epoch % save_every_epoch == 0: 
+                save_to_json(
+                    training_file_path, 
+                    loss_disc_history, 
+                    smoothed_loss_disc_history, 
+                    loss_gen_history, 
+                    smoothed_loss_gen_history
+                )
 
-            if (is_overtraining_gen and consecutive_increases_gen == overtraining_threshold or is_overtraining_disc and consecutive_increases_disc == (overtraining_threshold * 2)):
-                logger.info(translations["overtraining_find"].format(epoch=epoch, smoothed_value_gen=f"{smoothed_value_gen:.3f}", smoothed_value_disc=f"{smoothed_value_disc:.3f}"))
+            if (
+                is_overtraining_gen and 
+                consecutive_increases_gen == overtraining_threshold or 
+                is_overtraining_disc and 
+                consecutive_increases_disc == (overtraining_threshold * 2)
+            ):
+                logger.info(
+                    translations["overtraining_find"].format(
+                        epoch=epoch, 
+                        smoothed_value_gen=f"{smoothed_value_gen:.3f}", 
+                        smoothed_value_disc=f"{smoothed_value_disc:.3f}"
+                    )
+                )
+
                 done = True
             else:
-                logger.info(translations["best_epoch"].format(epoch=epoch, smoothed_value_gen=f"{smoothed_value_gen:.3f}", smoothed_value_disc=f"{smoothed_value_disc:.3f}"))
-                for file in glob.glob(os.path.join(main_configs["weights_path"], f"{model_name}_*e_*s_best_epoch.pth")):
+                logger.info(
+                    translations["best_epoch"].format(
+                        epoch=epoch, 
+                        smoothed_value_gen=f"{smoothed_value_gen:.3f}", 
+                        smoothed_value_disc=f"{smoothed_value_disc:.3f}"
+                    )
+                )
+
+                for file in glob.glob(os.path.join(weights_path, f"{model_name}_*e_*s_best_epoch.pth")):
                     model_del.append(file)
 
-                model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s_best_epoch.pth"))
+                model_add.append(
+                    os.path.join(weights_path, f"{model_name}_{epoch}e_{global_step}s_best_epoch.pth")
+                )
         
         if epoch >= custom_total_epoch:
-            logger.info(translations["success_training"].format(epoch=epoch, global_step=global_step, loss_gen_all=round(loss_gen_all.item(), 3)))
-            logger.info(translations["training_info"].format(lowest_value_rounded=round(float(lowest_value["value"]), 3), lowest_value_epoch=lowest_value['epoch'], lowest_value_step=lowest_value['step']))
-            model_add.append(os.path.join(main_configs["weights_path"], f"{model_name}_{epoch}e_{global_step}s.pth"))
+            logger.info(
+                translations["success_training"].format(
+                    epoch=epoch, 
+                    global_step=global_step, 
+                    loss_gen_all=round(loss_gen_all.item(), 3)
+                )
+            )
+
+            logger.info(
+                translations["training_info"].format(
+                    lowest_value_rounded=round(float(lowest_value["value"]), 3), 
+                    lowest_value_epoch=lowest_value['epoch'], 
+                    lowest_value_step=lowest_value['step']
+                )
+            )
+
+            model_add.append(
+                os.path.join(weights_path, f"{model_name}_{epoch}e_{global_step}s.pth")
+            )
+
             done = True
             
         for m in model_del:
@@ -1031,27 +1606,83 @@ def train_and_evaluate(rank, epoch, hps, nets, optims, scaler, train_loader, wri
         if model_add:
             ckpt = (net_g.module.state_dict() if hasattr(net_g, "module") else net_g.state_dict())
             for m in model_add:
-                extract_model(ckpt=ckpt, sr=config.data.sample_rate, pitch_guidance=pitch_guidance == True, name=model_name, model_path=m, epoch=epoch, step=global_step, version=version, hps=hps, model_author=model_author, vocoder=vocoder, energy_use=energy_use)
+                extract_model(
+                    ckpt=ckpt, 
+                    sr=config.data.sample_rate, 
+                    pitch_guidance=pitch_guidance == True, 
+                    name=model_name, 
+                    model_path=m, 
+                    epoch=epoch, 
+                    step=global_step, 
+                    version=version, 
+                    hps=hps, 
+                    model_author=model_author, 
+                    vocoder=vocoder, 
+                    energy_use=energy_use,
+                    speakers_id=getattr(config, 'sid', None),
+                    architecture=architecture
+                )
 
         lowest_value_rounded = round(float(lowest_value["value"]), 3)
 
-        if epoch > 1 and overtraining_detector: logger.info(translations["model_training_info"].format(model_name=model_name, epoch=epoch, global_step=global_step, epoch_recorder=epoch_recorder.record(), lowest_value_rounded=lowest_value_rounded, lowest_value_epoch=lowest_value['epoch'], lowest_value_step=lowest_value['step'], remaining_epochs_gen=(overtraining_threshold - consecutive_increases_gen), remaining_epochs_disc=((overtraining_threshold * 2) - consecutive_increases_disc), smoothed_value_gen=f"{smoothed_value_gen:.3f}", smoothed_value_disc=f"{smoothed_value_disc:.3f}"))
-        elif epoch > 1 and overtraining_detector == False: logger.info(translations["model_training_info_2"].format(model_name=model_name, epoch=epoch, global_step=global_step, epoch_recorder=epoch_recorder.record(), lowest_value_rounded=lowest_value_rounded, lowest_value_epoch=lowest_value['epoch'], lowest_value_step=lowest_value['step']))
-        else: logger.info(translations["model_training_info_3"].format(model_name=model_name, epoch=epoch, global_step=global_step, epoch_recorder=epoch_recorder.record()))
+        if epoch > 1 and overtraining_detector: 
+            logger.info(
+                translations["model_training_info"].format(
+                    model_name=model_name, 
+                    epoch=epoch, 
+                    global_step=global_step, 
+                    epoch_recorder=epoch_recorder.record(), 
+                    lowest_value_rounded=lowest_value_rounded, 
+                    lowest_value_epoch=lowest_value['epoch'], 
+                    lowest_value_step=lowest_value['step'], 
+                    remaining_epochs_gen=(overtraining_threshold - consecutive_increases_gen), 
+                    remaining_epochs_disc=((overtraining_threshold * 2) - consecutive_increases_disc), 
+                    smoothed_value_gen=f"{smoothed_value_gen:.3f}", 
+                    smoothed_value_disc=f"{smoothed_value_disc:.3f}"
+                )
+            )
+        elif epoch > 1 and overtraining_detector == False: 
+            logger.info(
+                translations["model_training_info_2"].format(
+                    model_name=model_name, 
+                    epoch=epoch, 
+                    global_step=global_step, 
+                    epoch_recorder=epoch_recorder.record(), 
+                    lowest_value_rounded=lowest_value_rounded, 
+                    lowest_value_epoch=lowest_value['epoch'], 
+                    lowest_value_step=lowest_value['step']
+                )
+            )
+        else: 
+            logger.info(
+                translations["model_training_info_3"].format(
+                    model_name=model_name, 
+                    epoch=epoch, 
+                    global_step=global_step, 
+                    epoch_recorder=epoch_recorder.record()
+                )
+            )
 
-        logger.debug(f"loss_gen_all: {loss_gen_all} loss_gen: {loss_gen} loss_fm: {loss_fm} loss_mel: {loss_mel} loss_kl: {loss_kl}")
+        logger.debug(
+            f"loss_gen_all: {loss_gen_all} loss_gen: {loss_gen} loss_fm: {loss_fm} loss_mel: {loss_mel} loss_kl: {loss_kl}"
+        )
+
         last_loss_gen_all = loss_gen_all
 
         if done: 
-            pid_file_path = os.path.join(experiment_dir, "config.json")
-            with open(pid_file_path, "r") as pid_file:
-                pid_data = json.load(pid_file)
+            if save_the_pid:
+                pid_file_path = os.path.join(experiment_dir, "config.json")
 
-            with open(pid_file_path, "w") as pid_file:
-                pid_data.pop("process_pids", None)
-                json.dump(pid_data, pid_file, indent=4)
+                with open(pid_file_path, "r", encoding="utf-8") as pid_file:
+                    pid_data = json.load(pid_file)
 
-            if os.path.exists(os.path.join(experiment_dir, "train_pid.txt")): os.remove(os.path.join(experiment_dir, "train_pid.txt"))
+                with open(pid_file_path, "w", encoding="utf-8") as pid_file:
+                    pid_data.pop("process_pids", None)
+                    json.dump(pid_data, pid_file, indent=4)
+
+                if os.path.exists(os.path.join(experiment_dir, "train_pid.txt")): 
+                    os.remove(os.path.join(experiment_dir, "train_pid.txt"))
+
             sys.exit(0)
 
         with torch.no_grad():

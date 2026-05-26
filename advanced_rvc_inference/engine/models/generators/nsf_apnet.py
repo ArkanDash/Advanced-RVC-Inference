@@ -25,7 +25,9 @@ import torch
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn.utils import remove_weight_norm, weight_norm
+import torch.nn.utils.parametrize as parametrize
+from torch.nn.utils import remove_weight_norm
+from torch.nn.utils.parametrizations import weight_norm
 from torch.utils.checkpoint import checkpoint
 
 LRELU_SLOPE = 0.1
@@ -59,7 +61,8 @@ class AllPassLayer(nn.Module):
         return x * (magnitude / (torch.abs(x) + 1e-8))
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv)
+        if hasattr(self.conv, "parametrizations") and "weight" in self.conv.parametrizations: parametrize.remove_parametrizations(self.conv, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv)
 
 
 class AllPassBlock(nn.Module):
@@ -182,7 +185,8 @@ class NSFAPNetResBlock(nn.Module):
     def remove_weight_norm(self):
         for conv_list in [self.convs1, self.convs2]:
             for conv in conv_list:
-                remove_weight_norm(conv)
+                if hasattr(conv, "parametrizations") and "weight" in conv.parametrizations: parametrize.remove_parametrizations(conv, "weight", leave_parametrized=True)
+                else: remove_weight_norm(conv)
         self.apn.remove_weight_norm()
 
 
@@ -312,13 +316,16 @@ class NSFAPNetGenerator(nn.Module):
         return self.conv_post(F.leaky_relu(x, LRELU_SLOPE)).tanh()
 
     def remove_weight_norm(self):
-        remove_weight_norm(self.conv_pre)
+        if hasattr(self.conv_pre, "parametrizations") and "weight" in self.conv_pre.parametrizations: parametrize.remove_parametrizations(self.conv_pre, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_pre)
 
         for up in self.ups:
-            remove_weight_norm(up)
+            if hasattr(up, "parametrizations") and "weight" in up.parametrizations: parametrize.remove_parametrizations(up, "weight", leave_parametrized=True)
+            else: remove_weight_norm(up)
 
         for res_list in self.resblocks:
             for rb in res_list:
                 rb.remove_weight_norm()
 
-        remove_weight_norm(self.conv_post)
+        if hasattr(self.conv_post, "parametrizations") and "weight" in self.conv_post.parametrizations: parametrize.remove_parametrizations(self.conv_post, "weight", leave_parametrized=True)
+        else: remove_weight_norm(self.conv_post)
