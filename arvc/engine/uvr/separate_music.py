@@ -5,9 +5,12 @@ import json
 import argparse
 import traceback
 
-from arvc.utils import strtobool
+# ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
-sys.path.append(os.getcwd())
+from arvc.utils import strtobool
 
 from arvc.engine.uvr.uvr5_lib.separator import Separator
 from arvc.utils.variables import config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models

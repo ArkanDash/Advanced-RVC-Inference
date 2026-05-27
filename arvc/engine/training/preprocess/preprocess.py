@@ -15,7 +15,10 @@ from scipy.io import wavfile
 from distutils.util import strtobool
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-sys.path.append(os.getcwd())
+# ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 from arvc.engine.models.utils import load_audio
 from arvc.engine.training.preprocess.slicer2 import Slicer

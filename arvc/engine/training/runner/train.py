@@ -13,6 +13,14 @@ import warnings
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
+# ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
+# When run as a subprocess (e.g. python arvc/engine/training/runner/train.py),
+# the project root isn't automatically in the path, causing ModuleNotFoundError.
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
+
 from tqdm import tqdm
 from collections import deque
 from contextlib import nullcontext
@@ -24,9 +32,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from time import time as ttime
 from torch.nn.parallel import DistributedDataParallel as DDP
-
-sys.path.append(os.getcwd())
-os.environ["USE_LIBUV"] = "0" if sys.platform == "win32" else "1"
 
 from arvc.engine.models.utils import clear_gpu_cache
 from arvc.engine.models.backends import directml, opencl, zluda

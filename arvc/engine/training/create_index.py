@@ -8,7 +8,10 @@ import numpy as np
 from multiprocessing import cpu_count
 from sklearn.cluster import MiniBatchKMeans
 
-sys.path.append(os.getcwd())
+# ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
+_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 from arvc.utils.variables import logger, translations, configs
 

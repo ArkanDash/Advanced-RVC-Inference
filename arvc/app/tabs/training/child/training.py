@@ -218,16 +218,19 @@ def training_model_tab():
                 with gr.Accordion(translations["custom_pretrain_info"], open=True):
                     gr.Markdown(f"**{translations.get('select_pretrain', 'Select from pretrained list')}**")
                     pretrained_data = fetch_pretrained_data()
+                    _pretrained_names = list(pretrained_data.keys()) if pretrained_data else []
+                    _first_model = _pretrained_names[0] if _pretrained_names else ''
+                    _first_sr_choices = list(pretrained_data[_first_model].keys()) if _first_model and _first_model in pretrained_data else ["48k", "40k", "32k"]
                     pretrained_model_select = gr.Dropdown(
                         label=translations.get("select_pretrain_info", "Choose a pretrained model"),
-                        choices=list(pretrained_data.keys()) if pretrained_data else [],
-                        value=list(pretrained_data.keys())[0] if pretrained_data else '',
+                        choices=_pretrained_names,
+                        value=_first_model,
                         interactive=True, allow_custom_value=True,
                     )
                     pretrained_sr_select = gr.Dropdown(
                         label=translations.get("pretrain_sr", "Sample rate"),
-                        choices=list(pretrained_data[pretrained_model_select.value].keys()) if pretrained_data and pretrained_model_select.value in pretrained_data else ["48k", "40k", "32k", "24k", "44.1k"],
-                        value=list(pretrained_data[pretrained_model_select.value].keys())[0] if pretrained_data and pretrained_model_select.value in pretrained_data else "48k",
+                        choices=_first_sr_choices,
+                        value=_first_sr_choices[0] if _first_sr_choices else '',
                         interactive=True,
                     )
                     gr.Markdown(f"**{translations.get('custom_pretrain_info', 'Or select files manually')}**")
