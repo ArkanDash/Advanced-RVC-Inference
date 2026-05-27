@@ -749,6 +749,8 @@
 # LOGS & TEMPORARY FILES
 # ==============================================================================
 **/logs/
+# Exception: mute audio files are required for training
+!arvc/assets/logs/
 **/*.log
 **/log/
 **/debug/
