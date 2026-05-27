@@ -12,7 +12,28 @@ __all__ = [
     "meganz",
     "noisereduce",
     "pixeldrain",
+    "strtobool",
 ]
+
+
+def strtobool(val):
+    """Convert a string representation of truth to boolean.
+    
+    Replacement for the deprecated distutils.util.strtobool which was
+    removed in Python 3.12+.
+    """
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, float)):
+        return bool(val)
+    val_str = str(val).strip().lower()
+    if val_str in ('y', 'yes', 'true', 't', '1', 'on'):
+        return True
+    elif val_str in ('n', 'no', 'false', 'f', '0', 'off'):
+        return False
+    else:
+        raise ValueError(f"Invalid truth value: {val!r}")
+
 
 # Lazy imports for tool modules
 _LAZY_MODULES = {

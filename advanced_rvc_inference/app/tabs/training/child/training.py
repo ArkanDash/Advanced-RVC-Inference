@@ -28,7 +28,7 @@ def training_model_tab():
                     training_sr = gr.Radio(
                         label=translations["sample_rate"],
                         info=translations["sample_rate_info"],
-                        choices=["32k", "40k", "48k"],
+                        choices=["24k", "32k", "40k", "44.1k", "48k"],
                         value="48k",
                         interactive=True,
                     )
@@ -164,11 +164,11 @@ def training_model_tab():
                 with gr.Column(scale=1):
                     total_epochs = gr.Slider(
                         label=translations["total_epoch"], info=translations["total_epoch_info"],
-                        minimum=1, maximum=10000, value=300, step=1, interactive=True,
+                        minimum=1, maximum=10000, value=10, step=1, interactive=True,
                     )
                     save_epochs = gr.Slider(
                         label=translations["save_epoch"], info=translations["save_epoch_info"],
-                        minimum=1, maximum=10000, value=50, step=1, interactive=True,
+                        minimum=1, maximum=10000, value=5, step=1, interactive=True,
                     )
                     train_batch_size = gr.Slider(
                         label=translations["batch_size"], info=translations["batch_size_info"],
@@ -226,7 +226,7 @@ def training_model_tab():
                     )
                     pretrained_sr_select = gr.Dropdown(
                         label=translations.get("pretrain_sr", "Sample rate"),
-                        choices=list(pretrained_data[pretrained_model_select.value].keys()) if pretrained_data and pretrained_model_select.value in pretrained_data else ["48k", "40k", "32k"],
+                        choices=list(pretrained_data[pretrained_model_select.value].keys()) if pretrained_data and pretrained_model_select.value in pretrained_data else ["48k", "40k", "32k", "24k", "44.1k"],
                         value=list(pretrained_data[pretrained_model_select.value].keys())[0] if pretrained_data and pretrained_model_select.value in pretrained_data else "48k",
                         interactive=True,
                     )

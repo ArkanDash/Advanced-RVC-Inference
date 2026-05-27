@@ -17,7 +17,7 @@ from tqdm import tqdm
 from collections import deque
 from contextlib import nullcontext
 from random import randint, shuffle
-from distutils.util import strtobool
+from advanced_rvc_inference.utils import strtobool
 from torch.utils.data import DataLoader
 from torch.amp import GradScaler, autocast
 from torch.utils.tensorboard import SummaryWriter
@@ -52,7 +52,19 @@ try:
         _is_t4 = False
 except Exception:
     _is_t4 = False
-from advanced_rvc_inference.utils.variables import logger, translations
+from advanced_rvc_inference.utils.variables import logger, translations as _raw_translations
+
+# ── BULLETPROOF SAFETY NET ──
+# Wrap translations in a dict subclass that returns the key name itself
+# if missing. This means training will NEVER crash with KeyError on
+# translation lookups, regardless of what the language files contain.
+class _SafeTranslations(dict):
+    def __missing__(self, key):
+        return key
+    def __contains__(self, key):
+        return True  # always report True so `in` checks never fail
+
+translations = _SafeTranslations(_raw_translations)
 
 from advanced_rvc_inference.engine.models.algorithms import commons
 from advanced_rvc_inference.engine.training.runner import losses
@@ -91,7 +103,7 @@ def parse_arguments():
     parser.add_argument("--save_every_epoch", type=int, required=True)
     parser.add_argument("--save_only_latest", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--save_every_weights", type=lambda x: bool(strtobool(x)), default=True)
-    parser.add_argument("--total_epoch", type=int, default=300)
+    parser.add_argument("--total_epoch", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--gpu", type=str, default="0")
     parser.add_argument("--pitch_guidance", type=lambda x: bool(strtobool(x)), default=True)
@@ -242,7 +254,11 @@ if not os.path.exists(config_save_path):
     config_template_path = os.path.join(main_configs["configs_path"], version, f"{sr}.json")
     
     if not os.path.exists(config_template_path):
-        config_template_path = os.path.join(main_configs["configs_path"], version, "32000.json")
+        # Try nearest available sample rate as fallback
+        for fallback_sr in [40000, 32000, 48000, 24000, 44100]:
+            config_template_path = os.path.join(main_configs["configs_path"], version, f"{fallback_sr}.json")
+            if os.path.exists(config_template_path):
+                break
     
     if os.path.exists(config_template_path):
         shutil.copy(config_template_path, config_save_path)
@@ -817,13 +833,17 @@ def run(
 
             pretrained_selector = {
                 True: {  # pitch_guidance (f0 models)
+                    24000: ("f0G24k.pth", "f0D24k.pth"),
                     32000: ("f0G32k.pth", "f0D32k.pth"),
                     40000: ("f0G40k.pth", "f0D40k.pth"),
+                    44100: ("f0G40k.pth", "f0D40k.pth"),  # reuse 40k pretrained
                     48000: ("f0G48k.pth", "f0D48k.pth"),
                 },
                 False: {  # no pitch guidance (base models)
+                    24000: ("G24k.pth", "D24k.pth"),
                     32000: ("G32k.pth", "D32k.pth"),
                     40000: ("G40k.pth", "D40k.pth"),
+                    44100: ("G40k.pth", "D40k.pth"),  # reuse 40k pretrained
                     48000: ("G48k.pth", "D48k.pth"),
                 }
             }
