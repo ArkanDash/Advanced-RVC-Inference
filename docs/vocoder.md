@@ -290,4 +290,4 @@ Use **BigVGAN** — it consistently achieves the highest objective and subjectiv
 - Vocoder choice is saved in the model checkpoint and used automatically during inference
 - Pre-trained weights for non-HiFi-GAN vocoders follow the naming pattern: `{VocoderName}_f0G48k.pth`
 - All vocoders support gradient checkpointing except BigVGAN and WaveGlow
-- The vocoder registry is in `advanced_rvc_inference/models/generators/__init__.py`
+- The vocoder registry is in `arvc/models/generators/__init__.py`

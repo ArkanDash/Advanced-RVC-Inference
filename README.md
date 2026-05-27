@@ -114,10 +114,10 @@ Launch the Gradio web UI — this is the easiest way to get started:
 rvc-gui
 
 # Or via Python module
-python -m advanced_rvc_inference.app.gui
+python -m arvc.app.gui
 
 # With a public share link
-python -m advanced_rvc_inference.app.gui --share
+python -m arvc.app.gui --share
 ```
 
 The web interface will be available at `http://localhost:7860` by default.
@@ -300,7 +300,7 @@ rvc-cli info
 
 ```
 Advanced-RVC-Inference/
-├── advanced_rvc_inference/
+├── arvc/
 │   ├── app/
 │   │   ├── gui.py              # Main entry point & Gradio app
 │   │   ├── easy_gui.py         # Simplified Easy GUI interface
@@ -395,7 +395,7 @@ rvc-cli info
 python -c "import torch; print(torch.cuda.get_device_name(0))"
 
 # If STFT issues occur, check that ZLUDA STFT override is loaded
-python -c "from advanced_rvc_inference.models.backends import zluda; print(f'ZLUDA: {zluda.is_available()}')"
+python -c "from arvc.models.backends import zluda; print(f'ZLUDA: {zluda.is_available()}')"
 ```
 
 ### Common Dependency Issues

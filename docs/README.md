@@ -439,12 +439,12 @@ rvc-cli list-f0-methods
 
 Place your model files (`.pth` or `.onnx`) in:
 ```
-advanced_rvc_inference/assets/weights/
+arvc/assets/weights/
 ```
 
 Place index files (`.index`) in:
 ```
-advanced_rvc_inference/assets/logs/<model_name>/
+arvc/assets/logs/<model_name>/
 ```
 
 ## Examples

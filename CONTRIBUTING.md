@@ -74,7 +74,7 @@ pip install -e .
 
 ```bash
 # Run a quick check to ensure everything is installed correctly
-python -c "from advanced_rvc_inference import RVCInference; print('Installation successful!')"
+python -c "from arvc import RVCInference; print('Installation successful!')"
 ```
 
 ## Ways to Contribute
@@ -170,7 +170,7 @@ pytest tests/test_package.py
 pytest -v
 
 # Run with coverage
-pytest --cov=advanced_rvc_inference
+pytest --cov=arvc
 ```
 
 ### Writing Tests

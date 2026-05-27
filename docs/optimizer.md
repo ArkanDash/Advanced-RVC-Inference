@@ -480,7 +480,7 @@ Use **LAMB** or **LARS** for their per-layer adaptive learning rate scaling, whi
 
 ## Technical Notes
 
-- All custom optimizers are implemented in `advanced_rvc_inference/models/optimizers/`
+- All custom optimizers are implemented in `arvc/models/optimizers/`
 - The central registry in `__init__.py` maps optimizer names to their classes
 - The training engine (`engine/training/runner/train.py`) uses the registry for dynamic optimizer selection
 - Each optimizer automatically receives appropriate kwargs (betas, eps, weight_decay) based on its capabilities

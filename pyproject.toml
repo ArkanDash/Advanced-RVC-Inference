@@ -108,8 +108,8 @@ dev = [
 ]
 
 [project.scripts]
-rvc-cli = "advanced_rvc_inference.api.cli:main"
-rvc-gui = "advanced_rvc_inference.app.gui:launch"
+rvc-cli = "arvc.api.cli:main"
+rvc-gui = "arvc.app.gui:launch"
 
 [project.urls]
 Homepage = "https://github.com/ArkanDash/Advanced-RVC-Inference"
@@ -119,7 +119,7 @@ Discord = "https://discord.gg/hvmsukmBHE"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["advanced_rvc_inference*"]
+include = ["arvc*"]
 
 [tool.black]
 line-length = 100

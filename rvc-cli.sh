@@ -11,4 +11,4 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 # Run the CLI module
-python3 -m advanced_rvc_inference.api.cli "$@"
+python3 -m arvc.api.cli "$@"
