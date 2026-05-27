@@ -81,21 +81,25 @@ def separate_music(
 
     gr_info(translations["success"])
     
+    # _separate() creates a subdirectory named after the input filename
+    filename = os.path.splitext(os.path.basename(input_path))[0]
+    file_output_dir = os.path.join(output_dirs, filename)
+    
     return [
         os.path.join(
-            output_dirs, 
+            file_output_dir, 
             f"Original_Vocals_No_Reverb.{export_format}" if separate_reverb else f"Original_Vocals.{export_format}"
         ), 
         os.path.join(
-            output_dirs, 
+            file_output_dir, 
             f"Instruments.{export_format}"
         ), 
         os.path.join(
-            output_dirs, 
+            file_output_dir, 
             f"Main_Vocals_No_Reverb.{export_format}" if separate_reverb else f"Main_Vocals.{export_format}"
         ) if separate_backing else None,
         os.path.join(
-            output_dirs, 
+            file_output_dir, 
             f"Backing_Vocals.{export_format}"
         ) if separate_backing else None
     ] if os.path.isfile(input_path) else [None]*4

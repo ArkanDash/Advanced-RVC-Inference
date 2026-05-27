@@ -5,11 +5,10 @@ import json
 import argparse
 import traceback
 
-from distutils.util import strtobool
+from arvc.utils import strtobool
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.models.utils import pydub_load
 from arvc.engine.uvr.uvr5_lib.separator import Separator
 from arvc.utils.variables import config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models
 
@@ -142,7 +141,7 @@ def separate(
         for file in files:
             if os.path.isfile(file):
                 output_files.append(_separate(
-                    input_path,
+                    file,
                     output_dirs,
                     model_name, 
                     karaoke_model,

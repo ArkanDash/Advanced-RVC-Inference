@@ -143,12 +143,8 @@ class CommonSeparator:
 
     def write_audio_soundfile(self, stem_path, stem_source):
         if stem_source.shape[1] == 2:
-            if stem_source.flags["F_CONTIGUOUS"]: stem_source = np.ascontiguousarray(stem_source)
-            else:
-                stereo_interleaved = np.empty((2 * stem_source.shape[0],), dtype=np.int16)
-                stereo_interleaved[0::2] = stem_source[:, 0]
-                stereo_interleaved[1::2] = stem_source[:, 1]
-                stem_source = stereo_interleaved
+            # Always ensure C-contiguous layout for soundfile stereo output
+            stem_source = np.ascontiguousarray(stem_source)
 
         sf.write(stem_path, stem_source, self.sample_rate)
 

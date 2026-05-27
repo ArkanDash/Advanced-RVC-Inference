@@ -225,7 +225,7 @@ class Separator:
             raise ValueError(translations["model_type_not_support"].format(model_type=model_type))
 
         module_name, class_name = separator_classes[model_type].split(".")
-        separator_class = getattr(import_module(f"arvc.library.uvr.{module_name}"), class_name)
+        separator_class = getattr(import_module(f"arvc.engine.uvr.uvr5_lib.uvr.{module_name}"), class_name)
         self.model_instance = separator_class(common_config=common_params, arch_config=self.arch_specific_params[model_type])
 
     def separate(self, audio_file_path):
