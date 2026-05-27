@@ -2,6 +2,7 @@
 Downloads tab for the Advanced RVC Inference Gradio interface.
 
 Provides model download, audio download, and model search functionality.
+Pretrained model download UI ported from Vietnamese-RVC.
 """
 
 import os
@@ -15,8 +16,10 @@ from arvc.services.downloads import (
     download_pretrained_model,
     search_models,
 )
+from arvc.services.process import fetch_pretrained_data, update_sample_rate_dropdown
 from arvc.ui.feedback import (
     change_models_choices,
+    change_download_pretrained_choices,
     gr_info,
     gr_warning,
 )
@@ -129,7 +132,7 @@ def download_tab():
                 interactive=False,
             )
 
-        # ── Download Pretrained Section ──
+        # ── Download Pretrained Section (Vietnamese-RVC style) ──
         with gr.TabItem(
             translations.get("download_pretrain", "Download Pretrained"),
             visible=configs.get("downloads_tab", True),
@@ -138,29 +141,67 @@ def download_tab():
 
             with gr.Row():
                 pretrained_choice = gr.Radio(
-                    label=translations.get("pretrained_source", "Source"),
+                    label=translations.get("model_download_select", "Source"),
                     choices=[
-                        translations.get("list_model", "List"),
                         translations.get("download_url", "URL"),
+                        translations.get("list_model", "List Model"),
+                        translations.get("upload", "Upload"),
                     ],
-                    value=translations.get("list_model", "List"),
+                    value=translations.get("download_url", "URL"),
                     interactive=True,
                 )
 
+            # ── URL mode: D URL + G URL textboxes ──
+            with gr.Column():
+                pretrained_d_url = gr.Textbox(
+                    label=translations.get("pretrained_url", "D Model URL").format(dg="D") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else translations.get("pretrained_url", "D Model URL"),
+                    placeholder="https://huggingface.co/.../D_48k.pth",
+                    interactive=True,
+                    visible=True,
+                )
+                pretrained_g_url = gr.Textbox(
+                    label=translations.get("pretrained_url", "G Model URL").format(dg="G") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else translations.get("pretrained_url", "G Model URL"),
+                    placeholder="https://huggingface.co/.../G_48k.pth",
+                    interactive=True,
+                    visible=True,
+                )
+                pretrained_url_btn = gr.Button(
+                    translations.get("download_pretrain", "Download Pretrained"),
+                    variant="primary",
+                    visible=True,
+                )
+
+            # ── List Model mode: Dropdown from HF JSON + dynamic sample rate ──
+            with gr.Column():
+                pretrained_list = gr.Dropdown(
+                    label=translations.get("select_pretrain", "Select Pretrained Model"),
+                    choices=list(fetch_pretrained_data().keys()),
+                    value="Titan_Medium" if "Titan_Medium" in fetch_pretrained_data() else None,
+                    allow_custom_value=True,
+                    interactive=True,
+                    visible=False,
+                )
+                pretrained_sr = gr.Dropdown(
+                    label=translations.get("pretrain_sr", "Sample Rate"),
+                    choices=["48k", "40k", "32k"],
+                    value="48k",
+                    interactive=True,
+                    visible=False,
+                )
+                pretrained_list_btn = gr.Button(
+                    translations.get("download_pretrain", "Download Pretrained"),
+                    variant="primary",
+                    visible=False,
+                )
+
+            # ── Upload mode: .pth file upload ──
             with gr.Row():
-                pretrained_model = gr.Textbox(
-                    label=translations.get("pretrained_model", "Model Name / D URL"),
-                    interactive=True,
-                )
-                pretrained_sr = gr.Textbox(
-                    label=translations.get("pretrained_sr", "Sample Rate / G URL"),
-                    interactive=True,
+                upload_pretrains = gr.Files(
+                    label=translations.get("drop_pretrain", "Drop G & D pretrained files (.pth)").format(dg="G, D") if isinstance(translations.get("drop_pretrain", ""), str) and "{dg}" in translations.get("drop_pretrain", "") else translations.get("drop_pretrain", "Drop G & D pretrained files (.pth)"),
+                    file_types=[".pth"],
+                    visible=False,
                 )
 
-            pretrained_btn = gr.Button(
-                translations.get("download_pretrain", "Download Pretrained"),
-                variant="primary",
-            )
             pretrained_output = gr.Textbox(
                 label=translations.get("status", "Status"),
                 interactive=False,
@@ -211,9 +252,38 @@ def download_tab():
             outputs=[download_audio_output, download_audio_path, download_audio_status],
         )
 
-        # Download pretrained model
-        pretrained_btn.click(
+        # ── Pretrained: visibility toggle when source radio changes ──
+        pretrained_choice.change(
+            fn=change_download_pretrained_choices,
+            inputs=[pretrained_choice],
+            outputs=[
+                pretrained_d_url,       # [0] D URL textbox
+                pretrained_g_url,       # [1] G URL textbox
+                pretrained_url_btn,     # [2] URL download button
+                pretrained_list,        # [3] List model dropdown
+                pretrained_sr,          # [4] Sample rate dropdown
+                pretrained_list_btn,    # [5] List download button
+                upload_pretrains,       # [6] Upload files
+            ],
+        )
+
+        # ── Pretrained: update sample rate dropdown when model changes ──
+        pretrained_list.change(
+            fn=update_sample_rate_dropdown,
+            inputs=[pretrained_list],
+            outputs=[pretrained_sr],
+        )
+
+        # ── Pretrained: download from URL ──
+        pretrained_url_btn.click(
             fn=download_pretrained_model,
-            inputs=[pretrained_choice, pretrained_model, pretrained_sr],
+            inputs=[pretrained_choice, pretrained_d_url, pretrained_g_url],
+            outputs=[pretrained_output],
+        )
+
+        # ── Pretrained: download from list selection ──
+        pretrained_list_btn.click(
+            fn=download_pretrained_model,
+            inputs=[pretrained_choice, pretrained_list, pretrained_sr],
             outputs=[pretrained_output],
         )
