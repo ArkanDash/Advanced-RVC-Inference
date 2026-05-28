@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import json
-import codecs
 import shutil
 import yt_dlp
 import warnings
@@ -149,7 +148,10 @@ def download_pretrained_model(choices, model, sample_rate):
         paths = pretrained_data[model][sample_rate]
 
         if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
-        url = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cergenvarq_phfgbz/", "rot13") + paths
+        base_url = configs.get("pretrained_custom_url", "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_custom/")
+        if not base_url:
+            base_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_custom/"
+        url = base_url + paths
 
         gr_info(translations["download_pretrain"])
         file = huggingface.HF_download_file(replace_url(url), os.path.join(pretraineds_custom_path, paths))
@@ -157,6 +159,33 @@ def download_pretrained_model(choices, model, sample_rate):
         if file.endswith(".zip"): 
             shutil.unpack_archive(file, pretraineds_custom_path)
             os.remove(file)
+
+        gr_info(translations["success"])
+        return translations["success"]
+    elif choices == "Ultimate RVC Models" or choices == translations.get("ultimate_rvc_models", "Ultimate RVC Models"):
+        # Alternative source: R-Kentaren/Ultimate-RVC-Models on HuggingFace
+        if not model and not sample_rate:
+            gr_warning(translations.get("provide_pretrain", "Please provide D and G model URLs"))
+            return translations.get("provide_pretrain", "Please provide D and G model URLs")
+
+        alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/R-Kentaren/Ultimate-RVC-Models/resolve/main/")
+        if not alt_base_url:
+            alt_base_url = "https://huggingface.co/R-Kentaren/Ultimate-RVC-Models/resolve/main/"
+
+        if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
+
+        gr_info(translations["download_pretrain"])
+        urls = []
+        if model: urls.append(alt_base_url + model if not model.startswith("http") else model)
+        if sample_rate: urls.append(alt_base_url + sample_rate if not sample_rate.startswith("http") else sample_rate)
+
+        for url in urls:
+            url = replace_url(url)
+            file = huggingface.HF_download_file(url, pretraineds_custom_path)
+
+            if file.endswith(".zip"):
+                shutil.unpack_archive(file, pretraineds_custom_path)
+                if os.path.exists(file): os.remove(file)
 
         gr_info(translations["success"])
         return translations["success"]
@@ -196,7 +225,7 @@ def download_pretrained_model(choices, model, sample_rate):
         gr_info(translations["success"])
         return translations["success"], translations["success"]
 
-SEARCH_API_URL = codecs.decode("uggcf://ibvpr-zbqryf.pbz/srgpu_qngn.cuc", "rot13")
+SEARCH_API_URL = configs.get("search_api_url", "https://voice-models.com/fetch_data.php")
 MAX_SEARCH_PAGES = 10
 SEARCH_REQUEST_TIMEOUT = 15
 

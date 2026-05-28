@@ -832,7 +832,10 @@ def run(
         # Auto-download default pretrained models if no custom pretrained paths provided
         # (Advanced-RVC feature — better than Vietnamese-RVC's approach)
         if pretrainG in check and pretrainD in check and rank == 0:
-            pretrained_base_url = f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
+            pretrained_base_url = main_configs.get(
+                f"pretrained_{version}_url",
+                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
+            )
             pretrained_save_dir = os.path.join(main_configs.get(f"pretrained_{version}_path", os.path.join(os.path.dirname(__file__), "../../assets/models", f"pretrained_{version}")))
             os.makedirs(pretrained_save_dir, exist_ok=True)
 

@@ -368,13 +368,22 @@ def change_download_choices(select: str) -> List[Dict[str, Any]]:
     return [{"visible": selects[i], "__type__": "update"} for i in range(len(selects))]
 
 def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
-    """Update pretrained download UI based on selected option"""
-    selects = [False] * 7
+    """Update pretrained download UI based on selected option
+    
+    Returns 10 visibility updates:
+    [0] D URL textbox, [1] G URL textbox, [2] URL download button,
+    [3] List model dropdown, [4] Sample rate dropdown, [5] List download button,
+    [6] Upload files,
+    [7] Ultimate D file textbox, [8] Ultimate G file textbox, [9] Ultimate download button
+    """
+    selects = [False] * 10
     
     if select == translations["download_url"]:
         selects[0] = selects[1] = selects[2] = True
     elif select == translations["list_model"]:
         selects[3] = selects[4] = selects[5] = True
+    elif select == translations.get("ultimate_rvc_models", "Ultimate RVC Models") or select == "Ultimate RVC Models":
+        selects[7] = selects[8] = selects[9] = True
     elif select == translations["upload"]:
         selects[6] = True
     else:

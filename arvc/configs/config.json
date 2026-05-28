@@ -607,5 +607,11 @@
     "pretrain_verify_shape": true,
     "pretrain_strict": true,
     "cpu_mode": false,
-    "brain": false
+    "brain": false,
+    "pretrained_custom_url": "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_custom/",
+    "pretrained_json_url": "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/json/custom_pretrained.json",
+    "alternative_pretrained_url": "https://huggingface.co/R-Kentaren/Ultimate-RVC-Models/resolve/main/",
+    "pretrained_v1_url": "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_v1/",
+    "pretrained_v2_url": "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_v2/",
+    "search_api_url": "https://voice-models.com/fetch_data.php"
 }

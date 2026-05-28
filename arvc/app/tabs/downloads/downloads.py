@@ -145,6 +145,7 @@ def download_tab():
                     choices=[
                         translations.get("download_url", "URL"),
                         translations.get("list_model", "List Model"),
+                        translations.get("ultimate_rvc_models", "Ultimate RVC Models"),
                         translations.get("upload", "Upload"),
                     ],
                     value=translations.get("download_url", "URL"),
@@ -189,6 +190,32 @@ def download_tab():
                     visible=False,
                 )
                 pretrained_list_btn = gr.Button(
+                    translations.get("download_pretrain", "Download Pretrained"),
+                    variant="primary",
+                    visible=False,
+                )
+
+            # ── Ultimate RVC Models mode: D/G filename from R-Kentaren repo ──
+            with gr.Column():
+                alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/R-Kentaren/Ultimate-RVC-Models/resolve/main/")
+                gr.Markdown(
+                    f"**Source:** [{alt_base_url}]({alt_base_url})\n\n"
+                    "Enter the D and G model filenames or relative paths from this repo "
+                    "(e.g. `D_48k.pth` and `G_48k.pth`). Full URLs are also accepted."
+                )
+                ultimate_d_file = gr.Textbox(
+                    label=translations.get("pretrained_url", "D Model Filename/URL").format(dg="D") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else "D Model Filename/URL",
+                    placeholder="D_48k.pth or full URL",
+                    interactive=True,
+                    visible=False,
+                )
+                ultimate_g_file = gr.Textbox(
+                    label=translations.get("pretrained_url", "G Model Filename/URL").format(dg="G") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else "G Model Filename/URL",
+                    placeholder="G_48k.pth or full URL",
+                    interactive=True,
+                    visible=False,
+                )
+                ultimate_btn = gr.Button(
                     translations.get("download_pretrain", "Download Pretrained"),
                     variant="primary",
                     visible=False,
@@ -264,6 +291,9 @@ def download_tab():
                 pretrained_sr,          # [4] Sample rate dropdown
                 pretrained_list_btn,    # [5] List download button
                 upload_pretrains,       # [6] Upload files
+                ultimate_d_file,        # [7] Ultimate D file textbox
+                ultimate_g_file,        # [8] Ultimate G file textbox
+                ultimate_btn,           # [9] Ultimate download button
             ],
         )
 
@@ -285,5 +315,12 @@ def download_tab():
         pretrained_list_btn.click(
             fn=download_pretrained_model,
             inputs=[pretrained_choice, pretrained_list, pretrained_sr],
+            outputs=[pretrained_output],
+        )
+
+        # ── Pretrained: download from Ultimate RVC Models ──
+        ultimate_btn.click(
+            fn=download_pretrained_model,
+            inputs=[pretrained_choice, ultimate_d_file, ultimate_g_file],
             outputs=[pretrained_output],
         )

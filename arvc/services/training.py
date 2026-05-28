@@ -159,7 +159,10 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
     if not not_pretrain:
         if not custom_pretrained: 
             pretrain_dir = configs["pretrained_v2_path"] if rvc_version == 'v2' else configs["pretrained_v1_path"]
-            download_version = f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{rvc_version}/"
+            download_version = configs.get(
+                f"pretrained_{rvc_version}_url",
+                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{rvc_version}/"
+            )
 
             pretrained_selector = {
                 True: {  # pitch_guidance (f0 models)
