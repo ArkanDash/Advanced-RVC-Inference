@@ -161,7 +161,7 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
             pretrain_dir = configs["pretrained_v2_path"] if rvc_version == 'v2' else configs["pretrained_v1_path"]
             download_version = configs.get(
                 f"pretrained_{rvc_version}_url",
-                f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/main/pretrained_{rvc_version}/"
+                f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{rvc_version}/"
             )
 
             pretrained_selector = {
