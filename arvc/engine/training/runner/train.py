@@ -832,9 +832,20 @@ def run(
         # Auto-download default pretrained models if no custom pretrained paths provided
         # (Advanced-RVC feature — better than Vietnamese-RVC's approach)
         if pretrainG in check and pretrainD in check and rank == 0:
-            pretrained_base_url = main_configs.get(
+            # Primary and fallback pretrained URLs
+            primary_url = main_configs.get(
                 f"pretrained_{version}_url",
                 f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{version}/"
+            )
+            # Fallback: lj1995/VoiceConversionWebUI (original RVC repo) — uses /main/ branch
+            _default_fallback = (
+                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/"
+                if version == "v2" else
+                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained/"
+            )
+            fallback_url = main_configs.get(
+                f"pretrained_{version}_fallback_url",
+                _default_fallback
             )
             pretrained_save_dir = os.path.join(main_configs.get(f"pretrained_{version}_path", os.path.join(os.path.dirname(__file__), "../../assets/models", f"pretrained_{version}")))
             os.makedirs(pretrained_save_dir, exist_ok=True)
@@ -857,29 +868,50 @@ def run(
             }
 
             sr = config.data.sample_rate
-            g_file, d_file = pretrained_selector.get(pitch_guidance, pretrained_selector[True]).get(sr, pretrained_selector[pitch_guidance][40000])
+
+            # 24k pretrained models do not exist in any known repo.
+            # Fallback to 32k pretrained for 24k training.
+            sr_for_pretrained = sr
+            if sr == 24000:
+                logger.warning("24k pretrained models are not available; falling back to 32k pretrained.")
+                sr_for_pretrained = 32000
+
+            g_file, d_file = pretrained_selector.get(pitch_guidance, pretrained_selector[True]).get(
+                sr_for_pretrained,
+                pretrained_selector[pitch_guidance][40000]
+            )
 
             g_local = os.path.join(pretrained_save_dir, g_file)
             d_local = os.path.join(pretrained_save_dir, d_file)
 
+            def _train_download_pretrained(file_name, file_path, url_sources):
+                """Try downloading from multiple URL sources, return True on success."""
+                for src_url in url_sources:
+                    try:
+                        full_url = src_url + file_name
+                        logger.info(f"Trying download: {full_url}")
+                        HF_download_file(full_url, file_path)
+                        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                            return True
+                    except Exception as e:
+                        logger.warning(f"Download failed from {src_url}: {e}")
+                        continue
+                return False
+
+            url_sources = [primary_url, fallback_url]
+
             if not os.path.exists(g_local):
                 logger.info(f"Downloading default pretrained G ({g_file}) for {version.upper()} {sr}Hz...")
-                try:
-                    HF_download_file(pretrained_base_url + g_file, g_local)
-                    logger.info(f"Downloaded {g_file} to {g_local}")
-                except Exception as e:
-                    logger.warning(f"Failed to download default pretrained G: {e}")
+                if not _train_download_pretrained(g_file, g_local, url_sources):
+                    logger.error(f"Failed to download pretrained G ({g_file}) from all sources")
                     g_local = ""
             else:
                 logger.info(f"Using cached default pretrained G: {g_local}")
 
             if not os.path.exists(d_local):
                 logger.info(f"Downloading default pretrained D ({d_file}) for {version.upper()} {sr}Hz...")
-                try:
-                    HF_download_file(pretrained_base_url + d_file, d_local)
-                    logger.info(f"Downloaded {d_file} to {d_local}")
-                except Exception as e:
-                    logger.warning(f"Failed to download default pretrained D: {e}")
+                if not _train_download_pretrained(d_file, d_local, url_sources):
+                    logger.error(f"Failed to download pretrained D ({d_file}) from all sources")
                     d_local = ""
             else:
                 logger.info(f"Using cached default pretrained D: {d_local}")

@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 
 from arvc.utils import huggingface
 from arvc.utils.feedback import gr_info, gr_warning
-from arvc.utils.variables import python, translations, configs
+from arvc.utils.variables import python, translations, configs, logger
 from arvc.engine.models.optimizers import get_optimizer_choices
 from arvc.engine.models.generators import get_vocoder_choices
 
@@ -199,37 +199,74 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
                 )
             )
 
+            # Primary and fallback pretrained URLs
+            primary_url = download_version
+            # Fallback: lj1995/VoiceConversionWebUI (original RVC repo) — uses /main/ branch
+            _default_fallback = (
+                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/"
+                if rvc_version == "v2" else
+                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained/"
+            )
+            fallback_url = configs.get(
+                f"pretrained_{rvc_version}_fallback_url",
+                _default_fallback
+            )
+
+            # 24k pretrained models do not exist in any known repo.
+            # Fallback to 32k pretrained for 24k training.
+            sr_for_pretrained = sr
+            if sr == 24000:
+                logger.warning("24k pretrained models are not available; falling back to 32k pretrained.")
+                sr_for_pretrained = 32000
+                # Re-derive filenames for the fallback sample rate
+                pg_fallback, pd_fallback = pretrained_selector[pitch_guidance][sr_for_pretrained]
+                if energy_use: pg2, pd2 = "ENERGY_" + pg_fallback, "ENERGY_" + pd_fallback
+                else: pg2, pd2 = pg_fallback, pd_fallback
+                if vocoder != 'Default': pg2, pd2 = vocoder + "_" + pg2, vocoder + "_" + pd2
+                pretrained_G = os.path.join(pretrain_dir, pg2)
+                pretrained_D = os.path.join(pretrain_dir, pd2)
+
+            def _download_pretrained(file_url, file_path, url_sources):
+                """Try downloading from multiple URL sources, return True on success."""
+                for src_url in url_sources:
+                    try:
+                        full_url = src_url + os.path.basename(file_path)
+                        logger.info(f"Trying download: {full_url}")
+                        huggingface.HF_download_file(full_url, file_path)
+                        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+                            return True
+                    except Exception as e:
+                        logger.warning(f"Download failed from {src_url}: {e}")
+                        continue
+                return False
+
             try:
+                url_sources = [primary_url, fallback_url]
+
                 if not os.path.exists(pretrained_G):
                     gr_info(translations["download_pretrained"].format(dg="G", rvc_version=rvc_version))
-                    huggingface.HF_download_file(
-                        "".join(
-                            [
-                                download_version, 
-                                pg2
-                            ]
-                        ),
-                        os.path.join(
-                            pretrain_dir,
-                            pg2
-                        )
-                    )
-                        
+                    if not _download_pretrained(download_version + pg2, pretrained_G, url_sources):
+                        logger.error(f"Failed to download pretrained G ({pg2}) from all sources")
+                        pretrained_G = None
+
                 if not os.path.exists(pretrained_D):
                     gr_info(translations["download_pretrained"].format(dg="D", rvc_version=rvc_version))
-                    huggingface.HF_download_file(
-                        "".join(
-                            [
-                                download_version, 
-                                pd2
-                            ]
-                        ), 
-                        os.path.join(
-                            pretrain_dir,
-                            pd2
-                        )
-                    )
-            except:
+                    if not _download_pretrained(download_version + pd2, pretrained_D, url_sources):
+                        logger.error(f"Failed to download pretrained D ({pd2}) from all sources")
+                        pretrained_D = None
+
+                # Verify files actually exist after download
+                if pretrained_G and not os.path.exists(pretrained_G):
+                    logger.error(f"Pretrained G file missing after download: {pretrained_G}")
+                    pretrained_G = None
+                if pretrained_D and not os.path.exists(pretrained_D):
+                    logger.error(f"Pretrained D file missing after download: {pretrained_D}")
+                    pretrained_D = None
+
+                if pretrained_G is None and pretrained_D is None:
+                    gr_warning(translations["not_use_pretrain_error_download"])
+            except Exception as e:
+                logger.error(f"Pretrained model download error: {e}")
                 gr_warning(translations["not_use_pretrain_error_download"])
                 pretrained_G = pretrained_D = None
         else:
