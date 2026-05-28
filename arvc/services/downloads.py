@@ -163,10 +163,10 @@ def download_pretrained_model(choices, model, sample_rate):
         gr_info(translations["success"])
         return translations["success"]
     elif choices == "Ultimate RVC Models" or choices == translations.get("ultimate_rvc_models", "Ultimate RVC Models"):
-        # Alternative source: R-Kentaren/Ultimate-RVC-Models on HuggingFace
+        # Alternative source: R-Kentaren/Ultimate-RVC-Models HuggingFace Storage Bucket
         if not model and not sample_rate:
-            gr_warning(translations.get("provide_pretrain", "Please provide D and G model URLs"))
-            return translations.get("provide_pretrain", "Please provide D and G model URLs")
+            gr_warning(translations.get("provide_pretrain", "Please provide D and G model filenames"))
+            return translations.get("provide_pretrain", "Please provide D and G model filenames")
 
         alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/")
         if not alt_base_url:
