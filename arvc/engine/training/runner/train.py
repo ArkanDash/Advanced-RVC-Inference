@@ -837,11 +837,9 @@ def run(
                 f"pretrained_{version}_url",
                 f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{version}/"
             )
-            # Fallback: lj1995/VoiceConversionWebUI (original RVC repo) — uses /main/ branch
+            # Fallback: AnhP/Vietnamese-RVC-Project (regular repo, has /main/ branch)
             _default_fallback = (
-                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/"
-                if version == "v2" else
-                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained/"
+                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
             )
             fallback_url = main_configs.get(
                 f"pretrained_{version}_fallback_url",

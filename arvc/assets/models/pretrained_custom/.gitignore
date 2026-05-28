@@ -1,0 +1,2 @@
+# Pretrained model files are downloaded at runtime - do not commit them
+*.pth

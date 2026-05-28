@@ -181,31 +181,40 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
                 }
             }
 
-            pg2, pd2 = "", ""
             pg, pd = pretrained_selector[pitch_guidance][sr]
 
-            if energy_use: pg2, pd2 = pg2 + "ENERGY_", pd2 + "ENERGY_"
-            if vocoder != 'Default': pg2, pd2 = pg2 + vocoder + "_", pd2 + vocoder + "_"
+            # NOTE: The default pretrained models in the bucket do NOT have
+            # vocoder or energy prefixes.  Only attempt vocoder/energy-prefixed
+            # filenames if those specific files already exist locally (e.g. the
+            # user manually placed them).  Otherwise fall back to the standard
+            # filenames (f0G40k.pth, f0D40k.pth, etc.) which are guaranteed
+            # to exist in the R-Kentaren/Ultimate-RVC-Models bucket for 32k/40k/48k.
+            pg_prefixed, pd_prefixed = pg, pd
 
-            pg2, pd2 = pg2 + pg, pd2 + pd
-            pretrained_G, pretrained_D = (
-                os.path.join(
-                    pretrain_dir,
-                    pg2
-                ), 
-                os.path.join(
-                    pretrain_dir,
-                    pd2
-                )
-            )
+            if energy_use:
+                _pg_e = "ENERGY_" + pg
+                _pd_e = "ENERGY_" + pd
+                if os.path.exists(os.path.join(pretrain_dir, _pg_e)):
+                    pg_prefixed = _pg_e
+                if os.path.exists(os.path.join(pretrain_dir, _pd_e)):
+                    pd_prefixed = _pd_e
+
+            if vocoder not in ('Default', 'HiFi-GAN'):
+                _pg_v = vocoder + "_" + pg_prefixed
+                _pd_v = vocoder + "_" + pd_prefixed
+                if os.path.exists(os.path.join(pretrain_dir, _pg_v)):
+                    pg_prefixed = _pg_v
+                if os.path.exists(os.path.join(pretrain_dir, _pd_v)):
+                    pd_prefixed = _pd_v
+
+            pretrained_G = os.path.join(pretrain_dir, pg_prefixed)
+            pretrained_D = os.path.join(pretrain_dir, pd_prefixed)
 
             # Primary and fallback pretrained URLs
             primary_url = download_version
-            # Fallback: lj1995/VoiceConversionWebUI (original RVC repo) — uses /main/ branch
+            # Fallback: AnhP/Vietnamese-RVC-Project (regular repo, has /main/ branch)
             _default_fallback = (
-                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained_v2/"
-                if rvc_version == "v2" else
-                "https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/pretrained/"
+                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{rvc_version}/"
             )
             fallback_url = configs.get(
                 f"pretrained_{rvc_version}_fallback_url",
@@ -218,13 +227,10 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
             if sr == 24000:
                 logger.warning("24k pretrained models are not available; falling back to 32k pretrained.")
                 sr_for_pretrained = 32000
-                # Re-derive filenames for the fallback sample rate
-                pg_fallback, pd_fallback = pretrained_selector[pitch_guidance][sr_for_pretrained]
-                if energy_use: pg2, pd2 = "ENERGY_" + pg_fallback, "ENERGY_" + pd_fallback
-                else: pg2, pd2 = pg_fallback, pd_fallback
-                if vocoder != 'Default': pg2, pd2 = vocoder + "_" + pg2, vocoder + "_" + pd2
-                pretrained_G = os.path.join(pretrain_dir, pg2)
-                pretrained_D = os.path.join(pretrain_dir, pd2)
+                # Re-derive filenames for the fallback sample rate (without vocoder prefix)
+                pg_prefixed, pd_prefixed = pretrained_selector[pitch_guidance][sr_for_pretrained]
+                pretrained_G = os.path.join(pretrain_dir, pg_prefixed)
+                pretrained_D = os.path.join(pretrain_dir, pd_prefixed)
 
             def _download_pretrained(file_url, file_path, url_sources):
                 """Try downloading from multiple URL sources, return True on success."""
@@ -245,14 +251,14 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
 
                 if not os.path.exists(pretrained_G):
                     gr_info(translations["download_pretrained"].format(dg="G", rvc_version=rvc_version))
-                    if not _download_pretrained(download_version + pg2, pretrained_G, url_sources):
-                        logger.error(f"Failed to download pretrained G ({pg2}) from all sources")
+                    if not _download_pretrained(download_version + pg_prefixed, pretrained_G, url_sources):
+                        logger.error(f"Failed to download pretrained G ({pg_prefixed}) from all sources")
                         pretrained_G = None
 
                 if not os.path.exists(pretrained_D):
                     gr_info(translations["download_pretrained"].format(dg="D", rvc_version=rvc_version))
-                    if not _download_pretrained(download_version + pd2, pretrained_D, url_sources):
-                        logger.error(f"Failed to download pretrained D ({pd2}) from all sources")
+                    if not _download_pretrained(download_version + pd_prefixed, pretrained_D, url_sources):
+                        logger.error(f"Failed to download pretrained D ({pd_prefixed}) from all sources")
                         pretrained_D = None
 
                 # Verify files actually exist after download
