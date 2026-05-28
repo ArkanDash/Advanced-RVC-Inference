@@ -87,7 +87,7 @@ def create_reference(audio_path, reference_name, pitch_guidance, use_energy, ver
     for log in log_read(done, "create_reference"):
         yield log
 
-def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effects, dataset, clean_dataset, clean_strength, chunk_len=3.0, overlap_len=0.3, normalization_mode="none"):
+def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effects, dataset, clean_dataset, clean_strength, chunk_len=3.0, overlap_len=0.3, normalization_mode="post"):
     sr = int(float(sample_rate.rstrip("k")) * 1000)
 
     if not model_name: return gr_warning(translations["provide_name"])
@@ -159,18 +159,22 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
     if not not_pretrain:
         if not custom_pretrained: 
             pretrain_dir = configs["pretrained_v2_path"] if rvc_version == 'v2' else configs["pretrained_v1_path"]
-            download_version = f"https://github.com/PhamHuynhAnh16/Vietnamese-RVC/raw/main/assets/models/pretrained_{rvc_version}/"
+            download_version = f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{rvc_version}/"
 
             pretrained_selector = {
-                True: {
-                    32000: ("f0G32k.pth", "f0D32k.pth"), 
-                    40000: ("f0G40k.pth", "f0D40k.pth"), 
-                    48000: ("f0G48k.pth", "f0D48k.pth")
-                }, 
-                False: {
-                    32000: ("G32k.pth", "D32k.pth"), 
-                    40000: ("G40k.pth", "D40k.pth"), 
-                    48000: ("G48k.pth", "D48k.pth")
+                True: {  # pitch_guidance (f0 models)
+                    24000: ("f0G24k.pth", "f0D24k.pth"),
+                    32000: ("f0G32k.pth", "f0D32k.pth"),
+                    40000: ("f0G40k.pth", "f0D40k.pth"),
+                    44100: ("f0G40k.pth", "f0D40k.pth"),  # reuse 40k pretrained
+                    48000: ("f0G48k.pth", "f0D48k.pth"),
+                },
+                False: {  # no pitch guidance
+                    24000: ("G24k.pth", "D24k.pth"),
+                    32000: ("G32k.pth", "D32k.pth"),
+                    40000: ("G40k.pth", "D40k.pth"),
+                    44100: ("G40k.pth", "D40k.pth"),  # reuse 40k pretrained
+                    48000: ("G48k.pth", "D48k.pth"),
                 }
             }
 

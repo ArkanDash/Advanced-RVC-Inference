@@ -42,7 +42,7 @@ def parse_arguments():
     parser.add_argument("--clean_strength", type=float, default=0.7)
     parser.add_argument("--chunk_len", type=float, default=3.0, required=False)
     parser.add_argument("--overlap_len", type=float, default=0.3, required=False)
-    parser.add_argument("--normalization_mode", type=str, default="none", required=False)
+    parser.add_argument("--normalization_mode", type=str, default="post", required=False)
 
     return parser.parse_args()
 
