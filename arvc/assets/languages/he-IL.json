@@ -649,7 +649,7 @@
     "train&energy": "אימון עם אנרגיה",
     "train&energy_info": "אימון מודל עם אנרגיית RMS",
     "editing": "עריכה",
-    "check_assets_error": "הורדת נכסים נכשלה {count} פעמים ברציפות! אנא הורד ידנית והנח בתיקיית הנכסים: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "הורדת נכסים נכשלה {count} פעמים ברציפות! אנא הורד ידנית והנח בתיקיית הנכסים: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "מתחיל זיהוי דיבור ליצירת קובץ SRT...",
     "start_rpc": "התחל רינדור RPC",
     "stop_rpc": "רינדור RPC הופסק",

@@ -837,9 +837,9 @@ def run(
                 f"pretrained_{version}_url",
                 f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{version}/"
             )
-            # Fallback: AnhP/Vietnamese-RVC-Project (regular repo, has /main/ branch)
+            # Fallback: R-Kentaren/Ultimate-RVC-Models HuggingFace Storage Bucket
             _default_fallback = (
-                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{version}/"
+                f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{version}/"
             )
             fallback_url = main_configs.get(
                 f"pretrained_{version}_fallback_url",

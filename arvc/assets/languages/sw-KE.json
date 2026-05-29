@@ -649,7 +649,7 @@
     "train&energy": "Mafunzo na nishati",
     "train&energy_info": "Kufundisha modeli na nishati ya RMS",
     "editing": "Kuhariri",
-    "check_assets_error": "Upakuaji wa rasilimali umeshindwa mara {count} mfululizo! Tafadhali pakua kibinafsi na weka kwenye folda ya rasilimali: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Upakuaji wa rasilimali umeshindwa mara {count} mfululizo! Tafadhali pakua kibinafsi na weka kwenye folda ya rasilimali: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Anza utambuzi wa mazungumzo kuunda faili ya srt...",
     "start_rpc": "Anza uchoraji wa RPC",
     "stop_rpc": "Uchoraji wa RPC umesimamishwa",

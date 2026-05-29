@@ -649,7 +649,7 @@
     "train&energy": "Antrenament cu energie",
     "train&energy_info": "Antrenamentul modelului cu energie RMS",
     "editing": "Editare",
-    "check_assets_error": "Descărcarea resurselor a eșuat de {count} ori la rând! Vă rugăm să descărcați manual și să plasați în folderul assets: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Descărcarea resurselor a eșuat de {count} ori la rând! Vă rugăm să descărcați manual și să plasați în folderul assets: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Se pornește recunoașterea vorbirii pentru a crea fișier SRT...",
     "start_rpc": "Pornire randare RPC",
     "stop_rpc": "Randarea RPC oprită",

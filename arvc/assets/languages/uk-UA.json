@@ -649,7 +649,7 @@
     "train&energy": "Тренування з енергією",
     "train&energy_info": "Тренування моделі з енергією RMS",
     "editing": "Редагування",
-    "check_assets_error": "Завантаження ресурсів не вдавалося {count} разів поспіль! Будь ласка, завантажте вручну та розмістіть у папці assets: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Завантаження ресурсів не вдавалося {count} разів поспіль! Будь ласка, завантажте вручну та розмістіть у папці assets: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Початок розпізнавання мовлення для створення файлу SRT...",
     "start_rpc": "Початок візуалізації RPC",
     "stop_rpc": "Візуалізацію RPC зупинено",

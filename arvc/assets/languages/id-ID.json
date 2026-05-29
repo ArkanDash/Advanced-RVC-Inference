@@ -649,7 +649,7 @@
     "train&energy": "Pelatihan dengan energi",
     "train&energy_info": "Melatih model dengan energi RMS",
     "editing": "Mengedit",
-    "check_assets_error": "Pengunduhan aset gagal {count} kali berturut-turut! Harap unduh secara manual dan tempatkan di folder aset: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Pengunduhan aset gagal {count} kali berturut-turut! Harap unduh secara manual dan tempatkan di folder aset: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Mulai pengenalan ucapan untuk membuat file srt...",
     "start_rpc": "Mulai rendering RPC",
     "stop_rpc": "Rendering RPC dihentikan",

@@ -649,7 +649,7 @@
     "train&energy": "Обучение с енергия",
     "train&energy_info": "Обучение на модел с RMS енергия",
     "editing": "Редактиране",
-    "check_assets_error": "Изтеглянето на активи неуспешно {count} пъти подред! Моля, изтеглете ръчно и поставете в папката assets: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Изтеглянето на активи неуспешно {count} пъти подред! Моля, изтеглете ръчно и поставете в папката assets: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Започване на разпознаване на реч за създаване на srt файл...",
     "start_rpc": "Започване на RPC рендериране",
     "stop_rpc": "RPC рендериране спряно",

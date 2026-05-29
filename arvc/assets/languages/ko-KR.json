@@ -649,7 +649,7 @@
     "train&energy": "에너지 포함 학습",
     "train&energy_info": "RMS 에너지로 모델 학습",
     "editing": "편집",
-    "check_assets_error": "애셋 다운로드가 {count}회 연속 실패했습니다! 수동으로 다운로드하여 assets 폴더에 배치하세요: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "애셋 다운로드가 {count}회 연속 실패했습니다! 수동으로 다운로드하여 assets 폴더에 배치하세요: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "음성 인식을 시작하여 SRT 파일 생성...",
     "start_rpc": "RPC 렌더링 시작",
     "stop_rpc": "RPC 렌더링 중지됨",

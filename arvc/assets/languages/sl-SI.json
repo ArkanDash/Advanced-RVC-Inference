@@ -649,7 +649,7 @@
     "train&energy": "Usposabljanje z energijo",
     "train&energy_info": "Usposabljanje modela z RMS energijo",
     "editing": "Urejanje",
-    "check_assets_error": "Prenos sredstev je spodletel {count} krat zaporedoma! Prosimo, prenesite ročno in namestite v mapo sredstev: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Prenos sredstev je spodletel {count} krat zaporedoma! Prosimo, prenesite ročno in namestite v mapo sredstev: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Začenjam prepoznavanje govora za ustvarjanje SRT datoteke...",
     "start_rpc": "Začni RPC izrisovanje",
     "stop_rpc": "RPC izrisovanje ustavljeno",

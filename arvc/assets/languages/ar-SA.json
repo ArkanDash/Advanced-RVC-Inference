@@ -649,7 +649,7 @@
     "train&energy": "التدريب بالطاقة",
     "train&energy_info": "تدريب النموذج بطاقة RMS",
     "editing": "التحرير",
-    "check_assets_error": "فشل تحميل الأصول {count} مرة متتالية! يرجى التحميل يدوياً ووضعه في مجلد الأصول: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "فشل تحميل الأصول {count} مرة متتالية! يرجى التحميل يدوياً ووضعه في مجلد الأصول: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "جاري بدء التعرف على الكلام لإنشاء ملف srt...",
     "start_rpc": "بدء تصيير RPC",
     "stop_rpc": "تم إيقاف تصيير RPC",

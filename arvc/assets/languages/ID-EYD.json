@@ -649,7 +649,7 @@
     "train&energy": "Pelatihan dengan energi",
     "train&energy_info": "Melatih model dengan energi RMS",
     "editing": "Mengedit",
-    "check_assets_error": "Pengoendoehan aset gagal {count} kali boertoroet-toroet! Harap oendoeh secara manoel dan tempatkan di folder aset: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Pengoendoehan aset gagal {count} kali boertoroet-toroet! Harap oendoeh secara manoel dan tempatkan di folder aset: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Moelai pengenalan oetjapan oentoek membikin bêrkas srt...",
     "start_rpc": "Moelai rendering RPC",
     "stop_rpc": "Rendering RPC dihentikan",

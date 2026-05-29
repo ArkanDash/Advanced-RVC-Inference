@@ -649,7 +649,7 @@
     "train&energy": "Treening energiaga",
     "train&energy_info": "Mudeli treening RMS energiaga",
     "editing": "Redigeerimine",
-    "check_assets_error": "Varade allalaadimine nurjus {count} korda järjest! Palun laadige käsitsi alla ja asetage varade kausta: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Varade allalaadimine nurjus {count} korda järjest! Palun laadige käsitsi alla ja asetage varade kausta: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Kõnetuvastuse alustamine SRT faili loomiseks...",
     "start_rpc": "Alusta RPC renderdamist",
     "stop_rpc": "RPC renderdamine peatatud",

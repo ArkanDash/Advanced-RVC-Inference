@@ -649,7 +649,7 @@
     "train&energy": "ऊर्जा के साथ प्रशिक्षण",
     "train&energy_info": "RMS ऊर्जा के साथ मॉडल प्रशिक्षण",
     "editing": "संपादन",
-    "check_assets_error": "एसेट डाउनलोड {count} बार लगातार विफल! कृपया मैन्युअली डाउनलोड करें और एसेट फ़ोल्डर में रखें: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "एसेट डाउनलोड {count} बार लगातार विफल! कृपया मैन्युअली डाउनलोड करें और एसेट फ़ोल्डर में रखें: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "srt फ़ाइल बनाने के लिए स्पीच रिकॉग्निशन शुरू...",
     "start_rpc": "RPC रेंडरिंग शुरू",
     "stop_rpc": "RPC रेंडरिंग बंद",

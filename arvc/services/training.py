@@ -212,9 +212,9 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
 
             # Primary and fallback pretrained URLs
             primary_url = download_version
-            # Fallback: AnhP/Vietnamese-RVC-Project (regular repo, has /main/ branch)
+            # Fallback: R-Kentaren/Ultimate-RVC-Models HuggingFace Storage Bucket
             _default_fallback = (
-                f"https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_{rvc_version}/"
+                f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{rvc_version}/"
             )
             fallback_url = configs.get(
                 f"pretrained_{rvc_version}_fallback_url",

@@ -649,7 +649,7 @@
     "train&energy": "Εκπαίδευση με ενέργεια",
     "train&energy_info": "Εκπαίδευση μοντέλου με ενέργεια RMS",
     "editing": "Επεξεργασία",
-    "check_assets_error": "Η λήψη στοιχείων απέτυχε {count} φορές στη σειρά! Κατεβάστε χειροκίνητα και τοποθετήστε στον φάκελο στοιχείων: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Η λήψη στοιχείων απέτυχε {count} φορές στη σειρά! Κατεβάστε χειροκίνητα και τοποθετήστε στον φάκελο στοιχείων: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Έναρξη αναγνώρισης φωνής για δημιουργία αρχείου SRT...",
     "start_rpc": "Έναρξη απόδοσης RPC",
     "stop_rpc": "Η απόδοση RPC σταμάτησε",

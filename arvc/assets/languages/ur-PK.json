@@ -649,7 +649,7 @@
     "train&energy": "توانائی کے ساتھ ٹریننگ",
     "train&energy_info": "RMS توانائی کے ساتھ ماڈل ٹریننگ",
     "editing": "ترمیم",
-    "check_assets_error": "ایسیٹس ڈاؤن لوڈ کرنا {count} بار لگاتار ناکام ہوا! براہ کرم دستی طور پر ڈاؤن لوڈ کر کے ایسیٹس فولڈر میں رکھیں: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "ایسیٹس ڈاؤن لوڈ کرنا {count} بار لگاتار ناکام ہوا! براہ کرم دستی طور پر ڈاؤن لوڈ کر کے ایسیٹس فولڈر میں رکھیں: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "SRT فائل بنانے کے لیے سپیچ ریکگنیشن شروع کریں...",
     "start_rpc": "RPC رینڈرنگ شروع کریں",
     "stop_rpc": "RPC رینڈرنگ روک دی گئی",

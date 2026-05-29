@@ -148,9 +148,9 @@ def download_pretrained_model(choices, model, sample_rate):
         paths = pretrained_data[model][sample_rate]
 
         if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
-        base_url = configs.get("pretrained_custom_url", "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_custom/")
+        base_url = configs.get("pretrained_custom_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/")
         if not base_url:
-            base_url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/pretrained_custom/"
+            base_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/"
         url = base_url + paths
 
         gr_info(translations["download_pretrain"])
@@ -168,9 +168,9 @@ def download_pretrained_model(choices, model, sample_rate):
             gr_warning(translations.get("provide_pretrain", "Please provide D and G model filenames"))
             return translations.get("provide_pretrain", "Please provide D and G model filenames")
 
-        alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/")
+        alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/")
         if not alt_base_url:
-            alt_base_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/"
+            alt_base_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/"
 
         if not os.path.exists(pretraineds_custom_path): os.makedirs(pretraineds_custom_path, exist_ok=True)
 

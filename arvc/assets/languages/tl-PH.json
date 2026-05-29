@@ -649,7 +649,7 @@
     "train&energy": "Pagsasanay na may energy",
     "train&energy_info": "Pagsasanay ng model gamit ang RMS energy",
     "editing": "Pag-e-edit",
-    "check_assets_error": "Nabigo ang pag-download ng assets ng {count} beses nang sunod-sunod! Mangyaring i-download manually at ilagay sa assets folder: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Nabigo ang pag-download ng assets ng {count} beses nang sunod-sunod! Mangyaring i-download manually at ilagay sa assets folder: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Simulan ang speech recognition para gumawa ng srt file...",
     "start_rpc": "Simulan ang RPC rendering",
     "stop_rpc": "Nahinto ang RPC rendering",

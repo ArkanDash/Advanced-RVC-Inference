@@ -649,7 +649,7 @@
     "train&energy": "Koulutus energialla",
     "train&energy_info": "Mallin koulutus RMS-energialla",
     "editing": "Muokkaus",
-    "check_assets_error": "Resurssien lataus epäonnistui {count} kertaa peräkkäin! Lataa manuaalisesti ja sijoita assets-kansioon: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Resurssien lataus epäonnistui {count} kertaa peräkkäin! Lataa manuaalisesti ja sijoita assets-kansioon: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Puheentunnistus aloitetaan SRT-tiedoston luomiseksi...",
     "start_rpc": "RPC-renderöinnin aloitus",
     "stop_rpc": "RPC-renderöinti pysäytetty",

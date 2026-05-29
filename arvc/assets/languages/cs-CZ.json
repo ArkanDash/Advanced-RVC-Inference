@@ -649,7 +649,7 @@
     "train&energy": "Trénování s energií",
     "train&energy_info": "Trénování modelu s RMS energií",
     "editing": "Úpravy",
-    "check_assets_error": "Stažení prostředků selhalo {count}krát po sobě! Prosím, stáhněte ručně a umístěte do složky assets: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Stažení prostředků selhalo {count}krát po sobě! Prosím, stáhněte ručně a umístěte do složky assets: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Zahájení rozpoznávání řeči pro vytvoření SRT souboru...",
     "start_rpc": "Zahájení RPC renderování",
     "stop_rpc": "RPC renderování zastaveno",

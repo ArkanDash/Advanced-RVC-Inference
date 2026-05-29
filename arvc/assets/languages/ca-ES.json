@@ -649,7 +649,7 @@
     "train&energy": "Entrenament amb energia",
     "train&energy_info": "Entrenament del model amb energia RMS",
     "editing": "Edició",
-    "check_assets_error": "La baixada d'actius ha fallat {count} vegades seguides! Si us plau, baixa manualment i col·loca a la carpeta d'actius: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "La baixada d'actius ha fallat {count} vegades seguides! Si us plau, baixa manualment i col·loca a la carpeta d'actius: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Iniciant el reconeixement de veu per crear un fitxer srt...",
     "start_rpc": "Iniciant el renderitzat RPC",
     "stop_rpc": "Renderitzat RPC aturat",

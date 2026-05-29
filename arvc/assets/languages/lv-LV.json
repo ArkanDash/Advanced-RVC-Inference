@@ -649,7 +649,7 @@
     "train&energy": "Apmācība ar enerģiju",
     "train&energy_info": "Modeļa apmācība ar RMS enerģiju",
     "editing": "Rediģēšana",
-    "check_assets_error": "Papildu failu lejupielāde neizdevās {count} reizes pēc kārtas! Lūdzu, lejupielādējiet manuāli un ievietojiet papildu failu mapē: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Papildu failu lejupielāde neizdevās {count} reizes pēc kārtas! Lūdzu, lejupielādējiet manuāli un ievietojiet papildu failu mapē: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Sāku runas atpazīšanu SRT faila izveidošanai...",
     "start_rpc": "Sākt RPC renderēšanu",
     "stop_rpc": "RPC renderēšana apturēta",

@@ -649,7 +649,7 @@
     "train&energy": "এনার্জি সহ প্রশিক্ষণ",
     "train&energy_info": "RMS এনার্জি সহ মডেল প্রশিক্ষণ",
     "editing": "সম্পাদনা",
-    "check_assets_error": "অ্যাসেট ডাউনলোড {count} বার পরপর ব্যর্থ হয়েছে! অনুগ্রহ করে ম্যানুয়ালি ডাউনলোড করুন এবং অ্যাসেট ফোল্ডারে রাখুন: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "অ্যাসেট ডাউনলোড {count} বার পরপর ব্যর্থ হয়েছে! অনুগ্রহ করে ম্যানুয়ালি ডাউনলোড করুন এবং অ্যাসেট ফোল্ডারে রাখুন: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "srt ফাইল তৈরি করতে স্পিচ রিকগনিশন শুরু হচ্ছে...",
     "start_rpc": "RPC রেন্ডারিং শুরু",
     "stop_rpc": "RPC রেন্ডারিং বন্ধ",

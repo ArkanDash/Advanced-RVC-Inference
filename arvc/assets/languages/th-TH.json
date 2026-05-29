@@ -649,7 +649,7 @@
     "train&energy": "การฝึกกับพลังงาน",
     "train&energy_info": "ฝึกโมเดลด้วยพลังงาน RMS",
     "editing": "แก้ไข",
-    "check_assets_error": "ดาวน์โหลดสินทรัพย์ล้มเหลว {count} ครั้งติดต่อกัน! โปรดดาวน์โหลดด้วยตนเองและวางในโฟลเดอร์สินทรัพย์: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "ดาวน์โหลดสินทรัพย์ล้มเหลว {count} ครั้งติดต่อกัน! โปรดดาวน์โหลดด้วยตนเองและวางในโฟลเดอร์สินทรัพย์: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "เริ่มจดจำเสียงเพื่อสร้างไฟล์ srt...",
     "start_rpc": "เริ่มการเรนเดอร์ RPC",
     "stop_rpc": "หยุดการเรนเดอร์ RPC",

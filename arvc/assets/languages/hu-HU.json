@@ -649,7 +649,7 @@
     "train&energy": "Képzés energiával",
     "train&energy_info": "Modell képzése RMS energiával",
     "editing": "Szerkesztés",
-    "check_assets_error": "Az erőforrások letöltése {count} alkalommal egymás után sikertelen! Kérjük, töltse le manuálisan és helyezze el az assets mappában: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Az erőforrások letöltése {count} alkalommal egymás után sikertelen! Kérjük, töltse le manuálisan és helyezze el az assets mappában: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Beszédfelismerés indítása SRT fájl létrehozásához...",
     "start_rpc": "RPC renderelés indítása",
     "stop_rpc": "RPC renderelés leállítva",

@@ -649,7 +649,7 @@
     "train&energy": "Trening z energią",
     "train&energy_info": "Trening modelu z energią RMS",
     "editing": "Edycja",
-    "check_assets_error": "Pobieranie zasobów nie powiodło się {count} razy z rzędu! Pobierz ręcznie i umieść w folderze zasobów: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Pobieranie zasobów nie powiodło się {count} razy z rzędu! Pobierz ręcznie i umieść w folderze zasobów: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Rozpocznij rozpoznawanie mowy, aby utworzyć plik srt...",
     "start_rpc": "Rozpocznij renderowanie RPC",
     "stop_rpc": "Renderowanie RPC zatrzymane",

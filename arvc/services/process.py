@@ -135,9 +135,9 @@ def zip_file(name, pth, index):
 
 def fetch_pretrained_data():
     try:
-        url = configs.get("pretrained_json_url", "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/json/custom_pretrained.json")
+        url = configs.get("pretrained_json_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/custom_pretrained.json")
         if not url:
-            url = "https://huggingface.co/AnhP/Vietnamese-RVC-Project/resolve/main/json/custom_pretrained.json"
+            url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/custom_pretrained.json"
         url = url.replace("/tree/", "/resolve/")
         response = requests.get(url, timeout=15)
         response.raise_for_status()

@@ -649,7 +649,7 @@
     "train&energy": "Entrenamiento con energía",
     "train&energy_info": "Entrenando modelo con energía RMS",
     "editing": "Edición",
-    "check_assets_error": "¡La descarga de recursos falló {count} veces seguidas! Por favor, descarga manualmente y coloca en la carpeta assets: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "¡La descarga de recursos falló {count} veces seguidas! Por favor, descarga manualmente y coloca en la carpeta assets: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Iniciando reconocimiento de voz para crear archivo SRT...",
     "start_rpc": "Iniciar renderizado RPC",
     "stop_rpc": "Renderizado RPC detenido",

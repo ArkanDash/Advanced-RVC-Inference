@@ -649,7 +649,7 @@
     "train&energy": "Mokymas su energija",
     "train&energy_info": "Modelio mokymas su RMS energija",
     "editing": "Redagavimas",
-    "check_assets_error": "Papildomų failų atsisiuntimas nepavyko {count} kartų iš eilės! Prašome atsisiųsti rankiniu būdu ir patalpinti papildomų failų aplanke: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Papildomų failų atsisiuntimas nepavyko {count} kartų iš eilės! Prašome atsisiųsti rankiniu būdu ir patalpinti papildomų failų aplanke: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Pradedamas kalbos atpažinimas SRT failo kūrimui...",
     "start_rpc": "Pradėti RPC renderiavimą",
     "stop_rpc": "RPC renderiavimas sustabdytas",

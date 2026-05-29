@@ -649,7 +649,7 @@
     "train&energy": "使用能量訓練",
     "train&energy_info": "使用 RMS 能量訓練模型",
     "editing": "編輯",
-    "check_assets_error": "連續 {count} 次下載資產失敗！請手動下載並放置在 assets 文件夾中：https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "連續 {count} 次下載資產失敗！請手動下載並放置在 assets 文件夾中：https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "開始語音識別以創建 srt 文件...",
     "start_rpc": "開始 RPC 渲染",
     "stop_rpc": "RPC 渲染已停止",

@@ -649,7 +649,7 @@
     "train&energy": "Trening med energi",
     "train&energy_info": "Trener modell med RMS-energi",
     "editing": "Redigering",
-    "check_assets_error": "Nedlasting av assets mislyktes {count} ganger på rad! Last ned manuelt og plasser i assets-mappen: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Nedlasting av assets mislyktes {count} ganger på rad! Last ned manuelt og plasser i assets-mappen: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Starter stemmegjenkjenning for å opprette SRT-fil...",
     "start_rpc": "Starter RPC-rendering",
     "stop_rpc": "RPC-rendering stoppet",

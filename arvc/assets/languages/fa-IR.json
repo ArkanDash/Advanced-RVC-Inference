@@ -649,7 +649,7 @@
     "train&energy": "آموزش با انرژی",
     "train&energy_info": "آموزش مدل با انرژی RMS",
     "editing": "ویرایش",
-    "check_assets_error": "دانلود دارایی‌ها {count} بار پشت سر هم ناموفق بود! لطفاً به صورت دستی دانلود و در پوشه assets قرار دهید: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "دانلود دارایی‌ها {count} بار پشت سر هم ناموفق بود! لطفاً به صورت دستی دانلود و در پوشه assets قرار دهید: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "شروع تشخیص گفتار برای ایجاد فایل srt...",
     "start_rpc": "شروع رندر RPC",
     "stop_rpc": "رندر RPC متوقف شد",

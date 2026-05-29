@@ -649,7 +649,7 @@
     "train&energy": "Obuka s energijom",
     "train&energy_info": "Obuka modela s RMS energijom",
     "editing": "Uređivanje",
-    "check_assets_error": "Preuzimanje resursa nije uspjelo {count} puta za redom! Molimo preuzmite ručno i smjestite u mapu resursa: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Preuzimanje resursa nije uspjelo {count} puta za redom! Molimo preuzmite ručno i smjestite u mapu resursa: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Pokretanje prepoznavanja govora za stvaranje srt datoteke...",
     "start_rpc": "Pokretanje RPC renderiranja",
     "stop_rpc": "RPC renderiranje zaustavljeno",

@@ -650,7 +650,7 @@
     "train&energy": "Huấn luyện năng lượng",
     "train&energy_info": "Huấn luyện mô hình với năng lượng RMS",
     "editing": "Chỉnh Sửa",
-    "check_assets_error": "Tải xuống tài nguyên thất bại {count} lần liên tiếp! hãy tải xuống thủ công và đặt vào thư mục tài nguyên: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Tải xuống tài nguyên thất bại {count} lần liên tiếp! hãy tải xuống thủ công và đặt vào thư mục tài nguyên: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Bắt đầu nhận dạng giọng để tạo tệp srt...",
     "start_rpc": "Bắt đầu hiển thị RPC",
     "stop_rpc": "Đã dừng hiển thị RPC",

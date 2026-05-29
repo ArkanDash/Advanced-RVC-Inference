@@ -649,7 +649,7 @@
     "train&energy": "Enerji ile eğitim",
     "train&energy_info": "RMS enerjisi ile model eğit",
     "editing": "Düzenleme",
-    "check_assets_error": "Varlıklar {count} kez üst üste indirilemedi! Lütfen manuel olarak indirin ve varlıklar klasörüne yerleştirin: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Varlıklar {count} kez üst üste indirilemedi! Lütfen manuel olarak indirin ve varlıklar klasörüne yerleştirin: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "srt dosyası oluşturmak için ses tanıma başlatılıyor...",
     "start_rpc": "RPC oluşturma başlatılıyor",
     "stop_rpc": "RPC oluşturma durduruldu",

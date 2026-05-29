@@ -649,7 +649,7 @@
     "train&energy": "Training mit Energie",
     "train&energy_info": "Modell mit RMS-Energie trainieren",
     "editing": "Bearbeitung",
-    "check_assets_error": "Das Herunterladen von Assets ist {count}-mal hintereinander fehlgeschlagen! Bitte laden Sie es manuell herunter und legen Sie es im Assets-Ordner ab: https://huggingface.co/AnhP/Vietnamese-RVC-Project",
+    "check_assets_error": "Das Herunterladen von Assets ist {count}-mal hintereinander fehlgeschlagen! Bitte laden Sie es manuell herunter und legen Sie es im Assets-Ordner ab: https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models",
     "csrt": "Spracherkennung zur Erstellung einer SRT-Datei wird gestartet...",
     "start_rpc": "RPC-Rendering starten",
     "stop_rpc": "RPC-Rendering gestoppt",
