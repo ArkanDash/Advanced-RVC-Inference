@@ -2,8 +2,8 @@
 Downloads tab for the Advanced RVC Inference GUI.
 
 Provides UI for downloading RVC voice models, pretrained models,
-and audio from URLs. Model download and audio download are combined
-into a single tab with sub-sections.
+and audio from URLs. Model download and audio download are in
+separate tabs.
 """
 
 import os
@@ -30,7 +30,7 @@ def download_tab():
     """Create the Downloads tab UI."""
     with gr.TabItem(translations["downloads"], visible=configs.get("downloads_tab", True)):
         # ════════════════════════════════════════════════════════════
-        # Tab 1: Download Model + Download Audio (combined)
+        # Tab 1: Download Model
         # ════════════════════════════════════════════════════════════
         with gr.TabItem(translations.get("download_model", "Download Model")):
             gr.Markdown(translations.get("download_markdown", "## Download Model"))
@@ -137,38 +137,8 @@ def download_tab():
                     label=translations.get("upload_model", "Upload Model Files"),
                 )
 
-            # ── Download Audio section (combined in same tab) ──
-            gr.Markdown("---")
-            gr.Markdown(translations.get("download_music", "## Download Audio"))
-
-            with gr.Row():
-                audio_link = gr.Textbox(
-                    label=translations.get("url_audio", "Audio URL"),
-                    placeholder="https://www.youtube.com/watch?v=...",
-                    interactive=True,
-                    scale=5,
-                )
-                download_audio_btn = gr.Button(
-                    translations.get("download_music", "Download Audio"),
-                    variant="secondary",
-                )
-
-            download_audio_output = gr.Audio(
-                label=translations.get("output_audio", "Output Audio"),
-                type="filepath",
-                interactive=False,
-            )
-            download_audio_path = gr.Textbox(
-                label=translations.get("output_path", "Audio output path"),
-                interactive=False,
-            )
-            download_audio_status = gr.Textbox(
-                label=translations.get("status", "Status"),
-                interactive=False,
-            )
-
             # ══════════════════════════════════════════════════════════
-            # Event Handlers — Download Model + Audio
+            # Event Handlers — Download Model
             # ══════════════════════════════════════════════════════════
 
             # Mode selector: toggle visibility of sub-sections
@@ -245,6 +215,38 @@ def download_tab():
                 outputs=[download_search_output],
             )
 
+        # ════════════════════════════════════════════════════════════
+        # Tab 2: Download Audio (separate tab)
+        # ════════════════════════════════════════════════════════════
+        with gr.TabItem(translations.get("download_music", "Download Audio")):
+            gr.Markdown(translations.get("download_music", "## Download Audio"))
+
+            with gr.Row():
+                audio_link = gr.Textbox(
+                    label=translations.get("url_audio", "Audio URL"),
+                    placeholder="https://www.youtube.com/watch?v=...",
+                    interactive=True,
+                    scale=5,
+                )
+                download_audio_btn = gr.Button(
+                    translations.get("download_music", "Download Audio"),
+                    variant="secondary",
+                )
+
+            download_audio_output = gr.Audio(
+                label=translations.get("output_audio", "Output Audio"),
+                type="filepath",
+                interactive=False,
+            )
+            download_audio_path = gr.Textbox(
+                label=translations.get("output_path", "Audio output path"),
+                interactive=False,
+            )
+            download_audio_status = gr.Textbox(
+                label=translations.get("status", "Status"),
+                interactive=False,
+            )
+
             # Download audio from URL
             download_audio_btn.click(
                 fn=download_url,
@@ -253,7 +255,7 @@ def download_tab():
             )
 
         # ════════════════════════════════════════════════════════════
-        # Tab 2: Download Pretrained Models
+        # Tab 3: Download Pretrained Models
         # ════════════════════════════════════════════════════════════
         with gr.TabItem(translations.get("download_pretrained", "Download Pre-trained")):
             gr.Markdown(translations.get("download_pretrained_2", "Download pre-trained model"))
