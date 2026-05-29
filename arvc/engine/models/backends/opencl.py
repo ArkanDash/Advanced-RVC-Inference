@@ -16,8 +16,7 @@ torch_available = pytorch_ocl != None
 if torch_available: adaptive_orig = torch.nn.AdaptiveAvgPool2d
 
 def check_amd_gpu(gpu):
-    for i in ["RX", "AMD", "Vega", "Radeon", "FirePro"]:
-        return i in gpu
+    return any(i in gpu for i in ["RX", "AMD", "Vega", "Radeon", "FirePro"])
 
 def get_amd_gpu_windows():
     gpus = ""
@@ -46,6 +45,18 @@ def device_name(device_id = 0):
 
 def is_available():
     return (device_count() > 0) if torch_available else False
+
+def empty_cache():
+    """Clear GPU cache for OpenCL backend."""
+    import gc
+    gc.collect()
+    if pytorch_ocl is not None:
+        try:
+            import torch
+            if hasattr(torch, 'ocl') and hasattr(torch.ocl, 'empty_cache'):
+                torch.ocl.empty_cache()
+        except Exception:
+            pass
 
 def group_norm(x, num_groups, weight=None, bias=None, eps=1e-5):
     N, C = x.shape[:2]

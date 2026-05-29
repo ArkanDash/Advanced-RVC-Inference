@@ -2,6 +2,10 @@ import numpy as np
 
 from sortedcontainers import SortedList
 
+# Module-level defaults for Segment precision (set by Segment.set_precision)
+AUTO_ROUND_TIME = False
+SEGMENT_PRECISION = 1e-6
+
 class Timeline:
     @classmethod
     def from_df(cls, df, uri = None):

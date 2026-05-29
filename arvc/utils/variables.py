@@ -83,7 +83,7 @@ class Config:
         version_config_paths = [
             CONFIGS_PATH / version / size
             for version in ["v1", "v2"]
-            for size in ["32000.json", "40000.json", "48000.json"]
+            for size in ["24000.json", "32000.json", "40000.json", "44100.json", "48000.json"]
         ]
 
         for config_file in version_config_paths:
@@ -116,7 +116,7 @@ class Config:
         """Check if half precision is supported."""
         fp16 = self.configs.get("fp16", False)
 
-        if self.device in ["cpu", "mps"] and fp16:
+        if self.device in ["cpu", "mps", "ocl:0", "privateuseone:0"] and fp16:
             self.configs["fp16"] = False
             fp16 = False
             self._save_configs()
@@ -291,7 +291,7 @@ configs_json = CONFIGS_PATH / "config.json"
 configs = config.configs
 
 # Adjust for CPU/MPS with FP16
-if config.device in ["cpu", "mps", "ocl:0"] and configs.get("fp16", False):
+if config.device in ["cpu", "mps", "ocl:0", "privateuseone:0"] and configs.get("fp16", False):
     logger.warning(translations.get("fp16_not_support", "FP16 not supported on this device"))
     configs["fp16"] = config.is_half = False
     config._save_configs()

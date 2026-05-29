@@ -1,326 +1,262 @@
 """
-Downloads tab for the Advanced RVC Inference Gradio interface.
+Downloads tab for the Advanced RVC Inference GUI.
 
-Provides model download, audio download, and model search functionality.
-Pretrained model download UI ported from Vietnamese-RVC.
+Provides UI for downloading RVC voice models, pretrained models,
+and audio from URLs.
 """
 
 import os
+import sys
 
 import gradio as gr
 
-from arvc.utils.variables import translations, configs, model_options
+from arvc.utils.variables import translations, configs, model_options, model_name
+from arvc.ui.feedback import (
+    gr_info, gr_warning, gr_error,
+    change_models_choices, change_pretrained_choices,
+    change_download_choices, change_download_pretrained_choices,
+    replace_url, replace_modelname,
+)
 from arvc.services.downloads import (
-    download_model,
     download_url,
+    download_model,
     download_pretrained_model,
     search_models,
-)
-from arvc.services.process import fetch_pretrained_data, update_sample_rate_dropdown
-from arvc.ui.feedback import (
-    change_models_choices,
-    change_download_pretrained_choices,
-    gr_info,
-    gr_warning,
 )
 
 
 def download_tab():
-    """Build the Downloads tab UI for the full Gradio interface."""
-    with gr.TabItem(
-        translations.get("downloads", "Downloads"),
-        visible=configs.get("downloads_tab", True),
-    ):
-        # ── Download Model Section ──
-        with gr.TabItem(
-            translations.get("download", "Download Model"),
-            visible=configs.get("download_tab", True),
-        ):
-            gr.Markdown(translations.get("download_markdown", ""))
+    """Create the Downloads tab UI."""
+    with gr.TabItem(translations["downloads"], visible=configs.get("downloads_tab", True)):
+        # ── Download Voice Models ──
+        with gr.TabItem(translations.get("download_model", "Download Model")):
+            gr.Markdown(f"## {translations.get('download_model', 'Download Model')}")
 
             with gr.Row():
-                link = gr.Textbox(
-                    label=translations.get("download_model_link", "Model URL"),
+                download_select = gr.Dropdown(
+                    choices=[
+                        translations.get("download_url", "Download from URL"),
+                        translations.get("download_from_csv", "Download from CSV"),
+                        translations.get("search_models", "Search Models"),
+                        translations.get("upload", "Upload"),
+                    ],
+                    value=translations.get("download_url", "Download from URL"),
+                    label=translations.get("select_option", "Select Option"),
+                    interactive=True,
+                )
+
+            # URL download section
+            with gr.Row(visible=True) as url_row:
+                download_model_url = gr.Textbox(
+                    label=translations.get("model_url", "Model URL"),
                     placeholder="https://huggingface.co/...",
                     interactive=True,
-                    scale=4,
                 )
-                model_name = gr.Textbox(
+                download_model_name = gr.Textbox(
                     label=translations.get("model_name", "Model Name"),
-                    placeholder=translations.get("model_name_placeholder", "(optional)"),
+                    placeholder=translations.get("model_name_placeholder", "Leave empty to use original name"),
                     interactive=True,
-                    scale=2,
                 )
-
-            with gr.Row():
-                download_model_btn = gr.Button(
+                download_url_button = gr.Button(
                     translations.get("download", "Download"),
                     variant="primary",
                 )
-                refresh_models_btn = gr.Button(
-                    translations.get("refresh", "Refresh Models"),
-                )
 
-            download_model_output = gr.Textbox(
-                label=translations.get("status", "Status"),
-                interactive=False,
-                lines=3,
-            )
-
-            # ── Search Models Section ──
-            with gr.Accordion(
-                translations.get("search_models", "Search Models"),
-                open=False,
-            ):
-                with gr.Row():
-                    search_name = gr.Textbox(
-                        label=translations.get("search_name", "Model Name"),
-                        placeholder=translations.get("search_placeholder", "Enter model name to search..."),
-                        interactive=True,
-                        scale=4,
-                    )
-                    search_btn = gr.Button(
-                        translations.get("search", "Search"),
-                        variant="primary",
-                    )
-
-                search_results = gr.Dropdown(
-                    label=translations.get("search_results", "Search Results"),
-                    choices=[],
+            # CSV download section
+            with gr.Row(visible=False) as csv_row:
+                download_csv_model = gr.Dropdown(
+                    choices=list(model_name.keys()) if model_name else [],
+                    label=translations.get("select_model", "Select Model"),
                     interactive=True,
-                    allow_custom_value=True,
                 )
-                download_search_btn = gr.Button(
+                download_csv_button = gr.Button(
+                    translations.get("download", "Download"),
+                    variant="primary",
+                )
+
+            # Search section
+            with gr.Row(visible=False) as search_row:
+                search_model_name = gr.Textbox(
+                    label=translations.get("search_model_name", "Search Model Name"),
+                    placeholder=translations.get("search_placeholder", "Enter model name..."),
+                    interactive=True,
+                )
+                search_button = gr.Button(
+                    translations.get("search", "Search"),
+                    variant="primary",
+                )
+            with gr.Row(visible=False) as search_result_row:
+                search_dropdown = gr.Dropdown(
+                    choices=[],
+                    label=translations.get("search_results", "Search Results"),
+                    interactive=True,
+                )
+                search_download_model = gr.Button(
                     translations.get("download", "Download"),
                 )
-                download_search_output = gr.Textbox(
-                    label=translations.get("status", "Status"),
-                    interactive=False,
-                    lines=3,
+
+            # Upload section
+            with gr.Row(visible=False) as upload_row:
+                upload_model_files = gr.File(
+                    label=translations.get("upload_model", "Upload Model Files"),
+                    file_count="multiple",
                 )
 
-        # ── Download Audio Section ──
-        with gr.TabItem(
-            translations.get("download_music", "Download Audio"),
-            visible=configs.get("downloads_tab", True),
-        ):
-            gr.Markdown(translations.get("download_music_markdown", ""))
+            # Status output
+            download_status = gr.Textbox(
+                label=translations.get("status", "Status"),
+                interactive=False,
+            )
 
+            # ── Download Audio from URL ──
             with gr.Row():
-                audio_link = gr.Textbox(
+                audio_url = gr.Textbox(
                     label=translations.get("audio_url", "Audio URL (YouTube, etc.)"),
                     placeholder="https://www.youtube.com/watch?v=...",
                     interactive=True,
-                    scale=5,
                 )
-                download_audio_btn = gr.Button(
-                    translations.get("download_music", "Download Audio"),
-                    variant="primary",
+                audio_download_button = gr.Button(
+                    translations.get("download_audio", "Download Audio"),
+                    variant="secondary",
                 )
 
-            download_audio_output = gr.Audio(
-                label=translations.get("output_audio", "Output Audio"),
-                type="filepath",
-                interactive=False,
-            )
-            download_audio_path = gr.Textbox(
+            audio_output_path = gr.Textbox(
                 label=translations.get("output_path", "Output Path"),
                 interactive=False,
             )
-            download_audio_status = gr.Textbox(
-                label=translations.get("status", "Status"),
-                interactive=False,
+            audio_player = gr.Audio(
+                label=translations.get("audio_output", "Audio Output"),
+                type="filepath",
             )
 
-        # ── Download Pretrained Section (Vietnamese-RVC style) ──
-        with gr.TabItem(
-            translations.get("download_pretrain", "Download Pretrained"),
-            visible=configs.get("downloads_tab", True),
-        ):
-            gr.Markdown(translations.get("download_pretrain_markdown", ""))
+            # ── Event Handlers ──
+            download_select.change(
+                fn=change_download_choices,
+                inputs=[download_select],
+                outputs=[
+                    download_model_url, download_model_name, download_url_button,
+                    download_csv_model, download_csv_button,
+                    search_model_name, search_button,
+                    search_dropdown, search_download_model,
+                    upload_model_files,
+                ],
+            )
+
+            download_url_button.click(
+                fn=lambda url, name: download_model(url=url, model=name) if url else gr_warning(translations.get("provide_url", "Please provide a URL")),
+                inputs=[download_model_url, download_model_name],
+                outputs=[download_status],
+            )
+
+            search_button.click(
+                fn=search_models,
+                inputs=[search_model_name],
+                outputs=[search_dropdown, search_download_model],
+            )
+
+            search_download_model.click(
+                fn=lambda selection: download_model(url=model_options.get(selection, ""), model=selection) if selection else None,
+                inputs=[search_dropdown],
+                outputs=[download_status],
+            )
+
+            audio_download_button.click(
+                fn=download_url,
+                inputs=[audio_url],
+                outputs=[audio_output_path, audio_player, download_status],
+            )
+
+        # ── Download Pretrained Models ──
+        with gr.TabItem(translations.get("download_pretrained", "Download Pretrained")):
+            gr.Markdown(f"## {translations.get('download_pretrained', 'Download Pretrained Models')}")
 
             with gr.Row():
-                pretrained_choice = gr.Radio(
-                    label=translations.get("model_download_select", "Source"),
+                pretrained_select = gr.Dropdown(
                     choices=[
-                        translations.get("download_url", "URL"),
+                        translations.get("download_url", "Download from URL"),
                         translations.get("list_model", "List Model"),
-                        translations.get("ultimate_rvc_models", "Ultimate RVC Models"),
                         translations.get("upload", "Upload"),
                     ],
-                    value=translations.get("download_url", "URL"),
+                    value=translations.get("download_url", "Download from URL"),
+                    label=translations.get("select_option", "Select Option"),
                     interactive=True,
                 )
 
-            # ── URL mode: D URL + G URL textboxes ──
-            with gr.Column():
+            # URL section for pretrained
+            with gr.Row(visible=True) as pretrained_url_row:
                 pretrained_d_url = gr.Textbox(
-                    label=translations.get("pretrained_url", "D Model URL").format(dg="D") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else translations.get("pretrained_url", "D Model URL"),
-                    placeholder="https://huggingface.co/.../D_48k.pth",
+                    label="D Model URL",
+                    placeholder="https://huggingface.co/...",
                     interactive=True,
-                    visible=True,
                 )
                 pretrained_g_url = gr.Textbox(
-                    label=translations.get("pretrained_url", "G Model URL").format(dg="G") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else translations.get("pretrained_url", "G Model URL"),
-                    placeholder="https://huggingface.co/.../G_48k.pth",
+                    label="G Model URL",
+                    placeholder="https://huggingface.co/...",
                     interactive=True,
-                    visible=True,
                 )
-                pretrained_url_btn = gr.Button(
-                    translations.get("download_pretrain", "Download Pretrained"),
+                pretrained_url_button = gr.Button(
+                    translations.get("download", "Download"),
                     variant="primary",
-                    visible=True,
                 )
 
-            # ── List Model mode: Dropdown from HF JSON + dynamic sample rate ──
-            with gr.Column():
-                pretrained_list = gr.Dropdown(
-                    label=translations.get("select_pretrain", "Select Pretrained Model"),
-                    choices=list(fetch_pretrained_data().keys()),
-                    value="Titan_Medium" if "Titan_Medium" in fetch_pretrained_data() else None,
-                    allow_custom_value=True,
+            # List model section
+            with gr.Row(visible=False) as pretrained_list_row:
+                pretrained_list_model = gr.Dropdown(
+                    choices=[],
+                    label=translations.get("select_model", "Select Model"),
                     interactive=True,
-                    visible=False,
                 )
-                pretrained_sr = gr.Dropdown(
-                    label=translations.get("pretrain_sr", "Sample Rate"),
-                    choices=["48k", "40k", "32k"],
-                    value="48k",
+                pretrained_sample_rate = gr.Dropdown(
+                    choices=["32000", "40000", "48000"],
+                    value="40000",
+                    label=translations.get("sample_rate", "Sample Rate"),
                     interactive=True,
-                    visible=False,
                 )
-                pretrained_list_btn = gr.Button(
-                    translations.get("download_pretrain", "Download Pretrained"),
+                pretrained_list_button = gr.Button(
+                    translations.get("download", "Download"),
                     variant="primary",
-                    visible=False,
                 )
 
-            # ── Ultimate RVC Models mode: D/G filename from R-Kentaren repo ──
-            with gr.Column():
-                alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/")
-                gr.Markdown(
-                    f"**Source:** [{alt_base_url}]({alt_base_url})\n\n"
-                    "Enter the D and G model filenames or relative paths from this repo "
-                    "(e.g. `D_48k.pth` and `G_48k.pth`). Full URLs are also accepted."
-                )
-                ultimate_d_file = gr.Textbox(
-                    label=translations.get("pretrained_url", "D Model Filename/URL").format(dg="D") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else "D Model Filename/URL",
-                    placeholder="D_48k.pth or full URL",
-                    interactive=True,
-                    visible=False,
-                )
-                ultimate_g_file = gr.Textbox(
-                    label=translations.get("pretrained_url", "G Model Filename/URL").format(dg="G") if isinstance(translations.get("pretrained_url", ""), str) and "{dg}" in translations.get("pretrained_url", "") else "G Model Filename/URL",
-                    placeholder="G_48k.pth or full URL",
-                    interactive=True,
-                    visible=False,
-                )
-                ultimate_btn = gr.Button(
-                    translations.get("download_pretrain", "Download Pretrained"),
-                    variant="primary",
-                    visible=False,
+            # Upload section for pretrained
+            with gr.Row(visible=False) as pretrained_upload_row:
+                pretrained_upload_files = gr.File(
+                    label=translations.get("upload_pretrained", "Upload Pretrained Files"),
+                    file_count="multiple",
                 )
 
-            # ── Upload mode: .pth file upload ──
-            with gr.Row():
-                upload_pretrains = gr.Files(
-                    label=translations.get("drop_pretrain", "Drop G & D pretrained files (.pth)").format(dg="G, D") if isinstance(translations.get("drop_pretrain", ""), str) and "{dg}" in translations.get("drop_pretrain", "") else translations.get("drop_pretrain", "Drop G & D pretrained files (.pth)"),
-                    file_types=[".pth"],
-                    visible=False,
-                )
-
-            pretrained_output = gr.Textbox(
+            pretrained_status = gr.Textbox(
                 label=translations.get("status", "Status"),
                 interactive=False,
-                lines=3,
             )
 
-        # ── Event bindings ──
+            # Event handlers
+            pretrained_select.change(
+                fn=change_download_pretrained_choices,
+                inputs=[pretrained_select],
+                outputs=[
+                    pretrained_d_url, pretrained_g_url, pretrained_url_button,
+                    pretrained_list_model, pretrained_sample_rate, pretrained_list_button,
+                    pretrained_upload_files,
+                    pretrained_d_url, pretrained_g_url, pretrained_url_button,
+                ],
+            )
 
-        # Download model from URL
-        download_model_btn.click(
-            fn=download_model,
-            inputs=[link, model_name],
-            outputs=[download_model_output],
-        )
+            pretrained_url_button.click(
+                fn=download_pretrained_model,
+                inputs=[
+                    pretrained_select,
+                    pretrained_d_url,
+                    pretrained_g_url,
+                ],
+                outputs=[pretrained_status],
+            )
 
-        # Refresh models list
-        refresh_models_btn.click(
-            fn=change_models_choices,
-            inputs=[],
-            outputs=[download_model_output],
-        )
-
-        # Search models
-        search_btn.click(
-            fn=search_models,
-            inputs=[search_name],
-            outputs=[search_results, download_search_btn],
-        )
-
-        # Download from search results
-        def _download_from_search(selected_model):
-            if not selected_model or selected_model not in model_options:
-                gr_warning(translations.get("select_model", "Please select a model."))
-                return translations.get("select_model", "Please select a model.")
-            url = model_options[selected_model]
-            return download_model(url=url, model=None)
-
-        download_search_btn.click(
-            fn=_download_from_search,
-            inputs=[search_results],
-            outputs=[download_search_output],
-        )
-
-        # Download audio from URL
-        download_audio_btn.click(
-            fn=download_url,
-            inputs=[audio_link],
-            outputs=[download_audio_output, download_audio_path, download_audio_status],
-        )
-
-        # ── Pretrained: visibility toggle when source radio changes ──
-        pretrained_choice.change(
-            fn=change_download_pretrained_choices,
-            inputs=[pretrained_choice],
-            outputs=[
-                pretrained_d_url,       # [0] D URL textbox
-                pretrained_g_url,       # [1] G URL textbox
-                pretrained_url_btn,     # [2] URL download button
-                pretrained_list,        # [3] List model dropdown
-                pretrained_sr,          # [4] Sample rate dropdown
-                pretrained_list_btn,    # [5] List download button
-                upload_pretrains,       # [6] Upload files
-                ultimate_d_file,        # [7] Ultimate D file textbox
-                ultimate_g_file,        # [8] Ultimate G file textbox
-                ultimate_btn,           # [9] Ultimate download button
-            ],
-        )
-
-        # ── Pretrained: update sample rate dropdown when model changes ──
-        pretrained_list.change(
-            fn=update_sample_rate_dropdown,
-            inputs=[pretrained_list],
-            outputs=[pretrained_sr],
-        )
-
-        # ── Pretrained: download from URL ──
-        pretrained_url_btn.click(
-            fn=download_pretrained_model,
-            inputs=[pretrained_choice, pretrained_d_url, pretrained_g_url],
-            outputs=[pretrained_output],
-        )
-
-        # ── Pretrained: download from list selection ──
-        pretrained_list_btn.click(
-            fn=download_pretrained_model,
-            inputs=[pretrained_choice, pretrained_list, pretrained_sr],
-            outputs=[pretrained_output],
-        )
-
-        # ── Pretrained: download from Ultimate RVC Models ──
-        ultimate_btn.click(
-            fn=download_pretrained_model,
-            inputs=[pretrained_choice, ultimate_d_file, ultimate_g_file],
-            outputs=[pretrained_output],
-        )
+            pretrained_list_button.click(
+                fn=download_pretrained_model,
+                inputs=[
+                    pretrained_select,
+                    pretrained_list_model,
+                    pretrained_sample_rate,
+                ],
+                outputs=[pretrained_status],
+            )

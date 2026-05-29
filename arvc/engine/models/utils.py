@@ -13,11 +13,35 @@ from pydub import AudioSegment
 
 
 from arvc.utils import huggingface
-from arvc.engine.models.backends import directml, opencl
 from arvc.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 for l in ["httpx", "httpcore"]:
     logging.getLogger(l).setLevel(logging.ERROR)
+
+# Lazy imports for GPU backends — avoid import-time side effects and crashes
+# when DirectML/OpenCL libraries are partially available
+_directml = None
+_opencl = None
+
+def _get_directml():
+    global _directml
+    if _directml is None:
+        try:
+            from arvc.engine.models.backends import directml
+            _directml = directml
+        except ImportError:
+            pass
+    return _directml
+
+def _get_opencl():
+    global _opencl
+    if _opencl is None:
+        try:
+            from arvc.engine.models.backends import opencl
+            _opencl = opencl
+        except ImportError:
+            pass
+    return _opencl
 
 def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
     predictors_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/predictors/"
@@ -249,8 +273,12 @@ def clear_gpu_cache():
 
     if torch.cuda.is_available(): torch.cuda.empty_cache()
     elif torch.backends.mps.is_available(): torch.mps.empty_cache()
-    elif directml.is_available(): directml.empty_cache()
-    elif opencl.is_available(): opencl.pytorch_ocl.empty_cache()
+    else:
+        directml = _get_directml()
+        if directml is not None and directml.is_available(): directml.empty_cache()
+        else:
+            opencl = _get_opencl()
+            if opencl is not None and opencl.is_available(): opencl.empty_cache()
 
 def extract_median_f0(f0):
     f0 = np.where(f0 == 0, np.nan, f0)

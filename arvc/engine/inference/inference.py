@@ -96,10 +96,12 @@ def convert(
         "--audio_processing", str(audio_processing),
         "--alpha", str(alpha),
         "--sid", str(sid)
-    ])
+    ], capture_output=True, text=True)
 
     if result.returncode != 0:
         logger.error(f"Conversion subprocess failed with return code {result.returncode}")
+        if result.stderr:
+            logger.error(f"Subprocess stderr: {result.stderr}")
 
 def convert_audio(
     clean_audio, 

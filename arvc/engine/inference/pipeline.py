@@ -97,7 +97,7 @@ class Pipeline:
         return audio1
     
     def pipeline(self, logger, model, net_g, sid, audio, f0_up_key, f0_method, file_index, index_rate, pitch_guidance, filter_radius, rms_mix_rate, version, protect, hop_length, f0_autotune, f0_autotune_strength, f0_file=None, f0_onnx=False, pbar=None, proposal_pitch=False, proposal_pitch_threshold=255.0, energy_use=False, del_onnx=True, alpha = 0.5):
-        index, big_npy = load_faiss_index(file_index) if index_rate != 0 else None, None
+        index, big_npy = load_faiss_index(file_index) if index_rate != 0 else (None, None)
         if pbar: pbar.update(1)
 
         opt_ts, audio_opt = [], []
