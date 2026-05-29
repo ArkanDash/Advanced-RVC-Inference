@@ -168,7 +168,7 @@ def download_pretrained_model(choices, model, sample_rate):
             gr_warning(translations.get("provide_pretrain", "Please provide D and G model filenames"))
             return translations.get("provide_pretrain", "Please provide D and G model filenames")
 
-        alt_base_url = configs.get("alternative_pretrained_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/")
+        alt_base_url = configs.get("pretrained_custom_url", "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/")
         if not alt_base_url:
             alt_base_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/"
 

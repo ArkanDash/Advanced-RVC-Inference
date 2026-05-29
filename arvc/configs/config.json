@@ -610,10 +610,9 @@
     "brain": false,
     "pretrained_custom_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_custom/",
     "pretrained_json_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/custom_pretrained.json",
-    "alternative_pretrained_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/",
     "pretrained_v1_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v1/",
     "pretrained_v2_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v2/",
     "pretrained_v1_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v1/",
-    "pretrained_v2_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v2/"
+    "pretrained_v2_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v2/",
     "search_api_url": "https://voice-models.com/fetch_data.php"
 }
