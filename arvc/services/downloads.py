@@ -194,12 +194,14 @@ def download_pretrained_model(choices, model, sample_rate):
         urls = []
 
         if not model and not pretrain_is_zip: 
-            gr_warning(translations["provide_pretrain"].format(dg="D"))
-            return [None]*2
+            msg = translations["provide_pretrain"].format(dg="D")
+            gr_warning(msg)
+            return msg
 
         if not sample_rate and not pretrain_is_zip: 
-            gr_warning(translations["provide_pretrain"].format(dg="G"))
-            return [None]*2
+            msg = translations["provide_pretrain"].format(dg="G")
+            gr_warning(msg)
+            return msg
 
         gr_info(translations["download_pretrain"])
 
@@ -216,14 +218,14 @@ def download_pretrained_model(choices, model, sample_rate):
             elif "mega.nz" in url: file = meganz.mega_download_url(url, pretraineds_custom_path)
             else:
                 gr_warning(translations["not_support_url"])
-                return translations["not_support_url"], translations["not_support_url"]
+                return translations["not_support_url"]
             
             if file.endswith(".zip"):
                 shutil.unpack_archive(file, pretraineds_custom_path)
                 if os.path.exists(file): os.remove(file)
 
         gr_info(translations["success"])
-        return translations["success"], translations["success"]
+        return translations["success"]
 
 SEARCH_API_URL = configs.get("search_api_url", "https://voice-models.com/fetch_data.php")
 MAX_SEARCH_PAGES = 10

@@ -344,52 +344,44 @@ def change_backing_choices(backing: bool, merge: bool) -> Dict[str, Any]:
 def change_download_choices(select: str) -> List[Dict[str, Any]]:
     """Update download UI based on selected option.
 
-    Returns 10 visibility updates matching the download tab components:
-    [0] download_model_url, [1] download_model_name, [2] download_url_button,
-    [3] download_csv_model, [4] download_csv_button,
-    [5] search_model_name, [6] search_button,
-    [7] search_dropdown, [8] search_download_model,
-    [9] upload_model_files
-    Ported from Vietnamese-RVC.
+    Returns 11 visibility updates matching the download tab components:
+    [0] link, [1] model_name_input, [2] download_model_btn,
+    [3] refresh_models_btn,
+    [4] csv_dropdown, [5] csv_download_btn,
+    [6] search_name, [7] search_btn,
+    [8] search_results, [9] download_search_btn,
+    [10] upload_model_files
     """
-    selects = [False] * 10
+    selects = [False] * 11
 
     if select == translations["download_url"]:
-        selects[0] = selects[1] = selects[2] = True
+        selects[0] = selects[1] = selects[2] = selects[3] = True
     elif select == translations["download_from_csv"]:
-        selects[3] = selects[4] = True
+        selects[4] = selects[5] = True
     elif select == translations["search_models"]:
-        selects[5] = selects[6] = True
+        selects[6] = selects[7] = selects[8] = selects[9] = True
     elif select == translations["upload"]:
-        selects[9] = True
+        selects[10] = True
     else:
         gr_warning(translations["option_not_valid"])
 
     return [{"visible": selects[i], "__type__": "update"} for i in range(len(selects))]
 
 def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
-    """Update pretrained download UI based on selected option
-    
-    Returns 10 visibility updates:
-    [0] D URL textbox, [1] G URL textbox, [2] URL download button,
-    [3] List model dropdown, [4] Sample rate dropdown, [5] List download button,
-    [6] Upload files,
-    [7] Ultimate D file textbox, [8] Ultimate G file textbox, [9] Ultimate download button
+    """Update pretrained download UI based on selected option.
+
+    Returns 3 visibility updates for:
+    [0] pretrained_url_col, [1] pretrained_list_col, [2] pretrained_upload_col
     """
-    selects = [False] * 10
-    
-    if select == translations["download_url"]:
-        selects[0] = selects[1] = selects[2] = True
-    elif select == translations["list_model"]:
-        selects[3] = selects[4] = selects[5] = True
-    elif select == translations.get("ultimate_rvc_models", "Ultimate RVC Models") or select == "Ultimate RVC Models":
-        selects[7] = selects[8] = selects[9] = True
-    elif select == translations["upload"]:
-        selects[6] = True
-    else:
-        gr_warning(translations["option_not_valid"])
-    
-    return [{"visible": selects[i], "__type__": "update"} for i in range(len(selects))]
+    url_vis = select == translations["download_url"]
+    list_vis = select == translations.get("list_model", "Model list")
+    upload_vis = select == translations["upload"]
+
+    return [
+        {"visible": url_vis, "__type__": "update"},
+        {"visible": list_vis, "__type__": "update"},
+        {"visible": upload_vis, "__type__": "update"},
+    ]
 
 def get_index(model: str) -> Optional[Dict[str, Any]]:
     """Update index file choice based on selected model"""
