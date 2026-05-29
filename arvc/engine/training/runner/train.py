@@ -91,7 +91,7 @@ from arvc.engine.training.runner.utils import (
     latest_checkpoint_path, 
     plot_spectrogram_to_numpy,
 )
-from arvc.engine.models.weight_norm import convert_old_to_new
+from arvc.engine.models.weight_norm import convert_old_to_new, configure_weight_norm, use_new_pytorch
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
@@ -134,6 +134,7 @@ def parse_arguments():
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
     parser.add_argument("--use_8bit_adam", type=lambda x: bool(strtobool(x)), default=False, help="Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)")
     parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
+    parser.add_argument("--newpytorch", type=lambda x: bool(strtobool(x)), default=False, help="Use PyTorch 2.0+ parametrization format. Default: old format for RVC fork compatibility.")
 
     return parser.parse_args()
 
@@ -172,6 +173,7 @@ args = parse_arguments()
     compile_model,
     use_8bit_adam,
     grad_accum_steps,
+    newpytorch,
 ) = (
     args.model_name, 
     args.save_every_epoch, 
@@ -201,7 +203,15 @@ args = parse_arguments()
     args.compile_model,
     args.use_8bit_adam,
     args.grad_accum_steps,
+    args.newpytorch,
 )
+
+# ── Configure weight_norm mode BEFORE any model creation ──
+configure_weight_norm(newpytorch)
+if newpytorch:
+    if __name__ == "__main__": print(f"[Advanced-RVC] PyTorch weight format: NEW (2.0+ parametrization)")
+else:
+    if __name__ == "__main__": print(f"[Advanced-RVC] PyTorch weight format: OLD (weight_norm, RVC fork compatible)")
 
 # Discriminator version: use v3 discriminator for non-HiFi-GAN vocoders
 disc_version = version if vocoder not in ["RefineGAN", "BigVGAN"] else "v3"

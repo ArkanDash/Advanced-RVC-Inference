@@ -144,7 +144,7 @@ def create_index(model_name, rvc_version, index_algorithm):
     for log in log_read(done, "create_index"):
         yield log
 
-def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_every_weights, total_epoch, sample_rate, batch_size, gpu, pitch_guidance, not_pretrain, custom_pretrained, pretrain_g, pretrain_d, detector, threshold, clean_up, cache, model_author, vocoder, checkpointing, deterministic, benchmark, optimizer, energy_use, custom_reference=False, reference_name="", multiscale_mel_loss=False, cosine_lr=False):
+def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_every_weights, total_epoch, sample_rate, batch_size, gpu, pitch_guidance, not_pretrain, custom_pretrained, pretrain_g, pretrain_d, detector, threshold, clean_up, cache, model_author, vocoder, checkpointing, deterministic, benchmark, optimizer, energy_use, custom_reference=False, reference_name="", multiscale_mel_loss=False, cosine_lr=False, newpytorch=False):
     sr = int(float(sample_rate.rstrip("k")) * 1000)
     if not model_name: return gr_warning(translations["provide_name"])
 
@@ -303,7 +303,7 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
 
     gr_info(translations["start"].format(start=translations["training"]))
 
-    p = subprocess.Popen(f'{python} {configs["train_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --save_every_epoch {save_every_epoch} --save_only_latest {save_only_latest} --save_every_weights {save_every_weights} --total_epoch {total_epoch} --batch_size {batch_size} --gpu {gpu} --pitch_guidance {pitch_guidance} --overtraining_detector {detector} --overtraining_threshold {threshold} --cleanup {clean_up} --cache_data_in_gpu {cache} --g_pretrained_path "{pretrained_G}" --d_pretrained_path "{pretrained_D}" --model_author "{model_author}" --vocoder "{vocoder}" --checkpointing {checkpointing} --deterministic {deterministic} --benchmark {benchmark} --optimizer {optimizer} --energy_use {energy_use} --use_custom_reference {custom_reference} --reference_path {reference_path} --multiscale_mel_loss {multiscale_mel_loss} --use_cosine_annealing_lr {cosine_lr}', shell=True)
+    p = subprocess.Popen(f'{python} {configs["train_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --save_every_epoch {save_every_epoch} --save_only_latest {save_only_latest} --save_every_weights {save_every_weights} --total_epoch {total_epoch} --batch_size {batch_size} --gpu {gpu} --pitch_guidance {pitch_guidance} --overtraining_detector {detector} --overtraining_threshold {threshold} --cleanup {clean_up} --cache_data_in_gpu {cache} --g_pretrained_path "{pretrained_G}" --d_pretrained_path "{pretrained_D}" --model_author "{model_author}" --vocoder "{vocoder}" --checkpointing {checkpointing} --deterministic {deterministic} --benchmark {benchmark} --optimizer {optimizer} --energy_use {energy_use} --use_custom_reference {custom_reference} --reference_path {reference_path} --multiscale_mel_loss {multiscale_mel_loss} --use_cosine_annealing_lr {cosine_lr} --newpytorch {newpytorch}', shell=True)
     done = [False]
 
     with open(os.path.join(model_dir, "train_pid.txt"), "w") as pid_file:

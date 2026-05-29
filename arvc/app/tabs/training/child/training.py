@@ -15,7 +15,7 @@ def training_model_tab():
         gr.Markdown(translations["training_markdown"])
 
         # ── Step 1: Dataset Preprocessing ──
-        with gr.Accordion("Step 1: Dataset Preprocessing", open=True):
+        with gr.Accordion("1. Dataset Preprocessing", open=True):
             training_name = gr.Textbox(
                 label=translations["modelname"],
                 info=translations["training_model_name"],
@@ -98,7 +98,7 @@ def training_model_tab():
             preprocess_info = gr.Textbox(label=translations["preprocess_info"], value="", interactive=False, lines=2)
 
         # ── Step 2: Feature Extraction ──
-        with gr.Accordion("Step 2: Feature Extraction", open=False):
+        with gr.Accordion("2. Feature Extraction", open=False):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=1):
                     gr.Markdown(f"**{translations['f0_method']}**")
@@ -151,64 +151,87 @@ def training_model_tab():
             extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
 
         # ── Step 3: Index Creation ──
-        with gr.Accordion("Step 3: Index Creation", open=False):
+        with gr.Accordion("3. Index Creation", open=False):
             index_algorithm = gr.Radio(
                 label=translations["index_algorithm"], info=translations["index_algorithm_info"],
                 choices=["Auto", "Faiss", "KMeans"], value="Auto", interactive=True,
             )
-            index_button = gr.Button(f"3. {translations['create_index']}", variant="secondary")
+            index_button = gr.Button(translations["create_index"], variant="secondary")
 
         # ── Step 4: Model Training ──
-        with gr.Accordion("Step 4: Model Training", open=False):
-            with gr.Row(equal_height=False):
-                with gr.Column(scale=1):
-                    total_epochs = gr.Slider(
-                        label=translations["total_epoch"], info=translations["total_epoch_info"],
-                        minimum=1, maximum=10000, value=10, step=1, interactive=True,
-                    )
-                    save_epochs = gr.Slider(
-                        label=translations["save_epoch"], info=translations["save_epoch_info"],
-                        minimum=1, maximum=10000, value=5, step=1, interactive=True,
-                    )
-                    train_batch_size = gr.Slider(
-                        label=translations["batch_size"], info=translations["batch_size_info"],
-                        minimum=1, maximum=64, value=8, step=1, interactive=True,
-                    )
-                with gr.Column(scale=1):
-                    vocoders = gr.Dropdown(
-                        label=translations["vocoder"], info=translations["vocoder_info"],
-                        choices=get_vocoder_choices(), value=get_vocoder_choices()[0],
-                        interactive=True, allow_custom_value=True,
-                    )
-                    optimizer = gr.Dropdown(
-                        label=translations["optimizer"],
-                        info=translations.get("optimizer_info", "Optimizer in training, AdamW is default."),
-                        value="AdamW", choices=get_optimizer_choices(),
-                        interactive=True, allow_custom_value=False,
-                    )
-                    model_author = gr.Textbox(
-                        label=translations["training_author"],
-                        info=translations["training_author_info"],
-                        value="", placeholder=translations["training_author"], interactive=True,
-                    )
+        with gr.Accordion("4. Model Training", open=False):
+            # ── Training Parameters ──
+            with gr.Group():
+                gr.Markdown("### Training Parameters")
+                with gr.Row(equal_height=False):
+                    with gr.Column(scale=1):
+                        total_epochs = gr.Slider(
+                            label=translations["total_epoch"], info=translations["total_epoch_info"],
+                            minimum=1, maximum=10000, value=10, step=1, interactive=True,
+                        )
+                        save_epochs = gr.Slider(
+                            label=translations["save_epoch"], info=translations["save_epoch_info"],
+                            minimum=1, maximum=10000, value=5, step=1, interactive=True,
+                        )
+                        train_batch_size = gr.Slider(
+                            label=translations["batch_size"], info=translations["batch_size_info"],
+                            minimum=1, maximum=64, value=8, step=1, interactive=True,
+                        )
+                    with gr.Column(scale=1):
+                        vocoders = gr.Dropdown(
+                            label=translations["vocoder"], info=translations["vocoder_info"],
+                            choices=get_vocoder_choices(), value=get_vocoder_choices()[0],
+                            interactive=True, allow_custom_value=True,
+                        )
+                        optimizer = gr.Dropdown(
+                            label=translations["optimizer"],
+                            info=translations.get("optimizer_info", "Optimizer in training, AdamW is default."),
+                            value="AdamW", choices=get_optimizer_choices(),
+                            interactive=True, allow_custom_value=False,
+                        )
+                        model_author = gr.Textbox(
+                            label=translations["training_author"],
+                            info=translations["training_author_info"],
+                            value="", placeholder=translations["training_author"], interactive=True,
+                        )
 
-            with gr.Row():
-                cache_in_gpu = gr.Checkbox(label=translations["cache_in_gpu"], info=translations["cache_in_gpu_info"], value=True, interactive=True)
-                overtraining_detector = gr.Checkbox(label=translations["overtraining_detector"], info=translations["overtraining_detector_info"], value=False, interactive=True)
-                checkpointing1 = gr.Checkbox(label=translations["memory_efficient_training"], value=False, interactive=True)
-            with gr.Row():
-                save_only_latest = gr.Checkbox(label=translations["save_only_latest"], info=translations["save_only_latest_info"], value=True, interactive=True)
-                save_every_weights = gr.Checkbox(label=translations["save_every_weights"], info=translations["save_every_weights_info"], value=True, interactive=True)
-                clean_up = gr.Checkbox(label=translations["cleanup_training"], info=translations["cleanup_training_info"], value=False, interactive=True)
-            with gr.Row():
-                not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
-                custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
-                custom_dataset = gr.Checkbox(label=translations["custom_dataset"], info=translations["custom_dataset_info"], value=False, interactive=True)
-            with gr.Row():
-                multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
-                cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
-                deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
-                benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
+            # ── PyTorch Weight Format ──
+            with gr.Group():
+                gr.Markdown("### PyTorch Weight Format")
+                newpytorch = gr.Checkbox(
+                    label="New PyTorch 2.0+ Format",
+                    info="Enable PyTorch 2.0+ parametrization format. Default: OFF = Old format (.weight_g/.weight_v) for broad RVC fork compatibility.",
+                    value=False, interactive=True,
+                )
+
+            # ── Training Options ──
+            with gr.Group():
+                gr.Markdown("### Training Options")
+                with gr.Row():
+                    cache_in_gpu = gr.Checkbox(label=translations["cache_in_gpu"], info=translations["cache_in_gpu_info"], value=True, interactive=True)
+                    overtraining_detector = gr.Checkbox(label=translations["overtraining_detector"], info=translations["overtraining_detector_info"], value=False, interactive=True)
+                    checkpointing1 = gr.Checkbox(label=translations["memory_efficient_training"], value=False, interactive=True)
+                with gr.Row():
+                    save_only_latest = gr.Checkbox(label=translations["save_only_latest"], info=translations["save_only_latest_info"], value=True, interactive=True)
+                    save_every_weights = gr.Checkbox(label=translations["save_every_weights"], info=translations["save_every_weights_info"], value=True, interactive=True)
+                    clean_up = gr.Checkbox(label=translations["cleanup_training"], info=translations["cleanup_training_info"], value=False, interactive=True)
+
+            # ── Pretrain & Dataset ──
+            with gr.Group():
+                gr.Markdown("### Pretrain & Dataset")
+                with gr.Row():
+                    not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
+                    custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
+                    custom_dataset = gr.Checkbox(label=translations["custom_dataset"], info=translations["custom_dataset_info"], value=False, interactive=True)
+
+            # ── Advanced Settings ──
+            with gr.Group():
+                gr.Markdown("### Advanced Settings")
+                with gr.Row():
+                    multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
+                    cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
+                    deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
+                    benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
 
             dataset_path = gr.Textbox(label=translations["dataset_folder"], value="arvc/assets/dataset", interactive=True, visible=False)
             threshold = gr.Slider(minimum=1, maximum=100, value=50, step=1, label=translations["threshold"], interactive=True, visible=False)
@@ -289,11 +312,11 @@ def training_model_tab():
                     info=translations["gpu_info_2"], interactive=False,
                 )
 
-            training_button = gr.Button(f"4. {translations['training_model']}", variant="primary")
+            training_button = gr.Button(translations["training_model"], variant="primary")
             training_info = gr.Textbox(label=translations["train_info"], value="", interactive=False, lines=4)
 
         # ── Export Model ──
-        with gr.Accordion("Export Model", open=False):
+        with gr.Accordion("5. Export Model", open=False):
             with gr.Row():
                 model_file = gr.Dropdown(
                     label=translations["model_name"], choices=model_name,
@@ -306,7 +329,7 @@ def training_model_tab():
                     interactive=True, allow_custom_value=True,
                 )
             with gr.Row():
-                refresh_file = gr.Button(f"1. {translations['refresh']}")
+                refresh_file = gr.Button(translations["refresh"])
                 zip_model = gr.Button(translations["zip_model"], variant="primary")
             zip_output = gr.File(label=translations["output_zip"], file_types=[".zip"], interactive=False, visible=False)
 
@@ -376,7 +399,7 @@ def training_model_tab():
             not_use_pretrain, custom_pretrain, pretrained_G, pretrained_D, overtraining_detector,
             threshold, clean_up, cache_in_gpu, model_author, vocoders, checkpointing1,
             deterministic, benchmark, optimizer, rms_extract, custom_reference, reference_name,
-            multiscale_mel_loss, cosine_lr
+            multiscale_mel_loss, cosine_lr, newpytorch
         ],
         outputs=[training_info],
         api_name="training_model"
