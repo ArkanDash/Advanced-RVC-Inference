@@ -30,8 +30,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils.parametrize as parametrize
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm, weight_norm_v
 from torch.utils.checkpoint import checkpoint
 
 LRELU_SLOPE = 0.1
@@ -101,7 +100,7 @@ class Invertible1x1Conv(nn.Module):
         self.conv = weight_norm(nn.Conv1d(channels, channels, kernel_size=1, bias=False))
 
         # Initialize as a near-identity rotation
-        nn.init.eye_(self.conv.weight_v.data[:channels, :channels, 0])
+        nn.init.eye_(weight_norm_v(self.conv).data[:channels, :channels, 0])
 
     def forward(self, x):
         return self.conv(x)

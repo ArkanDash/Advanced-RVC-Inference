@@ -9,8 +9,7 @@ import torch.nn.functional as F
 
 from einops import rearrange
 import torch.nn.utils.parametrize as parametrize
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
 
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 

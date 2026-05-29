@@ -3,13 +3,33 @@ import re
 import gc
 import sys
 import torch
-import faiss
-import codecs
 import logging
 
 import numpy as np
 
 from pydub import AudioSegment
+
+
+# ── Safe FAISS import ────────────────────────────────────────────────────
+# faiss-cpu may fail with ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
+# when the AVX2-optimized native module isn't available (e.g. older CPUs, some
+# cloud VMs).  Fall back to the non-AVX2 version gracefully.
+try:
+    import faiss
+except ModuleNotFoundError as _faiss_err:
+    if "swigfaiss_avx2" in str(_faiss_err):
+        import warnings
+        warnings.warn(
+            "faiss.swigfaiss_avx2 not available — falling back to non-AVX2 faiss. "
+            "If you need AVX2 support, install a compatible faiss-cpu wheel.",
+            stacklevel=2,
+        )
+        # Force faiss to use the fallback (non-AVX2) implementation
+        import faiss.loader as _faiss_loader
+        _faiss_loader.toggle_swigfaiss_avx2 = False
+        import faiss
+    else:
+        raise
 
 
 from arvc.utils import huggingface

@@ -2,7 +2,8 @@ import torch
 import torch.nn.functional as F
 
 from torch.utils.checkpoint import checkpoint
-from torch.nn.utils.parametrizations import spectral_norm, weight_norm
+from torch.nn.utils.parametrizations import spectral_norm
+from arvc.engine.models.weight_norm import weight_norm
 
 from arvc.engine.models.algorithms.commons import get_padding
 from arvc.engine.models.algorithms.residuals import LRELU_SLOPE

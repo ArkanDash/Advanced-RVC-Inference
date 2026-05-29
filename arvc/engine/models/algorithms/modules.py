@@ -2,6 +2,7 @@ import torch
 
 import torch.nn.utils.parametrize as parametrize
 
+from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
 from .commons import fused_add_tanh_sigmoid_multiply
 
 class WaveNet(torch.nn.Module):
@@ -28,7 +29,7 @@ class WaveNet(torch.nn.Module):
         self.drop = torch.nn.Dropout(p_dropout)
 
         if gin_channels: 
-            self.cond_layer = torch.nn.utils.parametrizations.weight_norm(
+            self.cond_layer = weight_norm(
                 torch.nn.Conv1d(
                     gin_channels, 
                     2 * hidden_channels * n_layers, 
@@ -42,7 +43,7 @@ class WaveNet(torch.nn.Module):
 
         for i in range(n_layers):
             self.in_layers.append(
-                torch.nn.utils.parametrizations.weight_norm(
+                weight_norm(
                     torch.nn.Conv1d(
                         hidden_channels, 
                         2 * hidden_channels, 
@@ -57,7 +58,7 @@ class WaveNet(torch.nn.Module):
             res_skip_channels = (hidden_channels if i == n_layers - 1 else 2 * hidden_channels)
 
             self.res_skip_layers.append(
-                torch.nn.utils.parametrizations.weight_norm(
+                weight_norm(
                     torch.nn.Conv1d(
                         hidden_channels, 
                         res_skip_channels, 
@@ -86,12 +87,12 @@ class WaveNet(torch.nn.Module):
     def remove_weight_norm(self):
         if self.gin_channels != 0: 
             if hasattr(self.cond_layer, "parametrizations") and "weight" in self.cond_layer.parametrizations: parametrize.remove_parametrizations(self.cond_layer, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(self.cond_layer)
+            else: remove_weight_norm(self.cond_layer)
 
         for l in self.in_layers:
             if hasattr(l, "parametrizations") and "weight" in l.parametrizations: parametrize.remove_parametrizations(l, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(l)
+            else: remove_weight_norm(l)
 
         for l in self.res_skip_layers:
             if hasattr(l, "parametrizations") and "weight" in l.parametrizations: parametrize.remove_parametrizations(l, "weight", leave_parametrized=True)
-            else: torch.nn.utils.remove_weight_norm(l)
+            else: remove_weight_norm(l)

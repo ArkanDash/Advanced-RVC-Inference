@@ -90,8 +90,8 @@ from arvc.engine.training.runner.utils import (
     load_wav_to_torch,
     latest_checkpoint_path, 
     plot_spectrogram_to_numpy,
-    replace_keys_in_dict,
 )
+from arvc.engine.models.weight_norm import convert_old_to_new
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
@@ -931,12 +931,8 @@ def run(
             if pretrainG not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
 
-                ckptG = replace_keys_in_dict(
-                    replace_keys_in_dict(
-                        torch.load(pretrainG, map_location="cpu", weights_only=True)["model"],
-                        ".weight_v", ".parametrizations.weight.original1"
-                    ),
-                    ".weight_g", ".parametrizations.weight.original0"
+                ckptG = convert_old_to_new(
+                    torch.load(pretrainG, map_location="cpu", weights_only=True)["model"]
                 )
                 # SVC architecture: ensure emb_g.weight is present
                 if architecture == "SVC" and "emb_g.weight" not in ckptG: 
@@ -963,12 +959,8 @@ def run(
             if pretrainD not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="D", pretrain=pretrainD))
 
-                ckptD = replace_keys_in_dict(
-                    replace_keys_in_dict(
-                        torch.load(pretrainD, map_location="cpu", weights_only=True)["model"],
-                        ".weight_v", ".parametrizations.weight.original1"
-                    ),
-                    ".weight_g", ".parametrizations.weight.original0"
+                ckptD = convert_old_to_new(
+                    torch.load(pretrainD, map_location="cpu", weights_only=True)["model"]
                 )
 
                 if strict:

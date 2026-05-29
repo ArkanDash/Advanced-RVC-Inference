@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 
 from arvc.utils.variables import logger, translations, config
-from arvc.engine.training.runner.utils import replace_keys_in_dict
+from arvc.engine.models.weight_norm import convert_new_to_old
 
 def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, version, hps, model_author, vocoder, energy_use, speakers_id, architecture):
     try:
@@ -32,14 +32,7 @@ def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, versi
         opt["architecture"] = architecture
 
         torch.save(
-            replace_keys_in_dict(
-                replace_keys_in_dict(
-                    opt, 
-                    ".parametrizations.weight.original1", 
-                    ".weight_v"
-                ), 
-                ".parametrizations.weight.original0", ".weight_g"
-            ), 
+            convert_new_to_old(opt), 
             model_path
         )
     except Exception as e:

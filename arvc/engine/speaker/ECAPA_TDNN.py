@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from arvc.engine.models.weight_norm import weight_norm as apply_weight_norm, remove_weight_norm as apply_remove_weight_norm
+
 def length_to_mask(length, max_len=None, dtype=None, device=None):
     assert len(length.shape) == 1
 
@@ -69,7 +71,7 @@ class _Conv1d(nn.Module):
         elif conv_init == "zero": nn.init.zeros_(self.conv.weight)
         elif conv_init == "normal": nn.init.normal_(self.conv.weight, std=1e-6)
 
-        if weight_norm: self.conv = nn.utils.weight_norm(self.conv)
+        if weight_norm: self.conv = apply_weight_norm(self.conv)
 
     def forward(self, x):
         if not self.skip_transpose: x = x.transpose(1, -1)
@@ -102,7 +104,7 @@ class _Conv1d(nn.Module):
         return in_channels
 
     def remove_weight_norm(self):
-        self.conv = nn.utils.remove_weight_norm(self.conv)
+        self.conv = apply_remove_weight_norm(self.conv)
 
 class Linear(torch.nn.Module):
     def __init__(self, n_neurons, input_shape=None, input_size=None, bias=True, max_norm=None, combine_dims=False):

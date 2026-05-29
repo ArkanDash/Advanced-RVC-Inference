@@ -4,6 +4,8 @@ import math
 import uuid
 import torch
 import types
+
+from arvc.engine.models.weight_norm import weight_norm as _weight_norm, remove_weight_norm as _remove_weight_norm
 import contextlib
 
 import numpy as np
@@ -558,7 +560,7 @@ def make_conv_pos(e, k, g):
     dropout = 0
     nn.init.normal_(pos_conv.weight, mean=0, std=math.sqrt((4 * (1.0 - dropout)) / (k * e)))
     nn.init.constant_(pos_conv.bias, 0)
-    return nn.Sequential(nn.utils.parametrizations.weight_norm(pos_conv, name="weight", dim=2), SamePad(k), nn.GELU())
+    return nn.Sequential(_weight_norm(pos_conv, name="weight", dim=2), SamePad(k), nn.GELU())
 
 def is_xla_tensor(tensor):
     return torch.is_tensor(tensor) and tensor.device.type == "xla"
@@ -1183,7 +1185,7 @@ class BaseFairseqModel(nn.Module):
 
         def apply_remove_weight_norm(module):
             try:
-                nn.utils.remove_weight_norm(module)
+                _remove_weight_norm(module)
             except (AttributeError, ValueError):
                 return
 

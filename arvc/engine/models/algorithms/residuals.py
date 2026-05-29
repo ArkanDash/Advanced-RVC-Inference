@@ -3,8 +3,7 @@ import torch
 import torch.nn.utils.parametrize as parametrize
 
 from itertools import chain
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
 
 from .modules import WaveNet
 from .commons import get_padding, init_weights

@@ -296,6 +296,14 @@ if config.device in ["cpu", "mps", "ocl:0", "privateuseone:0"] and configs.get("
     configs["fp16"] = config.is_half = False
     config._save_configs()
 
+# Initialize weight_norm mode from config
+# Default: old-style (RVC fork compatible). Set new_pytorch_weight_norm: true for PyTorch 2.0+ parametrizations.
+try:
+    from arvc.engine.models.weight_norm import configure_weight_norm
+    configure_weight_norm(new_pytorch=configs.get("new_pytorch_weight_norm", False))
+except Exception:
+    pass
+
 # Global state
 models = {}
 model_name = {}

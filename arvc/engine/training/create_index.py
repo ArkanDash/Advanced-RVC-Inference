@@ -1,12 +1,28 @@
 import os
 import sys
-import faiss
 import argparse
 
 import numpy as np
 
 from multiprocessing import cpu_count
 from sklearn.cluster import MiniBatchKMeans
+
+# ── Safe FAISS import ────────────────────────────────────────────────────
+try:
+    import faiss
+except ModuleNotFoundError as _faiss_err:
+    if "swigfaiss_avx2" in str(_faiss_err):
+        import warnings
+        warnings.warn(
+            "faiss.swigfaiss_avx2 not available — falling back to non-AVX2 faiss. "
+            "If you need AVX2 support, install a compatible faiss-cpu wheel.",
+            stacklevel=2,
+        )
+        import faiss.loader as _faiss_loader
+        _faiss_loader.toggle_swigfaiss_avx2 = False
+        import faiss
+    else:
+        raise
 
 # ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

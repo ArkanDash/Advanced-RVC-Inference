@@ -8,8 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 import torch.nn.utils.parametrize as parametrize
-from torch.nn.utils import remove_weight_norm
-from torch.nn.utils.parametrizations import weight_norm
+from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
 
 
 from arvc.engine.models.algorithms.commons import init_weights, get_padding
