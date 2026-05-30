@@ -28,7 +28,7 @@
 | **Easy GUI** | Simplified one-click interface for quick conversion and training — inspired by EasierGUI |
 | **Auto Pretrained Download** | Automatically downloads default pretrained models from HuggingFace when no custom paths are specified |
 | **ZLUDA Support** | Full AMD GPU support via ZLUDA (CUDA compatibility layer) for training and inference |
-| **T4 / Low-VRAM Optimizations** | Auto-detected GPU-class optimizations for Colab T4 and low-VRAM GPUs (FP16, gradient accumulation, memory-efficient attention) |
+| **T4 Optimizations** | Auto-detected GPU-class optimizations for Colab T4 GPUs (FP16, gradient accumulation, memory-efficient attention) |
 | **Training Optimizations** | Gradient accumulation, torch.compile(), 8-bit Adam, set_to_none gradients, DDP tuning, CUDA cache cleanup |
 | **Model Management** | Download models from URLs (HuggingFace, direct links), create .index files, model format conversion, and reference set creation |
 | **Extra Tools** | F0 extraction, voice fusion, SRT subtitle generation, model info reader, and configurable settings |
@@ -260,9 +260,8 @@ The training system automatically detects your GPU hardware and applies appropri
 | GPU | Detection | Optimizations Applied |
 |-----|-----------|----------------------|
 | **Tesla T4** (Colab) | `tesla t4` in device name | FP16 AMP, gradient accumulation (auto), memory-efficient attention, reduced workers/prefetch |
-| **Low VRAM** (≤16 GB) | Memory size check | Reduced DataLoader workers/prefetch, memory-efficient attention |
 | **ZLUDA** (AMD) | CUDA version check, device name suffix, env vars | gloo DDP backend (no NCCL), FP16 AMP (no BF16), skip TF32/cuDNN/torch.compile, custom STFT |
-| **High VRAM CUDA** | Default | Full CUDA optimizations: TF32, cuDNN benchmark, torch.compile, CUDA streams |
+| **Standard CUDA** | Default | Full CUDA optimizations: TF32, cuDNN benchmark, torch.compile, CUDA streams |
 
 Run `rvc-cli info` to see your detected GPU class and active optimizations.
 

@@ -134,23 +134,6 @@ class Config:
         except Exception:
             return False
 
-    @property
-    def is_low_vram(self) -> bool:
-        """Check if GPU has low VRAM (<=16GB, e.g. T4 15GB, V100 16GB)."""
-        return self.gpu_mem is not None and self.gpu_mem <= 16
-
-    @property
-    def is_colab_t4(self) -> bool:
-        """Detect Google Colab T4 environment."""
-        import torch
-        if not torch.cuda.is_available():
-            return False
-        try:
-            name = torch.cuda.get_device_name(0).lower()
-            return "t4" in name or "tesla t4" in name
-        except Exception:
-            return False
-
     def _get_gpu_name(self) -> str:
         """Get the GPU device name for diagnostics."""
         import torch

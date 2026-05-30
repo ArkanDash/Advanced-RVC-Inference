@@ -163,14 +163,12 @@ def show_info():
                     info.append(f"  Backend: HIP/ROCm (via ZLUDA)")
             except ImportError:
                 pass
-            # T4 / low-VRAM detection
+            # T4 detection
             gpu_name_lower = gpu_name.lower()
             if "t4" in gpu_name_lower or "tesla t4" in gpu_name_lower:
                 info.append(f"  GPU Class: Tesla T4 (T4-optimized training defaults)")
-            elif gpu_mem <= 16:
-                info.append(f"  GPU Class: Low VRAM ({gpu_mem}GB, reduced memory defaults)")
             else:
-                info.append(f"  GPU Class: High VRAM ({gpu_mem}GB, full optimizations)")
+                info.append(f"  GPU Class: Standard ({gpu_mem}GB)")
         else:
             info.append("  CUDA Available: False")
     except ImportError:

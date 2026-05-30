@@ -45,18 +45,14 @@ except ImportError:
 # ZLUDA detection: True when running on AMD GPU via CUDA compatibility layer
 _is_zluda = zluda.is_available()
 
-# T4 / low-VRAM detection for Colab-friendly defaults
-_is_low_vram = False
+# T4 detection for Colab-friendly defaults
+_is_t4 = False
 try:
     if torch.cuda.is_available():
-        _gpu_mem_gb = torch.cuda.get_device_properties(0).total_memory // (1024 ** 3)
-        _is_low_vram = _gpu_mem_gb <= 16
         _gpu_name = torch.cuda.get_device_name(0).lower()
         _is_t4 = "t4" in _gpu_name or "tesla t4" in _gpu_name
-    else:
-        _is_t4 = False
 except Exception:
-    _is_t4 = False
+    pass
 from arvc.utils.variables import logger, translations as _raw_translations
 
 # ── BULLETPROOF SAFETY NET ──
@@ -548,8 +544,6 @@ def run(
             logger.info(f"Training on ZLUDA (AMD GPU): {zluda.device_name(0)}")
         elif _is_t4:
             logger.info(f"Training on T4 GPU — using T4-optimized defaults (FP16, grad accumulation)")
-        elif _is_low_vram:
-            logger.info(f"Training on low-VRAM GPU ({_gpu_mem_gb}GB) — reduced memory defaults active")
 
     writer_eval = SummaryWriter(
         log_dir=eval_dir
@@ -569,10 +563,10 @@ def run(
         energy=energy_use
     )
 
-    # Adaptive data loader settings — Advanced-RVC's low-VRAM / ZLUDA defaults
+    # Adaptive data loader settings
     _pin_mem = not _is_zluda
-    _num_workers = 2 if (_is_low_vram or _is_zluda) else 4
-    _prefetch = 2 if (_is_low_vram or _is_zluda) else 8
+    _num_workers = 2 if _is_zluda else 4
+    _prefetch = 2 if _is_zluda else 8
 
     train_loader = DataLoader(
         train_dataset, 
@@ -732,7 +726,7 @@ def run(
                 kwargs["fused"] = True
             return kwargs
 
-        # 8-bit Adam for low VRAM (requires bitsandbytes) — Advanced-RVC feature
+        # 8-bit Adam (requires bitsandbytes) — Advanced-RVC feature
         if use_8bit_adam and device.type == "cuda":
             try:
                 import bitsandbytes as bnb

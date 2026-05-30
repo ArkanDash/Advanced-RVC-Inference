@@ -177,21 +177,6 @@ class Config:
             pass
         return ""
 
-    def is_low_vram(self) -> bool:
-        """Check if the GPU has low VRAM (T4 = 15GB, V100 = 16GB thresholds)."""
-        return self.gpu_mem is not None and self.gpu_mem <= 16
-
-    def is_colab_t4(self) -> bool:
-        """Detect Google Colab T4 environment."""
-        try:
-            import torch
-            if not torch.cuda.is_available():
-                return False
-            name = torch.cuda.get_device_name(0).lower()
-            return "t4" in name or "tesla t4" in name
-        except Exception:
-            return False
-
     def load_config_json(self):
         configs = {}
         package_dir = os.path.dirname(os.path.abspath(__file__))
