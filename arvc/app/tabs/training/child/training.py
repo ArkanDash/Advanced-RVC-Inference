@@ -10,23 +10,11 @@ from arvc.ui.feedback import gr_warning, visible, unlock_f0, hoplength_show, cha
 from arvc.engine.models.optimizers import get_optimizer_choices, get_optimizer_info
 from arvc.engine.models.generators import get_vocoder_choices
 
-# ── Styled section label (replaces ugly ### headers) ──────────────────────
-def _section(title):
-    """Render a clean section label with a subtle left accent bar."""
-    return gr.HTML(
-        f'<div style="display:flex;align-items:center;gap:8px;margin:4px 0 2px 0;">'
-        f'<span style="width:3px;height:18px;border-radius:2px;background:linear-gradient(180deg,#6366f1,#8b5cf6);display:inline-block;"></span>'
-        f'<span style="font-size:13px;font-weight:600;color:#c4b5fd;letter-spacing:0.3px;">{title}</span>'
-        f'</div>'
-    )
-
 
 def training_model_tab():
     with gr.Column():
-        gr.Markdown(translations["training_markdown"])
-
-        # ── Step 1: Dataset Preprocessing ──
-        with gr.Accordion("1. Dataset Preprocessing", open=True):
+        # ── Sub-tab 1: Dataset Preprocessing ──
+        with gr.TabItem("1. Preprocess"):
             training_name = gr.Textbox(
                 label=translations["modelname"],
                 info=translations["training_model_name"],
@@ -108,11 +96,10 @@ def training_model_tab():
             preprocess_button = gr.Button(translations["preprocess_button"], variant="primary")
             preprocess_info = gr.Textbox(label=translations["preprocess_info"], value="", interactive=False, lines=2)
 
-        # ── Step 2: Feature Extraction ──
-        with gr.Accordion("2. Feature Extraction", open=False):
+        # ── Sub-tab 2: Feature Extraction ──
+        with gr.TabItem("2. Extract"):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=1):
-                    _section(translations['f0_method'])
                     onnx_f0_mode2 = gr.Checkbox(label=translations["f0_onnx_mode"], value=False, interactive=True)
                     unlock_full_method4 = gr.Checkbox(label=translations["f0_unlock"], value=False, interactive=True)
                     autotune = gr.Checkbox(label=translations["autotune"], value=False, interactive=True)
@@ -142,7 +129,6 @@ def training_model_tab():
                     )
 
                 with gr.Column(scale=1):
-                    _section(translations['hubert_model'])
                     embed_mode2 = gr.Radio(
                         label=translations["embed_mode"], info=translations["embed_mode_info"],
                         value="fairseq", choices=embedders_mode, interactive=True,
@@ -161,19 +147,19 @@ def training_model_tab():
             extract_button = gr.Button(translations["extract_button"], variant="primary")
             extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
 
-        # ── Step 3: Index Creation ──
-        with gr.Accordion("3. Index Creation", open=False):
+        # ── Sub-tab 3: Index Creation ──
+        with gr.TabItem("3. Index"):
             index_algorithm = gr.Radio(
                 label=translations["index_algorithm"], info=translations["index_algorithm_info"],
                 choices=["Auto", "Faiss", "KMeans"], value="Auto", interactive=True,
             )
             index_button = gr.Button(translations["create_index"], variant="secondary")
+            index_info = gr.Textbox(label=translations["create_index"], value="", interactive=False, lines=2)
 
-        # ── Step 4: Model Training ──
-        with gr.Accordion("4. Model Training", open=False):
+        # ── Sub-tab 4: Model Training ──
+        with gr.TabItem("4. Train"):
             # ── Training Parameters ──
             with gr.Group():
-                _section("Training Parameters")
                 with gr.Row(equal_height=False):
                     with gr.Column(scale=1):
                         total_epochs = gr.Slider(
@@ -208,7 +194,6 @@ def training_model_tab():
 
             # ── PyTorch Weight Format ──
             with gr.Group():
-                _section("PyTorch Weight Format")
                 newpytorch = gr.Checkbox(
                     label="New PyTorch 2.0+ Format",
                     info="Default: OFF = Old format (.weight_g/.weight_v) for broad RVC fork compatibility. Turn ON for PyTorch 2.0+ parametrization format.",
@@ -217,7 +202,6 @@ def training_model_tab():
 
             # ── Training Options ──
             with gr.Group():
-                _section("Training Options")
                 with gr.Row():
                     cache_in_gpu = gr.Checkbox(label=translations["cache_in_gpu"], info=translations["cache_in_gpu_info"], value=True, interactive=True)
                     overtraining_detector = gr.Checkbox(label=translations["overtraining_detector"], info=translations["overtraining_detector_info"], value=False, interactive=True)
@@ -229,15 +213,13 @@ def training_model_tab():
 
             # ── Pretrain & Dataset ──
             with gr.Group():
-                _section("Pretrain & Dataset")
                 with gr.Row():
                     not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
                     custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
                     custom_dataset = gr.Checkbox(label=translations["custom_dataset"], info=translations["custom_dataset_info"], value=False, interactive=True)
 
             # ── Advanced Settings ──
-            with gr.Group():
-                _section("Advanced Settings")
+            with gr.Accordion("Advanced Settings", open=False):
                 with gr.Row():
                     multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
                     cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
@@ -250,7 +232,6 @@ def training_model_tab():
             pretrain_setting = gr.Group(visible=False)
             with pretrain_setting:
                 with gr.Accordion(translations["custom_pretrain_info"], open=True):
-                    _section(translations.get('select_pretrain', 'Select from pretrained list'))
                     pretrained_data = fetch_pretrained_data()
                     _pretrained_names = list(pretrained_data.keys()) if pretrained_data else []
                     _first_model = _pretrained_names[0] if _pretrained_names else ''
@@ -267,7 +248,6 @@ def training_model_tab():
                         value=_first_sr_choices[0] if _first_sr_choices else '',
                         interactive=True,
                     )
-                    _section(translations.get('custom_pretrain_info', 'Or select files manually'))
                     with gr.Row():
                         pretrained_D = gr.Dropdown(
                             label=translations["pretrain_file"].format(dg="D"),
@@ -294,7 +274,6 @@ def training_model_tab():
                 if not data or model not in data or sr not in data[model]:
                     return gr.update(), gr.update()
                 paths = data[model][sr]
-                # paths can be a string like "D_file.pth, G_file.pth" or a dict
                 if isinstance(paths, str):
                     parts = [p.strip() for p in paths.split(",")]
                     g_val = parts[-1] if len(parts) > 1 else ''
@@ -326,8 +305,8 @@ def training_model_tab():
             training_button = gr.Button(translations["training_model"], variant="primary")
             training_info = gr.Textbox(label=translations["train_info"], value="", interactive=False, lines=4)
 
-        # ── Export Model ──
-        with gr.Accordion("5. Export Model", open=False):
+        # ── Sub-tab 5: Export Model ──
+        with gr.TabItem("5. Export"):
             with gr.Row():
                 model_file = gr.Dropdown(
                     label=translations["model_name"], choices=model_name,
@@ -399,7 +378,7 @@ def training_model_tab():
     index_button.click(
         fn=create_index,
         inputs=[training_name, training_ver, index_algorithm],
-        outputs=[training_info],
+        outputs=[index_info],
         api_name="create_index"
     )
     training_button.click(
