@@ -79,17 +79,20 @@ def main():
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
     
+    success = False
     try:
         run_pitch_extraction(exp_dir, f0_method, hop_length, num_processes, devices, f0_onnx, config.is_half, f0_autotune, f0_autotune_strength, alpha)
         run_embedding_extraction(exp_dir, version, num_processes, devices, embedder_model, embedders_mode, config.is_half)
         run_rms_extraction(exp_dir, num_processes, devices, rms_extract)
         generate_config(version, sample_rate, exp_dir)
         generate_filelist(pitch_guidance, exp_dir, version, sample_rate, embedders_mode, embedder_model, rms_extract)
+        success = True
     except Exception as e:
         logger.error(f"{translations['extract_error']}: {e}")
 
     if os.path.exists(pid_path): os.remove(pid_path)
-    logger.info(f"{translations['extract_success']} {args.model_name}.")
+    if success:
+        logger.info(f"{translations['extract_success']} {args.model_name}.")
 
 if __name__ == "__main__": 
     mp.set_start_method("spawn", force=True)

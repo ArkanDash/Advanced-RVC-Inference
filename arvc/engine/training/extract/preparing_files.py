@@ -85,6 +85,15 @@ def generate_filelist(pitch_guidance, model_path, rvc_version, sample_rate,
     # Start with intersection of wav and feature files
     names = gt_wavs_files & feature_files
 
+    # If no overlap, try stripping .wav suffix from feature files
+    # (embedding saves as name.npy, but wavs are name.wav → splitext gives name)
+    # Some embedders may save with different naming conventions
+    if not names and feature_files:
+        feature_stripped = set(
+            name.replace(".wav", "") for name in feature_files
+        )
+        names = gt_wavs_files & feature_stripped
+
     # Further intersect with other required files
     if pitch_guidance:
         f0_files = set(
@@ -105,6 +114,20 @@ def generate_filelist(pitch_guidance, model_path, rvc_version, sample_rate,
         names = names & energy_files
     
     if not names:
+        # Diagnostic: log what's in each directory to help debug
+        import logging as _log
+        _logger = _log.getLogger(__name__)
+        _logger.error(
+            f"File matching failed! Directory contents:\n"
+            f"  sliced_audios ({len(gt_wavs_files)} wavs): {sorted(gt_wavs_files)[:5]}...\n"
+            f"  {rvc_version}_extracted ({len(feature_files)} npys): {sorted(feature_files)[:5]}...\n"
+            f"  intersection before f0: {sorted(gt_wavs_files & feature_files)[:5]}..."
+        )
+        if pitch_guidance:
+            _logger.error(
+                f"  f0 ({len(f0_files)} npys): {sorted(f0_files)[:5]}...\n"
+                f"  f0_voiced ({len(f0nsf_files)} npys): {sorted(f0nsf_files)[:5]}..."
+            )
         raise ValueError("No matching files found across all required directories")
     
     options = []

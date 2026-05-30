@@ -22,7 +22,7 @@ def process_file_embedding(files, embedder_model, embedders_mode, device, versio
     def worker(file_info):
         try:
             file, out_path = file_info
-            out_file_path = os.path.join(out_path, os.path.basename(file.replace("wav", "npy"))) if os.path.isdir(out_path) else out_path
+            out_file_path = os.path.join(out_path, os.path.splitext(os.path.basename(file))[0] + ".npy") if os.path.isdir(out_path) else out_path
 
             if os.path.exists(out_file_path): return
             feats = torch.from_numpy(load_audio(file, 16000)).to(device).to(torch.float16 if is_half else torch.float32)
