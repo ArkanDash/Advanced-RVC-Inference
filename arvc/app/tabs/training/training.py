@@ -20,5 +20,4 @@ def training_tab():
             create_reference_tab()
 
         with gr.TabItem(translations["training_model"], visible=configs.get("training_tab", True)):
-            gr.Markdown(f"## {translations['training_model']}")
             training_model_tab()

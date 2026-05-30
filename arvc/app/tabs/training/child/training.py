@@ -10,6 +10,17 @@ from arvc.ui.feedback import gr_warning, visible, unlock_f0, hoplength_show, cha
 from arvc.engine.models.optimizers import get_optimizer_choices, get_optimizer_info
 from arvc.engine.models.generators import get_vocoder_choices
 
+# ── Styled section label (replaces ugly ### headers) ──────────────────────
+def _section(title):
+    """Render a clean section label with a subtle left accent bar."""
+    return gr.HTML(
+        f'<div style="display:flex;align-items:center;gap:8px;margin:4px 0 2px 0;">'
+        f'<span style="width:3px;height:18px;border-radius:2px;background:linear-gradient(180deg,#6366f1,#8b5cf6);display:inline-block;"></span>'
+        f'<span style="font-size:13px;font-weight:600;color:#c4b5fd;letter-spacing:0.3px;">{title}</span>'
+        f'</div>'
+    )
+
+
 def training_model_tab():
     with gr.Column():
         gr.Markdown(translations["training_markdown"])
@@ -101,7 +112,7 @@ def training_model_tab():
         with gr.Accordion("2. Feature Extraction", open=False):
             with gr.Row(equal_height=False):
                 with gr.Column(scale=1):
-                    gr.Markdown(f"**{translations['f0_method']}**")
+                    _section(translations['f0_method'])
                     onnx_f0_mode2 = gr.Checkbox(label=translations["f0_onnx_mode"], value=False, interactive=True)
                     unlock_full_method4 = gr.Checkbox(label=translations["f0_unlock"], value=False, interactive=True)
                     autotune = gr.Checkbox(label=translations["autotune"], value=False, interactive=True)
@@ -131,7 +142,7 @@ def training_model_tab():
                     )
 
                 with gr.Column(scale=1):
-                    gr.Markdown(f"**{translations['hubert_model']}**")
+                    _section(translations['hubert_model'])
                     embed_mode2 = gr.Radio(
                         label=translations["embed_mode"], info=translations["embed_mode_info"],
                         value="fairseq", choices=embedders_mode, interactive=True,
@@ -162,7 +173,7 @@ def training_model_tab():
         with gr.Accordion("4. Model Training", open=False):
             # ── Training Parameters ──
             with gr.Group():
-                gr.Markdown("### Training Parameters")
+                _section("Training Parameters")
                 with gr.Row(equal_height=False):
                     with gr.Column(scale=1):
                         total_epochs = gr.Slider(
@@ -197,16 +208,16 @@ def training_model_tab():
 
             # ── PyTorch Weight Format ──
             with gr.Group():
-                gr.Markdown("### PyTorch Weight Format")
+                _section("PyTorch Weight Format")
                 newpytorch = gr.Checkbox(
                     label="New PyTorch 2.0+ Format",
-                    info="Enable PyTorch 2.0+ parametrization format. Default: OFF = Old format (.weight_g/.weight_v) for broad RVC fork compatibility.",
+                    info="Default: OFF = Old format (.weight_g/.weight_v) for broad RVC fork compatibility. Turn ON for PyTorch 2.0+ parametrization format.",
                     value=False, interactive=True,
                 )
 
             # ── Training Options ──
             with gr.Group():
-                gr.Markdown("### Training Options")
+                _section("Training Options")
                 with gr.Row():
                     cache_in_gpu = gr.Checkbox(label=translations["cache_in_gpu"], info=translations["cache_in_gpu_info"], value=True, interactive=True)
                     overtraining_detector = gr.Checkbox(label=translations["overtraining_detector"], info=translations["overtraining_detector_info"], value=False, interactive=True)
@@ -218,7 +229,7 @@ def training_model_tab():
 
             # ── Pretrain & Dataset ──
             with gr.Group():
-                gr.Markdown("### Pretrain & Dataset")
+                _section("Pretrain & Dataset")
                 with gr.Row():
                     not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
                     custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
@@ -226,7 +237,7 @@ def training_model_tab():
 
             # ── Advanced Settings ──
             with gr.Group():
-                gr.Markdown("### Advanced Settings")
+                _section("Advanced Settings")
                 with gr.Row():
                     multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
                     cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
@@ -239,7 +250,7 @@ def training_model_tab():
             pretrain_setting = gr.Group(visible=False)
             with pretrain_setting:
                 with gr.Accordion(translations["custom_pretrain_info"], open=True):
-                    gr.Markdown(f"**{translations.get('select_pretrain', 'Select from pretrained list')}**")
+                    _section(translations.get('select_pretrain', 'Select from pretrained list'))
                     pretrained_data = fetch_pretrained_data()
                     _pretrained_names = list(pretrained_data.keys()) if pretrained_data else []
                     _first_model = _pretrained_names[0] if _pretrained_names else ''
@@ -256,7 +267,7 @@ def training_model_tab():
                         value=_first_sr_choices[0] if _first_sr_choices else '',
                         interactive=True,
                     )
-                    gr.Markdown(f"**{translations.get('custom_pretrain_info', 'Or select files manually')}**")
+                    _section(translations.get('custom_pretrain_info', 'Or select files manually'))
                     with gr.Row():
                         pretrained_D = gr.Dropdown(
                             label=translations["pretrain_file"].format(dg="D"),
