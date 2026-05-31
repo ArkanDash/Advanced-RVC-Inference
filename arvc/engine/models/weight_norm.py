@@ -35,17 +35,22 @@ def use_new_pytorch() -> bool:
 
 # ── Public API ───────────────────────────────────────────────────────────
 
-def weight_norm(module, name: str = "weight"):
+def weight_norm(module, name: str = "weight", dim: int = 0):
     """Apply weight normalization to a module.
 
     Dispatches to the old or new PyTorch implementation depending on the
     current mode (see :func:`configure_weight_norm`).
+
+    Args:
+        module: The module to apply weight normalization to.
+        name: Name of the weight parameter.
+        dim: Dimension along which to apply weight normalization.
     """
     if _new_pytorch_mode:
         from torch.nn.utils.parametrizations import weight_norm as _wn
     else:
         from torch.nn.utils.weight_norm import weight_norm as _wn
-    return _wn(module, name=name)
+    return _wn(module, name=name, dim=dim)
 
 
 def remove_weight_norm(module, name: str = "weight"):
