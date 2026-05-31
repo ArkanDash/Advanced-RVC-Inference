@@ -117,11 +117,21 @@ def generate_filelist(pitch_guidance, model_path, rvc_version, sample_rate,
         # Diagnostic: log what's in each directory to help debug
         import logging as _log
         _logger = _log.getLogger(__name__)
+        
+        # Check if sliced_audios_16k exists (embedding source)
+        wav16k_dir = os.path.join(model_path, "sliced_audios_16k")
+        wav16k_info = ""
+        if os.path.exists(wav16k_dir):
+            wav16k_files = [f for f in os.listdir(wav16k_dir) if f.endswith(".wav")]
+            wav16k_info = f"\n  sliced_audios_16k ({len(wav16k_files)} wavs): exists — embedding extraction may have failed to produce output"
+        else:
+            wav16k_info = f"\n  sliced_audios_16k: MISSING — preprocessing may not have created 16kHz resamples"
+        
         _logger.error(
             f"File matching failed! Directory contents:\n"
             f"  sliced_audios ({len(gt_wavs_files)} wavs): {sorted(gt_wavs_files)[:5]}...\n"
             f"  {rvc_version}_extracted ({len(feature_files)} npys): {sorted(feature_files)[:5]}...\n"
-            f"  intersection before f0: {sorted(gt_wavs_files & feature_files)[:5]}..."
+            f"  intersection before f0: {sorted(gt_wavs_files & feature_files)[:5]}...{wav16k_info}"
         )
         if pitch_guidance:
             _logger.error(
