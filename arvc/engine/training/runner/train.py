@@ -45,14 +45,6 @@ except ImportError:
 # ZLUDA detection: True when running on AMD GPU via CUDA compatibility layer
 _is_zluda = zluda.is_available()
 
-# T4 detection for Colab-friendly defaults
-_is_t4 = False
-try:
-    if torch.cuda.is_available():
-        _gpu_name = torch.cuda.get_device_name(0).lower()
-        _is_t4 = "t4" in _gpu_name or "tesla t4" in _gpu_name
-except Exception:
-    pass
 from arvc.utils.variables import logger, translations as _raw_translations
 
 # ── BULLETPROOF SAFETY NET ──
@@ -543,8 +535,6 @@ def run(
     if rank == 0:
         if _is_zluda:
             logger.info(f"Training on ZLUDA (AMD GPU): {zluda.device_name(0)}")
-        elif _is_t4:
-            logger.info(f"Training on T4 GPU — using T4-optimized defaults (FP16, grad accumulation)")
 
     writer_eval = SummaryWriter(
         log_dir=eval_dir
