@@ -348,16 +348,47 @@ class VoiceConverter:
                     audio_output *= target_peak / out_peak
 
                 try:
-                    sf.write(audio_output_path, audio_output, self.tgt_sr, format=export_format)
+                    self._write_audio(audio_output_path, audio_output, self.tgt_sr, export_format)
                 except Exception as e:
                     logger.warning(f"Direct audio write failed ({e}), trying with resampling to 48kHz")
-                    sf.write(audio_output_path, librosa.resample(audio_output, orig_sr=self.tgt_sr, target_sr=48000, res_type="soxr_vhq"), 48000, format=export_format)
+                    self._write_audio(audio_output_path, librosa.resample(audio_output, orig_sr=self.tgt_sr, target_sr=48000, res_type="soxr_vhq"), 48000, export_format)
 
                 pbar.update(1)
         except Exception as e:
             import traceback
             logger.debug(traceback.format_exc())
             logger.error(translations["error_convert"].format(e=e))
+    @staticmethod
+    def _write_audio(path, audio, sr, fmt):
+        """Write audio to file with browser-compatible format.
+
+        - WAV/FLAC/AIFF: soundfile with PCM_16 (browsers can't play float32 WAV)
+        - OGG/OPUS: soundfile (Vorbis codec, browser-native)
+        - MP3/M4A/AAC/WMA/MP4/WEBM/AC3/ALAC: pydub/ffmpeg fallback
+        """
+        # soundfile natively supports these formats
+        _sf_formats = {"wav", "flac", "ogg", "opus", "aiff"}
+
+        if fmt.lower() in _sf_formats:
+            subtype = "PCM_16" if fmt.lower() in ("wav", "flac", "aiff") else None
+            kwargs = {"format": fmt}
+            if subtype:
+                kwargs["subtype"] = subtype
+            sf.write(path, audio, sr, **kwargs)
+        else:
+            # Fallback: write temp WAV then transcode with pydub/ffmpeg
+            import tempfile
+            from pydub import AudioSegment
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+                tmp_path = tmp.name
+            try:
+                sf.write(tmp_path, audio, sr, format="wav", subtype="PCM_16")
+                seg = AudioSegment.from_file(tmp_path)
+                seg.export(path, format=fmt)
+            finally:
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+
     def get_vc(self, weight_root, sid):
         if sid == "" or sid == []:
             self.cleanup()

@@ -146,7 +146,7 @@ class CommonSeparator:
             # Always ensure C-contiguous layout for soundfile stereo output
             stem_source = np.ascontiguousarray(stem_source)
 
-        sf.write(stem_path, stem_source, self.sample_rate)
+        sf.write(stem_path, stem_source, self.sample_rate, subtype='PCM_16')
 
     def clear_file_specific_paths(self):
         self.audio_file_path = None

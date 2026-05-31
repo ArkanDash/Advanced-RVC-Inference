@@ -30,7 +30,11 @@ def synthesize_tts(prompt, voice, speed, output, pitch, google):
                 if speed != 0: y = librosa.effects.time_stretch(y, rate=speed)
 
                 import soundfile as sf
-                sf.write(file=output, data=y, samplerate=sr, format=os.path.splitext(os.path.basename(output))[-1].lower().replace('.', ''))
+                fmt = os.path.splitext(os.path.basename(output))[-1].lower().replace('.', '')
+                subtype = 'PCM_16' if fmt in ('wav', 'flac', 'aiff') else None
+                kwargs = {'format': fmt}
+                if subtype: kwargs['subtype'] = subtype
+                sf.write(file=output, data=y, samplerate=sr, **kwargs)
         else: gr_error(f"{response.status_code}, {response.text}")
 
 def srt_tts(srt_file, out_file, voice, rate = 0, sr = 24000, google = False):
@@ -70,7 +74,7 @@ def srt_tts(srt_file, out_file, voice, rate = 0, sr = 24000, google = False):
 
             final_audio[start_sample:end_sample] += adjusted
 
-    sf.write(out_file, final_audio, sr)
+    sf.write(out_file, final_audio, sr, subtype='PCM_16')
 
 def TTS(prompt, voice, speed, output, pitch, google, srt_input):
     if not srt_input: srt_input = ""
