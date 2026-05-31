@@ -234,10 +234,9 @@ def download_tab():
                 fn=change_download_pretrained_choices,
                 inputs=[pretrained_select],
                 outputs=[
-                    pretrained_d_url, pretrained_g_url, pretrained_url_button,
-                    pretrained_list_model, pretrained_sample_rate, pretrained_list_button,
-                    pretrained_upload_files,
-                    pretrained_d_url, pretrained_g_url, pretrained_url_button,
+                    pretrained_url_row,
+                    pretrained_list_row,
+                    pretrained_upload_row,
                 ],
             )
 

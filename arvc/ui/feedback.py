@@ -371,11 +371,11 @@ def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
     """Update pretrained download UI based on selected option.
 
     Returns 3 visibility updates for:
-    [0] pretrained_url_col, [1] pretrained_list_col, [2] pretrained_upload_col
+    [0] pretrained_url_row, [1] pretrained_list_row, [2] pretrained_upload_row
     """
-    url_vis = select == translations["download_url"]
-    list_vis = select == translations.get("list_model", "Model list")
-    upload_vis = select == translations["upload"]
+    url_vis = select == translations.get("download_url", "Download from URL")
+    list_vis = select == translations.get("list_model", "List Model")
+    upload_vis = select == translations.get("upload", "Upload")
 
     return [
         {"visible": url_vis, "__type__": "update"},
