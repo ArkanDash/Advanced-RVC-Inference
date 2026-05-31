@@ -792,5 +792,17 @@
     "downloads_from_drive": "Pobierz z Google Drive",
     "downloads_from_link": "Pobierz z bezpośredniego linku",
     "download_complete": "Pobieranie zakończone pomyślnie!",
-    "download_failed": "Pobieranie nie powiodło się: {error}"
+    "download_failed": "Pobieranie nie powiodło się: {error}",
+    "select_option": "Wybierz opcję",
+    "upload_model": "Prześlij pliki modelu",
+    "upload_pretrained": "Prześlij pliki wstępnie wytrenowane",
+    "search_model_name": "Szukaj nazwy modelu",
+    "search_placeholder": "Wpisz nazwę modelu...",
+    "search_results": "Wyniki wyszukiwania",
+    "audio_url": "URL audio (YouTube itp.)",
+    "download_audio": "Pobierz audio",
+    "audio_output": "Wyjście audio",
+    "model_name_placeholder": "Zostaw puste, aby użyć oryginalnej nazwy",
+    "d_model_url": "URL modelu D",
+    "g_model_url": "URL modelu G"
 }

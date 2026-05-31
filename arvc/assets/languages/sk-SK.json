@@ -792,5 +792,17 @@
     "downloads_from_drive": "Stiahnuť z Google Drive",
     "downloads_from_link": "Stiahnuť z priameho odkazu",
     "download_complete": "Stiahnutie bolo úspešne dokončené!",
-    "download_failed": "Stiahnutie zlyhalo: {error}"
+    "download_failed": "Stiahnutie zlyhalo: {error}",
+    "select_option": "Vybrať možnosť",
+    "upload_model": "Nahrať súbory modelu",
+    "upload_pretrained": "Nahrať predtrénované súbory",
+    "search_model_name": "Hľadať názov modelu",
+    "search_placeholder": "Zadajte názov modelu...",
+    "search_results": "Výsledky vyhľadávania",
+    "audio_url": "URL zvuku (YouTube atď.)",
+    "download_audio": "Stiahnuť zvuk",
+    "audio_output": "Zvukový výstup",
+    "model_name_placeholder": "Nechajte prázdne pre pôvodný názov",
+    "d_model_url": "URL D modelu",
+    "g_model_url": "URL G modelu"
 }

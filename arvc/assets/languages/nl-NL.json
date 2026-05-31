@@ -792,5 +792,17 @@
     "downloads_from_drive": "Downloaden vanuit Google Drive",
     "downloads_from_link": "Downloaden via Directe Link",
     "download_complete": "Download succesvol voltooid!",
-    "download_failed": "Download mislukt: {error}"
+    "download_failed": "Download mislukt: {error}",
+    "select_option": "Selecteer optie",
+    "upload_model": "Modelbestanden uploaden",
+    "upload_pretrained": "Voorgetrainde bestanden uploaden",
+    "search_model_name": "Modelnaam zoeken",
+    "search_placeholder": "Voer modelnaam in...",
+    "search_results": "Zoekresultaten",
+    "audio_url": "Audio-URL (YouTube enz.)",
+    "download_audio": "Audio downloaden",
+    "audio_output": "Audio-uitvoer",
+    "model_name_placeholder": "Laat leeg om de originele naam te gebruiken",
+    "d_model_url": "D-model-URL",
+    "g_model_url": "G-model-URL"
 }

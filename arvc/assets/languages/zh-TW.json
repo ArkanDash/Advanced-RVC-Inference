@@ -792,5 +792,17 @@
     "downloads_from_drive": "從 Google Drive 下載",
     "downloads_from_link": "從直接連結下載",
     "download_complete": "下載成功完成！",
-    "download_failed": "下載失敗：{error}"
+    "download_failed": "下載失敗：{error}",
+    "select_option": "選擇選項",
+    "upload_model": "上傳模型檔案",
+    "upload_pretrained": "上傳預訓練檔案",
+    "search_model_name": "搜尋模型名稱",
+    "search_placeholder": "輸入模型名稱...",
+    "search_results": "搜尋結果",
+    "audio_url": "音訊連結（YouTube等）",
+    "download_audio": "下載音訊",
+    "audio_output": "音訊輸出",
+    "model_name_placeholder": "留空則使用原始名稱",
+    "d_model_url": "D模型連結",
+    "g_model_url": "G模型連結"
 }

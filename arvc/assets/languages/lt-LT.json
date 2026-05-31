@@ -792,5 +792,17 @@
     "downloads_from_drive": "Atsisiųsti iš Google Drive",
     "downloads_from_link": "Atsisiųsti iš tiesioginės nuorodos",
     "download_complete": "Atsisiuntimas sėkmingai baigtas!",
-    "download_failed": "Atsisiuntimas nepavyko: {error}"
+    "download_failed": "Atsisiuntimas nepavyko: {error}",
+    "select_option": "Pasirinkite parinktį",
+    "upload_model": "Įkelti modelio failus",
+    "upload_pretrained": "Įkelti iš anksto apmokytus failus",
+    "search_model_name": "Ieškoti modelio pavadinimo",
+    "search_placeholder": "Įveskite modelio pavadinimą...",
+    "search_results": "Paieškos rezultatai",
+    "audio_url": "Garso URL (YouTube ir tt)",
+    "download_audio": "Atsisiųsti garsą",
+    "audio_output": "Garso išvestis",
+    "model_name_placeholder": "Palikite tuščią, norėdami naudoti originalų pavadinimą",
+    "d_model_url": "D modelio URL",
+    "g_model_url": "G modelio URL"
 }

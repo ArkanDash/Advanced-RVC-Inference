@@ -792,5 +792,17 @@
     "downloads_from_drive": "Muat Turun dari Google Drive",
     "downloads_from_link": "Muat Turun dari Pautan Terus",
     "download_complete": "Muat turun selesai!",
-    "download_failed": "Muat turun gagal: {error}"
+    "download_failed": "Muat turun gagal: {error}",
+    "select_option": "Pilih pilihan",
+    "upload_model": "Muat naik fail model",
+    "upload_pretrained": "Muat naik fail pratrain",
+    "search_model_name": "Cari nama model",
+    "search_placeholder": "Masukkan nama model...",
+    "search_results": "Hasil carian",
+    "audio_url": "URL audio (YouTube dll)",
+    "download_audio": "Muat turun audio",
+    "audio_output": "Output audio",
+    "model_name_placeholder": "Kosongkan untuk gunakan nama asal",
+    "d_model_url": "URL model D",
+    "g_model_url": "URL model G"
 }

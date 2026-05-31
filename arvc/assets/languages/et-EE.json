@@ -792,5 +792,17 @@
     "downloads_from_drive": "Laadi Google Drive'ist alla",
     "downloads_from_link": "Laadi otse lingist alla",
     "download_complete": "Allalaadimine edukalt lõpetatud!",
-    "download_failed": "Allalaadimine nurjus: {error}"
+    "download_failed": "Allalaadimine nurjus: {error}",
+    "select_option": "Vali suvand",
+    "upload_model": "Laadi üles mudelifailid",
+    "upload_pretrained": "Laadi üles eeltreenitud failid",
+    "search_model_name": "Otsi mudeli nime",
+    "search_placeholder": "Sisesta mudeli nimi...",
+    "search_results": "Otsingutulemused",
+    "audio_url": "Heli URL (YouTube jne)",
+    "download_audio": "Lae heli alla",
+    "audio_output": "Heli väljund",
+    "model_name_placeholder": "Jäta tühjaks algse nime kasutamiseks",
+    "d_model_url": "D-mudeli URL",
+    "g_model_url": "G-mudeli URL"
 }

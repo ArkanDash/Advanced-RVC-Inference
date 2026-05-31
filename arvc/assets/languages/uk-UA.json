@@ -792,5 +792,17 @@
     "downloads_from_drive": "Завантажити з Google Drive",
     "downloads_from_link": "Завантажити за прямим посиланням",
     "download_complete": "Завантаження успішно завершено!",
-    "download_failed": "Завантаження не вдалося: {error}"
+    "download_failed": "Завантаження не вдалося: {error}",
+    "select_option": "Вибрати опцію",
+    "upload_model": "Завантажити файли моделі",
+    "upload_pretrained": "Завантажити попередньо навчені файли",
+    "search_model_name": "Пошук за назвою моделі",
+    "search_placeholder": "Введіть назву моделі...",
+    "search_results": "Результати пошуку",
+    "audio_url": "URL аудіо (YouTube тощо)",
+    "download_audio": "Завантажити аудіо",
+    "audio_output": "Аудіовихід",
+    "model_name_placeholder": "Залиште порожнім для оригінальної назви",
+    "d_model_url": "URL моделі D",
+    "g_model_url": "URL моделі G"
 }

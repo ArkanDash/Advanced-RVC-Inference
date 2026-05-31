@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Drive에서 다운로드",
     "downloads_from_link": "직접 링크에서 다운로드",
     "download_complete": "다운로드가 성공적으로 완료되었습니다!",
-    "download_failed": "다운로드 실패: {error}"
+    "download_failed": "다운로드 실패: {error}",
+    "select_option": "옵션 선택",
+    "upload_model": "모델 파일 업로드",
+    "upload_pretrained": "사전 학습 파일 업로드",
+    "search_model_name": "모델 이름 검색",
+    "search_placeholder": "모델 이름 입력...",
+    "search_results": "검색 결과",
+    "audio_url": "오디오 URL (YouTube 등)",
+    "download_audio": "오디오 다운로드",
+    "audio_output": "오디오 출력",
+    "model_name_placeholder": "비워두면 원래 이름 사용",
+    "d_model_url": "D 모델 URL",
+    "g_model_url": "G 모델 URL"
 }

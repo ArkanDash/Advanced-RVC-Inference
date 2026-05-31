@@ -759,5 +759,17 @@
     "mic_inaccessible": "Tidak dapat mengakses perangkat input!",
     "ws_connected": "Terhubung ke [WS]",
     "ws_closed": "Berhenti terhubung ke [WS]",
-    "ws_disconnected": "Terputus dari [WS]"
+    "ws_disconnected": "Terputus dari [WS]",
+    "select_option": "Pilih opsi",
+    "upload_model": "Unggah file model",
+    "upload_pretrained": "Unggah file pretrained",
+    "search_model_name": "Cari nama model",
+    "search_placeholder": "Masukkan nama model...",
+    "search_results": "Hasil pencarian",
+    "audio_url": "URL audio (YouTube, dll.)",
+    "download_audio": "Unduh audio",
+    "audio_output": "Output audio",
+    "model_name_placeholder": "Kosongkan untuk menggunakan nama asli",
+    "d_model_url": "URL model D",
+    "g_model_url": "URL model G"
 }

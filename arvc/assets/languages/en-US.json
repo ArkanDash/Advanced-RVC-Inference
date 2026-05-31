@@ -792,5 +792,17 @@
     "downloads_from_drive": "Download from Google Drive",
     "downloads_from_link": "Download from Direct Link",
     "download_complete": "Download completed successfully!",
-    "download_failed": "Download failed: {error}"
+    "download_failed": "Download failed: {error}",
+    "select_option": "Select Option",
+    "upload_model": "Upload Model Files",
+    "upload_pretrained": "Upload Pretrained Files",
+    "search_model_name": "Search Model Name",
+    "search_placeholder": "Enter model name...",
+    "search_results": "Search Results",
+    "audio_url": "Audio URL (YouTube, etc.)",
+    "download_audio": "Download Audio",
+    "audio_output": "Audio Output",
+    "model_name_placeholder": "Leave empty to use original name",
+    "d_model_url": "D Model URL",
+    "g_model_url": "G Model URL"
 }

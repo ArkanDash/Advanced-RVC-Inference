@@ -134,11 +134,11 @@ def download_tab():
                 fn=change_download_choices,
                 inputs=[download_select],
                 outputs=[
-                    download_model_url, download_model_name, download_url_button,
-                    download_csv_model, download_csv_button,
-                    search_model_name, search_button,
-                    search_dropdown, search_download_model,
-                    upload_model_files,
+                    url_row,
+                    csv_row,
+                    search_row,
+                    search_result_row,
+                    upload_row,
                 ],
             )
 
@@ -185,12 +185,12 @@ def download_tab():
             # URL section for pretrained
             with gr.Row(visible=True) as pretrained_url_row:
                 pretrained_d_url = gr.Textbox(
-                    label="D Model URL",
+                    label=translations.get("d_model_url", "D Model URL"),
                     placeholder="https://huggingface.co/...",
                     interactive=True,
                 )
                 pretrained_g_url = gr.Textbox(
-                    label="G Model URL",
+                    label=translations.get("g_model_url", "G Model URL"),
                     placeholder="https://huggingface.co/...",
                     interactive=True,
                 )

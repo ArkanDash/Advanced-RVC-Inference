@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Drive'dan İndir",
     "downloads_from_link": "Doğrudan Bağlantıdan İndir",
     "download_complete": "İndirme başarıyla tamamlandı!",
-    "download_failed": "İndirme başarısız: {error}"
+    "download_failed": "İndirme başarısız: {error}",
+    "select_option": "Seçenek seç",
+    "upload_model": "Model dosyalarını yükle",
+    "upload_pretrained": "Önceden eğitilmiş dosyaları yükle",
+    "search_model_name": "Model adını ara",
+    "search_placeholder": "Model adını girin...",
+    "search_results": "Arama sonuçları",
+    "audio_url": "Ses URL'si (YouTube vb.)",
+    "download_audio": "Sesi indir",
+    "audio_output": "Ses çıkışı",
+    "model_name_placeholder": "Orijinal adı kullanmak için boş bırakın",
+    "d_model_url": "D Model URL'si",
+    "g_model_url": "G Model URL'si"
 }

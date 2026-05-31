@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Driveからダウンロード",
     "downloads_from_link": "直接リンクからダウンロード",
     "download_complete": "ダウンロードが正常に完了しました！",
-    "download_failed": "ダウンロードに失敗しました：{error}"
+    "download_failed": "ダウンロードに失敗しました：{error}",
+    "select_option": "オプションを選択",
+    "upload_model": "モデルファイルをアップロード",
+    "upload_pretrained": "事前学習ファイルをアップロード",
+    "search_model_name": "モデル名を検索",
+    "search_placeholder": "モデル名を入力...",
+    "search_results": "検索結果",
+    "audio_url": "音声URL（YouTubeなど）",
+    "download_audio": "音声をダウンロード",
+    "audio_output": "音声出力",
+    "model_name_placeholder": "空欄で元の名前を使用",
+    "d_model_url": "DモデルURL",
+    "g_model_url": "GモデルURL"
 }

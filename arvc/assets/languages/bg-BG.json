@@ -792,5 +792,17 @@
     "downloads_from_drive": "Изтегляне от Google Drive",
     "downloads_from_link": "Изтегляне от директен линк",
     "download_complete": "Изтеглянето завърши успешно!",
-    "download_failed": "Изтеглянето е неуспешно: {error}"
+    "download_failed": "Изтеглянето е неуспешно: {error}",
+    "select_option": "Изберете опция",
+    "upload_model": "Качете файлове на модела",
+    "upload_pretrained": "Качете предварително обучени файлове",
+    "search_model_name": "Търсене на име на модела",
+    "search_placeholder": "Въведете име на модела...",
+    "search_results": "Резултати от търсенето",
+    "audio_url": "Аудио URL (YouTube и др.)",
+    "download_audio": "Изтегляне на аудио",
+    "audio_output": "Аудио изход",
+    "model_name_placeholder": "Оставете празно за оригинално име",
+    "d_model_url": "URL на модел D",
+    "g_model_url": "URL на модел G"
 }

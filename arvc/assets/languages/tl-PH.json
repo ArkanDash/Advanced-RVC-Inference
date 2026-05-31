@@ -792,5 +792,17 @@
     "downloads_from_drive": "I-download mula sa Google Drive",
     "downloads_from_link": "I-download mula sa Direct Link",
     "download_complete": "Matagumpay na natapos ang download!",
-    "download_failed": "Nabigo ang download: {error}"
+    "download_failed": "Nabigo ang download: {error}",
+    "select_option": "Pumili ng opsyon",
+    "upload_model": "I-upload ang mga file ng modelo",
+    "upload_pretrained": "I-upload ang mga pre-trained na file",
+    "search_model_name": "Maghanap ng pangalan ng modelo",
+    "search_placeholder": "Ilagay ang pangalan ng modelo...",
+    "search_results": "Mga resulta ng paghahanap",
+    "audio_url": "Audio URL (YouTube, atbp.)",
+    "download_audio": "I-download ang audio",
+    "audio_output": "Output ng audio",
+    "model_name_placeholder": "Iwanang blanko para gamitin ang orihinal na pangalan",
+    "d_model_url": "URL ng D modelo",
+    "g_model_url": "URL ng G modelo"
 }

@@ -792,5 +792,17 @@
     "downloads_from_drive": "הורד מ-Google Drive",
     "downloads_from_link": "הורד מקישור ישיר",
     "download_complete": "ההורדה הושלמה בהצלחה!",
-    "download_failed": "ההורדה נכשלה: {error}"
+    "download_failed": "ההורדה נכשלה: {error}",
+    "select_option": "בחר אפשרות",
+    "upload_model": "העלה קבצי מודל",
+    "upload_pretrained": "העלה קבצי קדם-אימון",
+    "search_model_name": "חפש שם מודל",
+    "search_placeholder": "הזן שם מודל...",
+    "search_results": "תוצאות חיפוש",
+    "audio_url": "כתובת אודיו (YouTube וכו')",
+    "download_audio": "הורד אודיו",
+    "audio_output": "פלט אודיו",
+    "model_name_placeholder": "השאר ריק לשימוש בשם המקורי",
+    "d_model_url": "כתובת מודל D",
+    "g_model_url": "כתובת מודל G"
 }

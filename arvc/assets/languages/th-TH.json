@@ -792,5 +792,17 @@
     "downloads_from_drive": "ดาวน์โหลดจาก Google Drive",
     "downloads_from_link": "ดาวน์โหลดจากลิงก์ตรง",
     "download_complete": "ดาวน์โหลดเสร็จสมบูรณ์!",
-    "download_failed": "ดาวน์โหลดล้มเหลว: {error}"
+    "download_failed": "ดาวน์โหลดล้มเหลว: {error}",
+    "select_option": "เลือกตัวเลือก",
+    "upload_model": "อัปโหลดไฟล์โมเดล",
+    "upload_pretrained": "อัปโหลดไฟล์ pretrained",
+    "search_model_name": "ค้นหาชื่อโมเดล",
+    "search_placeholder": "ป้อนชื่อโมเดล...",
+    "search_results": "ผลการค้นหา",
+    "audio_url": "URL เสียง (YouTube ฯลฯ)",
+    "download_audio": "ดาวน์โหลดเสียง",
+    "audio_output": "เอาต์พุตเสียง",
+    "model_name_placeholder": "เว้นว่างไว้เพื่อใช้ชื่อเดิม",
+    "d_model_url": "URL โมเดล D",
+    "g_model_url": "URL โมเดล G"
 }

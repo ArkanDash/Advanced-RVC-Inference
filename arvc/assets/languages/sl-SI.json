@@ -792,5 +792,17 @@
     "downloads_from_drive": "Prenesi iz Google Drive",
     "downloads_from_link": "Prenesi iz neposredne povezave",
     "download_complete": "Prenos je bil uspešno zaključen!",
-    "download_failed": "Prenos je spodletel: {error}"
+    "download_failed": "Prenos je spodletel: {error}",
+    "select_option": "Izberite možnost",
+    "upload_model": "Naložite datoteke modela",
+    "upload_pretrained": "Naložite vnaprej usposobljene datoteke",
+    "search_model_name": "Poiščite ime modela",
+    "search_placeholder": "Vnesite ime modela...",
+    "search_results": "Rezultati iskanja",
+    "audio_url": "URL zvoka (YouTube itd.)",
+    "download_audio": "Prenesi zvok",
+    "audio_output": "Zvočni izhod",
+    "model_name_placeholder": "Pustite prazno za uporabo izvirnega imena",
+    "d_model_url": "URL modela D",
+    "g_model_url": "URL modela G"
 }

@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Drive থেকে ডাউনলোড",
     "downloads_from_link": "ডিরেক্ট লিংক থেকে ডাউনলোড",
     "download_complete": "ডাউনলোড সফলভাবে সম্পন্ন!",
-    "download_failed": "ডাউনলোড ব্যর্থ: {error}"
+    "download_failed": "ডাউনলোড ব্যর্থ: {error}",
+    "select_option": "বিকল্প নির্বাচন করুন",
+    "upload_model": "মডেল ফাইল আপলোড করুন",
+    "upload_pretrained": "প্রিট্রেইনড ফাইল আপলোড করুন",
+    "search_model_name": "মডেলের নাম খুঁজুন",
+    "search_placeholder": "মডেলের নাম লিখুন...",
+    "search_results": "অনুসন্ধান ফলাফল",
+    "audio_url": "অডিও URL (ইউটিউব ইত্যাদি)",
+    "download_audio": "অডিও ডাউনলোড করুন",
+    "audio_output": "অডিও আউটপুট",
+    "model_name_placeholder": "মূল নাম ব্যবহারের জন্য খালি রাখুন",
+    "d_model_url": "D মডেল URL",
+    "g_model_url": "G মডেল URL"
 }

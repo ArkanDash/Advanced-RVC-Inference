@@ -792,5 +792,17 @@
     "downloads_from_drive": "Last ned fra Google Drive",
     "downloads_from_link": "Last ned fra Direkte Lenke",
     "download_complete": "Nedlasting fullført!",
-    "download_failed": "Nedlasting mislyktes: {error}"
+    "download_failed": "Nedlasting mislyktes: {error}",
+    "select_option": "Velg alternativ",
+    "upload_model": "Last opp modellfiler",
+    "upload_pretrained": "Last opp forhåndstrente filer",
+    "search_model_name": "Søk modellnavn",
+    "search_placeholder": "Skriv inn modellnavn...",
+    "search_results": "Søkeresultater",
+    "audio_url": "Lyd-URL (YouTube osv.)",
+    "download_audio": "Last ned lyd",
+    "audio_output": "Lydutgang",
+    "model_name_placeholder": "La stå tomt for å bruke opprinnelig navn",
+    "d_model_url": "D-modell-URL",
+    "g_model_url": "G-modell-URL"
 }

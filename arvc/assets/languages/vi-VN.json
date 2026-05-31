@@ -760,5 +760,17 @@
     "mic_inaccessible": "Không thể truy cập được thiết bị âm thanh đầu vào!",
     "ws_connected": "Đã kết nối với [WS]",
     "ws_closed": "Đã dừng kết nối với [WS]",
-    "ws_disconnected": "Đã ngắt kết nối với [WS]"
+    "ws_disconnected": "Đã ngắt kết nối với [WS]",
+    "select_option": "Chọn tùy chọn",
+    "upload_model": "Tải lên tệp mô hình",
+    "upload_pretrained": "Tải lên tệp pretrained",
+    "search_model_name": "Tìm kiếm tên mô hình",
+    "search_placeholder": "Nhập tên mô hình...",
+    "search_results": "Kết quả tìm kiếm",
+    "audio_url": "URL âm thanh (YouTube, v.v.)",
+    "download_audio": "Tải xuống âm thanh",
+    "audio_output": "Đầu ra âm thanh",
+    "model_name_placeholder": "Để trống để dùng tên gốc",
+    "d_model_url": "URL mô hình D",
+    "g_model_url": "URL mô hình G"
 }

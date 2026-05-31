@@ -792,5 +792,17 @@
     "downloads_from_drive": "Baixar des de Google Drive",
     "downloads_from_link": "Baixar des de l'Enllaç Directe",
     "download_complete": "Baixada completada correctament!",
-    "download_failed": "La baixada ha fallat: {error}"
+    "download_failed": "La baixada ha fallat: {error}",
+    "select_option": "Seleccionar opció",
+    "upload_model": "Pujar fitxers del model",
+    "upload_pretrained": "Pujar fitxers pre-entrenats",
+    "search_model_name": "Cercar nom del model",
+    "search_placeholder": "Introduïu el nom del model...",
+    "search_results": "Resultats de la cerca",
+    "audio_url": "URL d'àudio (YouTube, etc.)",
+    "download_audio": "Descarregar àudio",
+    "audio_output": "Sortida d'àudio",
+    "model_name_placeholder": "Deixeu buit per utilitzar el nom original",
+    "d_model_url": "URL del model D",
+    "g_model_url": "URL del model G"
 }

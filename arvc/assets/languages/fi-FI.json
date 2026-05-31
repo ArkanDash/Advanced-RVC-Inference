@@ -792,5 +792,17 @@
     "downloads_from_drive": "Lataa Google Drive -palvelusta",
     "downloads_from_link": "Lataa suoraa linkkiä",
     "download_complete": "Lataus suoritettu onnistuneesti!",
-    "download_failed": "Lataus epäonnistui: {error}"
+    "download_failed": "Lataus epäonnistui: {error}",
+    "select_option": "Valitse vaihtoehto",
+    "upload_model": "Lataa mallitiedostot",
+    "upload_pretrained": "Lataa esikoulutetut tiedostot",
+    "search_model_name": "Hae mallin nimeä",
+    "search_placeholder": "Syötä mallin nimi...",
+    "search_results": "Hakutulokset",
+    "audio_url": "Ääni-URL (YouTube jne.)",
+    "download_audio": "Lataa ääni",
+    "audio_output": "Äänilähtö",
+    "model_name_placeholder": "Jätä tyhjäksi käyttääksesi alkuperäistä nimeä",
+    "d_model_url": "D-mallin URL",
+    "g_model_url": "G-mallin URL"
 }

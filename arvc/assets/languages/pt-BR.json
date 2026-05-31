@@ -792,5 +792,17 @@
     "downloads_from_drive": "Baixar do Google Drive",
     "downloads_from_link": "Baixar do link direto",
     "download_complete": "Download concluído com sucesso!",
-    "download_failed": "Download falhou: {error}"
+    "download_failed": "Download falhou: {error}",
+    "select_option": "Selecionar opção",
+    "upload_model": "Enviar arquivos do modelo",
+    "upload_pretrained": "Enviar arquivos pré-treinados",
+    "search_model_name": "Pesquisar nome do modelo",
+    "search_placeholder": "Digite o nome do modelo...",
+    "search_results": "Resultados da pesquisa",
+    "audio_url": "URL do áudio (YouTube, etc.)",
+    "download_audio": "Baixar áudio",
+    "audio_output": "Saída de áudio",
+    "model_name_placeholder": "Deixe vazio para usar o nome original",
+    "d_model_url": "URL do modelo D",
+    "g_model_url": "URL do modelo G"
 }

@@ -792,5 +792,17 @@
     "downloads_from_drive": "Download from Google Drive",
     "downloads_from_link": "Download from Direct Link",
     "download_complete": "Download completed successfully!",
-    "download_failed": "Download failed: {error}"
+    "download_failed": "Download failed: {error}",
+    "select_option": "选择选项",
+    "upload_model": "上传模型文件",
+    "upload_pretrained": "上传预训练文件",
+    "search_model_name": "搜索模型名称",
+    "search_placeholder": "输入模型名称...",
+    "search_results": "搜索结果",
+    "audio_url": "音频链接（YouTube等）",
+    "download_audio": "下载音频",
+    "audio_output": "音频输出",
+    "model_name_placeholder": "留空则使用原始名称",
+    "d_model_url": "D模型链接",
+    "g_model_url": "G模型链接"
 }

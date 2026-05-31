@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Drive से डाउनलोड करें",
     "downloads_from_link": "सीधे लिंक से डाउनलोड करें",
     "download_complete": "डाउनलोड सफलतापूर्वक पूर्ण!",
-    "download_failed": "डाउनलोड विफल: {error}"
+    "download_failed": "डाउनलोड विफल: {error}",
+    "select_option": "विकल्प चुनें",
+    "upload_model": "मॉडल फ़ाइलें अपलोड करें",
+    "upload_pretrained": "प्रीट्रेंड फ़ाइलें अपलोड करें",
+    "search_model_name": "मॉडल नाम खोजें",
+    "search_placeholder": "मॉडल नाम दर्ज करें...",
+    "search_results": "खोज परिणाम",
+    "audio_url": "ऑडियो URL (YouTube, आदि)",
+    "download_audio": "ऑडियो डाउनलोड करें",
+    "audio_output": "ऑडियो आउटपुट",
+    "model_name_placeholder": "मूल नाम उपयोग करने के लिए खाली छोड़ें",
+    "d_model_url": "D मॉडल URL",
+    "g_model_url": "G मॉडल URL"
 }

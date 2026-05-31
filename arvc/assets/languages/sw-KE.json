@@ -792,5 +792,17 @@
     "downloads_from_drive": "Pakua kutoka Google Drive",
     "downloads_from_link": "Pakua kutoka Kiungo cha Moja kwa Moja",
     "download_complete": "Upakuaji umekamilika kwa ufanisi!",
-    "download_failed": "Upakuaji umeshindwa: {error}"
+    "download_failed": "Upakuaji umeshindwa: {error}",
+    "select_option": "Chagua chaguo",
+    "upload_model": "Pakia faili za mfano",
+    "upload_pretrained": "Pakia faili zilizofunzwa mapema",
+    "search_model_name": "Tafuta jina la mfano",
+    "search_placeholder": "Ingiza jina la mfano...",
+    "search_results": "Matokeo ya utafutaji",
+    "audio_url": "URL ya sauti (YouTube, nk)",
+    "download_audio": "Pakua sauti",
+    "audio_output": "Matokeo ya sauti",
+    "model_name_placeholder": "Acha wazi kutumia jina la asili",
+    "d_model_url": "URL ya mfano wa D",
+    "g_model_url": "URL ya mfano wa G"
 }

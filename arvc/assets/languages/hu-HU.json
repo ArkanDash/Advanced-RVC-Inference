@@ -792,5 +792,17 @@
     "downloads_from_drive": "Letöltés Google Drive-ról",
     "downloads_from_link": "Letöltés közvetlen linkről",
     "download_complete": "Letöltés sikeresen befejezve!",
-    "download_failed": "Letöltés sikertelen: {error}"
+    "download_failed": "Letöltés sikertelen: {error}",
+    "select_option": "Válasszon opciót",
+    "upload_model": "Modellfájlok feltöltése",
+    "upload_pretrained": "Előtanított fájlok feltöltése",
+    "search_model_name": "Modellnév keresése",
+    "search_placeholder": "Írja be a modell nevét...",
+    "search_results": "Keresési eredmények",
+    "audio_url": "Hang URL (YouTube stb.)",
+    "download_audio": "Hang letöltése",
+    "audio_output": "Hangkimenet",
+    "model_name_placeholder": "Hagyja üresen az eredeti név használatához",
+    "d_model_url": "D modell URL",
+    "g_model_url": "G modell URL"
 }

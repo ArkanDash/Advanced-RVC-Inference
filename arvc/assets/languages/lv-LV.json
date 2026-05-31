@@ -792,5 +792,17 @@
     "downloads_from_drive": "Lejupielādēt no Google Drive",
     "downloads_from_link": "Lejupielādēt no tiešās saites",
     "download_complete": "Lejupielāde veiksmīgi pabeigta!",
-    "download_failed": "Lejupielāde neizdevās: {error}"
+    "download_failed": "Lejupielāde neizdevās: {error}",
+    "select_option": "Izvēlēties opciju",
+    "upload_model": "Augšupielādēt modeļa failus",
+    "upload_pretrained": "Augšupielādēt iepriekš apmācītus failus",
+    "search_model_name": "Meklēt modeļa nosaukumu",
+    "search_placeholder": "Ievadiet modeļa nosaukumu...",
+    "search_results": "Meklēšanas rezultāti",
+    "audio_url": "Audio URL (YouTube u.c.)",
+    "download_audio": "Lejupielādēt audio",
+    "audio_output": "Audio izvade",
+    "model_name_placeholder": "Atstājiet tukšu, lai izmantotu sākotnējo nosaukumu",
+    "d_model_url": "D modeļa URL",
+    "g_model_url": "G modeļa URL"
 }

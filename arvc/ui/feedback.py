@@ -344,28 +344,24 @@ def change_backing_choices(backing: bool, merge: bool) -> Dict[str, Any]:
 def change_download_choices(select: str) -> List[Dict[str, Any]]:
     """Update download UI based on selected option.
 
-    Returns 11 visibility updates matching the download tab components:
-    [0] link, [1] model_name_input, [2] download_model_btn,
-    [3] refresh_models_btn,
-    [4] csv_dropdown, [5] csv_download_btn,
-    [6] search_name, [7] search_btn,
-    [8] search_results, [9] download_search_btn,
-    [10] upload_model_files
+    Returns 5 visibility updates for row containers:
+    [0] url_row, [1] csv_row, [2] search_row, [3] search_result_row, [4] upload_row
     """
-    selects = [False] * 11
+    url_vis = select == translations.get("download_url", "Download from URL")
+    csv_vis = select == translations.get("download_from_csv", "Download from CSV")
+    search_vis = select == translations.get("search_models", "Search Models")
+    upload_vis = select == translations.get("upload", "Upload")
 
-    if select == translations["download_url"]:
-        selects[0] = selects[1] = selects[2] = selects[3] = True
-    elif select == translations["download_from_csv"]:
-        selects[4] = selects[5] = True
-    elif select == translations["search_models"]:
-        selects[6] = selects[7] = selects[8] = selects[9] = True
-    elif select == translations["upload"]:
-        selects[10] = True
-    else:
-        gr_warning(translations["option_not_valid"])
+    if not any([url_vis, csv_vis, search_vis, upload_vis]):
+        gr_warning(translations.get("option_not_valid", "Invalid option!"))
 
-    return [{"visible": selects[i], "__type__": "update"} for i in range(len(selects))]
+    return [
+        {"visible": url_vis, "__type__": "update"},
+        {"visible": csv_vis, "__type__": "update"},
+        {"visible": search_vis, "__type__": "update"},
+        {"visible": search_vis, "__type__": "update"},
+        {"visible": upload_vis, "__type__": "update"},
+    ]
 
 def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
     """Update pretrained download UI based on selected option.

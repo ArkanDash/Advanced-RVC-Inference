@@ -792,5 +792,17 @@
     "downloads_from_drive": "Скачать из Google Drive",
     "downloads_from_link": "Скачать по прямой ссылке",
     "download_complete": "Загрузка успешно завершена!",
-    "download_failed": "Загрузка не удалась: {error}"
+    "download_failed": "Загрузка не удалась: {error}",
+    "select_option": "Выбрать опцию",
+    "upload_model": "Загрузить файлы модели",
+    "upload_pretrained": "Загрузить предобученные файлы",
+    "search_model_name": "Поиск по названию модели",
+    "search_placeholder": "Введите название модели...",
+    "search_results": "Результаты поиска",
+    "audio_url": "URL аудио (YouTube и т.д.)",
+    "download_audio": "Скачать аудио",
+    "audio_output": "Аудиовыход",
+    "model_name_placeholder": "Оставьте пустым для оригинального имени",
+    "d_model_url": "URL модели D",
+    "g_model_url": "URL модели G"
 }

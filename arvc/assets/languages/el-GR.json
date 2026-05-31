@@ -792,5 +792,17 @@
     "downloads_from_drive": "Λήψη από Google Drive",
     "downloads_from_link": "Λήψη από Απευθείας Σύνδεσμο",
     "download_complete": "Η λήψη ολοκληρώθηκε επιτυχώς!",
-    "download_failed": "Αποτυχία λήψης: {error}"
+    "download_failed": "Αποτυχία λήψης: {error}",
+    "select_option": "Επιλογή επιλογής",
+    "upload_model": "Μεταφόρτωση αρχείων μοντέλου",
+    "upload_pretrained": "Μεταφόρτωση προεκπαιδευμένων αρχείων",
+    "search_model_name": "Αναζήτηση ονόματος μοντέλου",
+    "search_placeholder": "Εισάγετε όνομα μοντέλου...",
+    "search_results": "Αποτελέσματα αναζήτησης",
+    "audio_url": "URL ήχου (YouTube κ.λπ.)",
+    "download_audio": "Λήψη ήχου",
+    "audio_output": "Έξοδος ήχου",
+    "model_name_placeholder": "Αφήστε κενό για χρήση αρχικού ονόματος",
+    "d_model_url": "URL μοντέλου D",
+    "g_model_url": "URL μοντέλου G"
 }

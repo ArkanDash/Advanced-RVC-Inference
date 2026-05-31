@@ -792,5 +792,17 @@
     "downloads_from_drive": "Download fra Google Drive",
     "downloads_from_link": "Download fra Direkte Link",
     "download_complete": "Download gennemført succesfuldt!",
-    "download_failed": "Download mislykkedes: {error}"
+    "download_failed": "Download mislykkedes: {error}",
+    "select_option": "Vælg indstilling",
+    "upload_model": "Upload modelfiler",
+    "upload_pretrained": "Upload fortrænede filer",
+    "search_model_name": "Søg modelnavn",
+    "search_placeholder": "Indtast modelnavn...",
+    "search_results": "Søgeresultater",
+    "audio_url": "Lyd-URL (YouTube osv.)",
+    "download_audio": "Download lyd",
+    "audio_output": "Lydoutput",
+    "model_name_placeholder": "Efterlad tom for at bruge oprindeligt navn",
+    "d_model_url": "D-model-URL",
+    "g_model_url": "G-model-URL"
 }

@@ -792,5 +792,17 @@
     "downloads_from_drive": "التحميل من Google Drive",
     "downloads_from_link": "التحميل من رابط مباشر",
     "download_complete": "تم التحميل بنجاح!",
-    "download_failed": "فشل التحميل: {error}"
+    "download_failed": "فشل التحميل: {error}",
+    "select_option": "اختيار الخيار",
+    "upload_model": "رفع ملفات النموذج",
+    "upload_pretrained": "رفع ملفات ما قبل التدريب",
+    "search_model_name": "البحث عن اسم النموذج",
+    "search_placeholder": "أدخل اسم النموذج...",
+    "search_results": "نتائج البحث",
+    "audio_url": "رابط الصوت (يوتيوب، إلخ)",
+    "download_audio": "تنزيل الصوت",
+    "audio_output": "مخرجات الصوت",
+    "model_name_placeholder": "اتركه فارغًا للاستخدام الاسم الأصلي",
+    "d_model_url": "رابط نموذج D",
+    "g_model_url": "رابط نموذج G"
 }

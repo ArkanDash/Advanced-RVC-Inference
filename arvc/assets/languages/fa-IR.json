@@ -792,5 +792,17 @@
     "downloads_from_drive": "دانلود از Google Drive",
     "downloads_from_link": "دانلود از لینک مستقیم",
     "download_complete": "دانلود با موفقیت تکمیل شد!",
-    "download_failed": "دانلود ناموفق: {error}"
+    "download_failed": "دانلود ناموفق: {error}",
+    "select_option": "انتخاب گزینه",
+    "upload_model": "آپلود فایل‌های مدل",
+    "upload_pretrained": "آپلود فایل‌های از پیش آموزش‌دیده",
+    "search_model_name": "جستجوی نام مدل",
+    "search_placeholder": "نام مدل را وارد کنید...",
+    "search_results": "نتایج جستجو",
+    "audio_url": "URL صوتی (یوتیوب و غیره)",
+    "download_audio": "دانلود صدا",
+    "audio_output": "خروجی صدا",
+    "model_name_placeholder": "برای استفاده از نام اصلی خالی بگذارید",
+    "d_model_url": "URL مدل D",
+    "g_model_url": "URL مدل G"
 }

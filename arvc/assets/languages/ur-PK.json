@@ -792,5 +792,17 @@
     "downloads_from_drive": "Google Drive سے ڈاؤن لوڈ کریں",
     "downloads_from_link": "براہ راست لنک سے ڈاؤن لوڈ کریں",
     "download_complete": "ڈاؤن لوڈ کامیابی سے مکمل ہوا!",
-    "download_failed": "ڈاؤن لوڈ ناکام: {error}"
+    "download_failed": "ڈاؤن لوڈ ناکام: {error}",
+    "select_option": "آپشن منتخب کریں",
+    "upload_model": "ماڈل فائلز اپلوڈ کریں",
+    "upload_pretrained": "پریٹرینڈ فائلز اپلوڈ کریں",
+    "search_model_name": "ماڈل کا نام تلاش کریں",
+    "search_placeholder": "ماڈل کا نام درج کریں...",
+    "search_results": "تلاش کے نتائج",
+    "audio_url": "آڈیو URL (یوٹیوب وغیرہ)",
+    "download_audio": "آڈیو ڈاؤنلوڈ کریں",
+    "audio_output": "آڈیو آؤٹ پٹ",
+    "model_name_placeholder": "اصلی نام استعمال کرنے کے لیے خالی چھوڑیں",
+    "d_model_url": "D ماڈل URL",
+    "g_model_url": "G ماڈل URL"
 }

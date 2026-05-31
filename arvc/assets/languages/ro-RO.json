@@ -792,5 +792,17 @@
     "downloads_from_drive": "Descărcați de la Google Drive",
     "downloads_from_link": "Descărcați de la link direct",
     "download_complete": "Descărcare finalizată cu succes!",
-    "download_failed": "Descărcarea a eșuat: {error}"
+    "download_failed": "Descărcarea a eșuat: {error}",
+    "select_option": "Selectați opțiunea",
+    "upload_model": "Încărcați fișierele modelului",
+    "upload_pretrained": "Încărcați fișiere pre-antrenate",
+    "search_model_name": "Căutați numele modelului",
+    "search_placeholder": "Introduceți numele modelului...",
+    "search_results": "Rezultatele căutării",
+    "audio_url": "URL audio (YouTube etc.)",
+    "download_audio": "Descărcați audio",
+    "audio_output": "Ieșire audio",
+    "model_name_placeholder": "Lăsați gol pentru a folosi numele original",
+    "d_model_url": "URL model D",
+    "g_model_url": "URL model G"
 }

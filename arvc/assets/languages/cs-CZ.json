@@ -792,5 +792,17 @@
     "downloads_from_drive": "Stáhnout z Google Drive",
     "downloads_from_link": "Stáhnout z přímého odkazu",
     "download_complete": "Stahování úspěšně dokončeno!",
-    "download_failed": "Stahování selhalo: {error}"
+    "download_failed": "Stahování selhalo: {error}",
+    "select_option": "Vybrat možnost",
+    "upload_model": "Nahrát soubory modelu",
+    "upload_pretrained": "Nahrát předtrénované soubory",
+    "search_model_name": "Hledat název modelu",
+    "search_placeholder": "Zadejte název modelu...",
+    "search_results": "Výsledky vyhledávání",
+    "audio_url": "URL zvuku (YouTube atd.)",
+    "download_audio": "Stáhnout zvuk",
+    "audio_output": "Zvukový výstup",
+    "model_name_placeholder": "Ponechte prázdné pro původní název",
+    "d_model_url": "URL modelu D",
+    "g_model_url": "URL modelu G"
 }

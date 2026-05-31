@@ -792,5 +792,17 @@
     "downloads_from_drive": "Ladda ner från Google Drive",
     "downloads_from_link": "Ladda ner från Direkt Länk",
     "download_complete": "Nedladdning slutförd!",
-    "download_failed": "Nedladdning misslyckades: {error}"
+    "download_failed": "Nedladdning misslyckades: {error}",
+    "select_option": "Välj alternativ",
+    "upload_model": "Ladda upp modellfiler",
+    "upload_pretrained": "Ladda upp förtränade filer",
+    "search_model_name": "Sök modellnamn",
+    "search_placeholder": "Ange modellnamn...",
+    "search_results": "Sökresultat",
+    "audio_url": "Ljud-URL (YouTube osv.)",
+    "download_audio": "Ladda ner ljud",
+    "audio_output": "Ljudutgång",
+    "model_name_placeholder": "Lämna tomt för att använda ursprungligt namn",
+    "d_model_url": "D-modell-URL",
+    "g_model_url": "G-modell-URL"
 }
