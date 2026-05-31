@@ -67,7 +67,7 @@ def spectrogram_torch(
             return_complex=True
         )
 
-        spec = (spec.real.pow(2) + spec.imag.pow(2) + 1e-6).sqrt()
+        spec = spec.abs().clamp_min_(1e-6)
 
     return spec.to(y.device)
 
@@ -121,6 +121,21 @@ def mel_spectrogram_torch(
         fmax
     )
 
+def compute_window_length(n_mels: int, sample_rate: int):
+    """Compute optimal STFT window length for a given mel band count and sample rate.
+
+    Derived from the relationship between frequency resolution and mel band count.
+    Returns the nearest power-of-2 window length for FFT efficiency.
+    (From Applio — avoids hardcoded window lengths that may be suboptimal
+    at non-standard sample rates.)
+    """
+    f_min = 0
+    f_max = sample_rate / 2
+    window_length_seconds = 8 * n_mels / (f_max - f_min)
+    window_length = int(window_length_seconds * sample_rate)
+    return 2 ** (window_length.bit_length() - 1)
+
+
 class MultiScaleMelSpectrogramLoss(torch.nn.Module):
     def __init__(
         self, 
@@ -157,7 +172,7 @@ class MultiScaleMelSpectrogramLoss(torch.nn.Module):
                 return_complex=True
             )
 
-            magnitude = (stft.real.pow(2) + stft.imag.pow(2) + 1e-6).sqrt().to(wav.device, dtype=torch.float32)
+            magnitude = stft.abs().clamp_min_(1e-6).to(wav.device, dtype=torch.float32)
         else:
             stft = torch.stft(
                 wav, 
@@ -167,7 +182,7 @@ class MultiScaleMelSpectrogramLoss(torch.nn.Module):
                 return_complex=True
             )
 
-            magnitude = (stft.real.pow(2) + stft.imag.pow(2) + 1e-6).sqrt()
+            magnitude = stft.abs().clamp_min_(1e-6)
 
         if mel_dtype_device not in self.mel_banks: 
             self.mel_banks[mel_dtype_device] = torch.from_numpy(

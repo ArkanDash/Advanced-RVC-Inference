@@ -105,7 +105,7 @@ def parse_arguments():
     parser.add_argument("--save_every_epoch", type=int, required=True)
     parser.add_argument("--save_only_latest", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--save_every_weights", type=lambda x: bool(strtobool(x)), default=True)
-    parser.add_argument("--total_epoch", type=int, default=10)
+    parser.add_argument("--total_epoch", type=int, default=300)
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--gpu", type=str, default="0")
     parser.add_argument("--pitch_guidance", type=lambda x: bool(strtobool(x)), default=True)
@@ -116,7 +116,7 @@ def parse_arguments():
     parser.add_argument("--cleanup", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--cache_data_in_gpu", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--model_author", type=str)
-    parser.add_argument("--vocoder", type=str, default="HiFi-GAN")
+    parser.add_argument("--vocoder", type=str, default="Default")
     parser.add_argument("--checkpointing", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--deterministic", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=False)
@@ -137,6 +137,7 @@ def parse_arguments():
 d_lr_coeff = 1.0
 g_lr_coeff = 1.0
 d_step_per_g_step = 1
+randomized = True  # Applio-style: random slice for training, full-sequence for finetuning
 
 args = parse_arguments()
 
@@ -653,6 +654,7 @@ def run(
                 use_f0=pitch_guidance, 
                 sr=config.data.sample_rate, 
                 vocoder=vocoder, 
+                randomized=randomized,
                 checkpointing=checkpointing, 
                 energy=energy_use
             ), 
@@ -1037,8 +1039,10 @@ def run(
     if device.type == "xpu" and is_half and xpu is not None: 
         xpu.setup_gradscaler()
 
-    # GradScaler — Vietnamese-RVC style: enabled for both CUDA and XPU
-    scaler = GradScaler(device=device, enabled=is_half and device.type in ["cuda", "xpu"])
+    # GradScaler — only for FP16 on CUDA/XPU (NOT BF16 — BF16 has same dynamic range as FP32)
+    # Applio correctly disables scaler for BF16; VRVC had this bug too
+    use_scaler = is_half and not getattr(main_config, 'brain', False) and device.type in ["cuda", "xpu"]
+    scaler = GradScaler(device=device, enabled=use_scaler)
     cache = []
 
     if len(scaler_dict) > 0: scaler.load_state_dict(scaler_dict)
@@ -1238,12 +1242,14 @@ def train_and_evaluate(
                     *net_g_params
                 )
 
-                wave = commons.slice_segments(
-                    wave, 
-                    ids_slice * config.data.hop_length, 
-                    config.train.segment_size, 
-                    dim=3
-                )
+                # Slice wave to match generator output — only when using random slices
+                if ids_slice is not None:
+                    wave = commons.slice_segments(
+                        wave, 
+                        ids_slice * config.data.hop_length, 
+                        config.train.segment_size, 
+                        dim=3
+                    )
 
             # ── Discriminator step ──────────────────────────────────────────
             for _ in range(d_step_per_g_step):
@@ -1339,12 +1345,15 @@ def train_and_evaluate(
             loss_energy = torch.tensor(0.0, device=device)
             if energy_use and energy is not None:
                 energy_target = energy.float()
-                energy_slice = commons.slice_segments(
-                    energy_target.unsqueeze(1), 
-                    ids_slice, 
-                    config.train.segment_size // config.data.hop_length, 
-                    dim=2
-                ).squeeze(1)
+                if ids_slice is not None:
+                    energy_slice = commons.slice_segments(
+                        energy_target.unsqueeze(1), 
+                        ids_slice, 
+                        config.train.segment_size // config.data.hop_length, 
+                        dim=2
+                    ).squeeze(1)
+                else:
+                    energy_slice = energy_target
                 wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-5))
                 energy_pred = wave_rms.squeeze(-1)
                 loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice)
@@ -1434,12 +1443,15 @@ def train_and_evaluate(
             config.data.mel_fmax
         )
 
-        y_mel = commons.slice_segments(
-            mel, 
-            ids_slice, 
-            config.train.segment_size // config.data.hop_length, 
-            dim=3
-        )
+        if ids_slice is not None:
+            y_mel = commons.slice_segments(
+                mel, 
+                ids_slice, 
+                config.train.segment_size // config.data.hop_length, 
+                dim=3
+            )
+        else:
+            y_mel = mel
 
         y_hat_mel = mel_spectrogram_torch(
             y_hat.float().squeeze(1), 

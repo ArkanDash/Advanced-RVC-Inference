@@ -5,7 +5,7 @@ from arvc.engine.models.algorithms.encoders import TextEncoder, PosteriorEncoder
 from arvc.engine.models.algorithms.commons import slice_segments, rand_slice_segments, sequence_mask
 
 class Synthesizer(torch.nn.Module):
-    def __init__(self, spec_channels, segment_size, inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, spk_embed_dim, gin_channels, sr, use_f0, text_enc_hidden_dim=768, vocoder="Default", checkpointing=False, onnx=False, energy=False, **kwargs):
+    def __init__(self, spec_channels, segment_size, inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, spk_embed_dim, gin_channels, sr, use_f0, text_enc_hidden_dim=768, vocoder="Default", randomized=True, checkpointing=False, onnx=False, energy=False, **kwargs):
         super(Synthesizer, self).__init__()
         self.spec_channels = spec_channels
         self.inter_channels = inter_channels
@@ -25,6 +25,7 @@ class Synthesizer(torch.nn.Module):
         self.spk_embed_dim = spk_embed_dim
         self.use_f0 = use_f0
         self.vocoder = vocoder
+        self.randomized = randomized
         self.enc_p = TextEncoder(inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, float(p_dropout), text_enc_hidden_dim, f0=use_f0, energy=energy, onnx=onnx)
 
         if use_f0:
@@ -199,14 +200,25 @@ class Synthesizer(torch.nn.Module):
 
         if y is not None:
             z, m_q, logs_q, y_mask = self.enc_q(y, y_lengths, g=g)
-            z_slice, ids_slice = rand_slice_segments(z, y_lengths, self.segment_size)
+            z_p = self.flow(z, y_mask, g=g)
 
-            pitch_slice = slice_segments(pitchf, ids_slice, self.segment_size, 2) if self.use_f0 else None
-            if self.use_f0 and self.vocoder != "HiFi-GAN":
-                dec_out = self.dec(z_slice, pitch_slice, g=g)
+            if self.randomized:
+                # Standard training: random slices of latent for each batch
+                z_slice, ids_slice = rand_slice_segments(z, y_lengths, self.segment_size)
+                pitch_slice = slice_segments(pitchf, ids_slice, self.segment_size, 2) if self.use_f0 else None
+                if self.use_f0 and self.vocoder != "HiFi-GAN":
+                    dec_out = self.dec(z_slice, pitch_slice, g=g)
+                else:
+                    dec_out = self.dec(z_slice, g=g)
+                return dec_out, ids_slice, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
             else:
-                dec_out = self.dec(z_slice, g=g)
-            return dec_out, ids_slice, x_mask, y_mask, (z, self.flow(z, y_mask, g=g), m_p, logs_p, m_q, logs_q)
+                # Full-sequence mode (from Applio): use entire latent for finetuning
+                # No random slicing — better consistency for fine-tuning passes
+                if self.use_f0 and self.vocoder != "HiFi-GAN":
+                    dec_out = self.dec(z, pitchf, g=g)
+                else:
+                    dec_out = self.dec(z, g=g)
+                return dec_out, None, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
         else: return None, None, x_mask, None, (None, None, m_p, logs_p, None, None)
 
     @torch.jit.export

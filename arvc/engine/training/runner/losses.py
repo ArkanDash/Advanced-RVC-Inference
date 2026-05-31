@@ -30,6 +30,42 @@ def generator_loss(disc_outputs):
 
     return loss, gen_losses
 
+def discriminator_loss_scaled(disc_real, disc_fake, scale=1.0):
+    """Scaled discriminator loss (from Applio).
+
+    Downweights losses from sub-discriminators beyond the midpoint by `scale`.
+    This prevents later multi-period discriminator heads from dominating the
+    total loss, which can improve training stability.
+    """
+    midpoint = len(disc_real) // 2
+    losses = []
+    for i, (d_real, d_fake) in enumerate(zip(disc_real, disc_fake)):
+        real_loss = (1 - d_real.float()).pow(2).mean()
+        fake_loss = d_fake.float().pow(2).mean()
+        total_loss = real_loss + fake_loss
+        if i >= midpoint:
+            total_loss *= scale
+        losses.append(total_loss)
+    loss = sum(losses)
+    return loss, None, None
+
+def generator_loss_scaled(disc_outputs, scale=1.0):
+    """Scaled generator loss (from Applio).
+
+    Downweights losses from sub-discriminators beyond the midpoint by `scale`.
+    This prevents later multi-period discriminator heads from dominating the
+    total loss, which can improve training stability.
+    """
+    midpoint = len(disc_outputs) // 2
+    losses = []
+    for i, d_fake in enumerate(disc_outputs):
+        loss_value = (1 - d_fake.float()).pow(2).mean()
+        if i >= midpoint:
+            loss_value *= scale
+        losses.append(loss_value)
+    loss = sum(losses)
+    return loss, None, None
+
 def kl_loss(z_p, logs_q, m_p, logs_p, z_mask):
     z_p = z_p.float()
     logs_q = logs_q.float()
