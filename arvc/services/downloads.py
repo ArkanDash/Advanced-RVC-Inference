@@ -136,7 +136,7 @@ def download_model(url=None, model=None):
 def download_pretrained_model(choices, model, sample_rate):
     pretraineds_custom_path = configs["pretrained_custom_path"]
 
-    if choices == translations["list_model"]:
+    if choices == translations.get("list_model", "List Model"):
         pretrained_data = fetch_pretrained_data()
         if not pretrained_data or model not in pretrained_data:
             gr_warning(translations.get("not_found", "Not found"))
@@ -189,7 +189,7 @@ def download_pretrained_model(choices, model, sample_rate):
 
         gr_info(translations["success"])
         return translations["success"]
-    elif choices == translations["download_url"]:
+    elif choices == translations.get("download_url", "Download from URL"):
         pretrain_is_zip = model.endswith(".zip") or model.endswith(".zip?download=true") or sample_rate.endswith(".zip") or sample_rate.endswith(".zip?download=true")
         urls = []
 

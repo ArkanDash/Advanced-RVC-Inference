@@ -23,6 +23,7 @@ from arvc.services.downloads import (
     download_pretrained_model,
     search_models,
 )
+from arvc.services.process import fetch_pretrained_data, update_sample_rate_dropdown
 
 
 def download_tab():
@@ -108,27 +109,6 @@ def download_tab():
                 interactive=False,
             )
 
-            # ── Download Audio from URL ──
-            with gr.Row():
-                audio_url = gr.Textbox(
-                    label=translations.get("audio_url", "Audio URL (YouTube, etc.)"),
-                    placeholder="https://www.youtube.com/watch?v=...",
-                    interactive=True,
-                )
-                audio_download_button = gr.Button(
-                    translations.get("download_audio", "Download Audio"),
-                    variant="secondary",
-                )
-
-            audio_output_path = gr.Textbox(
-                label=translations.get("output_path", "Output Path"),
-                interactive=False,
-            )
-            audio_player = gr.Audio(
-                label=translations.get("audio_output", "Audio Output"),
-                type="filepath",
-            )
-
             # ── Event Handlers ──
             download_select.change(
                 fn=change_download_choices,
@@ -158,12 +138,6 @@ def download_tab():
                 fn=lambda selection: download_model(url=model_options.get(selection, ""), model=selection) if selection else None,
                 inputs=[search_dropdown],
                 outputs=[download_status],
-            )
-
-            audio_download_button.click(
-                fn=download_url,
-                inputs=[audio_url],
-                outputs=[audio_output_path, audio_player, download_status],
             )
 
         # ── Download Pretrained Models ──
@@ -207,8 +181,7 @@ def download_tab():
                     interactive=True,
                 )
                 pretrained_sample_rate = gr.Dropdown(
-                    choices=["32000", "40000", "48000"],
-                    value="40000",
+                    choices=[],
                     label=translations.get("sample_rate", "Sample Rate"),
                     interactive=True,
                 )
@@ -237,7 +210,16 @@ def download_tab():
                     pretrained_url_row,
                     pretrained_list_row,
                     pretrained_upload_row,
+                    pretrained_list_model,
+                    pretrained_sample_rate,
                 ],
+            )
+
+            # When a pretrained model is selected from list, update sample rate choices
+            pretrained_list_model.change(
+                fn=update_sample_rate_dropdown,
+                inputs=[pretrained_list_model],
+                outputs=[pretrained_sample_rate],
             )
 
             pretrained_url_button.click(
@@ -258,4 +240,38 @@ def download_tab():
                     pretrained_sample_rate,
                 ],
                 outputs=[pretrained_status],
+            )
+
+        # ── Download Audio ──
+        with gr.TabItem(translations.get("download_audio", "Download Audio")):
+            gr.Markdown(f"## {translations.get('download_audio', 'Download Audio')}")
+
+            with gr.Row():
+                audio_url = gr.Textbox(
+                    label=translations.get("audio_url", "Audio URL (YouTube, etc.)"),
+                    placeholder="https://www.youtube.com/watch?v=...",
+                    interactive=True,
+                )
+                audio_download_button = gr.Button(
+                    translations.get("download", "Download"),
+                    variant="primary",
+                )
+
+            audio_output_path = gr.Textbox(
+                label=translations.get("output_path", "Output Path"),
+                interactive=False,
+            )
+            audio_player = gr.Audio(
+                label=translations.get("audio_output", "Audio Output"),
+                type="filepath",
+            )
+            audio_status = gr.Textbox(
+                label=translations.get("status", "Status"),
+                interactive=False,
+            )
+
+            audio_download_button.click(
+                fn=download_url,
+                inputs=[audio_url],
+                outputs=[audio_output_path, audio_player, audio_status],
             )

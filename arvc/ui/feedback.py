@@ -45,6 +45,7 @@ from arvc.utils.variables import (
     vr_models, mdx_models, embedders_model, 
     spin_model, whisper_model
 )
+from arvc.services.process import fetch_pretrained_data
 
 # Constants for supported audio formats
 AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", 
@@ -366,17 +367,38 @@ def change_download_choices(select: str) -> List[Dict[str, Any]]:
 def change_download_pretrained_choices(select: str) -> List[Dict[str, Any]]:
     """Update pretrained download UI based on selected option.
 
-    Returns 3 visibility updates for:
-    [0] pretrained_url_row, [1] pretrained_list_row, [2] pretrained_upload_row
+    Returns 5 updates:
+    [0] pretrained_url_row visibility
+    [1] pretrained_list_row visibility
+    [2] pretrained_upload_row visibility
+    [3] pretrained_list_model choices (populated when List Model selected)
+    [4] pretrained_sample_rate choices
     """
     url_vis = select == translations.get("download_url", "Download from URL")
     list_vis = select == translations.get("list_model", "List Model")
     upload_vis = select == translations.get("upload", "Upload")
 
+    # When "List Model" is selected, fetch available pretrained models
+    model_choices = []
+    sample_rate_choices = []
+    if list_vis:
+        try:
+            pretrained_data = fetch_pretrained_data()
+            if pretrained_data:
+                model_choices = sorted(pretrained_data.keys())
+                # Pre-fill sample rates from first model
+                if model_choices:
+                    first_model = model_choices[0]
+                    sample_rate_choices = list(pretrained_data[first_model].keys())
+        except Exception as e:
+            logger.error(f"Failed to fetch pretrained model list: {e}")
+
     return [
         {"visible": url_vis, "__type__": "update"},
         {"visible": list_vis, "__type__": "update"},
         {"visible": upload_vis, "__type__": "update"},
+        {"choices": model_choices, "value": model_choices[0] if model_choices else "", "__type__": "update"},
+        {"choices": sample_rate_choices, "value": sample_rate_choices[0] if sample_rate_choices else "", "__type__": "update"},
     ]
 
 def get_index(model: str) -> Optional[Dict[str, Any]]:
