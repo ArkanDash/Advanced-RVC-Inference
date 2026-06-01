@@ -39,7 +39,6 @@ class Synthesizer(torch.nn.Module):
                 )
             elif vocoder == "BigVGAN":
                 from arvc.engine.models.generators.bigvgan import BigVGANGenerator
-
                 self.dec = BigVGANGenerator(
                     in_channel=inter_channels,
                     upsample_initial_channel=upsample_initial_channel,
@@ -54,134 +53,12 @@ class Synthesizer(torch.nn.Module):
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
                 from arvc.engine.models.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
-            elif vocoder in ["RingFormer", "RingFormer_v1", "RingFormer_v2"]:
-                from arvc.engine.models.algorithms.generators import RingFormerGenerator
-                self.dec = RingFormerGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr
-                )
-                print(f"    ██████  Vocoder: {vocoder}")
-            elif vocoder == "PCPH-GAN":
-                from arvc.engine.models.algorithms.generators import PCPH_GAN_Generator
-                self.dec = PCPH_GAN_Generator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr
-                )
-                print("    ██████  Vocoder: PCPH-GAN")
-            elif vocoder == "Vocos":
-                from arvc.engine.models.generators.vocos import VocosGenerator
-                self.dec = VocosGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=0,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: Vocos")
-            elif vocoder == "HiFi-GAN-v3":
-                from arvc.engine.models.generators.hifigan_v3 import HiFiGANV3Generator
-                self.dec = HiFiGANV3Generator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=0,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: HiFi-GAN-v3")
-            elif vocoder == "JVSF-HiFi-GAN":
-                from arvc.engine.models.generators.jvsf_hifigan import JVSFHiFiGANGenerator
-                self.dec = JVSFHiFiGANGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=8,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: JVSF-HiFi-GAN")
-            elif vocoder == "WaveGlow":
-                from arvc.engine.models.generators.waveglow import WaveGlowGenerator
-                self.dec = WaveGlowGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=0,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: WaveGlow")
-            elif vocoder == "NSF-APNet":
-                from arvc.engine.models.generators.nsf_apnet import NSFAPNetGenerator
-                self.dec = NSFAPNetGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=0,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: NSF-APNet")
-            elif vocoder == "FullBand-MRF":
-                from arvc.engine.models.generators.fullband_mrf import FullBandMRFGenerator
-                self.dec = FullBandMRFGenerator(
-                    in_channel=inter_channels,
-                    upsample_initial_channel=upsample_initial_channel,
-                    upsample_rates=upsample_rates,
-                    upsample_kernel_sizes=upsample_kernel_sizes,
-                    resblock_kernel_sizes=resblock_kernel_sizes,
-                    resblock_dilations=resblock_dilation_sizes,
-                    gin_channels=gin_channels,
-                    sr=sr,
-                    harmonic_num=0,
-                    checkpointing=checkpointing
-                )
-                print("    ██████  Vocoder: FullBand-MRF")
-            elif vocoder == "HiFi-GAN":
-                from arvc.engine.models.generators.hifigan import HiFiGANGenerator
-                self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
-                print("    ██████  Vocoder: HiFi-GAN")
-            elif vocoder in ("Default", "Default (HiFi-GAN NSF)"):
+            else:
+                # Default: HiFi-GAN NSF (matches VRVC)
                 from arvc.engine.models.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
-                print("    ██████  Vocoder: Default (HiFi-GAN NSF)")
-            else:
-                from arvc.engine.models.generators.hifigan import HiFiGANGenerator
-                self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
         else: 
+            # No pitch guidance: plain HiFi-GAN (matches VRVC)
             from arvc.engine.models.generators.hifigan import HiFiGANGenerator
             self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
 
@@ -203,18 +80,15 @@ class Synthesizer(torch.nn.Module):
             z_p = self.flow(z, y_mask, g=g)
 
             if self.randomized:
-                # Standard training: random slices of latent for each batch
                 z_slice, ids_slice = rand_slice_segments(z, y_lengths, self.segment_size)
                 pitch_slice = slice_segments(pitchf, ids_slice, self.segment_size, 2) if self.use_f0 else None
-                if self.use_f0 and self.vocoder != "HiFi-GAN":
+                if self.use_f0:
                     dec_out = self.dec(z_slice, pitch_slice, g=g)
                 else:
                     dec_out = self.dec(z_slice, g=g)
                 return dec_out, ids_slice, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
             else:
-                # Full-sequence mode (from Applio): use entire latent for finetuning
-                # No random slicing — better consistency for fine-tuning passes
-                if self.use_f0 and self.vocoder != "HiFi-GAN":
+                if self.use_f0:
                     dec_out = self.dec(z, pitchf, g=g)
                 else:
                     dec_out = self.dec(z, g=g)
@@ -228,7 +102,7 @@ class Synthesizer(torch.nn.Module):
         z_p = (m_p + logs_p.exp() * torch.randn_like(m_p) * 0.66666) * x_mask
 
         z = self.flow(z_p, x_mask, g=g, reverse=True)
-        if self.use_f0 and self.vocoder != "HiFi-GAN":
+        if self.use_f0:
             o = self.dec(z * x_mask, nsff0, g=g)
         else:
             o = self.dec(z * x_mask, g=g)
@@ -246,7 +120,7 @@ class SynthesizerONNX(Synthesizer):
 
         z = self.flow(z_p, x_mask, g=g, reverse=True)
 
-        if self.use_f0 and self.vocoder != "HiFi-GAN":
+        if self.use_f0:
             return self.dec(
                 (z * x_mask)[:, :, :None], 
                 nsff0, 
@@ -338,73 +212,8 @@ class SynthesizerSVC(torch.nn.Module):
                 harmonic_num=8, 
                 checkpointing=checkpointing
             )
-        elif vocoder in ["RingFormer", "RingFormer_v1", "RingFormer_v2"]:
-            from arvc.engine.models.algorithms.generators import RingFormerGenerator
-            self.dec = RingFormerGenerator(
-                in_channel=inter_channels,
-                upsample_initial_channel=upsample_initial_channel,
-                upsample_rates=upsample_rates,
-                upsample_kernel_sizes=upsample_kernel_sizes,
-                resblock_kernel_sizes=resblock_kernel_sizes,
-                resblock_dilations=resblock_dilation_sizes,
-                gin_channels=gin_channels,
-                sr=sr
-            )
-        elif vocoder == "PCPH-GAN":
-            from arvc.engine.models.algorithms.generators import PCPH_GAN_Generator
-            self.dec = PCPH_GAN_Generator(
-                in_channel=inter_channels,
-                upsample_initial_channel=upsample_initial_channel,
-                upsample_rates=upsample_rates,
-                upsample_kernel_sizes=upsample_kernel_sizes,
-                resblock_kernel_sizes=resblock_kernel_sizes,
-                resblock_dilations=resblock_dilation_sizes,
-                gin_channels=gin_channels,
-                sr=sr
-            )
-        elif vocoder == "Vocos":
-            from arvc.engine.models.generators.vocos import VocosGenerator
-            self.dec = VocosGenerator(
-                in_channel=inter_channels,
-                upsample_initial_channel=upsample_initial_channel,
-                upsample_rates=upsample_rates,
-                upsample_kernel_sizes=upsample_kernel_sizes,
-                resblock_kernel_sizes=resblock_kernel_sizes,
-                resblock_dilations=resblock_dilation_sizes,
-                gin_channels=gin_channels,
-                sr=sr,
-                harmonic_num=0,
-                checkpointing=checkpointing
-            )
-        elif vocoder == "HiFi-GAN-v3":
-            from arvc.engine.models.generators.hifigan_v3 import HiFiGANV3Generator
-            self.dec = HiFiGANV3Generator(
-                in_channel=inter_channels,
-                upsample_initial_channel=upsample_initial_channel,
-                upsample_rates=upsample_rates,
-                upsample_kernel_sizes=upsample_kernel_sizes,
-                resblock_kernel_sizes=resblock_kernel_sizes,
-                resblock_dilations=resblock_dilation_sizes,
-                gin_channels=gin_channels,
-                sr=sr,
-                harmonic_num=0,
-                checkpointing=checkpointing
-            )
-        elif vocoder in ("Default", "Default (HiFi-GAN NSF)"):
-            from arvc.engine.models.generators.nsf_hifigan import HiFiGANNRFGenerator
-            self.dec = HiFiGANNRFGenerator(
-                inter_channels, 
-                resblock_kernel_sizes, 
-                resblock_dilation_sizes, 
-                upsample_rates, 
-                upsample_initial_channel, 
-                upsample_kernel_sizes, 
-                gin_channels=gin_channels, 
-                sr=sr, 
-                checkpointing=checkpointing,
-                harmonic_num=8
-            )
-        else: 
+        else:
+            # Default: HiFi-GAN NSF (matches VRVC)
             from arvc.engine.models.generators.nsf_hifigan import HiFiGANNRFGenerator
             self.dec = HiFiGANNRFGenerator(
                 inter_channels, 

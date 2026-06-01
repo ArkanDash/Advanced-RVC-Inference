@@ -511,7 +511,7 @@
     "provide_folder": "Vui lòng cung cấp thư mục hợp lệ!",
     "empty_folder": "Thư mục dữ liệu trống!",
     "vocoder": "Bộ mã hóa",
-    "vocoder_info": "Bộ giải mã giọng cho tổng hợp âm thanh. 12 bộ giải mã giọng có sẵn với kiến trúc và mức chất lượng khác nhau.",
+    "vocoder_info": "Bộ giải mã giọng cho tổng hợp âm thanh. 4 bộ giải mã giọng có sẵn với kiến trúc và mức chất lượng khác nhau.",
     "code_error": "Lỗi: Nhận mã trạng thái",
     "json_error": "Lỗi: Không thể phân tích từ phản hồi.",
     "requests_error": "Yêu cầu thất bại: {e}",

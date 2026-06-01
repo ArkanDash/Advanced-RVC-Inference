@@ -510,7 +510,7 @@
     "provide_folder": "Angiv venligst en gyldig mappe!",
     "empty_folder": "Datamappen er tom!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder til lydsyntese. 12 vokodere til rådighed med forskellige arkitekturer og kvalitetsniveauer.",
+    "vocoder_info": "Vokoder til lydsyntese. 4 vokodere til rådighed med forskellige arkitekturer og kvalitetsniveauer.",
     "code_error": "Fejl: Modtog statuskode",
     "json_error": "Fejl: Kan ikke parse svar.",
     "requests_error": "Anmodning mislykkedes: {e}",

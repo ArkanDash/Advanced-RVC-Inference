@@ -510,7 +510,7 @@
     "provide_folder": "Harap bêrikan folder jang sah!",
     "empty_folder": "Folder data kosong!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder untuk sintesis audio. 12 vokoder tersedia dengan arsitektur dan tingkat kualitas yang berbeda.",
+    "vocoder_info": "Vokoder untuk sintesis audio. 4 vokoder tersedia dengan arsitektur dan tingkat kualitas yang berbeda.",
     "code_error": "Kesalahan: Menerima kode status",
     "json_error": "Kesalahan: Tidak dapa mengoerai respons.",
     "requests_error": "Permintaan gagal: {e}",

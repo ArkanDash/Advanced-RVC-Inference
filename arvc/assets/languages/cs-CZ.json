@@ -510,7 +510,7 @@
     "provide_folder": "Prosím, poskytněte platnou složku!",
     "empty_folder": "Datová složka je prázdná!",
     "vocoder": "Vokodér",
-    "vocoder_info": "Vokodér pro syntézu zvuku. 12 vokodérů s různými architekturami a úrovněmi kvality. Výchozí doporučeno.",
+    "vocoder_info": "Vokodér pro syntézu zvuku. 4 vokodérů s různými architekturami a úrovněmi kvality. Výchozí doporučeno.",
     "code_error": "Chyba: Obdržený stavový kód",
     "json_error": "Chyba: Nelze analyzovat odpověď.",
     "requests_error": "Požadavek selhal: {e}",

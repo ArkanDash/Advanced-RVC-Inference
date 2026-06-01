@@ -510,7 +510,7 @@
     "provide_folder": "Por favor, forneça uma pasta válida!",
     "empty_folder": "A pasta de dados está vazia!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vocodificador para síntese de áudio. 12 vocodificadores disponíveis com diferentes arquiteturas e níveis de qualidade.",
+    "vocoder_info": "Vocodificador para síntese de áudio. 4 vocodificadores disponíveis com diferentes arquiteturas e níveis de qualidade.",
     "code_error": "Erro: Código de status recebido",
     "json_error": "Erro: Não foi possível analisar a resposta.",
     "requests_error": "A solicitação falhou: {e}",

@@ -510,7 +510,7 @@
     "provide_folder": "Prosimo, navedite veljavno mapo!",
     "empty_folder": "Podatkovna mapa je prazna!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder za avdio sintezo. 12 vokoderjev na voljo z različnimi arhitekturami in ravni kakovosti.",
+    "vocoder_info": "Vokoder za avdio sintezo. 4 vokoderjev na voljo z različnimi arhitekturami in ravni kakovosti.",
     "code_error": "Napaka: Prejeta statusna koda",
     "json_error": "Napaka: Ni mogoče razčleniti odgovora.",
     "requests_error": "Zahteva je spodletela: {e}",

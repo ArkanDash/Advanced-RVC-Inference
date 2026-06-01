@@ -30,6 +30,22 @@
 - **ZLUDA Support** — Full AMD GPU support via ZLUDA
 - **30+ F0 Methods** — rmvpe, crepe, fcpe, harvest, hybrid, and many more
 - **Training Optimizations** — Gradient accumulation, torch.compile(), 8-bit Adam, DDP tuning
+- **Push to Hub** — Upload trained models directly to HuggingFace Hub
+
+---
+
+## Supported Vocoders
+
+Advanced RVC Inference supports the same vocoders as [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC):
+
+| Vocoder | Description | Pitch Required |
+|---------|-------------|----------------|
+| **Default** (HiFi-GAN NSF) | HiFi-GAN with Neural Sine Filter. Adds harmonic sine wave injection for improved pitch accuracy. **Recommended for best compatibility.** | Yes |
+| **BigVGAN** | Snake activations with Anti-Aliasing (SnakeBeta + AMP blocks). State-of-the-art audio quality. | Yes |
+| **MRF-HiFi-GAN** | HiFi-GAN with Multi-Receptive Field fusion. Richer feature extraction with MRF blocks. | Yes |
+| **RefineGAN** | U-Net based vocoder with parallel residual blocks and anti-aliased resampling. High-fidelity spectral detail. | Yes |
+
+When training without pitch guidance (`pitch_guidance=False`), a plain HiFi-GAN generator (no NSF) is used automatically regardless of the selected vocoder.
 
 ---
 

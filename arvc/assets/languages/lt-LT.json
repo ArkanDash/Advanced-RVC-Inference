@@ -510,7 +510,7 @@
     "provide_folder": "Prašome pateikti tinkamą aplanką!",
     "empty_folder": "Duomenų aplankas tuščias!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoderis garso sintezei. 12 vokoderių su skirtingomis architektūromis ir kokybės lygiais.",
+    "vocoder_info": "Vokoderis garso sintezei. 4 vokoderių su skirtingomis architektūromis ir kokybės lygiais.",
     "code_error": "Klaida: Gautas būsenos kodas",
     "json_error": "Klaida: Nepavyko išanalizuoti atsakymo.",
     "requests_error": "Užklausa nepavyko: {e}",

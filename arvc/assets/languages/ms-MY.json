@@ -510,7 +510,7 @@
     "provide_folder": "Sila sediakan folder yang sah!",
     "empty_folder": "Folder data kosong!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder untuk sintesis audio. 12 vokoder tersedia dengan seni bina dan tahap kualiti yang berbeza.",
+    "vocoder_info": "Vokoder untuk sintesis audio. 4 vokoder tersedia dengan seni bina dan tahap kualiti yang berbeza.",
     "code_error": "Ralat: Menerima kod status",
     "json_error": "Ralat: Tidak dapat menghuraikan respons.",
     "requests_error": "Permintaan gagal: {e}",

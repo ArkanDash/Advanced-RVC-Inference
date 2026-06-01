@@ -510,7 +510,7 @@
     "provide_folder": "Lūdzu, norādiet derīgu mapi!",
     "empty_folder": "Datu mape ir tukša!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoders audio sintēzei. 12 vokoderi ar dažādām arhitektūrām un kvalitātes līmeņiem.",
+    "vocoder_info": "Vokoders audio sintēzei. 4 vokoderi ar dažādām arhitektūrām un kvalitātes līmeņiem.",
     "code_error": "Kļūda: Saņemts statusa kods",
     "json_error": "Kļūda: Nevar parsēt atbildi.",
     "requests_error": "Pieprasījums neizdevās: {e}",

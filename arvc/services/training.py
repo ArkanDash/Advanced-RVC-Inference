@@ -337,7 +337,7 @@ def one_click_train(
         batch_size: Training batch size.
         save_every: Save checkpoint every N epochs.
         gpu: GPU identifier string (e.g. "0" or "-").
-        vocoder: Vocoder name (e.g. "HiFi-GAN").
+        vocoder: Vocoder name (e.g. "Default", "BigVGAN", "MRF-HiFi-GAN", "RefineGAN").
         optimizer: Optimizer name (e.g. "AdamW").
         model_author: Optional model author name.
 

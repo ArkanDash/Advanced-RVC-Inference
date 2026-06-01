@@ -31,7 +31,7 @@ class LayerNorm(torch.nn.Module):
 
 
 # ---------------------------------------------------------------------------
-# SnakeBeta activation — used by ResBlock_SnakeBeta (RingFormer vocoder)
+# SnakeBeta activation — general-purpose activation function
 # ---------------------------------------------------------------------------
 
 class SnakeBeta(nn.Module):
@@ -75,7 +75,7 @@ def _create_conv1d_layer(channels, kernel_size, dilation):
 
 
 # ---------------------------------------------------------------------------
-# ResBlock & ResBlock_SnakeBeta — used by RingFormer and PCPH-GAN vocoders
+# ResBlock & ResBlock_SnakeBeta — general-purpose residual blocks
 # ---------------------------------------------------------------------------
 
 class ResBlock(nn.Module):
@@ -119,7 +119,7 @@ class ResBlock(nn.Module):
 
 
 class ResBlock_SnakeBeta(nn.Module):
-    """Multi-dilation residual block with SnakeBeta activation (RingFormer)."""
+    """Multi-dilation residual block with SnakeBeta activation."""
 
     def __init__(self, channels: int, kernel_size: int = 3,
                  dilations: Tuple[int, ...] = (1, 3, 5)):

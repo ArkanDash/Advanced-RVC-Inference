@@ -461,13 +461,13 @@ def valueEmpty_visible1(value: bool) -> Dict[str, Any]:
     return {"value": "", "visible": value, "__type__": "update"}
 
 def pitch_guidance_lock(vocoders: str) -> Dict[str, Any]:
-    """Update pitch guidance based on selected vocoder"""
-    is_default = vocoders in ("HiFi-GAN", "Default")
+    """Update pitch guidance based on selected vocoder (matches VRVC)"""
+    is_default = vocoders == "Default"
     return {"value": True, "interactive": is_default, "__type__": "update"}
 
 def vocoders_lock(pitch: bool, vocoders: str) -> Dict[str, Any]:
-    """Update vocoder choice based on pitch guidance"""
-    value = vocoders if pitch else "HiFi-GAN"
+    """Update vocoder choice based on pitch guidance (matches VRVC)"""
+    value = vocoders if pitch else "Default"
     return {"value": value, "interactive": pitch, "__type__": "update"}
 
 def unlock_f0(value: bool) -> Dict[str, Any]:
@@ -480,14 +480,14 @@ def unlock_f0(value: bool) -> Dict[str, Any]:
     }
 
 def unlock_vocoder(value: str, vocoder: str) -> Dict[str, Any]:
-    """Unlock vocoder options based on value"""
+    """Unlock vocoder options based on value (matches VRVC)"""
     is_v2 = value == "v2"
-    selected_vocoder = vocoder if is_v2 else "HiFi-GAN"
+    selected_vocoder = vocoder if is_v2 else "Default"
     return {"value": selected_vocoder, "interactive": is_v2, "__type__": "update"}
 
 def unlock_ver(value: str, vocoder: str) -> Dict[str, Any]:
-    """Unlock version options based on vocoder"""
-    is_default = vocoder in ("HiFi-GAN", "Default")
+    """Unlock version options based on vocoder (matches VRVC)"""
+    is_default = vocoder == "Default"
     selected_version = "v2" if is_default else value
     return {"value": selected_version, "interactive": is_default, "__type__": "update"}
 

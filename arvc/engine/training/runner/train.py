@@ -202,7 +202,7 @@ if newpytorch:
 else:
     if __name__ == "__main__": print(f"[Advanced-RVC] PyTorch weight format: OLD (weight_norm, RVC fork compatible)")
 
-# Discriminator version: use v3 discriminator for non-HiFi-GAN vocoders
+# Discriminator version: use v3 discriminator for BigVGAN and RefineGAN (matches VRVC)
 disc_version = version if vocoder not in ["RefineGAN", "BigVGAN"] else "v3"
 
 # is_half logic — matches Vietnamese-RVC exactly
@@ -329,7 +329,7 @@ def main():
     }
 
     if model_author: log_data[translations["model_author"].format(model_author=model_author)] = ""
-    if vocoder not in ("HiFi-GAN", "Default"): log_data[translations['vocoder']] = vocoder
+    if vocoder != "Default": log_data[translations['vocoder']] = vocoder
 
     for key, value in log_data.items():
         logger.debug(f"{key}: {value}" if value != "" else f"{key} {value}")

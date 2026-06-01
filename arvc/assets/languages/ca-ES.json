@@ -510,7 +510,7 @@
     "provide_folder": "Si us plau, proporciona una carpeta vàlida!",
     "empty_folder": "La carpeta de dades està buida!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vocodificador per a la síntesi d'àudio. 12 vocodificadors disponibles amb diferents arquitectures i nivells de qualitat.",
+    "vocoder_info": "Vocodificador per a la síntesi d'àudio. 4 vocodificadors disponibles amb diferents arquitectures i nivells de qualitat.",
     "code_error": "Error: S'ha rebut el codi d'estat",
     "json_error": "Error: No s'ha pogut analitzar la resposta.",
     "requests_error": "La sol·licitud ha fallat: {e}",

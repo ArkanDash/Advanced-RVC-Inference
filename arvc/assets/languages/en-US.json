@@ -510,7 +510,7 @@
     "provide_folder": "Please provide a valid folder!",
     "empty_folder": "The data folder is empty!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vocoder for audio synthesis. 12 vocoders available with different architectures and quality levels. Default recommended for compatibility.",
+    "vocoder_info": "Vocoder for audio synthesis. Default (HiFi-GAN NSF) recommended for best compatibility and quality. BigVGAN, MRF-HiFi-GAN, and RefineGAN offer alternative architectures.",
     "code_error": "Error: Received status code",
     "json_error": "Error: Unable to parse response.",
     "requests_error": "Request failed: {e}",

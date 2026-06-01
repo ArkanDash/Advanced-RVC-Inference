@@ -510,7 +510,7 @@
     "provide_folder": "Veuillez fournir un dossier valide !",
     "empty_folder": "Le dossier de données est vide !",
     "vocoder": "Vocodeur",
-    "vocoder_info": "Codeur vocal pour la synthèse audio. 12 codeurs disponibles avec différentes architectures et niveaux de qualité.",
+    "vocoder_info": "Codeur vocal pour la synthèse audio. 4 codeurs disponibles avec différentes architectures et niveaux de qualité.",
     "code_error": "Erreur : Code d'état reçu",
     "json_error": "Erreur : Impossible d'analyser la réponse.",
     "requests_error": "La requête a échoué : {e}",

@@ -510,7 +510,7 @@
     "provide_folder": "Please provide a valid folder!",
     "empty_folder": "The data folder is empty!",
     "vocoder": "Vocoder",
-    "vocoder_info": "音频合成声码器。提供12种不同架构和质量级别的声码器。",
+    "vocoder_info": "音频合成声码器。提供4种不同架构和质量级别的声码器。",
     "code_error": "Error: Received status code",
     "json_error": "Error: Unable to parse response.",
     "requests_error": "Request failed: {e}",

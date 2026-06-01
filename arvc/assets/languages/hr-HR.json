@@ -510,7 +510,7 @@
     "provide_folder": "Molimo pružite valjanu mapu!",
     "empty_folder": "Mapa podataka je prazna!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder za audio sintezu. 12 vokodera dostupno s različitim arhitekturama i razinama kvalitete.",
+    "vocoder_info": "Vokoder za audio sintezu. 4 vokodera dostupno s različitim arhitekturama i razinama kvalitete.",
     "code_error": "Greška: Primljen statusni kod",
     "json_error": "Greška: Nemoguće raščlaniti odgovor.",
     "requests_error": "Zahtjev nije uspio: {e}",

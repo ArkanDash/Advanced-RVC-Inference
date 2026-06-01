@@ -510,7 +510,7 @@
     "provide_folder": "Kérjük, adjon meg egy érvényes mappát!",
     "empty_folder": "Az adatmappa üres!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokodér az audió szintézishez. 12 vokodér elérhető különböző architektúrákkal és minőségi szintekkel.",
+    "vocoder_info": "Vokodér az audió szintézishez. 4 vokodér elérhető különböző architektúrákkal és minőségi szintekkel.",
     "code_error": "Hiba: Állapotkód érkezett",
     "json_error": "Hiba: Nem lehet elemezni a választ.",
     "requests_error": "Kérés sikertelen: {e}",

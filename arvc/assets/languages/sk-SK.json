@@ -510,7 +510,7 @@
     "provide_folder": "Prosím, poskytnite platný priečinok!",
     "empty_folder": "Dátový priečinok je prázdny!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vokoder pre zvukovú syntézu. 12 vokoderov dostupných s rôznymi architektúrami a úrovňami kvality.",
+    "vocoder_info": "Vokoder pre zvukovú syntézu. 4 vokoderov dostupných s rôznymi architektúrami a úrovňami kvality.",
     "code_error": "Chyba: Obdržaný stavový kód",
     "json_error": "Chyba: Nepodarilo sa spracovať odpoveď.",
     "requests_error": "Požiadavka zlyhala: {e}",

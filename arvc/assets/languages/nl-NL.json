@@ -510,7 +510,7 @@
     "provide_folder": "Geef een geldige map op!",
     "empty_folder": "De gegevensmap is leeg!",
     "vocoder": "Vocoder",
-    "vocoder_info": "Vocoder voor audio-synthese. 12 vocoders beschikbaar met verschillende architecturen en kwaliteitsniveaus.",
+    "vocoder_info": "Vocoder voor audio-synthese. Default (HiFi-GAN NSF) aanbevolen voor compatibiliteit en kwaliteit. BigVGAN, MRF-HiFi-GAN en RefineGAN bieden alternatieve architecturen.",
     "code_error": "Fout: Statuscode ontvangen",
     "json_error": "Fout: Kan antwoord niet verwerken.",
     "requests_error": "Aanvraag mislukt: {e}",
