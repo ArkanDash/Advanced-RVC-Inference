@@ -122,7 +122,7 @@ def parse_arguments():
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
     parser.add_argument("--use_8bit_adam", type=lambda x: bool(strtobool(x)), default=False, help="Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)")
     parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
-    parser.add_argument("--newpytorch", type=lambda x: bool(strtobool(x)), default=False, help="Use PyTorch 2.0+ parametrization format. Default: old format for RVC fork compatibility.")
+    parser.add_argument("--newpytorch", type=lambda x: bool(strtobool(x)), default=True, help="Use PyTorch 2.0+ parametrization format (default, matches Applio/VRVC). Set false for legacy weight_norm format.")
 
     return parser.parse_args()
 

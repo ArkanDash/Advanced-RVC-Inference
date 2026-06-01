@@ -10,6 +10,7 @@ sys.path.append(os.getcwd())
 
 from arvc.utils.variables import config
 from arvc.engine.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
+from arvc.engine.models.weight_norm import convert_old_to_new
 
 class Inference:
     def get_synthesizer(self, model_path):
@@ -37,7 +38,7 @@ class Inference:
                 energy=self.energy
             )
 
-            net_g.load_state_dict(model["weight"], strict=False)
+            net_g.load_state_dict(convert_old_to_new(model["weight"]), strict=False)
             net_g.eval().to(config.device).to(torch.float16 if config.is_half else torch.float32)
             net_g.remove_weight_norm()
 

@@ -10,6 +10,7 @@ import warnings
 
 from arvc.utils.variables import logger
 from arvc.engine.models.algorithms.synthesizers import SynthesizerONNX
+from arvc.engine.models.weight_norm import convert_old_to_new
 
 warnings.filterwarnings("ignore")
 
@@ -26,7 +27,7 @@ def onnx_exporter(input_path, output_path, is_half=False, device="cpu"):
     tgt_sr = cpt["config"][-1]
 
     net_g = SynthesizerONNX(*cpt["config"], use_f0=f0, text_enc_hidden_dim=text_enc_hidden_dim, vocoder=vocoder, checkpointing=False, energy=energy_use)
-    net_g.load_state_dict(cpt["weight"], strict=False)
+    net_g.load_state_dict(convert_old_to_new(cpt["weight"]), strict=False)
     net_g.eval().to(device).to(torch.float16 if is_half else torch.float32)
     net_g.remove_weight_norm()
 

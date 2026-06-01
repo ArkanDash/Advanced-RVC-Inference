@@ -3,7 +3,7 @@ import sys
 import gradio as gr
 
 
-from arvc.services.process import zip_file, fetch_pretrained_data
+from arvc.services.process import zip_file, fetch_pretrained_data, push_to_hub
 from arvc.services.training import preprocess, extract, create_index, training
 from arvc.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
 from arvc.ui.feedback import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
@@ -196,8 +196,8 @@ def training_model_tab():
             with gr.Group():
                 newpytorch = gr.Checkbox(
                     label="New PyTorch 2.0+ Format",
-                    info="Default: OFF = Old format (.weight_g/.weight_v) for broad RVC fork compatibility. Turn ON for PyTorch 2.0+ parametrization format.",
-                    value=False, interactive=True,
+                    info="Default: ON = PyTorch 2.0+ parametrization format (matches Applio/VRVC). Turn OFF only for legacy weight_norm format.",
+                    value=True, interactive=True,
                 )
 
             # ── Training Options ──
@@ -323,12 +323,44 @@ def training_model_tab():
                 zip_model = gr.Button(translations["zip_model"], variant="primary")
             zip_output = gr.File(label=translations["output_zip"], file_types=[".zip"], interactive=False, visible=False)
 
+            # ── Push to HuggingFace Hub ──
+            with gr.Accordion("Push to HuggingFace Hub", open=False):
+                with gr.Row():
+                    hf_model_file = gr.Dropdown(
+                        label="Model file", choices=model_name,
+                        value=model_name[0] if len(model_name) >= 1 else "",
+                        interactive=True, allow_custom_value=True,
+                    )
+                    hf_index_file = gr.Dropdown(
+                        label="Index file", choices=index_path,
+                        value=index_path[0] if len(index_path) >= 1 else "",
+                        interactive=True, allow_custom_value=True,
+                    )
+                with gr.Row():
+                    hf_token = gr.Textbox(
+                        label="HF Token",
+                        info="HuggingFace API token with write access",
+                        type="password",
+                        interactive=True,
+                    )
+                    hf_repo = gr.Textbox(
+                        label="HF Repo (model)",
+                        info="Target repository (e.g. username/model-name)",
+                        interactive=True,
+                    )
+                with gr.Row():
+                    hf_refresh = gr.Button(translations["refresh"])
+                    hf_push = gr.Button("Push to Hub", variant="primary")
+                hf_output = gr.Textbox(label="Status", value="", interactive=False, lines=2)
+
     # ── Event Bindings ──
     vocoders.change(fn=pitch_guidance_lock, inputs=[vocoders], outputs=[training_f0])
     training_f0.change(fn=vocoders_lock, inputs=[training_f0, vocoders], outputs=[vocoders])
     unlock_full_method4.change(fn=unlock_f0, inputs=[unlock_full_method4], outputs=[extract_method])
     refresh_file.click(fn=change_models_choices, inputs=[], outputs=[model_file, index_file])
     zip_model.click(fn=zip_file, inputs=[training_name, model_file, index_file], outputs=[zip_output])
+    hf_refresh.click(fn=change_models_choices, inputs=[], outputs=[hf_model_file, hf_index_file])
+    hf_push.click(fn=push_to_hub, inputs=[hf_model_file, hf_index_file, hf_token, hf_repo], outputs=[hf_output])
     dataset_path.change(fn=lambda folder: os.makedirs(folder, exist_ok=True), inputs=[dataset_path], outputs=[])
     upload.change(fn=visible, inputs=[upload], outputs=[upload_dataset])
     overtraining_detector.change(fn=visible, inputs=[overtraining_detector], outputs=[threshold])

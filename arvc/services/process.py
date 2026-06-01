@@ -147,6 +147,121 @@ def fetch_pretrained_data():
         logger.debug(f"Failed to fetch pretrained data: {e}")
         return {}
 
+def push_to_hub(model_file, index_file, hf_token, hf_repo):
+    """Push a trained RVC model and its index file to HuggingFace Hub.
+
+    Args:
+        model_file: Filename of the .pth model in the weights directory.
+        index_file: Path to the .index file.
+        hf_token: HuggingFace API token with write access.
+        hf_repo: Target HuggingFace repository (e.g. "username/model-name").
+
+    Returns:
+        Status message string.
+    """
+    try:
+        from huggingface_hub import HfApi, create_repo
+    except ImportError:
+        return gr_error("huggingface_hub is not installed. Run: pip install huggingface_hub")
+
+    # Validate inputs
+    if not model_file:
+        return gr_warning("Please select a model file.")
+    if not hf_token:
+        return gr_warning("Please provide a HuggingFace token.")
+    if not hf_repo:
+        return gr_warning("Please provide a HuggingFace repository name (e.g. username/model-name).")
+
+    # Resolve model path
+    pth_path = os.path.join(configs["weights_path"], model_file)
+    if not os.path.exists(pth_path) or not model_file.endswith((".pth", ".onnx")):
+        return gr_warning(f"Model file not found: {pth_path}")
+
+    gr_info(f"Pushing model to HuggingFace Hub: {hf_repo}")
+
+    try:
+        api = HfApi()
+
+        # Create repo if it doesn't exist
+        create_repo(
+            repo_id=hf_repo,
+            token=hf_token,
+            repo_type="model",
+            exist_ok=True,
+            private=False,
+        )
+
+        # Upload model file
+        api.upload_file(
+            path_or_fileobj=pth_path,
+            path_in_repo=os.path.basename(pth_path),
+            repo_id=hf_repo,
+            token=hf_token,
+            repo_type="model",
+        )
+
+        # Upload index file if provided
+        if index_file and os.path.exists(index_file):
+            api.upload_file(
+                path_or_fileobj=index_file,
+                path_in_repo=os.path.basename(index_file),
+                repo_id=hf_repo,
+                token=hf_token,
+                repo_type="model",
+            )
+
+        # Auto-generate README
+        model_name = os.path.splitext(os.path.basename(model_file))[0]
+        index_info = f"\n- Index file: `{os.path.basename(index_file)}`" if index_file and os.path.exists(index_file) else ""
+        readme_content = f"""---
+license: mit
+tags:
+- rvc
+- voice-cloning
+- advanced-rvc
+---
+
+# {model_name}
+
+This model was uploaded to the HuggingFace Hub using [Advanced-RVC-Inference](https://github.com/ArkanDash/Advanced-RVC-Inference).
+
+## Model Files
+
+- Model weights: `{os.path.basename(pth_path)}`{index_info}
+
+## Usage
+
+This model can be used with any RVC-based inference application that supports the RVC v2 format.
+
+## Disclaimer
+
+This model is intended for research and educational purposes only. Please respect the rights of the original voice owners.
+"""
+
+        # Upload README
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as tmp:
+            tmp.write(readme_content)
+            tmp_path = tmp.name
+
+        api.upload_file(
+            path_or_fileobj=tmp_path,
+            path_in_repo="README.md",
+            repo_id=hf_repo,
+            token=hf_token,
+            repo_type="model",
+        )
+        os.unlink(tmp_path)
+
+        repo_url = f"https://huggingface.co/{hf_repo}"
+        gr_info(f"Successfully pushed model to: {repo_url}")
+        return f"Model pushed to HuggingFace Hub: {repo_url}"
+
+    except Exception as e:
+        logger.error(f"Failed to push model to HuggingFace Hub: {e}")
+        return gr_error(f"Failed to push to HuggingFace Hub: {e}")
+
+
 def update_sample_rate_dropdown(model):
     data = fetch_pretrained_data()
     if not data or model not in data:

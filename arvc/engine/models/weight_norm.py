@@ -1,13 +1,13 @@
 """
 Conditional weight_norm import for RVC fork compatibility.
 
-By default, uses the old-style ``torch.nn.utils.weight_norm`` which stores
-weights as ``.weight_g`` / ``.weight_v`` — the format used by virtually every
-RVC fork.  This ensures trained models are interchangeable across projects.
+Uses ``torch.nn.utils.parametrizations.weight_norm`` (PyTorch 2.0+) by default,
+which stores weights as ``.parametrizations.weight.original0`` / ``original1``.
+This matches the approach used by Applio and Vietnamese-RVC.
 
-Set the config option ``new_pytorch_weight_norm: true`` to switch to
-``torch.nn.utils.parametrizations.weight_norm`` (PyTorch 2.0+), which stores
-weights as ``.parametrizations.weight.original0`` / ``original1``.
+All checkpoints saved to disk use the old ``.weight_g`` / ``.weight_v`` format
+for maximum backward compatibility across RVC forks.  Key conversion happens
+automatically at save/load boundaries.
 """
 
 import logging
@@ -15,16 +15,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 # ── Global flag ──────────────────────────────────────────────────────────
-# False = old-style weight_norm (default, compatible with most RVC forks)
-# True  = new PyTorch 2.0+ parametrizations.weight_norm
-_new_pytorch_mode = False
+# True  = new PyTorch 2.0+ parametrizations.weight_norm (default, matches Applio/VRVC)
+# False = old-style weight_norm (legacy compatibility)
+_new_pytorch_mode = True
 
 
-def configure_weight_norm(new_pytorch: bool = False) -> None:
+def configure_weight_norm(new_pytorch: bool = True) -> None:
     """Set the weight_norm mode.  Call once at startup before model creation."""
     global _new_pytorch_mode
     _new_pytorch_mode = bool(new_pytorch)
-    mode = "new PyTorch 2.0+ parametrizations" if _new_pytorch_mode else "old-style (RVC fork compatible)"
+    mode = "new PyTorch 2.0+ parametrizations" if _new_pytorch_mode else "old-style (legacy)"
     logger.info(f"weight_norm mode: {mode}")
 
 
@@ -94,60 +94,45 @@ def weight_norm_g(module):
 
 
 # ── Key conversion helpers ───────────────────────────────────────────────
-# These are only needed when new_pytorch mode is active.
+# Always active regardless of mode.  This ensures seamless interoperability
+# between old-format checkpoints and new-format models (and vice versa).
 
-def needs_key_conversion() -> bool:
-    """Return True if checkpoint key conversion between old/new format is needed.
-
-    Conversion is needed only when the model uses new PyTorch parametrizations
-    but checkpoints are stored in old ``.weight_g``/``.weight_v`` format.
-    """
-    return _new_pytorch_mode
+def _replace_keys_in_dict(d, old_part, new_part):
+    """Recursively replace key substrings in a (possibly nested) dict."""
+    from collections import OrderedDict
+    updated = OrderedDict() if isinstance(d, OrderedDict) else {}
+    for key, value in d.items():
+        updated[(
+            key.replace(old_part, new_part) if isinstance(key, str) else key
+        )] = (
+            _replace_keys_in_dict(value, old_part, new_part) if isinstance(value, dict) else value
+        )
+    return updated
 
 
 def convert_old_to_new(state_dict):
     """Convert old-style weight_norm keys to new parametrizations keys.
 
-    Only applies when ``new_pytorch_weight_norm`` is enabled.
-    No-op otherwise (model and checkpoint both use old format).
+    Converts ``.weight_v`` → ``.parametrizations.weight.original1``
+    and       ``.weight_g`` → ``.parametrizations.weight.original0``
+
+    Always active — ensures old-format checkpoints load correctly into
+    models that use the new PyTorch parametrization format.
     """
-    if not _new_pytorch_mode:
-        return state_dict
-
-    from collections import OrderedDict
-
-    def _replace(d, old_part, new_part):
-        updated = OrderedDict() if isinstance(d, OrderedDict) else {}
-        for key, value in d.items():
-            updated[key.replace(old_part, new_part) if isinstance(key, str) else key] = (
-                _replace(value, old_part, new_part) if isinstance(value, dict) else value
-            )
-        return updated
-
-    result = _replace(state_dict, ".weight_v", ".parametrizations.weight.original1")
-    result = _replace(result, ".weight_g", ".parametrizations.weight.original0")
+    result = _replace_keys_in_dict(state_dict, ".weight_v", ".parametrizations.weight.original1")
+    result = _replace_keys_in_dict(result, ".weight_g", ".parametrizations.weight.original0")
     return result
 
 
 def convert_new_to_old(state_dict):
     """Convert new parametrizations keys to old-style weight_norm keys.
 
-    Only applies when ``new_pytorch_weight_norm`` is enabled.
-    No-op otherwise (model and checkpoint both use old format).
+    Converts ``.parametrizations.weight.original1`` → ``.weight_v``
+    and       ``.parametrizations.weight.original0`` → ``.weight_g``
+
+    Always active — ensures saved checkpoints use the old format for
+    maximum backward compatibility with other RVC forks.
     """
-    if not _new_pytorch_mode:
-        return state_dict
-
-    from collections import OrderedDict
-
-    def _replace(d, old_part, new_part):
-        updated = OrderedDict() if isinstance(d, OrderedDict) else {}
-        for key, value in d.items():
-            updated[key.replace(old_part, new_part) if isinstance(key, str) else key] = (
-                _replace(value, old_part, new_part) if isinstance(value, dict) else value
-            )
-        return updated
-
-    result = _replace(state_dict, ".parametrizations.weight.original1", ".weight_v")
-    result = _replace(result, ".parametrizations.weight.original0", ".weight_g")
+    result = _replace_keys_in_dict(state_dict, ".parametrizations.weight.original1", ".weight_v")
+    result = _replace_keys_in_dict(result, ".parametrizations.weight.original0", ".weight_g")
     return result

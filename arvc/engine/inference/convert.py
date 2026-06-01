@@ -38,6 +38,7 @@ from arvc.engine.inference.pipeline import Pipeline
 from arvc.utils.variables import config, logger, translations
 from arvc.engine.inference.audio_processing import preprocess, postprocess
 from arvc.engine.models.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
+from arvc.engine.models.weight_norm import convert_old_to_new
 
 for l in ["torch", "faiss", "omegaconf", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "transformers", "matplotlib"]:
     logging.getLogger(l).setLevel(logging.ERROR)
@@ -439,7 +440,7 @@ class VoiceConverter:
                 self.net_g = Synthesizer(*self.cpt["config"], use_f0=self.use_f0, text_enc_hidden_dim=768 if self.version == "v2" else 256, vocoder=self.vocoder, checkpointing=self.checkpointing, energy=self.energy)
                 del self.net_g.enc_q
 
-                self.net_g.load_state_dict(self.cpt["weight"], strict=False)
+                self.net_g.load_state_dict(convert_old_to_new(self.cpt["weight"]), strict=False)
                 self.net_g.eval().to(self.device)
                 self.net_g = self.net_g.to(torch.float16 if self.config.is_half else torch.float32)
                 self.n_spk = self.cpt["config"][-3]

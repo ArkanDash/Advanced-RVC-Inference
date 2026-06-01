@@ -50,6 +50,7 @@ edge-tts>=7.2.0
 ffmpy==0.3.1
 ffmpeg-python>=0.2.0
 beautifulsoup4
+huggingface_hub
 
 # Tensorboard and ONNX
 tensorboard
