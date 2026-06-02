@@ -1,3 +1,4 @@
+import codecs
 import os
 import re
 import gc
@@ -63,42 +64,53 @@ def _get_opencl():
             pass
     return _opencl
 
+def download_embedder(embedders_mode, hubert):
+    """Download an embedder model if it doesn't exist locally.
+
+    Args:
+        embedders_mode: One of "fairseq", "onnx", "transformers", "whisper".
+        hubert: Filename with extension (e.g. "hubert_base.pt", "hubert_base.onnx")
+                or directory name for transformers models.
+
+    Returns:
+        True if the model files exist after download, False otherwise.
+    """
+    embedders_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/embedders/"
+    model_path = os.path.join(configs["speaker_diarization_path"], "models", hubert) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], hubert)
+
+    if embedders_mode != "transformers" and not os.path.exists(model_path):
+        if embedders_mode == "whisper":
+            huggingface.HF_download_file("".join([codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13"), hubert]), model_path)
+        else:
+            huggingface.HF_download_file("".join([embedders_url, "fairseq/" if embedders_mode == "fairseq" else "onnx/", hubert]), model_path)
+    elif embedders_mode == "transformers":
+        url = "transformers/" if not hubert.startswith("spin") else "spin/"
+
+        bin_file = os.path.join(model_path, "model.safetensors")
+        config_file = os.path.join(model_path, "config.json")
+
+        os.makedirs(model_path, exist_ok=True)
+
+        if not os.path.exists(bin_file): huggingface.HF_download_file("".join([embedders_url, url, hubert, "/model.safetensors"]), bin_file)
+        if not os.path.exists(config_file): huggingface.HF_download_file("".join([embedders_url, url, hubert, "/config.json"]), config_file)
+
+        return os.path.exists(bin_file) and os.path.exists(config_file)
+
+    return os.path.exists(model_path)
+
+
 def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
     predictors_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/predictors/"
-    embedders_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/embedders/"
     if embedders_mode == "spin": embedders_mode = "transformers"
 
     def download_predictor(predictor):
         model_path = os.path.join(configs["predictors_path"], predictor)
 
-        if not os.path.exists(model_path): 
+        if not os.path.exists(model_path):
             huggingface.HF_download_file(
-                predictors_url + predictor, 
+                predictors_url + predictor,
                 model_path
             )
-
-        return os.path.exists(model_path)
-
-    def download_embedder(embedders_mode, hubert):
-        model_path = os.path.join(configs["speaker_diarization_path"], "models", hubert) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], hubert)
-
-        if embedders_mode != "transformers" and not os.path.exists(model_path): 
-            if embedders_mode == "whisper":
-                huggingface.HF_download_file("".join([codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13"), hubert]), model_path)
-            else:
-                huggingface.HF_download_file("".join([embedders_url, "fairseq/" if embedders_mode == "fairseq" else "onnx/", hubert]), model_path)
-        elif embedders_mode == "transformers":
-            url = "transformers/" if not hubert.startswith("spin") else "spin/"
-
-            bin_file = os.path.join(model_path, "model.safetensors")
-            config_file = os.path.join(model_path, "config.json")
-
-            os.makedirs(model_path, exist_ok=True)
-
-            if not os.path.exists(bin_file): huggingface.HF_download_file("".join([embedders_url, url, hubert, "/model.safetensors"]), bin_file)
-            if not os.path.exists(config_file): huggingface.HF_download_file("".join([embedders_url, url, hubert, "/config.json"]), config_file)
-
-            return os.path.exists(bin_file) and os.path.exists(config_file)
 
         return os.path.exists(model_path)
 
@@ -125,9 +137,9 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
             return "swift.onnx"
         else:
             return None
-        
+
         return modelname + suffix
-    
+
     results = []
     count = configs.get("num_of_restart", 5)
 
@@ -139,7 +151,7 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
             for method in methods:
                 modelname = get_modelname(method, f0_onnx)
                 if modelname is not None: results.append(download_predictor(modelname))
-        else: 
+        else:
             modelname = get_modelname(f0_method, f0_onnx)
             if modelname is not None: results.append(download_predictor(modelname))
 
@@ -209,6 +221,12 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
     elif embedders_mode == "spin": embedders_mode = "transformers"
 
     embedder_model_path = os.path.join(configs["speaker_diarization_path"], "models", embedder_model) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], embedder_model)
+
+    # Auto-download if the embedder model file is missing
+    if not os.path.exists(embedder_model_path):
+        logger.info(f"Embedder model not found locally, downloading: {embedder_model}")
+        download_embedder(embedders_mode, embedder_model)
+
     if not os.path.exists(embedder_model_path): raise FileNotFoundError(f"{translations['not_found'].format(name=translations['model'])}: {embedder_model}")
 
     try:
