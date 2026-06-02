@@ -1162,7 +1162,14 @@ done</code></pre>
       <span class="badge badge-green">Source: models/generators/hifigan.py</span>
     </div>
     <p>HiFi-GAN is the standard and default vocoder for Advanced RVC Inference. It uses a clean architecture of transposed convolution upsampling layers with weight-normalized residual blocks (Multi-Receptive Field fusion). Each upsampling layer is followed by multiple residual blocks with different kernel sizes and dilation rates, allowing the network to capture features at multiple temporal scales. This is the lightweight, no-frills version without the Neural Sine Filter, making it faster and simpler while still producing high-quality audio output. It works with both pitch-guided and non-pitch-guided training modes.</p>
-    <p><strong>Key Features:</strong> Standard transposed convolution upsampling, weight-normalized residual blocks with MRF fusion, works with and without pitch guidance (f0), lightweight and fast inference, most broadly compatible vocoder.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Standard transposed convolution upsampling</li>
+      <li>Weight-normalized residual blocks with MRF fusion</li>
+      <li>Works with and without pitch guidance (f0)</li>
+      <li>Lightweight and fast inference</li>
+      <li>Most broadly compatible vocoder</li>
+    </ul>
     <p><strong>Recommended for:</strong> Default choice for all training. Best for users who want a balance of quality, speed, and compatibility.</p>
   </div>
 
@@ -1172,8 +1179,16 @@ done</code></pre>
       <span class="badge badge-orange">Rating: 5.0/5</span>
       <span class="badge badge-purple">Category: Anti-Aliased GAN</span>
     </div>
-    <p>BigVGAN is the highest-quality vocoder available in the system. It introduces two key innovations: Snake activations with Anti-Aliasing (SnakeBeta and Anti-Aliased Multi-Period/AMP blocks) and data-augmented adversarial training. The Snake activation function provides a periodic, non-monotonic nonlinearity that is naturally suited for audio signals, while the anti-aliased design prevents high-frequency artifacts during upsampling. BigVGAN uses kaiser-sinc filters for both upsampling and downsampling, achieving state-of-the-art audio quality across multiple benchmarks.</p>
-    <p><strong>Key Features:</strong> SnakeBeta learnable periodic activations, Anti-Aliased Multi-Period (AMP) blocks, kaiser-sinc filters for upsampling/downsampling, data-augmented adversarial training, superior high-frequency reconstruction.</p>
+    <p>BigVGAN is the highest-quality vocoder available in the system. It introduces two key innovations: Snake activations with Anti-Aliasing (SnakeBeta and Anti-Aliased Multi-Period/AMP blocks) and data-augmented adversarial training. The Snake activation function provides a periodic, non-monotonic nonlinearity that is naturally suited for audio signals, while the anti-aliased design prevents high-frequency artifacts during upsampling. BigVGAN uses kaiser-sinc filters for both upsampling and downsampling, achieving state-of-the-art audio quality across multiple benchmarks. Its architecture includes extensive AMP blocks with parallel branches at different periods, capturing both fine and coarse spectral details.</p>
+    <p><strong>Paper:</strong> "BigVGAN: A Universal Neural Vocoder with Large-Scale Training" (2023)</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>SnakeBeta learnable periodic activations</li>
+      <li>Anti-Aliased Multi-Period (AMP) blocks</li>
+      <li>Kaiser-sinc filters for upsampling/downsampling</li>
+      <li>Data-augmented adversarial training</li>
+      <li>Superior high-frequency reconstruction</li>
+    </ul>
     <p><strong>Recommended for:</strong> Maximum audio quality. Best for singing voice conversion and high-fidelity speech synthesis.</p>
   </div>
 
@@ -1185,7 +1200,14 @@ done</code></pre>
       <span class="badge badge-green">Source: models/generators/nsf_hifigan.py</span>
     </div>
     <p>The Default (HiFi-GAN NSF) vocoder is the HiFi-GAN with Neural Sine Filter (NSF). It combines HiFi-GAN's transposed convolution upsampling with a Neural Sine Filter that injects harmonic information directly into each upsampling layer. The NSF source module generates sine waves conditioned on F0, which are mixed with the upsampled features through noise convolution layers. This vocoder provides improved pitch accuracy compared to standard HiFi-GAN due to the explicit harmonic conditioning, but requires pitch guidance (f0) to be enabled.</p>
-    <p><strong>Key Features:</strong> Neural Sine Filter for harmonic injection, noise convolutions at each upsampling layer, improved pitch accuracy from explicit harmonic conditioning, supports gradient checkpointing, requires pitch guidance (f0).</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Neural Sine Filter for harmonic injection</li>
+      <li>Noise convolutions at each upsampling layer</li>
+      <li>Improved pitch accuracy from explicit harmonic conditioning</li>
+      <li>Supports gradient checkpointing</li>
+      <li>Requires pitch guidance (f0)</li>
+    </ul>
     <p><strong>Recommended for:</strong> Users who need improved pitch accuracy. The explicit harmonic injection helps with singing voice and tonal languages.</p>
   </div>
 
@@ -1197,8 +1219,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.5/5</span>
       <span class="badge badge-purple">Category: Enhanced HiFi-GAN</span>
+      <span class="badge badge-green">Source: models/generators/hifigan_v3.py</span>
     </div>
     <p>HiFi-GAN-v3 is an enhanced variant of the standard HiFi-GAN architecture that incorporates SnakeBeta activations and wider dilation patterns in its residual blocks. Unlike the original HiFi-GAN which uses LeakyReLU activations, v3 uses the same Snake activation that made BigVGAN successful, providing periodic nonlinearity that better matches audio signal characteristics. The wider dilation pattern in residual blocks captures longer-range temporal dependencies, improving the modeling of speech formant transitions and vocal tract resonances.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>SnakeBeta learnable activations</li>
+      <li>Enhanced residual blocks with wider dilations</li>
+      <li>Better formant transition modeling</li>
+      <li>Gradient checkpointing support</li>
+      <li>Drop-in upgrade over standard HiFi-GAN</li>
+    </ul>
     <p><strong>Recommended for:</strong> Users who want a quality upgrade over Default without the computational cost of BigVGAN.</p>
   </div>
 
@@ -1207,8 +1238,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.5/5</span>
       <span class="badge badge-purple">Category: Multi-Receptive Field</span>
+      <span class="badge badge-green">Source: models/generators/mrf_hifigan.py</span>
     </div>
     <p>MRF-HiFi-GAN replaces the standard residual blocks with Multi-Receptive Field (MRF) blocks. Each MRF block contains a sequence of MRFLayers with different dilation stacks, allowing the network to capture features at multiple temporal scales simultaneously. This multi-scale approach is particularly effective for speech synthesis because speech contains information at multiple time scales — from fine-grained spectral details to broader prosodic patterns. The SineGenerator provides harmonic conditioning with <code>harmonic_num=8</code>.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Multi-Receptive Field fusion blocks</li>
+      <li>Multiple dilation stacks per block</li>
+      <li>SineGenerator with 8 harmonics</li>
+      <li>Richer multi-scale feature extraction</li>
+      <li>Gradient checkpointing support</li>
+    </ul>
     <p><strong>Recommended for:</strong> Speech with complex spectral characteristics. Good for multi-speaker models where diverse voice qualities need to be captured.</p>
   </div>
 
@@ -1217,8 +1257,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.5/5</span>
       <span class="badge badge-purple">Category: Fourier-based</span>
+      <span class="badge badge-green">Source: models/generators/vocos.py</span>
     </div>
-    <p>Vocos takes a fundamentally different approach to audio synthesis by using inverse Short-Time Fourier Transform (iSTFT) for waveform reconstruction instead of traditional transposed convolution upsampling. This architecture is inherently more lightweight because it operates in the frequency domain, where the waveform can be reconstructed analytically. The backbone uses 1D convolutions with Snake activations for feature extraction, and the iSTFT head predicts both magnitude and phase for clean waveform output.</p>
+    <p>Vocos takes a fundamentally different approach to audio synthesis by using inverse Short-Time Fourier Transform (iSTFT) for waveform reconstruction instead of traditional transposed convolution upsampling. This architecture is inherently more lightweight because it operates in the frequency domain, where the waveform can be reconstructed analytically. The backbone uses 1D convolutions with Snake activations for feature extraction, and the iSTFT head predicts both magnitude and phase for clean waveform output. This Fourier-based approach naturally handles pitch and harmonic structure.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>iSTFT-based waveform reconstruction (no transposed convolutions)</li>
+      <li>Lightweight and computationally efficient</li>
+      <li>Snake activations in backbone</li>
+      <li>Magnitude + phase prediction</li>
+      <li>Naturally suited for harmonic signals</li>
+    </ul>
     <p><strong>Recommended for:</strong> Users who want fast inference and lightweight models. Excellent for real-time applications.</p>
   </div>
 
@@ -1227,8 +1276,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.5/5</span>
       <span class="badge badge-purple">Category: Conformer-based</span>
+      <span class="badge badge-green">Source: models/algorithms/generators/ringformer.py</span>
     </div>
     <p>RingFormer is the most architecturally advanced vocoder in the system, using Conformer blocks with both time and frequency attention mechanisms. It employs einops-based rearrange operations for efficient multi-head attention across both dimensions. The output layer uses iSTFT (TorchSTFT) for waveform generation from predicted magnitude and phase, similar to Vocos but with the added power of Conformer attention. RingFormer uses ResBlock_SnakeBeta for its convolutional components and SourceModuleHnNSF with <code>harmonic_num=8</code> for harmonic conditioning.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Conformer attention (time + frequency)</li>
+      <li>iSTFT output with magnitude + phase prediction</li>
+      <li>SnakeBeta activations</li>
+      <li>Most complex architecture</li>
+      <li>Unique 3-output return (audio, spec, phase)</li>
+    </ul>
     <p><strong>Recommended for:</strong> Advanced users seeking maximum quality through attention-based processing. Higher memory usage than other vocoders.</p>
   </div>
 
@@ -1240,9 +1298,18 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.0/5</span>
       <span class="badge badge-purple">Category: Source-Filter</span>
+      <span class="badge badge-green">Source: models/generators/jvsf_hifigan.py</span>
     </div>
     <p>Joint-Variable Source-Filter HiFi-GAN explicitly separates the voice generation process into source (excitation) and filter (vocal tract) components, mirroring the human speech production model. The source module generates learnable harmonic components with adjustable weights, while the filter module uses a pyramid of dilated convolutions to model the vocal tract transfer function. This separation allows the model to independently control pitch-related and timbre-related features, leading to more natural voice conversion results.</p>
-    <p><strong>Recommended for:</strong> Voice conversion tasks where preserving speaker identity is critical.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Explicit source-filter separation</li>
+      <li>Learnable harmonic weights</li>
+      <li>Filter module with dilation pyramid</li>
+      <li>Physically motivated architecture</li>
+      <li>Good for voice identity preservation</li>
+    </ul>
+    <p><strong>Recommended for:</strong> Voice conversion tasks where preserving speaker identity is critical. The source-filter separation helps maintain natural vocal characteristics.</p>
   </div>
 
   <div class="tier-card tier-3">
@@ -1250,8 +1317,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.0/5</span>
       <span class="badge badge-purple">Category: U-Net GAN</span>
+      <span class="badge badge-green">Source: models/generators/refinegan.py</span>
     </div>
-    <p>RefineGAN uses a U-Net architecture with skip connections, a significant departure from the purely feedforward design of HiFi-GAN. The harmonic downsampling path processes F0 through sine generation, pre-convolution, and progressive downsampling using torchaudio's resample function. The upsampling path uses ParallelResBlocks with three parallel branches (kernel sizes 3, 7, 11) combined through AdaIN noise injection. Skip connections from the encoder to decoder preserve fine spectral details that might otherwise be lost.</p>
+    <p>RefineGAN uses a U-Net architecture with skip connections, a significant departure from the purely feedforward design of HiFi-GAN. The harmonic downsampling path processes F0 through sine generation, pre-convolution, and progressive downsampling using torchaudio's resample function. The upsampling path uses ParallelResBlocks with three parallel branches (kernel sizes 3, 7, 11) combined through AdaIN noise injection. Skip connections from the encoder to decoder preserve fine spectral details that might otherwise be lost during the compression-expansion process.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>U-Net architecture with skip connections</li>
+      <li>Parallel ResBlocks (3/7/11 kernel branches)</li>
+      <li>AdaIN noise injection</li>
+      <li>Anti-aliased harmonic downsampling</li>
+      <li>Progressive refinement through skip connections</li>
+    </ul>
     <p><strong>Recommended for:</strong> High-fidelity audio where spectral detail preservation is important. Good for singing and complex vocal passages.</p>
   </div>
 
@@ -1260,8 +1336,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.0/5</span>
       <span class="badge badge-purple">Category: Hybrid NSF</span>
+      <span class="badge badge-green">Source: models/generators/nsf_apnet.py</span>
     </div>
-    <p>NSF-APNet combines the Neural Sine Filter with an All-Pass Network for improved phase modeling. The All-Pass Network applies magnitude-preserving phase corrections at each residual block, addressing a common weakness of GAN-based vocoders: inaccurate phase reconstruction. By refining the phase component separately from the magnitude, NSF-APNet achieves more natural-sounding output, particularly in the higher frequency ranges where phase errors are most perceptible.</p>
+    <p>NSF-APNet combines the Neural Sine Filter with an All-Pass Network for improved phase modeling. The All-Pass Network applies magnitude-preserving phase corrections at each residual block, addressing a common weakness of GAN-based vocoders: inaccurate phase reconstruction. By refining the phase component separately from the magnitude, NSF-APNet achieves more natural-sounding output, particularly in the higher frequency ranges where phase errors are most perceptible. This hybrid approach maintains the harmonic conditioning of NSF while adding sophisticated phase correction.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Neural Sine Filter for harmonic generation</li>
+      <li>All-Pass Network for phase correction</li>
+      <li>Magnitude-preserving processing</li>
+      <li>Better high-frequency phase accuracy</li>
+      <li>Gradient checkpointing support</li>
+    </ul>
     <p><strong>Recommended for:</strong> Audio with prominent high-frequency content. The phase correction reduces metallic artifacts in synthesized speech.</p>
   </div>
 
@@ -1270,8 +1355,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 4.0/5</span>
       <span class="badge badge-purple">Category: Enhanced MRF</span>
+      <span class="badge badge-green">Source: models/generators/fullband_mrf.py</span>
     </div>
     <p>FullBand-MRF extends the MRF-HiFi-GAN concept with significantly wider dilation patterns (up to dilation rate 15) and channel attention mechanisms. The wider dilations allow the network to capture longer-range dependencies in the speech signal, which is particularly important for modeling vocal formant transitions and coarticulation effects. Channel attention helps the network focus on the most informative frequency bands dynamically. Snake activations provide periodic nonlinearity that matches the quasi-periodic nature of speech signals.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Extended Multi-Receptive Field (dilations up to 15)</li>
+      <li>Channel attention mechanism</li>
+      <li>Snake activations</li>
+      <li>Longer-range temporal modeling</li>
+      <li>Better coarticulation handling</li>
+    </ul>
     <p><strong>Recommended for:</strong> Speech with rapid formant transitions or wide pitch ranges. The extended receptive field captures longer temporal context.</p>
   </div>
 
@@ -1283,8 +1377,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 3.5/5</span>
       <span class="badge badge-purple">Category: Flow-based</span>
+      <span class="badge badge-green">Source: models/generators/waveglow.py</span>
     </div>
     <p>WaveGlow is a flow-based vocoder that uses invertible 1x1 convolutions and WaveNet-style layers with gated activations (tanh x sigmoid) for audio generation. Unlike GAN-based vocoders that learn through adversarial training, WaveGlow learns the exact probability distribution of audio waveforms through maximum likelihood estimation with invertible transformations. This provides more stable training but typically requires more computation. The WaveNet layers capture temporal dependencies through dilated causal convolutions with skip connections.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>Flow-based (invertible) architecture</li>
+      <li>Invertible 1x1 convolutions</li>
+      <li>WaveNet layers with gated activations</li>
+      <li>Maximum likelihood training (no GAN instability)</li>
+      <li>Deterministic and reproducible</li>
+    </ul>
     <p><strong>Recommended for:</strong> Users who prefer deterministic models. WaveGlow's flow-based approach avoids adversarial training instability.</p>
   </div>
 
@@ -1293,8 +1396,17 @@ done</code></pre>
     <div class="meta">
       <span class="badge badge-orange">Rating: 3.5/5</span>
       <span class="badge badge-purple">Category: Phase-Corrected</span>
+      <span class="badge badge-green">Source: models/algorithms/generators/pcph_gan.py</span>
     </div>
     <p>Phase-Corrected Parallel HiFi-GAN uses PCHIP (Piecewise Cubic Hermite Interpolating Polynomial) interpolation for F0 upsampling, providing smoother pitch contour transitions compared to nearest-neighbor or linear interpolation. The PCPH generator models pitch harmonics with a specialized source module, while SiLU (Sigmoid Linear Unit) activations and SnakeBeta provide smooth nonlinearity. A progressive upsampling path with downsampling pre-processing creates a coarse-to-fine synthesis pipeline that naturally handles multi-scale speech features.</p>
+    <p><strong>Key Features:</strong></p>
+    <ul>
+      <li>PCHIP interpolation for smooth F0 upsampling</li>
+      <li>Phase-Corrected Pulse Harmonic generator</li>
+      <li>Coarse-to-fine synthesis pipeline</li>
+      <li>SiLU + SnakeBeta activations</li>
+      <li>Progressive upsampling with pre-processing</li>
+    </ul>
     <p><strong>Recommended for:</strong> Singing voice conversion where smooth pitch transitions are important. The PCHIP interpolation preserves melodic contour accuracy.</p>
   </div>
 
