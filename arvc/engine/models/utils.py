@@ -1,4 +1,3 @@
-import codecs
 import os
 import re
 import gc
@@ -75,16 +74,17 @@ def download_embedder(embedders_mode, hubert):
     Returns:
         True if the model files exist after download, False otherwise.
     """
-    embedders_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/embedders/"
+    embedders_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/embedders/"
     model_path = os.path.join(configs["speaker_diarization_path"], "models", hubert) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], hubert)
 
     if embedders_mode != "transformers" and not os.path.exists(model_path):
         if embedders_mode == "whisper":
-            huggingface.HF_download_file("".join([codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13"), hubert]), model_path)
+            huggingface.HF_download_file(f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/speaker_diarization/{hubert}", model_path)
         else:
             huggingface.HF_download_file("".join([embedders_url, "fairseq/" if embedders_mode == "fairseq" else "onnx/", hubert]), model_path)
     elif embedders_mode == "transformers":
-        url = "transformers/" if not hubert.startswith("spin") else "spin/"
+        # All transformer-format models (including spin) are under embedders/transformers/
+        url = "transformers/"
 
         bin_file = os.path.join(model_path, "model.safetensors")
         config_file = os.path.join(model_path, "config.json")
@@ -100,7 +100,7 @@ def download_embedder(embedders_mode, hubert):
 
 
 def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
-    predictors_url = "https://huggingface.co/NeoPy/Ultimate-Models/resolve/main/predictors/"
+    predictors_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/predictors/"
     if embedders_mode == "spin": embedders_mode = "transformers"
 
     def download_predictor(predictor):
@@ -167,7 +167,7 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
     
 def check_spk_diarization(model_size, speechbrain=True):
     whisper_model = os.path.join(configs["speaker_diarization_path"], "models", f"{model_size}.pt")
-    if not os.path.exists(whisper_model): huggingface.HF_download_file("".join([codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/", "rot13"), model_size, ".pt"]), whisper_model)
+    if not os.path.exists(whisper_model): huggingface.HF_download_file(f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/speaker_diarization/{model_size}.pt", whisper_model)
 
     speechbrain_path = os.path.join(configs["speaker_diarization_path"], "models", "speechbrain")
     if not os.path.exists(speechbrain_path): os.makedirs(speechbrain_path, exist_ok=True)
@@ -176,7 +176,7 @@ def check_spk_diarization(model_size, speechbrain=True):
         for f in ["classifier.ckpt", "config.json", "embedding_model.ckpt", "hyperparams.yaml", "mean_var_norm_emb.ckpt"]:
             speechbrain_model = os.path.join(speechbrain_path, f)
 
-            if not os.path.exists(speechbrain_model): huggingface.HF_download_file(codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/fcrnxre_qvnevmngvba/fcrrpuoenva/", "rot13") + f, speechbrain_model)
+            if not os.path.exists(speechbrain_model): huggingface.HF_download_file(f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/speaker_diarization/speechbrain/{f}", speechbrain_model)
 
 def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=0.8, formant_timbre=0.8):
     import librosa

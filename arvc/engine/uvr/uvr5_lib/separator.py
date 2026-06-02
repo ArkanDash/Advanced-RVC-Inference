@@ -3,7 +3,6 @@ import sys
 import time
 import yaml
 import torch
-import codecs
 import hashlib
 import requests
 import warnings
@@ -134,7 +133,7 @@ class Separator:
         HF_download_file(url, output_path)
 
     def list_supported_model_files(self):
-        response = requests.get(codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/enj/znva/wfba/hie_zbqryf.wfba", "rot13"))
+        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/uvr_models.json")
         response.raise_for_status()
         model_downloads_list = response.json()
 
@@ -151,7 +150,7 @@ class Separator:
     def download_model_files(self, model_filename):
         model_path = os.path.join(self.model_file_dir, model_filename)
         supported_models = self.list_supported_model_files()
-        model_repo = codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/hie5_zbqryf", "rot13")
+        model_repo = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/uvr5_models"
 
         for model_type, model_list in supported_models.items():
             for _, files in model_list.items():
@@ -186,7 +185,7 @@ class Separator:
 
     def load_model_data_using_hash(self, model_path):
         model_hash = self.get_model_hash(model_path)
-        response = requests.get(codecs.decode("uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/enj/znva/wfba/zbqry_qngn.wfba", "rot13"))
+        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/model_data.json")
         response.raise_for_status()
         model_data_object = response.json()
 
