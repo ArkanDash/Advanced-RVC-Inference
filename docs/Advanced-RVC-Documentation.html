@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced RVC Inference - Complete Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  @page {
+    size: A4;
+    margin: 20mm 18mm 22mm 18mm;
+  }
+
+  :root {
+    --c-primary: #2563eb;
+    --c-primary-light: #dbeafe;
+    --c-primary-dark: #1e40af;
+    --c-accent: #7c3aed;
+    --c-accent-light: #ede9fe;
+    --c-text: #1e293b;
+    --c-text-secondary: #475569;
+    --c-text-muted: #94a3b8;
+    --c-bg: #ffffff;
+    --c-bg-alt: #f8fafc;
+    --c-border: #e2e8f0;
+    --c-border-light: #f1f5f9;
+    --c-code-bg: #f1f5f9;
+    --c-success: #16a34a;
+    --c-warning: #d97706;
+    --c-star: #f59e0b;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: var(--font-sans), sans-serif;
+    font-size: 10pt;
+    line-height: 1.6;
+  }
+
+  /* ========== COVER PAGE ========== */
+  .cover-page {
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+    color: #ffffff;
+    padding: 60px 40px;
+  }
+
+  .cover-page .cover-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 6px 20px;
+    font-size: 9pt;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    color: rgba(255,255,255,0.7);
+  }
+
+  .cover-page h1 {
+    font-size: 36pt;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .cover-page .cover-subtitle {
+    font-size: 14pt;
+    font-weight: 300;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 40px 0;
+  }
+
+  .cover-page .cover-divider {
+    width: 80px;
+    height: 2px;
+    background: var(--c-primary);
+    border: none;
+    margin: 0 0 40px 0;
+  }
+
+  .cover-page .cover-meta {
+    font-size: 9pt;
+    color: rgba(255,255,255,0.4);
+    line-height: 1.8;
+  }
+
+  .cover-page .cover-meta a {
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+  }
+
+  /* ========== TOC PAGE ========== */
+  .toc-page {
+    page-break-after: always;
+    padding: 20px 0;
+  }
+
+  .toc-page h2 {
+    font-size: 20pt;
+    font-weight: 700;
+    color: var(--c-primary-dark);
+    margin: 0 0 24px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--c-primary);
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .toc-list li {
+    margin: 0;
+    padding: 0;
+  }
+
+  .toc-list a {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    text-decoration: none;
+    color: var(--c-text);
+    border-bottom: 1px dotted var(--c-border);
+    font-size: 10pt;
+  }
+
+  .toc-list a:hover {
+    color: var(--c-primary);
+  }
+
+  .toc-list .toc-section {
+    font-weight: 600;
+    font-size: 11pt;
+    padding-top: 14px;
+    border-bottom: none;
+    color: var(--c-primary-dark);
+  }
+
+  .toc-list .toc-sub {
+    padding-left: 20px;
+    font-size: 9.5pt;
+    color: var(--c-text-secondary);
+  }
+
+  /* ========== BODY CONTENT ========== */
+  .content {
+    max-width: 100%;
+  }
+
+  h1 {
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--c-primary-dark);
+    margin: 40px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 3px solid var(--c-primary);
+    letter-spacing: -0.5px;
+    page-break-after: avoid;
+  }
+
+  h2 {
+    font-size: 15pt;
+    font-weight: 700;
+    color: var(--c-text);
+    margin: 28px 0 10px 0;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--c-border);
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 12pt;
+    font-weight: 600;
+    color: var(--c-text-secondary);
+    margin: 20px 0 8px 0;
+    page-break-after: avoid;
+  }
+
+  h4 {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--c-text-secondary);
+    margin: 14px 0 6px 0;
+    page-break-after: avoid;
+  }
+
+  p {
+    margin: 0 0 10px 0;
+  }
+
+  a {
+    color: var(--c-primary);
+    text-decoration: none;
+  }
+
+  /* ========== CODE BLOCKS ========== */
+  code {
+    font-family: var(--font-mono), monospace;
+    font-size: 8.5pt;
+    background: var(--c-code-bg);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--c-primary-dark);
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 18px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 8.5pt;
+    line-height: 1.5;
+    margin: 10px 0 14px 0;
+    page-break-inside: avoid;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* ========== TABLES ========== */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 16px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+
+  thead th {
+    background: var(--c-primary-dark);
+    color: #ffffff;
+    font-weight: 600;
+    padding: 8px 10px;
+    text-align: left;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--c-border);
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) {
+    background: var(--c-bg-alt);
+  }
+
+  tbody tr:hover {
+    background: var(--c-primary-light);
+  }
+
+  /* ========== CALLOUT BOXES ========== */
+  .callout {
+    border-left: 4px solid var(--c-primary);
+    background: var(--c-primary-light);
+    padding: 12px 16px;
+    margin: 14px 0;
+    border-radius: 0 6px 6px 0;
+    page-break-inside: avoid;
+  }
+
+  .callout-title {
+    font-weight: 700;
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--c-primary-dark);
+    margin-bottom: 4px;
+  }
+
+  .callout.warning {
+    border-left-color: var(--c-warning);
+    background: #fffbeb;
+  }
+
+  .callout.warning .callout-title {
+    color: var(--c-warning);
+  }
+
+  .callout.success {
+    border-left-color: var(--c-success);
+    background: #f0fdf4;
+  }
+
+  .callout.success .callout-title {
+    color: var(--c-success);
+  }
+
+  /* ========== VOCODER / OPTIMIZER CARDS ========== */
+  .item-card {
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    page-break-inside: avoid;
+    background: var(--c-bg);
+  }
+
+  .item-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .item-card-name {
+    font-size: 13pt;
+    font-weight: 700;
+    color: var(--c-primary-dark);
+    margin: 0;
+  }
+
+  .item-card-rating {
+    color: var(--c-star);
+    font-size: 11pt;
+    letter-spacing: 1px;
+  }
+
+  .item-card-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    font-size: 8.5pt;
+    color: var(--c-text-muted);
+  }
+
+  .item-card-meta span {
+    background: var(--c-bg-alt);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .item-card p {
+    margin: 0 0 8px 0;
+    font-size: 9.5pt;
+    color: var(--c-text-secondary);
+  }
+
+  .item-card ul {
+    margin: 4px 0 8px 18px;
+    padding: 0;
+    font-size: 9pt;
+    color: var(--c-text-secondary);
+  }
+
+  .item-card ul li {
+    margin-bottom: 2px;
+  }
+
+  .item-card .recommend {
+    font-weight: 600;
+    color: var(--c-primary-dark);
+    font-size: 9pt;
+  }
+
+  /* ========== ARG LIST ========== */
+  .arg-list {
+    margin: 8px 0 14px 0;
+  }
+
+  .arg-item {
+    display: flex;
+    gap: 8px;
+    padding: 3px 0;
+    font-size: 9pt;
+    border-bottom: 1px solid var(--c-border-light);
+  }
+
+  .arg-name {
+    font-family: var(--font-mono), monospace;
+    font-weight: 600;
+    color: var(--c-primary-dark);
+    min-width: 180px;
+    flex-shrink: 0;
+    font-size: 8.5pt;
+  }
+
+  .arg-desc {
+    color: var(--c-text-secondary);
+  }
+
+  /* ========== SECTION DIVIDER ========== */
+  .section-divider {
+    page-break-before: always;
+  }
+
+  /* ========== RECOMMENDATION BOX ========== */
+  .rec-box {
+    background: var(--c-bg-alt);
+    border: 1px solid var(--c-border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 14px 0;
+    page-break-inside: avoid;
+  }
+
+  .rec-box h4 {
+    margin: 0 0 8px 0;
+    color: var(--c-primary-dark);
+    font-size: 10pt;
+  }
+
+  .rec-box p, .rec-box ul {
+    font-size: 9.5pt;
+    color: var(--c-text-secondary);
+    margin: 0 0 6px 0;
+  }
+
+  .rec-box ul {
+    margin-left: 16px;
+  }
+
+  /* ========== QUICK REF TABLE SPECIAL ========== */
+  .quick-ref-table td:first-child {
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .star-rating {
+    color: var(--c-star);
+    letter-spacing: 0.5px;
+  }
+
+  /* ========== PRINT ========== */
+  @media print {
+    body { font-size: 9pt; }
+    .cover-page { min-height: auto; height: 100vh; }
+    pre { page-break-inside: avoid; }
+    table { page-break-inside: avoid; }
+    .item-card { page-break-inside: avoid; }
+  }
+
+  @media screen {
+    body {
+      max-width: 210mm;
+      margin: 0 auto;
+      box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="cover-badge">Open Source Voice AI</div>
+  <h1>Advanced RVC<br>Inference</h1>
+  <p class="cover-subtitle">Complete Documentation v2.1.0</p>
+  <hr class="cover-divider">
+  <div class="cover-meta">
+    CLI Reference Guide &middot; Vocoder Reference &middot; Optimizer Reference<br>
+    <a href="https://github.com/ArkanDash/Advanced-RVC-Inference">github.com/ArkanDash/Advanced-RVC-Inference</a><br>
+    <a href="https://discord.gg/hvmsukmBHE">discord.gg/hvmsukmBHE</a>
+  </div>
+</div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc-page">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li><a class="toc-section">Part I &mdash; CLI Reference Guide</a></li>
+    <li><a class="toc-sub" href="#installation">Installation</a></li>
+    <li><a class="toc-sub" href="#quick-start">Quick Start</a></li>
+    <li><a class="toc-sub" href="#cmd-infer">infer &mdash; Voice Conversion</a></li>
+    <li><a class="toc-sub" href="#cmd-uvr">uvr &mdash; Audio Separation</a></li>
+    <li><a class="toc-sub" href="#cmd-create-dataset">create-dataset &mdash; Create Training Data</a></li>
+    <li><a class="toc-sub" href="#cmd-create-index">create-index &mdash; Create Model Index</a></li>
+    <li><a class="toc-sub" href="#cmd-extract">extract &mdash; Feature Extraction</a></li>
+    <li><a class="toc-sub" href="#cmd-preprocess">preprocess &mdash; Data Preprocessing</a></li>
+    <li><a class="toc-sub" href="#cmd-train">train &mdash; Model Training</a></li>
+    <li><a class="toc-sub" href="#cmd-create-ref">create-ref &mdash; Create Reference Set</a></li>
+    <li><a class="toc-sub" href="#cmd-download">download &mdash; Download Models/Audio</a></li>
+    <li><a class="toc-sub" href="#cmd-serve">serve &mdash; Web Interface</a></li>
+    <li><a class="toc-sub" href="#cmd-info">info / version / list-models / list-f0-methods</a></li>
+    <li><a class="toc-sub" href="#configuration">Configuration</a></li>
+    <li><a class="toc-sub" href="#examples">Examples &amp; Workflows</a></li>
+    <li><a class="toc-sub" href="#troubleshooting">Troubleshooting</a></li>
+    <li><a class="toc-section">Part II &mdash; Vocoder Reference Guide</a></li>
+    <li><a class="toc-sub" href="#vocoders-quick">Quick Reference Table</a></li>
+    <li><a class="toc-sub" href="#vocoders-tier1">Tier 1: Best Quality</a></li>
+    <li><a class="toc-sub" href="#vocoders-tier2">Tier 2: Excellent Quality</a></li>
+    <li><a class="toc-sub" href="#vocoders-tier3">Tier 3: Very Good Quality</a></li>
+    <li><a class="toc-sub" href="#vocoders-tier4">Tier 4: Good Quality</a></li>
+    <li><a class="toc-sub" href="#vocoders-recs">Recommendations</a></li>
+    <li><a class="toc-section">Part III &mdash; Optimizer Reference Guide</a></li>
+    <li><a class="toc-sub" href="#optimizers-quick">Quick Reference Table</a></li>
+    <li><a class="toc-sub" href="#optimizers-tier1">Tier 1: Best for RVC/Audio Training</a></li>
+    <li><a class="toc-sub" href="#optimizers-tier2">Tier 2: Excellent Optimizers</a></li>
+    <li><a class="toc-sub" href="#optimizers-tier3">Tier 3: Very Good Optimizers</a></li>
+    <li><a class="toc-sub" href="#optimizers-tier4">Tier 4&ndash;7: Good to Specialized</a></li>
+    <li><a class="toc-sub" href="#optimizers-recs">Recommendations</a></li>
+  </ul>
+</div>
+
+<!-- ==================== PART I: CLI GUIDE ==================== -->
+<div class="content">
+
+<h1>Part I &mdash; CLI Reference Guide</h1>
+
+<p>A comprehensive command-line interface for the Advanced RVC Inference framework. This CLI provides access to all the powerful features of RVC including voice conversion, model training, audio separation, and more &mdash; all from the terminal.</p>
+
+<h2 id="installation">Installation</h2>
+
+<h3>From Source</h3>
+<pre><code># Clone the repository
+git clone https://github.com/ArkanDash/Advanced-RVC-Inference.git
+cd Advanced-RVC-Inference
+
+# Install the package
+pip install -e .
+
+# Or install with all dependencies
+pip install -e .[all]</code></pre>
+
+<h3>Using the CLI Directly</h3>
+<pre><code># Run directly with Python
+python rvc_cli.py --help
+
+# Or use the wrapper script (Linux/macOS)
+./rvc-cli --help
+
+# Make the wrapper executable (Linux/macOS)
+chmod +x rvc-cli</code></pre>
+
+<h2 id="quick-start">Quick Start</h2>
+
+<h3>Basic Voice Conversion</h3>
+<pre><code># Convert voice with default settings
+rvc-cli infer -m mymodel.pth -i input.wav -o output.wav
+
+# Convert with pitch shift (12 semitones = octave up)
+rvc-cli infer -m mymodel.pth -i input.wav -p 12
+
+# Convert with custom F0 method
+rvc-cli infer -m mymodel.pth -i input.wav --f0_method harvest</code></pre>
+
+<h3>Audio Separation</h3>
+<pre><code># Separate vocals from music
+rvc-cli uvr -i music.wav
+
+# Separate with specific model
+rvc-cli uvr -i music.wav --model MDXNET_Main --output ./separated</code></pre>
+
+<h3>Launch Web Interface</h3>
+<pre><code># Start web interface on default port
+rvc-cli serve
+
+# Start on custom port with public share
+rvc-cli serve --port 8080 --share</code></pre>
+
+<!-- ===== INFER ===== -->
+<h2 id="cmd-infer">infer &mdash; Voice Conversion</h2>
+<p>Convert voice in an audio file using an RVC model.</p>
+<pre><code>rvc-cli infer -m &lt;model&gt; -i &lt;input&gt; [options]</code></pre>
+
+<h4>Required Arguments</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-m, --model</span><span class="arg-desc">Path to RVC model file (.pth or .onnx)</span></div>
+  <div class="arg-item"><span class="arg-name">-i, --input</span><span class="arg-desc">Path to input audio file</span></div>
+</div>
+
+<h4>Optional Arguments</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-o, --output</span><span class="arg-desc">Output file path (auto-generated if not specified)</span></div>
+  <div class="arg-item"><span class="arg-name">-p, --pitch</span><span class="arg-desc">Pitch shift in semitones (default: 0)</span></div>
+  <div class="arg-item"><span class="arg-name">-f, --format</span><span class="arg-desc">Output format &mdash; wav, mp3, flac, ogg (default: wav)</span></div>
+  <div class="arg-item"><span class="arg-name">--index</span><span class="arg-desc">Path to .index file for better quality</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_method</span><span class="arg-desc">F0 extraction method (default: rmvpe)</span></div>
+  <div class="arg-item"><span class="arg-name">--filter_radius</span><span class="arg-desc">Filter radius for F0 smoothing (default: 3)</span></div>
+  <div class="arg-item"><span class="arg-name">--index_rate</span><span class="arg-desc">Index strength 0.0-1.0 (default: 0.5)</span></div>
+  <div class="arg-item"><span class="arg-name">--rms_mix_rate</span><span class="arg-desc">RMS mix rate (default: 1.0)</span></div>
+  <div class="arg-item"><span class="arg-name">--protect</span><span class="arg-desc">Protect consonants 0.0-1.0 (default: 0.33)</span></div>
+  <div class="arg-item"><span class="arg-name">--hop_length</span><span class="arg-desc">Hop length for processing (default: 64)</span></div>
+  <div class="arg-item"><span class="arg-name">--embedder_model</span><span class="arg-desc">Embedding model (default: hubert_base)</span></div>
+  <div class="arg-item"><span class="arg-name">--resample_sr</span><span class="arg-desc">Resample rate (0 = original, default: 0)</span></div>
+  <div class="arg-item"><span class="arg-name">--split_audio</span><span class="arg-desc">Split audio before processing</span></div>
+  <div class="arg-item"><span class="arg-name">--checkpointing</span><span class="arg-desc">Enable memory checkpointing</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_autotune</span><span class="arg-desc">Enable F0 autotune</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_autotune_strength</span><span class="arg-desc">Autotune strength (default: 1.0)</span></div>
+  <div class="arg-item"><span class="arg-name">--formant_shifting</span><span class="arg-desc">Enable formant shifting</span></div>
+  <div class="arg-item"><span class="arg-name">--formant_qfrency</span><span class="arg-desc">Formant frequency coefficient (default: 0.8)</span></div>
+  <div class="arg-item"><span class="arg-name">--formant_timbre</span><span class="arg-desc">Formant timbre coefficient (default: 0.8)</span></div>
+  <div class="arg-item"><span class="arg-name">--clean_audio</span><span class="arg-desc">Apply audio cleaning</span></div>
+  <div class="arg-item"><span class="arg-name">--clean_strength</span><span class="arg-desc">Cleaning strength (default: 0.7)</span></div>
+</div>
+
+<div class="callout"><div class="callout-title">Example</div>
+<pre><code>rvc-cli infer -m artist_model.pth -i speech.wav -o converted.wav -p 2 \
+    --index_rate 0.75 --f0_method rmvpe --clean_audio</code></pre>
+</div>
+
+<!-- ===== UVR ===== -->
+<h2 id="cmd-uvr">uvr &mdash; Audio Separation</h2>
+<p>Separate vocals from instrumentals using UVR5.</p>
+<pre><code>rvc-cli uvr -i &lt;input&gt; [options]</code></pre>
+
+<h4>Required Arguments</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-i, --input</span><span class="arg-desc">Path to input audio file</span></div>
+</div>
+
+<h4>Optional Arguments</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-o, --output</span><span class="arg-desc">Output directory (default: ./audios/uvr)</span></div>
+  <div class="arg-item"><span class="arg-name">-f, --format</span><span class="arg-desc">Output format (default: wav)</span></div>
+  <div class="arg-item"><span class="arg-name">--model</span><span class="arg-desc">Separation model (default: MDXNET_Main)</span></div>
+  <div class="arg-item"><span class="arg-name">--karaoke_model</span><span class="arg-desc">Karaoke model (default: MDX-Version-1)</span></div>
+  <div class="arg-item"><span class="arg-name">--reverb_model</span><span class="arg-desc">Reverb model (default: MDX-Reverb)</span></div>
+  <div class="arg-item"><span class="arg-name">--denoise_model</span><span class="arg-desc">Denoise model (default: Normal)</span></div>
+  <div class="arg-item"><span class="arg-name">--sample_rate</span><span class="arg-desc">Output sample rate (default: 44100)</span></div>
+  <div class="arg-item"><span class="arg-name">--shifts</span><span class="arg-desc">Number of predictions (default: 2)</span></div>
+  <div class="arg-item"><span class="arg-name">--batch_size</span><span class="arg-desc">Batch size (default: 1)</span></div>
+  <div class="arg-item"><span class="arg-name">--overlap</span><span class="arg-desc">Overlap between segments (default: 0.25)</span></div>
+  <div class="arg-item"><span class="arg-name">--aggression</span><span class="arg-desc">Extraction intensity (default: 5)</span></div>
+  <div class="arg-item"><span class="arg-name">--hop_length</span><span class="arg-desc">Hop length (default: 1024)</span></div>
+  <div class="arg-item"><span class="arg-name">--window_size</span><span class="arg-desc">Window size (default: 512)</span></div>
+  <div class="arg-item"><span class="arg-name">--enable_tta</span><span class="arg-desc">Enable test-time augmentation</span></div>
+  <div class="arg-item"><span class="arg-name">--enable_denoise</span><span class="arg-desc">Enable denoising</span></div>
+  <div class="arg-item"><span class="arg-name">--separate_backing</span><span class="arg-desc">Separate backing vocals</span></div>
+  <div class="arg-item"><span class="arg-name">--separate_reverb</span><span class="arg-desc">Separate reverb</span></div>
+</div>
+
+<div class="callout"><div class="callout-title">Available Models</div>
+MDXNET_Main, MDXNET_9482, HP-Vocal-1, HP-Vocal-2, Inst_HQ_1 through Inst_HQ_5, Kim_Vocal_1, Kim_Vocal_2
+</div>
+
+<div class="callout"><div class="callout-title">Example</div>
+<pre><code>rvc-cli uvr -i song.wav --model HP-Vocal-2 --aggression 10 \
+    --enable_denoise --output ./vocals</code></pre>
+</div>
+
+<!-- ===== CREATE-DATASET ===== -->
+<h2 id="cmd-create-dataset">create-dataset &mdash; Create Training Data</h2>
+<p>Create training dataset from YouTube videos or local audio files.</p>
+<pre><code>rvc-cli create-dataset -u &lt;url&gt; [options]
+# or
+rvc-cli create-dataset -i &lt;directory&gt; [options]</code></pre>
+
+<h4>Required Arguments (one of)</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-u, --url</span><span class="arg-desc">YouTube URL (separate multiple with commas)</span></div>
+  <div class="arg-item"><span class="arg-name">-i, --input</span><span class="arg-desc">Input directory with audio files</span></div>
+</div>
+
+<h4>Optional Arguments</h4>
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-o, --output</span><span class="arg-desc">Output directory (default: ./dataset)</span></div>
+  <div class="arg-item"><span class="arg-name">--sample_rate</span><span class="arg-desc">Sample rate (default: 48000)</span></div>
+  <div class="arg-item"><span class="arg-name">--clean_dataset</span><span class="arg-desc">Apply data cleaning</span></div>
+  <div class="arg-item"><span class="arg-name">--clean_strength</span><span class="arg-desc">Cleaning strength (default: 0.7)</span></div>
+  <div class="arg-item"><span class="arg-name">--separate</span><span class="arg-desc">Separate vocals (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--separator_model</span><span class="arg-desc">Separation model (default: MDXNET_Main)</span></div>
+  <div class="arg-item"><span class="arg-name">--skip_start</span><span class="arg-desc">Seconds to skip at start (default: 0)</span></div>
+  <div class="arg-item"><span class="arg-name">--skip_end</span><span class="arg-desc">Seconds to skip at end (default: 0)</span></div>
+</div>
+
+<div class="callout"><div class="callout-title">Example</div>
+<pre><code>rvc-cli create-dataset -u "https://youtube.com/watch?v=xxx" \
+    --sample_rate 48000 --separate --output ./my_dataset</code></pre>
+</div>
+
+<!-- ===== CREATE-INDEX ===== -->
+<h2 id="cmd-create-index">create-index &mdash; Create Model Index</h2>
+<p>Create .index file for voice retrieval.</p>
+<pre><code>rvc-cli create-index &lt;model_name&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">model_name</span><span class="arg-desc">Name of the model (positional)</span></div>
+  <div class="arg-item"><span class="arg-name">--version</span><span class="arg-desc">RVC version &mdash; v1 or v2 (default: v2)</span></div>
+  <div class="arg-item"><span class="arg-name">--algorithm</span><span class="arg-desc">Index algorithm &mdash; Auto, Faiss, or KMeans (default: Auto)</span></div>
+</div>
+
+<!-- ===== EXTRACT ===== -->
+<h2 id="cmd-extract">extract &mdash; Feature Extraction</h2>
+<p>Extract embeddings and F0 from training data.</p>
+<pre><code>rvc-cli extract &lt;model_name&gt; --sample_rate &lt;rate&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">model_name</span><span class="arg-desc">Name of the model (positional)</span></div>
+  <div class="arg-item"><span class="arg-name">--sample_rate</span><span class="arg-desc">Sample rate of input audio (required)</span></div>
+  <div class="arg-item"><span class="arg-name">--version</span><span class="arg-desc">RVC version &mdash; v1 or v2 (default: v2)</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_method</span><span class="arg-desc">F0 extraction method (default: rmvpe)</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_onnx</span><span class="arg-desc">Use ONNX F0 predictor</span></div>
+  <div class="arg-item"><span class="arg-name">--pitch_guidance</span><span class="arg-desc">Use pitch guidance (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--hop_length</span><span class="arg-desc">Hop length (default: 128)</span></div>
+  <div class="arg-item"><span class="arg-name">--cpu_cores</span><span class="arg-desc">CPU cores (default: 2)</span></div>
+  <div class="arg-item"><span class="arg-name">--gpu</span><span class="arg-desc">GPU index (default: - for CPU)</span></div>
+  <div class="arg-item"><span class="arg-name">--embedder_model</span><span class="arg-desc">Embedder model (default: hubert_base)</span></div>
+  <div class="arg-item"><span class="arg-name">--rms_extract</span><span class="arg-desc">Extract RMS energy</span></div>
+</div>
+
+<!-- ===== PREPROCESS ===== -->
+<h2 id="cmd-preprocess">preprocess &mdash; Data Preprocessing</h2>
+<p>Slice and normalize training audio.</p>
+<pre><code>rvc-cli preprocess &lt;model_name&gt; --sample_rate &lt;rate&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">model_name</span><span class="arg-desc">Name of the model (positional)</span></div>
+  <div class="arg-item"><span class="arg-name">--sample_rate</span><span class="arg-desc">Sample rate (required)</span></div>
+  <div class="arg-item"><span class="arg-name">--dataset_path</span><span class="arg-desc">Dataset path (default: ./dataset)</span></div>
+  <div class="arg-item"><span class="arg-name">--cpu_cores</span><span class="arg-desc">CPU cores (default: 2)</span></div>
+  <div class="arg-item"><span class="arg-name">--cut_method</span><span class="arg-desc">Cutting method &mdash; Automatic, Simple, or Skip (default: Automatic)</span></div>
+  <div class="arg-item"><span class="arg-name">--process_effects</span><span class="arg-desc">Apply preprocessing effects</span></div>
+  <div class="arg-item"><span class="arg-name">--clean_dataset</span><span class="arg-desc">Clean dataset</span></div>
+  <div class="arg-item"><span class="arg-name">--chunk_len</span><span class="arg-desc">Chunk length for Simple method (default: 3.0)</span></div>
+  <div class="arg-item"><span class="arg-name">--overlap_len</span><span class="arg-desc">Overlap length (default: 0.3)</span></div>
+  <div class="arg-item"><span class="arg-name">--normalization</span><span class="arg-desc">Normalization mode &mdash; none, pre, or post (default: none)</span></div>
+</div>
+
+<!-- ===== TRAIN ===== -->
+<h2 id="cmd-train">train &mdash; Model Training</h2>
+<p>Train a new RVC voice model.</p>
+<pre><code>rvc-cli train &lt;model_name&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">model_name</span><span class="arg-desc">Name of the model (positional)</span></div>
+  <div class="arg-item"><span class="arg-name">--version</span><span class="arg-desc">RVC version &mdash; v1 or v2 (default: v2)</span></div>
+  <div class="arg-item"><span class="arg-name">--author</span><span class="arg-desc">Model author name</span></div>
+  <div class="arg-item"><span class="arg-name">--epochs</span><span class="arg-desc">Total training epochs (default: 300)</span></div>
+  <div class="arg-item"><span class="arg-name">--batch_size</span><span class="arg-desc">Batch size (default: 8)</span></div>
+  <div class="arg-item"><span class="arg-name">--save_every</span><span class="arg-desc">Save checkpoint every N epochs (default: 50)</span></div>
+  <div class="arg-item"><span class="arg-name">--save_latest</span><span class="arg-desc">Save only latest checkpoint (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--save_weights</span><span class="arg-desc">Save all model weights (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--gpu</span><span class="arg-desc">GPU index (default: 0)</span></div>
+  <div class="arg-item"><span class="arg-name">--cache_gpu</span><span class="arg-desc">Cache data in GPU</span></div>
+  <div class="arg-item"><span class="arg-name">--pitch_guidance</span><span class="arg-desc">Use pitch guidance (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--pretrained_g</span><span class="arg-desc">Path to pre-trained G weights</span></div>
+  <div class="arg-item"><span class="arg-name">--pretrained_d</span><span class="arg-desc">Path to pre-trained D weights</span></div>
+  <div class="arg-item"><span class="arg-name">--vocoder</span><span class="arg-desc">Vocoder choice (see Part II). Default: HiFi-GAN</span></div>
+  <div class="arg-item"><span class="arg-name">--energy</span><span class="arg-desc">Use RMS energy</span></div>
+  <div class="arg-item"><span class="arg-name">--overtrain_detect</span><span class="arg-desc">Enable overtraining detection</span></div>
+  <div class="arg-item"><span class="arg-name">--optimizer</span><span class="arg-desc">Optimizer choice (see Part III). Default: AdamW</span></div>
+  <div class="arg-item"><span class="arg-name">--multiscale_loss</span><span class="arg-desc">Use multi-scale mel loss</span></div>
+  <div class="arg-item"><span class="arg-name">--use_reference</span><span class="arg-desc">Use custom reference set</span></div>
+  <div class="arg-item"><span class="arg-name">--reference_path</span><span class="arg-desc">Path to reference set</span></div>
+  <div class="arg-item"><span class="arg-name">--checkpointing</span><span class="arg-desc">Enable checkpointing</span></div>
+  <div class="arg-item"><span class="arg-name">--cosine_lr</span><span class="arg-desc">Use CosineAnnealingLR scheduler</span></div>
+</div>
+
+<!-- ===== CREATE-REF ===== -->
+<h2 id="cmd-create-ref">create-ref &mdash; Create Reference Set</h2>
+<p>Create reference audio for better inference quality.</p>
+<pre><code>rvc-cli create-ref &lt;audio_file&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">audio_file</span><span class="arg-desc">Path to audio file (positional)</span></div>
+  <div class="arg-item"><span class="arg-name">-n, --name</span><span class="arg-desc">Reference name (default: reference)</span></div>
+  <div class="arg-item"><span class="arg-name">--version</span><span class="arg-desc">RVC version &mdash; v1 or v2 (default: v2)</span></div>
+  <div class="arg-item"><span class="arg-name">--pitch_guidance</span><span class="arg-desc">Use pitch guidance (default: True)</span></div>
+  <div class="arg-item"><span class="arg-name">--energy</span><span class="arg-desc">Use RMS energy</span></div>
+  <div class="arg-item"><span class="arg-name">--embedder_model</span><span class="arg-desc">Embedder model (default: hubert_base)</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_method</span><span class="arg-desc">F0 extraction method (default: rmvpe)</span></div>
+  <div class="arg-item"><span class="arg-name">--pitch_shift</span><span class="arg-desc">Pitch shift (default: 0)</span></div>
+  <div class="arg-item"><span class="arg-name">--filter_radius</span><span class="arg-desc">Filter radius (default: 3)</span></div>
+  <div class="arg-item"><span class="arg-name">--f0_autotune</span><span class="arg-desc">Enable F0 autotune</span></div>
+  <div class="arg-item"><span class="arg-name">--alpha</span><span class="arg-desc">Alpha blending (default: 0.5)</span></div>
+</div>
+
+<!-- ===== DOWNLOAD ===== -->
+<h2 id="cmd-download">download &mdash; Download Models/Audio</h2>
+<p>Download models from HuggingFace or audio from YouTube.</p>
+<pre><code>rvc-cli download -l &lt;link&gt; [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">-l, --link</span><span class="arg-desc">Download link (HuggingFace or YouTube URL) (required)</span></div>
+  <div class="arg-item"><span class="arg-name">-n, --name</span><span class="arg-desc">Name to save as</span></div>
+</div>
+
+<!-- ===== SERVE ===== -->
+<h2 id="cmd-serve">serve &mdash; Web Interface</h2>
+<p>Launch the Gradio web UI.</p>
+<pre><code>rvc-cli serve [options]</code></pre>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">--host</span><span class="arg-desc">Host to bind (default: 0.0.0.0)</span></div>
+  <div class="arg-item"><span class="arg-name">--port</span><span class="arg-desc">Port to bind (default: 7860)</span></div>
+  <div class="arg-item"><span class="arg-name">--share</span><span class="arg-desc">Create public share URL</span></div>
+  <div class="arg-item"><span class="arg-name">--easy</span><span class="arg-desc">Launch Easy GUI (simplified mode)</span></div>
+</div>
+
+<!-- ===== INFO / VERSION / ETC ===== -->
+<h2 id="cmd-info">info / version / list-models / list-f0-methods</h2>
+
+<div class="arg-list">
+  <div class="arg-item"><span class="arg-name">rvc-cli info</span><span class="arg-desc">Show system and environment information (OS, GPU, memory, models)</span></div>
+  <div class="arg-item"><span class="arg-name">rvc-cli version</span><span class="arg-desc">Show version and dependency information</span></div>
+  <div class="arg-item"><span class="arg-name">rvc-cli list-models</span><span class="arg-desc">List installed models in the weights folder</span></div>
+  <div class="arg-item"><span class="arg-name">rvc-cli list-f0-methods</span><span class="arg-desc">Show all available pitch extraction methods</span></div>
+</div>
+
+<!-- ===== CONFIGURATION ===== -->
+<h2 id="configuration">Configuration</h2>
+
+<h3>Environment Variables</h3>
+<table>
+  <thead><tr><th>Variable</th><th>Description</th><th>Default</th></tr></thead>
+  <tbody>
+    <tr><td><code>ARVC_ASSETS_PATH</code></td><td>Path to assets directory</td><td><code>assets</code></td></tr>
+    <tr><td><code>ARVC_CONFIGS_PATH</code></td><td>Path to configs directory</td><td><code>configs</code></td></tr>
+    <tr><td><code>ARVC_WEIGHTS_PATH</code></td><td>Path to weights directory</td><td><code>assets/weights</code></td></tr>
+    <tr><td><code>ARVC_LOGS_PATH</code></td><td>Path to logs directory</td><td><code>assets/logs</code></td></tr>
+  </tbody>
+</table>
+
+<h3>Model and Index Files</h3>
+<p>Place your model files (<code>.pth</code> or <code>.onnx</code>) in <code>arvc/assets/weights/</code> and index files (<code>.index</code>) in <code>arvc/assets/logs/&lt;model_name&gt;/</code>.</p>
+
+<!-- ===== EXAMPLES ===== -->
+<h2 id="examples">Examples &amp; Workflows</h2>
+
+<h3>Complete Training Workflow</h3>
+<pre><code># 1. Create dataset from YouTube
+rvc-cli create-dataset -u "https://youtube.com/watch?v=xxx" \
+    --output ./dataset --sample_rate 48000 --separate
+
+# 2. Preprocess data
+rvc-cli preprocess mymodel --sample_rate 48000 --cut_method Automatic
+
+# 3. Extract features
+rvc-cli extract mymodel --sample_rate 48000 --f0_method rmvpe --gpu 0
+
+# 4. Train model
+rvc-cli train mymodel --version v2 --epochs 300 --batch_size 8 --gpu 0
+
+# 5. Create index (after training)
+rvc-cli create-index mymodel --version v2</code></pre>
+
+<h3>Voice Conversion with Different F0 Methods</h3>
+<pre><code># Using RMVPE (recommended)
+rvc-cli infer -m model.pth -i input.wav -o output_rmvpe.wav --f0_method rmvpe
+
+# Using Harvest (faster)
+rvc-cli infer -m model.pth -i input.wav -o output_harvest.wav --f0_method harvest
+
+# Using Crepe (most accurate but slow)
+rvc-cli infer -m model.pth -i input.wav -o output_crepe.wav --f0_method crepe-medium</code></pre>
+
+<h3>Batch Processing</h3>
+<pre><code># Process all audio files in a directory
+for file in ./inputs/*.wav; do
+    rvc-cli infer -m model.pth -i "$file" -o "./outputs/$(basename $file)"
+done</code></pre>
+
+<!-- ===== TROUBLESHOOTING ===== -->
+<h2 id="troubleshooting">Troubleshooting</h2>
+
+<h3>"Model file not found"</h3>
+<p>Ensure the model path is correct. Check that the model file has <code>.pth</code> or <code>.onnx</code> extension. Verify file permissions.</p>
+
+<h3>"CUDA out of memory"</h3>
+<p>Reduce batch size: <code>--batch_size 4</code>. Enable checkpointing: <code>--checkpointing</code>. Use CPU: <code>--gpu -</code>.</p>
+
+<h3>"Audio format not supported"</h3>
+<p>Convert audio to WAV first: <code>ffmpeg -i input.mp3 output.wav</code>. Supported formats: wav, mp3, flac, ogg, opus, m4a, aac.</p>
+
+<h3>"F0 method not available"</h3>
+<p>Install ONNX runtime for some methods. Some methods require specific embedders.</p>
+
+<h3>Getting Help</h3>
+<pre><code># General help
+rvc-cli --help
+
+# Command-specific help
+rvc-cli infer --help
+rvc-cli uvr --help
+rvc-cli train --help</code></pre>
+
+</div><!-- /content -->
+
+<!-- ==================== PART II: VOCODER GUIDE ==================== -->
+<div class="section-divider"></div>
+<div class="content">
+
+<h1>Part II &mdash; Vocoder Reference Guide</h1>
+
+<p>Advanced RVC Inference supports <strong>13 vocoders</strong> for audio synthesis, each with different architectures, strengths, and quality characteristics. This guide provides detailed descriptions, ratings, and recommendations.</p>
+
+<h2 id="vocoders-quick">Quick Reference</h2>
+
+<table class="quick-ref-table">
+  <thead><tr><th>Rating</th><th>Vocoder</th><th>Category</th><th>Key Feature</th></tr></thead>
+  <tbody>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>HiFi-GAN</strong> (default)</td><td>HiFi-GAN</td><td>Standard, lightweight &amp; fast</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>BigVGAN</strong></td><td>Anti-Aliased GAN</td><td>SnakeBeta + AMP, highest quality</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>Default (HiFi-GAN NSF)</strong></td><td>HiFi-GAN</td><td>Neural Sine Filter, harmonic injection</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>HiFi-GAN-v3</strong></td><td>Enhanced HiFi-GAN</td><td>SnakeBeta activations, wider dilations</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>MRF-HiFi-GAN</strong></td><td>Multi-Receptive Field</td><td>MRF blocks for richer features</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>Vocos</strong></td><td>Fourier-based</td><td>iSTFT output, lightweight</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>RingFormer</strong></td><td>Conformer-based</td><td>iSTFT + attention, phase prediction</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>JVSF-HiFi-GAN</strong></td><td>Source-Filter</td><td>Separate source/filter modeling</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>RefineGAN</strong></td><td>U-Net GAN</td><td>Skip connections, parallel ResBlocks</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>NSF-APNet</strong></td><td>Hybrid NSF</td><td>All-pass phase correction</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>FullBand-MRF</strong></td><td>Enhanced MRF</td><td>Wider dilations, channel attention</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>WaveGlow</strong></td><td>Flow-based</td><td>Invertible convolutions, WaveNet</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>PCPH-GAN</strong></td><td>Phase-Corrected</td><td>PCHIP interpolation, harmonic gen</td></tr>
+  </tbody>
+</table>
+
+<h2 id="vocoders-tier1">Tier 1: Best Quality</h2>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">HiFi-GAN (Default)</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span>
+  </div>
+  <div class="item-card-meta">
+    <span>Category: HiFi-GAN</span><span>Source: models/generators/hifigan.py</span><span>Rating: 5.0/5</span>
+  </div>
+  <p>HiFi-GAN is the standard and default vocoder. It uses transposed convolution upsampling with weight-normalized residual blocks (Multi-Receptive Field fusion). Each upsampling layer is followed by multiple residual blocks with different kernel sizes and dilation rates, capturing features at multiple temporal scales. Lightweight and fast while still producing high-quality audio output. Works with both pitch-guided and non-pitch-guided training modes.</p>
+  <ul>
+    <li>Standard transposed convolution upsampling</li>
+    <li>Weight-normalized residual blocks with MRF fusion</li>
+    <li>Works with and without pitch guidance (f0)</li>
+    <li>Lightweight and fast inference</li>
+  </ul>
+  <p class="recommend">Recommended for: Default choice for all training. Best balance of quality, speed, and compatibility.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">BigVGAN</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span>
+  </div>
+  <div class="item-card-meta">
+    <span>Category: Anti-Aliased GAN</span><span>Paper: 2023</span><span>Rating: 5.0/5</span>
+  </div>
+  <p>The highest-quality vocoder available. Introduces Snake activations with Anti-Aliasing (SnakeBeta and AMP blocks) and data-augmented adversarial training. Snake provides a periodic nonlinearity naturally suited for audio signals, while anti-aliased design prevents high-frequency artifacts. Uses kaiser-sinc filters for both upsampling and downsampling, achieving state-of-the-art quality across benchmarks.</p>
+  <ul>
+    <li>SnakeBeta learnable periodic activations</li>
+    <li>Anti-Aliased Multi-Period (AMP) blocks</li>
+    <li>Kaiser-sinc filters for upsampling/downsampling</li>
+    <li>Superior high-frequency reconstruction</li>
+  </ul>
+  <p class="recommend">Recommended for: Maximum audio quality. Best for singing voice conversion and high-fidelity speech synthesis.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">Default (HiFi-GAN NSF)</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span>
+  </div>
+  <div class="item-card-meta">
+    <span>Category: HiFi-GAN</span><span>Source: models/generators/nsf_hifigan.py</span><span>Rating: 5.0/5</span>
+  </div>
+  <p>HiFi-GAN with Neural Sine Filter (NSF). Combines HiFi-GAN's upsampling with a Neural Sine Filter that injects harmonic information directly into each upsampling layer. The NSF source module generates sine waves conditioned on F0, mixed through noise convolution layers. Provides improved pitch accuracy due to explicit harmonic conditioning, but requires pitch guidance (f0) to be enabled.</p>
+  <ul>
+    <li>Neural Sine Filter for harmonic injection</li>
+    <li>Noise convolutions at each upsampling layer</li>
+    <li>Improved pitch accuracy from explicit harmonic conditioning</li>
+    <li>Supports gradient checkpointing; requires pitch guidance (f0)</li>
+  </ul>
+  <p class="recommend">Recommended for: Users who need improved pitch accuracy. The explicit harmonic injection helps with singing voice and tonal languages.</p>
+</div>
+
+<h2 id="vocoders-tier2">Tier 2: Excellent Quality</h2>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">HiFi-GAN-v3</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span>
+  </div>
+  <div class="item-card-meta"><span>Category: Enhanced HiFi-GAN</span><span>Rating: 4.5/5</span></div>
+  <p>Enhanced variant incorporating SnakeBeta activations and wider dilation patterns. Unlike original HiFi-GAN which uses LeakyReLU, v3 uses the same Snake activation that made BigVGAN successful, providing periodic nonlinearity better matching audio signal characteristics. Wider dilation captures longer-range temporal dependencies for improved formant transition modeling.</p>
+  <ul><li>SnakeBeta learnable activations</li><li>Enhanced residual blocks with wider dilations</li><li>Gradient checkpointing support</li><li>Drop-in upgrade over standard HiFi-GAN</li></ul>
+  <p class="recommend">Recommended for: Quality upgrade over Default without the computational cost of BigVGAN.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">MRF-HiFi-GAN</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span>
+  </div>
+  <div class="item-card-meta"><span>Category: Multi-Receptive Field</span><span>Rating: 4.5/5</span></div>
+  <p>Replaces standard residual blocks with Multi-Receptive Field (MRF) blocks. Each MRF block contains a sequence of MRFLayers with different dilation stacks, capturing features at multiple temporal scales simultaneously. Particularly effective for speech with complex spectral characteristics. SineGenerator provides harmonic conditioning with 8 harmonics.</p>
+  <ul><li>Multi-Receptive Field fusion blocks</li><li>Multiple dilation stacks per block</li><li>SineGenerator with 8 harmonics</li><li>Gradient checkpointing support</li></ul>
+  <p class="recommend">Recommended for: Speech with complex spectral characteristics. Good for multi-speaker models.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">Vocos</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span>
+  </div>
+  <div class="item-card-meta"><span>Category: Fourier-based</span><span>Rating: 4.5/5</span></div>
+  <p>Fundamentally different approach using inverse Short-Time Fourier Transform (iSTFT) for waveform reconstruction instead of transposed convolution upsampling. Inherently more lightweight because it operates in the frequency domain. The backbone uses 1D convolutions with Snake activations, and the iSTFT head predicts both magnitude and phase for clean waveform output.</p>
+  <ul><li>iSTFT-based waveform reconstruction (no transposed convolutions)</li><li>Lightweight and computationally efficient</li><li>Magnitude + phase prediction</li><li>Naturally suited for harmonic signals</li></ul>
+  <p class="recommend">Recommended for: Fast inference and lightweight models. Excellent for real-time applications.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header">
+    <h3 class="item-card-name">RingFormer</h3>
+    <span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span>
+  </div>
+  <div class="item-card-meta"><span>Category: Conformer-based</span><span>Rating: 4.5/5</span></div>
+  <p>The most architecturally advanced vocoder, using Conformer blocks with both time and frequency attention mechanisms. Uses einops-based rearrange operations for efficient multi-head attention. Output layer uses iSTFT for waveform generation from predicted magnitude and phase. Uses ResBlock_SnakeBeta and SourceModuleHnNSF with 8 harmonics for harmonic conditioning.</p>
+  <ul><li>Conformer attention (time + frequency)</li><li>iSTFT output with magnitude + phase prediction</li><li>Most complex architecture; unique 3-output return</li><li>Higher memory usage than other vocoders</li></ul>
+  <p class="recommend">Recommended for: Advanced users seeking maximum quality through attention-based processing.</p>
+</div>
+
+<h2 id="vocoders-tier3">Tier 3: Very Good Quality</h2>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">JVSF-HiFi-GAN</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Source-Filter</span><span>Rating: 4.0/5</span></div>
+  <p>Joint-Variable Source-Filter explicitly separates voice generation into source (excitation) and filter (vocal tract) components, mirroring the human speech production model. The source module generates learnable harmonic components, while the filter module uses a pyramid of dilated convolutions. This separation allows independent control of pitch-related and timbre-related features.</p>
+  <p class="recommend">Recommended for: Voice conversion where preserving speaker identity is critical.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">RefineGAN</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: U-Net GAN</span><span>Rating: 4.0/5</span></div>
+  <p>U-Net architecture with skip connections. The harmonic downsampling path processes F0 through sine generation and progressive downsampling. The upsampling path uses ParallelResBlocks with three parallel branches (kernel sizes 3, 7, 11) combined through AdaIN noise injection. Skip connections preserve fine spectral details.</p>
+  <p class="recommend">Recommended for: High-fidelity audio where spectral detail preservation is important.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">NSF-APNet</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Hybrid NSF</span><span>Rating: 4.0/5</span></div>
+  <p>Combines Neural Sine Filter with an All-Pass Network for improved phase modeling. The All-Pass Network applies magnitude-preserving phase corrections at each residual block, addressing inaccurate phase reconstruction common in GAN-based vocoders. Particularly effective in higher frequency ranges where phase errors are most perceptible.</p>
+  <p class="recommend">Recommended for: Audio with prominent high-frequency content. Reduces metallic artifacts.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">FullBand-MRF</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Enhanced MRF</span><span>Rating: 4.0/5</span></div>
+  <p>Extends MRF-HiFi-GAN with significantly wider dilation patterns (up to rate 15) and channel attention mechanisms. Wider dilations capture longer-range dependencies for better formant transition modeling. Channel attention helps focus on the most informative frequency bands dynamically. Snake activations match the quasi-periodic nature of speech.</p>
+  <p class="recommend">Recommended for: Speech with rapid formant transitions or wide pitch ranges.</p>
+</div>
+
+<h2 id="vocoders-tier4">Tier 4: Good Quality</h2>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">WaveGlow</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#189;</span></div>
+  <div class="item-card-meta"><span>Category: Flow-based</span><span>Rating: 3.5/5</span></div>
+  <p>Flow-based vocoder using invertible 1x1 convolutions and WaveNet-style layers with gated activations. Unlike GAN-based vocoders, WaveGlow learns the exact probability distribution of audio waveforms through maximum likelihood estimation with invertible transformations. Provides more stable training but requires more computation.</p>
+  <p class="recommend">Recommended for: Users who prefer deterministic models. Avoids adversarial training instability.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">PCPH-GAN</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#189;</span></div>
+  <div class="item-card-meta"><span>Category: Phase-Corrected</span><span>Rating: 3.5/5</span></div>
+  <p>Phase-Corrected Parallel HiFi-GAN uses PCHIP interpolation for F0 upsampling, providing smoother pitch contour transitions. The PCPH generator models pitch harmonics with a specialized source module, while SiLU and SnakeBeta provide smooth nonlinearity. A progressive upsampling path creates a coarse-to-fine synthesis pipeline.</p>
+  <p class="recommend">Recommended for: Singing voice conversion where smooth pitch transitions are important.</p>
+</div>
+
+<h2 id="vocoders-recs">Recommendations for RVC Training</h2>
+
+<div class="rec-box">
+  <h4>Beginner</h4>
+  <p>Use <strong>HiFi-GAN</strong> (the default). Lightweight, fast, and works with both pitch-guided and non-pitch-guided training. The best starting point for all users.</p>
+</div>
+<div class="rec-box">
+  <h4>Intermediate</h4>
+  <p>Try <strong>BigVGAN</strong> for the highest quality, <strong>Default (HiFi-GAN NSF)</strong> for improved pitch accuracy, or <strong>HiFi-GAN-v3</strong> for a lighter upgrade.</p>
+</div>
+<div class="rec-box">
+  <h4>Advanced</h4>
+  <p>Experiment with <strong>RingFormer</strong> for attention-based synthesis, <strong>Vocos</strong> for lightweight inference, or <strong>MRF-HiFi-GAN</strong> for multi-scale feature extraction.</p>
+</div>
+<div class="rec-box">
+  <h4>Real-time / Low Latency</h4>
+  <p>Use <strong>Vocos</strong> &mdash; its Fourier-based architecture is inherently faster at inference since it avoids expensive transposed convolution upsampling.</p>
+</div>
+<div class="rec-box">
+  <h4>Maximum Quality</h4>
+  <p>Use <strong>BigVGAN</strong> &mdash; it consistently achieves the highest objective and subjective quality scores across all benchmarks.</p>
+</div>
+
+<div class="callout warning"><div class="callout-title">Technical Notes</div>
+<ul>
+  <li>Non-Default/HiFi-GAN vocoders require <strong>v2 + pitch guidance</strong> (enforced by UI)</li>
+  <li>Non-Default/HiFi-GAN vocoders use <strong>fp32</strong> at inference (fp16 disabled for stability)</li>
+  <li>Vocoder choice is saved in the model checkpoint and used automatically during inference</li>
+  <li>Pre-trained weights for non-HiFi-GAN vocoders follow the naming pattern: <code>{VocoderName}_f0G48k.pth</code></li>
+  <li>All vocoders support gradient checkpointing except BigVGAN and WaveGlow</li>
+  <li>The vocoder registry is in <code>arvc/models/generators/__init__.py</code></li>
+</ul>
+</div>
+
+</div><!-- /content -->
+
+<!-- ==================== PART III: OPTIMIZER GUIDE ==================== -->
+<div class="section-divider"></div>
+<div class="content">
+
+<h1>Part III &mdash; Optimizer Reference Guide</h1>
+
+<p>Advanced RVC Inference supports <strong>43 optimizers</strong> for model training, each with different characteristics, strengths, and use cases. This guide provides detailed descriptions, ratings, and recommendations for RVC/audio model training.</p>
+
+<h2 id="optimizers-quick">Quick Reference</h2>
+
+<table class="quick-ref-table">
+  <thead><tr><th>Rating</th><th>Optimizer</th><th>Category</th><th>Best For</th></tr></thead>
+  <tbody>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>AdamW</strong></td><td>PyTorch Built-in</td><td>General-purpose, most reliable</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>ScheduleFreeAdamW</strong></td><td>Schedule-Free</td><td>No LR schedule needed</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>Muon</strong></td><td>Second-Order</td><td>Large models, fast convergence</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</td><td><strong>Sophia</strong></td><td>Second-Order</td><td>Large-scale training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>Lion</strong></td><td>Sign-Based</td><td>Memory-efficient training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>Prodigy</strong></td><td>LR-Free</td><td>No LR tuning needed</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;&#189;</td><td><strong>NAdam</strong></td><td>PyTorch Built-in</td><td>Faster than standard Adam</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>RAdam</strong></td><td>PyTorch Built-in</td><td>Warmup-free training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>Adan</strong></td><td>Nesterov</td><td>Vision and audio tasks</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>AnyPrecisionAdamW</strong></td><td>Mixed-Precision</td><td>Bfloat16 training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>Ranger21</strong></td><td>Combined</td><td>RAdam + Lookahead synergy</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>AdaFactor</strong></td><td>Memory-Efficient</td><td>Large model training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>DAdaptAdam</strong></td><td>LR-Free</td><td>Automatic LR from gradients</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>Adam</strong></td><td>PyTorch Built-in</td><td>Classic adaptive optimizer</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>PAdam</strong></td><td>Partial Adaptive</td><td>Adam-SGD interpolation</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#11088;</td><td><strong>Apollo</strong></td><td>Quasi-Newton</td><td>L-BFGS-like convergence</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>CAME</strong></td><td>Unified</td><td>Adam+SGD benefits combined</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>NovoGrad</strong></td><td>Normalized</td><td>Well-conditioned gradients</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>ScheduleFreeAdam</strong></td><td>Schedule-Free</td><td>Adam without LR schedule</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;&#189;</td><td><strong>DAdaptAdaGrad</strong></td><td>LR-Free</td><td>Auto LR with AdaGrad</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;</td><td><strong>SGD</strong></td><td>PyTorch Built-in</td><td>Best generalization</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;</td><td><strong>RMSprop</strong></td><td>PyTorch Built-in</td><td>RL and recurrent networks</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;</td><td><strong>AdaBelief / V2</strong></td><td>Belief-Based</td><td>Better conditioned updates</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#11088;</td><td><strong>LAMB / LARS</strong></td><td>Layer-Adaptive</td><td>Large-batch training</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#189;</td><td><strong>Adagrad / Adadelta</strong></td><td>PyTorch Built-in</td><td>Sparse data / no manual LR</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#189;</td><td><strong>Adamax / ASGD</strong></td><td>PyTorch Built-in</td><td>Robust to outliers / convex opt</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;&#189;</td><td><strong>QHAdam / SWATS / Shampoo</strong></td><td>Various</td><td>Adam-SGD continuum / switching</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;</td><td><strong>A2Grad / AggMo / PID</strong></td><td>Various</td><td>Optimal averaging / multi-scale</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;</td><td><strong>Yogi / Fromage / SM3 / Nero</strong></td><td>Various</td><td>Stable variance / normalization</td></tr>
+    <tr><td class="star-rating">&#11088;&#11088;</td><td><strong>ScheduleFreeSGD / SOAP</strong></td><td>Various</td><td>SGD without schedule / 2nd order</td></tr>
+  </tbody>
+</table>
+
+<h2 id="optimizers-tier1">Tier 1: Best for RVC/Audio Training</h2>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">AdamW</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: PyTorch Built-in</span><span>Paper: 2019</span><span>Rating: 5.0/5</span></div>
+  <p>Adam with decoupled weight decay is the gold standard optimizer for deep learning training. It combines adaptive learning rate with proper L2 regularization by decoupling weight decay from the gradient update. The <strong>default and recommended optimizer</strong> for RVC model training, providing reliable convergence across all architectures, dataset sizes, and training configurations.</p>
+  <ul><li>Adaptive learning rates per parameter</li><li>Decoupled weight decay (proper L2 regularization)</li><li>Fused CUDA kernel support for faster training</li><li>Proven track record across all of deep learning</li></ul>
+  <p class="recommend">Recommended for: All RVC training scenarios as the default. Works well with LR 1e-4 to 1e-3, batch sizes 4-32, and 100-1000 epochs.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">ScheduleFreeAdamW</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Schedule-Free</span><span>Paper: 2024</span><span>Rating: 5.0/5</span></div>
+  <p>Eliminates the need for any learning rate scheduling by maintaining dual "z" (lookahead) and "y" (standard AdamW) parameters. The optimizer dynamically adjusts its effective learning rate based on the distance between z and y, providing built-in warmup at the start and natural decay as convergence approaches. Never worry about warmup steps, cosine annealing, or step decay again.</p>
+  <ul><li>No learning rate schedule needed whatsoever</li><li>Built-in warmup phase (first ~5% of training)</li><li>Automatic decay as training converges</li><li>Drop-in replacement for AdamW</li></ul>
+  <p class="recommend">Recommended for: Users who want to avoid LR schedule tuning. Especially useful with varying dataset sizes.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Muon</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Second-Order</span><span>Paper: 2025</span><span>Rating: 5.0/5</span></div>
+  <p>Applies Newton-Schulz iteration to orthogonalize the momentum vector at each step. This normalization provides significantly better conditioning for the optimization landscape, similar to preconditioning in second-order methods but at much lower cost. Demonstrates faster convergence compared to AdamW, particularly in later training stages.</p>
+  <ul><li>Momentum orthogonalization via Newton-Schulz iteration</li><li>Better conditioned optimization landscape</li><li>Faster convergence on deep models</li><li>Works well with high learning rates</li></ul>
+  <p class="recommend">Recommended for: Advanced users training large RVC models (v2, 48k) wanting faster convergence. Effective with 300+ epoch training runs.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Sophia</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Second-Order</span><span>Paper: 2023</span><span>Rating: 5.0/5</span></div>
+  <p>Second-order optimizer using a diagonal Hessian estimate combined with stochastic clipping. Unlike Adam which only uses first-order gradient information, Sophia incorporates curvature information from the Hessian (second derivatives) for more informed update decisions. The diagonal approximation keeps memory manageable while the clipping mechanism prevents excessively large updates in high-curvature directions.</p>
+  <ul><li>Diagonal Hessian estimation for curvature awareness</li><li>Stochastic clipping for stability</li><li>Faster convergence than first-order methods</li><li>Memory-efficient diagonal approximation</li></ul>
+  <p class="recommend">Recommended for: Users with sufficient GPU memory wanting maximum convergence speed. Best with larger batch sizes (8+) and longer training runs.</p>
+</div>
+
+<h2 id="optimizers-tier2">Tier 2: Excellent Optimizers</h2>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Lion</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span></div>
+  <div class="item-card-meta"><span>Category: Sign-Based</span><span>Paper: 2023</span><span>Rating: 4.5/5</span></div>
+  <p>Discovered through automated program search. Uses the <strong>sign of the momentum</strong> rather than the momentum itself for the update direction. This dramatically simplifies computation and results in ~50% less memory than AdamW (only one state tensor vs. two). Often matches or exceeds AdamW performance, particularly with higher learning rates.</p>
+  <p class="recommend">Recommended for: Memory-constrained training or when using higher learning rates than AdamW allows.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Prodigy</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span></div>
+  <div class="item-card-meta"><span>Category: LR-Free</span><span>Paper: 2023</span><span>Rating: 4.5/5</span></div>
+  <p>Automatically determines the optimal learning rate by estimating the distance to the solution (D0) using gradient statistics. You only need to set <code>d_coef</code>. The optimizer continuously adapts its effective LR during training, eliminating the most common failure mode &mdash; choosing the wrong learning rate.</p>
+  <p class="recommend">Recommended for: Users who struggle with LR tuning or need a "set it and forget it" optimizer across different model architectures.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">NAdam</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;&#189;</span></div>
+  <div class="item-card-meta"><span>Category: PyTorch Built-in</span><span>Paper: 2015</span><span>Rating: 4.5/5</span></div>
+  <p>Combines Adam's adaptive learning rates with Nesterov accelerated gradient. The Nesterov aspect means the optimizer looks ahead by computing the gradient at the anticipated next position, providing implicit momentum correction that often leads to faster convergence, especially in early training stages.</p>
+  <p class="recommend">Recommended for: A slight upgrade over AdamW without the complexity of newer optimizers. Good default alternative.</p>
+</div>
+
+<h2 id="optimizers-tier3">Tier 3: Very Good Optimizers</h2>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">RAdam</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: PyTorch Built-in</span><span>Rating: 4.0/5</span></div>
+  <p>Rectified Adam dynamically switches between SGD-like updates (when variance is unreliable) and Adam-like updates (when variance becomes trustworthy), eliminating the need for warmup steps.</p>
+  <p class="recommend">Recommended for: Short training runs where warmup would consume a significant fraction of total steps.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Adan</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Nesterov</span><span>Rating: 4.0/5</span></div>
+  <p>Introduces a unique third moment that tracks the difference between consecutive gradients, capturing curvature information at first-order cost. Has shown particularly strong results on vision and audio tasks.</p>
+  <p class="recommend">Recommended for: Audio/vision training tasks where gradient smoothness matters.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Ranger21</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Combined</span><span>Rating: 4.0/5</span></div>
+  <p>Synergistically combines RAdam's variance rectification with Lookahead's slow-fast weight synchronization. Every k steps, interpolates between "fast" weights (RAdam) and "slow" weights. Acts as a regularizer that prevents overshooting minima.</p>
+  <p class="recommend">Recommended for: A "best of both worlds" optimizer with RAdam's stability and Lookahead's generalization benefits.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">AdaFactor</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Memory-Efficient</span><span>Rating: 4.0/5</span></div>
+  <p>Dramatically reduces memory usage by factoring the second-moment estimator into row-wise and column-wise statistics. For a (m, n) parameter matrix, Adam stores m x n variance values while AdaFactor stores m + n. Instrumental in training T5.</p>
+  <p class="recommend">Recommended for: Training large RVC models on GPUs with limited memory.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">DAdaptAdam</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: LR-Free</span><span>Rating: 4.0/5</span></div>
+  <p>Automatically determines the learning rate by estimating the distance to the optimal solution from accumulated gradient statistics. Maintains the Adam update rule but automatically adjusts the effective LR. Set <code>lr=1.0</code> and let D-Adapt handle the rest.</p>
+  <p class="recommend">Recommended for: Automatic LR tuning while keeping familiar Adam behavior.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">PAdam</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Partial Adaptive</span><span>Rating: 4.0/5</span></div>
+  <p>Introduces a <code>p_partial</code> parameter that controls how much of the second moment's power to use. At <code>p_partial=0</code> it behaves like SGD; at <code>p_partial=1</code> it's Adam. Default 0.25 provides a balance retaining some adaptivity while gaining generalization benefits.</p>
+  <p class="recommend">Recommended for: A balance between Adam's fast convergence and SGD's good generalization.</p>
+</div>
+
+<div class="item-card">
+  <div class="item-card-header"><h3 class="item-card-name">Apollo</h3><span class="item-card-rating">&#11088;&#11088;&#11088;&#11088;</span></div>
+  <div class="item-card-meta"><span>Category: Quasi-Newton</span><span>Rating: 4.0/5</span></div>
+  <p>Approximates diagonal Hessian information using the ratio of consecutive gradients, similar to L-BFGS. Provides second-order convergence benefits without full Hessian computation. Starts with Adam-like behavior and progressively incorporates more curvature information.</p>
+  <p class="recommend">Recommended for: Quasi-Newton convergence speed without the complexity and memory cost of full second-order methods.</p>
+</div>
+
+<h2 id="optimizers-tier4">Tier 4&ndash;7: Good to Specialized Optimizers</h2>
+
+<h3>Tier 4: Good (3.5 stars)</h3>
+<table>
+  <thead><tr><th>Optimizer</th><th>Key Feature</th></tr></thead>
+  <tbody>
+    <tr><td><strong>CAME</strong></td><td>Tracks magnitude and sign consistency; combines Adam per-parameter LR with SGD generalization</td></tr>
+    <tr><td><strong>NovoGrad</strong></td><td>Normalizes gradient by RMS before second moment; better conditioning across layers</td></tr>
+    <tr><td><strong>ScheduleFreeAdam</strong></td><td>Adam variant with built-in warmup/decay; no external LR scheduling needed</td></tr>
+    <tr><td><strong>DAdaptAdaGrad</strong></td><td>Combines AdaGrad's cumulative second moment with D-Adaptation's automatic LR estimation</td></tr>
+  </tbody>
+</table>
+
+<h3>Tier 5: Solid (3 stars)</h3>
+<table>
+  <thead><tr><th>Optimizer</th><th>Key Feature</th></tr></thead>
+  <tbody>
+    <tr><td><strong>SGD</strong></td><td>Foundational optimizer; best generalization with proper LR scheduling, but requires more tuning</td></tr>
+    <tr><td><strong>RMSprop</strong></td><td>Moving average of squared gradients; popular in RL and recurrent networks</td></tr>
+    <tr><td><strong>AdaBelief / V2</strong></td><td>Adjusts step size based on "belief" in gradient direction; V2 adds AMSGrad support</td></tr>
+    <tr><td><strong>LAMB</strong></td><td>Per-layer trust ratio; essential for large-batch distributed training</td></tr>
+    <tr><td><strong>LARS</strong></td><td>Per-layer adaptive rate scaling; prevents single-layer gradient domination</td></tr>
+  </tbody>
+</table>
+
+<h3>Tier 6: Moderate (2.5 stars)</h3>
+<table>
+  <thead><tr><th>Optimizer</th><th>Key Feature</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Adagrad</strong></td><td>Cumulative squared gradients; larger updates for infrequent parameters; LR can become too small</td></tr>
+    <tr><td><strong>Adadelta</strong></td><td>Addresses Adagrad's decreasing LR by restricting accumulation window</td></tr>
+    <tr><td><strong>Adamax</strong></td><td>Uses infinity norm; more robust to gradient outliers</td></tr>
+    <tr><td><strong>ASGD</strong></td><td>Running average of past parameters; better generalization for convex objectives</td></tr>
+    <tr><td><strong>DAdaptSGD</strong></td><td>SGD + D-Adaptation; SGD generalization without manual LR tuning</td></tr>
+    <tr><td><strong>QHAdam</strong></td><td>Quasi-Hyperbolic Adam; principled continuum between SGD and Adam</td></tr>
+    <tr><td><strong>SWATS</strong></td><td>Starts with Adam, switches to SGD when variance drops; best of both worlds</td></tr>
+    <tr><td><strong>Shampoo</strong></td><td>Layer-wise preconditioning with Kronecker factorization</td></tr>
+    <tr><td><strong>SOAP</strong></td><td>Second-Order Adam-like Preconditioner for distributed training</td></tr>
+  </tbody>
+</table>
+
+<h3>Tier 7: Specialized (2 stars)</h3>
+<table>
+  <thead><tr><th>Optimizer</th><th>Key Feature</th></tr></thead>
+  <tbody>
+    <tr><td><strong>A2Grad</strong></td><td>Optimal averaging of iterates with second-order step sizes</td></tr>
+    <tr><td><strong>AggMo</strong></td><td>Multiple momentum buffers at different decay rates; combined update</td></tr>
+    <tr><td><strong>PID</strong></td><td>Proportional-Integral-Derivative control theory applied to gradient descent</td></tr>
+    <tr><td><strong>Yogi</strong></td><td>Controls second moment growth rate; ensures variance is non-decreasing</td></tr>
+    <tr><td><strong>Fromage</strong></td><td>Normalizes updates by Frobenius norm; natural regularization</td></tr>
+    <tr><td><strong>SM3</strong></td><td>Sublinear memory; element-wise maximum of squared gradients</td></tr>
+    <tr><td><strong>ScheduleFreeSGD</strong></td><td>SGD with built-in warmup/decay; no LR scheduling needed</td></tr>
+    <tr><td><strong>Nero</strong></td><td>Weight normalization at each step; natural regularizer</td></tr>
+  </tbody>
+</table>
+
+<h2 id="optimizers-recs">Recommendations for RVC Training</h2>
+
+<div class="rec-box">
+  <h4>Beginner</h4>
+  <p>Start with <strong>AdamW</strong> (default). Use learning rate 1e-3 with 300 epochs and batch size 8.</p>
+</div>
+<div class="rec-box">
+  <h4>Intermediate</h4>
+  <p>Try <strong>ScheduleFreeAdamW</strong> to eliminate LR schedule tuning, or <strong>NAdam</strong> for slightly faster convergence. Drop-in replacements requiring no additional configuration.</p>
+</div>
+<div class="rec-box">
+  <h4>Advanced</h4>
+  <p>Experiment with <strong>Sophia</strong> or <strong>Muon</strong> for faster convergence on larger models. <strong>Prodigy</strong> and <strong>DAdaptAdam</strong> eliminate LR tuning entirely.</p>
+</div>
+<div class="rec-box">
+  <h4>Memory-Constrained</h4>
+  <p>Use <strong>Lion</strong> (50% less memory than Adam) or <strong>AdaFactor</strong> (sublinear memory scaling).</p>
+</div>
+<div class="rec-box">
+  <h4>Large-Batch Training</h4>
+  <p>Use <strong>LAMB</strong> or <strong>LARS</strong> for per-layer adaptive learning rate scaling, preventing gradient explosion in large-batch scenarios.</p>
+</div>
+
+<div class="callout warning"><div class="callout-title">Technical Notes</div>
+<ul>
+  <li>All custom optimizers are implemented in <code>arvc/models/optimizers/</code></li>
+  <li>The central registry in <code>__init__.py</code> maps optimizer names to their classes</li>
+  <li>The training engine uses the registry for dynamic optimizer selection</li>
+  <li>Each optimizer automatically receives appropriate kwargs (betas, eps, weight_decay) based on its capabilities</li>
+  <li>Fused CUDA kernels are automatically enabled when supported (currently only AdamW)</li>
+  <li>For optimizers that don't support <code>betas</code> or <code>eps</code>, these parameters are silently omitted</li>
+</ul>
+</div>
+
+</div><!-- /content -->
+
+</body>
+</html>
