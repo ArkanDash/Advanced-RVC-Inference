@@ -17,7 +17,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from arvc.utils.variables import config, logger, translations, configs
-from arvc.engine.models.utils import load_audio, load_embedders_model, extract_features
+from arvc.engine.models.utils import check_assets, load_audio, load_embedders_model, extract_features
 
 warnings.filterwarnings("ignore")
 
@@ -91,6 +91,8 @@ def create_reference(
     if not audio_path:
         logger.warning(translations["not_found_audio"])
         sys.exit(1)
+
+    check_assets(f0_method, embedder_model, f0_onnx=f0_onnx, embedders_mode=embedders_mode)
 
     output_reference = os.path.join(configs["reference_path"], f"{reference_name}_{version}_{embedder_model}_{pitch_guidance}_{use_energy}")
     if os.path.exists(output_reference): shutil.rmtree(output_reference, ignore_errors=True)
