@@ -695,7 +695,7 @@ def cmd_serve(args):
 # ============================================================================
 
 def create_parser():
-    """Create the argument parser matching the wiki CLI Guide."""
+    """Create the argument parser for the rvc-cli interface."""
 
     parser = argparse.ArgumentParser(
         prog="rvc-cli",
@@ -730,8 +730,8 @@ Examples:
   # Show system info
   rvc-cli info
 
-For more information, visit:
-  https://github.com/ArkanDash/Advanced-RVC-Inference/wiki/Cli-Guide
+For the full CLI guide, see:
+  https://github.com/ArkanDash/Advanced-RVC-Inference/blob/master/docs/README.md
         """.strip(),
     )
 
