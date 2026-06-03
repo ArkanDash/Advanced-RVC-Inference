@@ -79,7 +79,7 @@ from arvc.engine.training.runner.utils import (
     latest_checkpoint_path, 
     plot_spectrogram_to_numpy,
 )
-from arvc.engine.models.weight_norm import convert_old_to_new, configure_weight_norm, use_new_pytorch
+from arvc.engine.models.weight_norm import configure_weight_norm, use_new_pytorch
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
@@ -926,57 +926,30 @@ def run(
             if pretrainG not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
 
-                ckptG = convert_old_to_new(
-                    torch.load(pretrainG, map_location="cpu", weights_only=True)["model"]
-                )
+                ckptG = torch.load(pretrainG, map_location="cpu", weights_only=True)["model"]
+
                 # SVC architecture: ensure emb_g.weight is present
                 if architecture == "SVC" and "emb_g.weight" not in ckptG: 
                     ckptG["emb_g.weight"] = net_g.module.emb_g.weight if hasattr(net_g, "module") else net_g.emb_g.weight
 
-                # Soft merge: only load keys present in both model and checkpoint.
-                # This handles architecture/vocoder mismatches gracefully (e.g. NSF vs plain
-                # HiFi-GAN, different weight_norm formats) without noisy warnings.
-                model_state_g = net_g.module.state_dict() if hasattr(net_g, "module") else net_g.state_dict()
-                new_state_dict_g = {k: ckptG.get(k, v) for k, v in model_state_g.items()}
-
-                loaded_keys_g = sum(1 for k in model_state_g if k in ckptG)
-                skipped_ckpt_keys_g = sum(1 for k in ckptG if k not in model_state_g)
-                skipped_model_keys_g = sum(1 for k in model_state_g if k not in ckptG)
-
-                if rank == 0:
-                    logger.info(f"Pretrained G: loaded {loaded_keys_g}/{len(model_state_g)} parameters")
-                    if skipped_ckpt_keys_g:
-                        logger.debug(f"Pretrained G: {skipped_ckpt_keys_g} checkpoint key(s) not in model (architecture/vocoder difference)")
-                    if skipped_model_keys_g:
-                        logger.debug(f"Pretrained G: {skipped_model_keys_g} model key(s) not in checkpoint (randomly initialized)")
-
-                net_g.module.load_state_dict(new_state_dict_g, strict=False) if hasattr(net_g, "module") else net_g.load_state_dict(new_state_dict_g, strict=False)
-                del ckptG, new_state_dict_g
+                # Match Vietnamese-RVC: strict loading with pretrain_strict config
+                # Soft-merge was silently replacing pretrained weights with random
+                # values for any key mismatch (e.g. weight_norm format), destroying
+                # the pretrained model quality. This caused training from a near-random
+                # initialization instead of a properly pretrained base.
+                strict = main_configs.get("pretrain_strict", True)
+                net_g.module.load_state_dict(ckptG, strict=strict) if hasattr(net_g, "module") else net_g.load_state_dict(ckptG, strict=strict)
+                del ckptG
 
             if pretrainD not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="D", pretrain=pretrainD))
 
-                ckptD = convert_old_to_new(
-                    torch.load(pretrainD, map_location="cpu", weights_only=True)["model"]
-                )
+                ckptD = torch.load(pretrainD, map_location="cpu", weights_only=True)["model"]
 
-                # Soft merge: only load keys present in both model and checkpoint.
-                model_state_d = net_d.module.state_dict() if hasattr(net_d, "module") else net_d.state_dict()
-                new_state_dict_d = {k: ckptD.get(k, v) for k, v in model_state_d.items()}
-
-                loaded_keys_d = sum(1 for k in model_state_d if k in ckptD)
-                skipped_ckpt_keys_d = sum(1 for k in ckptD if k not in model_state_d)
-                skipped_model_keys_d = sum(1 for k in model_state_d if k not in ckptD)
-
-                if rank == 0:
-                    logger.info(f"Pretrained D: loaded {loaded_keys_d}/{len(model_state_d)} parameters")
-                    if skipped_ckpt_keys_d:
-                        logger.debug(f"Pretrained D: {skipped_ckpt_keys_d} checkpoint key(s) not in model (architecture/vocoder difference)")
-                    if skipped_model_keys_d:
-                        logger.debug(f"Pretrained D: {skipped_model_keys_d} model key(s) not in checkpoint (randomly initialized)")
-
-                net_d.module.load_state_dict(new_state_dict_d, strict=False) if hasattr(net_d, "module") else net_d.load_state_dict(new_state_dict_d, strict=False)
-                del ckptD, new_state_dict_d
+                # Match Vietnamese-RVC: strict loading with pretrain_strict config
+                strict = main_configs.get("pretrain_strict", True)
+                net_d.module.load_state_dict(ckptD, strict=strict) if hasattr(net_d, "module") else net_d.load_state_dict(ckptD, strict=strict)
+                del ckptD
         except Exception as e:
             logger.error(translations["checkpointing_err"])
             logger.debug(e)
