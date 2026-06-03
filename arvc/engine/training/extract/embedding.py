@@ -16,7 +16,13 @@ from arvc.utils.variables import logger, translations, config
 from arvc.engine.training.extract.setup_path import setup_paths
 from arvc.engine.models.utils import load_audio, load_embedders_model, extract_features
 
-def process_file_embedding(files, embedder_model, embedders_mode, device, version, is_half, threads):
+def process_file_embedding(files, embedder_model, embedders_mode, device, version, is_half, threads, embedders_mix=False, embedders_mix_layers=9, embedders_mix_ratio=0.5):
+    """Extract embeddings from audio files using the specified embedder model.
+    
+    VRVC addition: supports embedders_mix for blending layers from different
+    transformer layers of the embedder, which can improve feature quality for
+    certain voice types (especially tonal languages like Vietnamese).
+    """
     model = load_embedders_model(embedder_model, embedders_mode)
     if isinstance(model, torch.nn.Module): model = model.to(device).to(torch.float16 if is_half else torch.float32).eval()
 
@@ -37,7 +43,10 @@ def process_file_embedding(files, embedder_model, embedders_mode, device, versio
             feats = torch.from_numpy(load_audio(file, 16000)).to(device).to(torch.float16 if is_half else torch.float32)
 
             with torch.no_grad():
-                feats = extract_features(model, feats.view(1, -1), version, device)
+                feats = extract_features(
+                    model, feats.view(1, -1), version, device,
+                    mix=embedders_mix, mix_layers=embedders_mix_layers, mix_ratio=embedders_mix_ratio
+                )
 
             feats = feats.squeeze(0).float().cpu().numpy()
             if not np.isnan(feats).any():
@@ -63,7 +72,14 @@ def process_file_embedding(files, embedder_model, embedders_mode, device, versio
 
     return saved
 
-def run_embedding_extraction(exp_dir, version, num_processes, devices, embedder_model, embedders_mode, is_half):
+def run_embedding_extraction(exp_dir, version, num_processes, devices, embedder_model, embedders_mode, is_half, embedders_mix=False, embedders_mix_layers=9, embedders_mix_ratio=0.5):
+    """Run embedding extraction across multiple devices.
+    
+    VRVC additions:
+    - embedders_mix: blend features from multiple transformer layers
+    - embedders_mix_layers: how many layers to blend
+    - embedders_mix_ratio: blending ratio between layers
+    """
     wav_path, out_path = setup_paths(exp_dir, version)
 
     logger.info(translations.get("start_extract_hubert", "Starting embedding extraction"))
@@ -100,7 +116,15 @@ def run_embedding_extraction(exp_dir, version, num_processes, devices, embedder_
     start_time = time.time()
     total_saved = 0
     with concurrent.futures.ProcessPoolExecutor(max_workers=len(devices)) as executor:
-        futures = [executor.submit(process_file_embedding, paths[i::len(devices)], embedder_model, embedders_mode, devices[i], version, is_half, num_processes // len(devices)) for i in range(len(devices))]
+        futures = [
+            executor.submit(
+                process_file_embedding, paths[i::len(devices)], embedder_model,
+                embedders_mode, devices[i], version, is_half,
+                num_processes // len(devices),
+                embedders_mix, embedders_mix_layers, embedders_mix_ratio
+            )
+            for i in range(len(devices))
+        ]
         for future in concurrent.futures.as_completed(futures):
             try:
                 result = future.result()
@@ -128,10 +152,25 @@ def run_embedding_extraction(exp_dir, version, num_processes, devices, embedder_
     logger.info(translations.get("extract_hubert_success", "Embedding extraction completed in {elapsed_time} seconds").format(elapsed_time=f"{(time.time() - start_time):.2f}"))
 
 def create_mute_file(version, embedder_model, embedders_mode, is_half):
+    """Create a mute feature file for the given embedder configuration.
+    
+    This is needed for training stability — mute entries in the filelist
+    help prevent the model from overfitting to silence patterns.
+    """
     start_time = time.time()
-    logger.info(translations["start_extract_hubert"])
+    logger.info(translations.get("start_extract_hubert", "Starting embedding extraction"))
 
-    process_file_embedding([(os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "logs", "mute", "sliced_audios_16k", "mute.wav"), os.path.join("assets", "logs", "mute", f"{version}_extracted", f"mute_{embedder_model}.npy"))], embedder_model, embedders_mode, config.device, version, is_half, 1)
+    mute_wav_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "logs", "mute", "sliced_audios_16k", "mute.wav")
+    mute_out_path = os.path.join("..", "assets", "logs", "mute", f"{version}_extracted", f"mute_{embedder_model}.npy")
+
+    # Fall back to the VRVC standard mute path
+    if not os.path.exists(mute_wav_path):
+        mute_wav_path = os.path.join(configs.get("logs_path", "assets/logs"), "mute", "sliced_audios_16k", "mute.wav")
+
+    process_file_embedding(
+        [(mute_wav_path, mute_out_path)],
+        embedder_model, embedders_mode, config.device, version, is_half, 1
+    )
 
     gc.collect()
-    logger.info(translations["extract_hubert_success"].format(elapsed_time=f"{(time.time() - start_time):.2f}"))
+    logger.info(translations.get("extract_hubert_success", "Embedding extraction completed in {elapsed_time} seconds").format(elapsed_time=f"{(time.time() - start_time):.2f}"))
