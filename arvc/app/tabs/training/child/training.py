@@ -54,6 +54,15 @@ def training_model_tab():
                         interactive=True,
                     )
 
+            # ── Architecture (RVC / SVC) — Vietnamese-RVC feature ──
+            architecture = gr.Radio(
+                label=translations.get("architecture", "Architecture"),
+                info=translations.get("architecture_info", "Model architecture: RVC (default) or SVC (Singing Voice Conversion). SVC forces pitch guidance ON and energy OFF."),
+                choices=["RVC", "SVC"],
+                value="RVC",
+                interactive=True,
+            )
+
             with gr.Row():
                 clean_dataset = gr.Checkbox(label=translations["clear_dataset"], value=False, interactive=True)
                 process_effects = gr.Checkbox(label=translations["preprocess_effect"], value=False, interactive=True)
@@ -144,6 +153,33 @@ def training_model_tab():
                     training_f0 = gr.Checkbox(label=translations["training_pitch"], value=True, interactive=True)
                     rms_extract = gr.Checkbox(label=translations["train&energy"], info=translations["train&energy_info"], value=False, interactive=True)
 
+                    # ── Include Mutes — Vietnamese-RVC feature ──
+                    include_mutes = gr.Slider(
+                        minimum=0, maximum=10, value=2, step=1,
+                        label=translations.get("include_mutes", "Include Mutes"),
+                        info=translations.get("include_mutes_info", "Number of mute audio entries per speaker in filelist. Helps model learn silence transitions. Default: 2"),
+                        interactive=True,
+                    )
+
+                    # ── Embedder Mixing — Vietnamese-RVC feature ──
+                    embedders_mix = gr.Checkbox(
+                        label=translations.get("embedders_mix", "Embedder Mix"),
+                        info=translations.get("embedders_mix_info", "Blend two transformer layer features for better tonal language support (Vietnamese-RVC)"),
+                        value=False, interactive=True,
+                    )
+                    embedders_mix_column = gr.Group(visible=False)
+                    with embedders_mix_column:
+                        embedders_mix_layers = gr.Slider(
+                            label=translations.get("embedders_mix_layers", "Mix Layers"),
+                            info=translations.get("embedders_mix_layers_info", "Number of transformer layers to blend (1-12). Higher = more blending"),
+                            minimum=1, maximum=12, value=9, step=1, interactive=True,
+                        )
+                        embedders_mix_ratio = gr.Slider(
+                            label=translations.get("embedders_mix_ratio", "Mix Ratio"),
+                            info=translations.get("embedders_mix_ratio_info", "Blending ratio (0.1-1.0). 0.5 = equal blend of both layers"),
+                            minimum=0.1, maximum=1.0, value=0.5, step=0.1, interactive=True,
+                        )
+
             extract_button = gr.Button(translations["extract_button"], variant="primary")
             extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
 
@@ -152,6 +188,11 @@ def training_model_tab():
             index_algorithm = gr.Radio(
                 label=translations["index_algorithm"], info=translations["index_algorithm_info"],
                 choices=["Auto", "Faiss", "KMeans"], value="Auto", interactive=True,
+            )
+            nprobe = gr.Slider(
+                label=translations.get("nprobe", "Nprobe"),
+                info=translations.get("nprobe_info", "Number of probes for FAISS index search. Higher = more accurate but slower. Default: 9"),
+                minimum=1, maximum=64, value=9, step=1, interactive=True,
             )
             index_button = gr.Button(translations["create_index"], variant="secondary")
             index_info = gr.Textbox(label=translations["create_index"], value="", interactive=False, lines=2)
@@ -386,12 +427,28 @@ def training_model_tab():
         inputs=[upload_dataset, dataset_path],
         outputs=[]
     )
+    # ── Embedder Mix toggle — show/hide mix options ──
+    embedders_mix.change(fn=visible, inputs=[embedders_mix], outputs=[embedders_mix_column])
+
+    # ── Architecture → SVC overrides pitch_guidance & energy ──
+    def architecture_override(arch, current_f0, current_energy):
+        """When SVC is selected, force pitch guidance ON and energy OFF (VRVC behavior)."""
+        if arch == "SVC":
+            return gr.update(value=True, interactive=False), gr.update(value=False, interactive=False)
+        return gr.update(interactive=True), gr.update(interactive=True)
+
+    architecture.change(
+        fn=architecture_override,
+        inputs=[architecture, training_f0, rms_extract],
+        outputs=[training_f0, rms_extract],
+    )
+
     preprocess_button.click(
         fn=preprocess,
         inputs=[
             training_name, training_sr, cpu_core, preprocess_split_audio_mode,
             process_effects, dataset_path, clean_dataset, clean_dataset_strength,
-            chunk_len, overlap_len, preprocess_normalization_mode
+            chunk_len, overlap_len, preprocess_normalization_mode, architecture
         ],
         outputs=[preprocess_info],
         api_name="preprocess"
@@ -402,14 +459,15 @@ def training_model_tab():
             training_name, training_ver, extract_method, training_f0, extract_hop_length,
             cpu_core, gpu_number, training_sr, extract_embedders, extract_embedders_custom,
             onnx_f0_mode2, embed_mode2, autotune, f0_autotune_strength, extract_hybrid_method,
-            rms_extract, alpha
+            rms_extract, alpha, include_mutes, embedders_mix, embedders_mix_layers,
+            embedders_mix_ratio, architecture
         ],
         outputs=[extract_info],
         api_name="extract"
     )
     index_button.click(
         fn=create_index,
-        inputs=[training_name, training_ver, index_algorithm],
+        inputs=[training_name, training_ver, index_algorithm, nprobe],
         outputs=[index_info],
         api_name="create_index"
     )
@@ -421,7 +479,8 @@ def training_model_tab():
             not_use_pretrain, custom_pretrain, pretrained_G, pretrained_D, overtraining_detector,
             threshold, clean_up, cache_in_gpu, model_author, vocoders, checkpointing1,
             deterministic, benchmark, optimizer, rms_extract, custom_reference, reference_name,
-            multiscale_mel_loss, cosine_lr, newpytorch
+            multiscale_mel_loss, cosine_lr, newpytorch, architecture,
+            extract_embedders, extract_embedders_custom
         ],
         outputs=[training_info],
         api_name="training_model"

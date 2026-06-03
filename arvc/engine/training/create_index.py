@@ -37,13 +37,14 @@ def parse_arguments():
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--rvc_version", type=str, default="v2")
     parser.add_argument("--index_algorithm", type=str, default="Auto")
+    parser.add_argument("--nprobe", type=int, default=9, help="Number of probes for FAISS index search (from Vietnamese-RVC)")
 
     return parser.parse_args()
 
 def main():
     args = parse_arguments()
     exp_dir = os.path.join(configs["logs_path"], args.model_name)
-    version, index_algorithm = args.rvc_version, args.index_algorithm
+    version, index_algorithm, nprobe = args.rvc_version, args.index_algorithm, args.nprobe
 
     log_data = {translations['modelname']: args.model_name, translations['model_path']: exp_dir, translations['training_version']: version, translations['index_algorithm_info']: index_algorithm}
     for key, value in log_data.items():
@@ -68,13 +69,13 @@ def main():
         n_ivf = max(1, min(int(16 * np.sqrt(big_npy.shape[0])), big_npy.shape[0] // 39))
         index_trained = faiss.index_factory(256 if version == "v1" else 768, f"IVF{n_ivf},Flat")
         index_ivf_trained = faiss.extract_index_ivf(index_trained)
-        index_ivf_trained.nprobe = 1
+        index_ivf_trained.nprobe = nprobe
         index_trained.train(big_npy)
-        faiss.write_index(index_trained, os.path.join(exp_dir, f"trained_IVF{n_ivf}_Flat_nprobe_{index_ivf_trained.nprobe}_{model_name}_{version}.index"))
+        faiss.write_index(index_trained, os.path.join(exp_dir, f"trained_IVF{n_ivf}_Flat_nprobe_{nprobe}_{model_name}_{version}.index"))
 
         index_added = faiss.index_factory(256 if version == "v1" else 768, f"IVF{n_ivf},Flat")
         index_ivf_added = faiss.extract_index_ivf(index_added)
-        index_ivf_added.nprobe = 1
+        index_ivf_added.nprobe = nprobe
         index_added.train(big_npy)
         batch_size_add = 8192
     

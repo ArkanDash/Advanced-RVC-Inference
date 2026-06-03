@@ -87,7 +87,7 @@ def create_reference(audio_path, reference_name, pitch_guidance, use_energy, ver
     for log in log_read(done, "create_reference"):
         yield log
 
-def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effects, dataset, clean_dataset, clean_strength, chunk_len=3.0, overlap_len=0.3, normalization_mode="post"):
+def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effects, dataset, clean_dataset, clean_strength, chunk_len=3.0, overlap_len=0.3, normalization_mode="post", architecture="RVC"):
     sr = int(float(sample_rate.rstrip("k")) * 1000)
 
     if not model_name: return gr_warning(translations["provide_name"])
@@ -96,7 +96,7 @@ def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effect
     model_dir = os.path.join(configs["logs_path"], model_name)
     if os.path.exists(model_dir): shutil.rmtree(model_dir, ignore_errors=True)
 
-    p = subprocess.Popen(f'{python} {configs["preprocess_path"]} --model_name "{model_name}" --dataset_path "{dataset}" --sample_rate {sr} --cpu_cores {cpu_core} --cut_preprocess {cut_preprocess} --process_effects {process_effects} --clean_dataset {clean_dataset} --clean_strength {clean_strength} --chunk_len {chunk_len} --overlap_len {overlap_len} --normalization_mode {normalization_mode}', shell=True)
+    p = subprocess.Popen(f'{python} {configs["preprocess_path"]} --model_name "{model_name}" --dataset_path "{dataset}" --sample_rate {sr} --cpu_cores {cpu_core} --cut_preprocess {cut_preprocess} --process_effects {process_effects} --clean_dataset {clean_dataset} --clean_strength {clean_strength} --chunk_len {chunk_len} --overlap_len {overlap_len} --normalization_mode {normalization_mode} --architecture {architecture}', shell=True)
     done = [False]
 
     threading.Thread(target=if_done, args=(done, p)).start()
@@ -105,7 +105,7 @@ def preprocess(model_name, sample_rate, cpu_core, cut_preprocess, process_effect
     for log in log_read(done, "preprocess"):
         yield log
 
-def extract(model_name, version, method, pitch_guidance, hop_length, cpu_cores, gpu, sample_rate, embedders, custom_embedders, onnx_f0_mode, embedders_mode, f0_autotune, f0_autotune_strength, hybrid_method, rms_extract, alpha=0.5):
+def extract(model_name, version, method, pitch_guidance, hop_length, cpu_cores, gpu, sample_rate, embedders, custom_embedders, onnx_f0_mode, embedders_mode, f0_autotune, f0_autotune_strength, hybrid_method, rms_extract, alpha=0.5, include_mutes=2, embedders_mix=False, embedders_mix_layers=9, embedders_mix_ratio=0.5, architecture="RVC"):
     f0method, embedder_model = (method if method != "hybrid" else hybrid_method), (embedders if embedders != "custom" else custom_embedders)
     sr = int(float(sample_rate.rstrip("k")) * 1000)
 
@@ -117,7 +117,7 @@ def extract(model_name, version, method, pitch_guidance, hop_length, cpu_cores, 
     except:
         return gr_warning(translations["not_found_data_preprocess"])
     
-    p = subprocess.Popen(f'{python} {configs["extract_path"]} --model_name "{model_name}" --rvc_version {version} --f0_method {f0method} --pitch_guidance {pitch_guidance} --hop_length {hop_length} --cpu_cores {cpu_cores} --gpu {gpu} --sample_rate {sr} --embedder_model {embedder_model} --f0_onnx {onnx_f0_mode} --embedders_mode {embedders_mode} --f0_autotune {f0_autotune} --f0_autotune_strength {f0_autotune_strength} --rms_extract {rms_extract} --alpha {alpha}', shell=True)
+    p = subprocess.Popen(f'{python} {configs["extract_path"]} --model_name "{model_name}" --rvc_version {version} --f0_method {f0method} --pitch_guidance {pitch_guidance} --hop_length {hop_length} --cpu_cores {cpu_cores} --gpu {gpu} --sample_rate {sr} --embedder_model {embedder_model} --f0_onnx {onnx_f0_mode} --embedders_mode {embedders_mode} --f0_autotune {f0_autotune} --f0_autotune_strength {f0_autotune_strength} --rms_extract {rms_extract} --alpha {alpha} --include_mutes {include_mutes} --embedders_mix {embedders_mix} --embedders_mix_layers {embedders_mix_layers} --embedders_mix_ratio {embedders_mix_ratio} --architecture {architecture}', shell=True)
     done = [False]
 
     threading.Thread(target=if_done, args=(done, p)).start()
@@ -126,7 +126,7 @@ def extract(model_name, version, method, pitch_guidance, hop_length, cpu_cores, 
     for log in log_read(done, "extract"):
         yield log
 
-def create_index(model_name, rvc_version, index_algorithm):
+def create_index(model_name, rvc_version, index_algorithm, nprobe=9):
     if not model_name: return gr_warning(translations["provide_name"])
     model_dir = os.path.join(configs["logs_path"], model_name)
     
@@ -135,7 +135,7 @@ def create_index(model_name, rvc_version, index_algorithm):
     except:
         return gr_warning(translations["not_found_data_extract"])
     
-    p = subprocess.Popen(f'{python} {configs["create_index_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --index_algorithm {index_algorithm}', shell=True)
+    p = subprocess.Popen(f'{python} {configs["create_index_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --index_algorithm {index_algorithm} --nprobe {nprobe}', shell=True)
     done = [False]
 
     threading.Thread(target=if_done, args=(done, p)).start()
@@ -144,7 +144,12 @@ def create_index(model_name, rvc_version, index_algorithm):
     for log in log_read(done, "create_index"):
         yield log
 
-def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_every_weights, total_epoch, sample_rate, batch_size, gpu, pitch_guidance, not_pretrain, custom_pretrained, pretrain_g, pretrain_d, detector, threshold, clean_up, cache, model_author, vocoder, checkpointing, deterministic, benchmark, optimizer, energy_use, custom_reference=False, reference_name="", multiscale_mel_loss=False, cosine_lr=False, newpytorch=True):
+def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_every_weights, total_epoch, sample_rate, batch_size, gpu, pitch_guidance, not_pretrain, custom_pretrained, pretrain_g, pretrain_d, detector, threshold, clean_up, cache, model_author, vocoder, checkpointing, deterministic, benchmark, optimizer, energy_use, custom_reference=False, reference_name="", multiscale_mel_loss=False, cosine_lr=False, newpytorch=True, architecture="RVC", embedders="hubert_base", custom_embedders=None):
+    # ── SVC architecture overrides (from Vietnamese-RVC) ──
+    if architecture == "SVC":
+        pitch_guidance = True
+        energy_use = False
+
     sr = int(float(sample_rate.rstrip("k")) * 1000)
     if not model_name: return gr_warning(translations["provide_name"])
 
@@ -206,6 +211,25 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
                     pg_prefixed = _pg_v
                 if os.path.exists(os.path.join(pretrain_dir, _pd_v)):
                     pd_prefixed = _pd_v
+
+            # Vietnamese-RVC: embedder prefix for custom embedders
+            embedder_model = embedders if embedders != "custom" else (custom_embedders or "hubert_base")
+            if embedder_model not in ["hubert_base", "contentvec_base"]:
+                _pg_e = embedder_model + "_" + pg_prefixed
+                _pd_e = embedder_model + "_" + pd_prefixed
+                if os.path.exists(os.path.join(pretrain_dir, _pg_e)):
+                    pg_prefixed = _pg_e
+                if os.path.exists(os.path.join(pretrain_dir, _pd_e)):
+                    pd_prefixed = _pd_e
+
+            # Vietnamese-RVC: architecture prefix for SVC
+            if architecture != "RVC":
+                _pg_a = architecture + "_" + pg_prefixed
+                _pd_a = architecture + "_" + pd_prefixed
+                if os.path.exists(os.path.join(pretrain_dir, _pg_a)):
+                    pg_prefixed = _pg_a
+                if os.path.exists(os.path.join(pretrain_dir, _pd_a)):
+                    pd_prefixed = _pd_a
 
             pretrained_G = os.path.join(pretrain_dir, pg_prefixed)
             pretrained_D = os.path.join(pretrain_dir, pd_prefixed)
@@ -292,18 +316,37 @@ def training(model_name, rvc_version, save_every_epoch, save_only_latest, save_e
         gr_warning(translations["not_use_pretrain"])
 
     if custom_reference:
-        reference_path = os.path.join(configs["reference_path"], reference_name)
+        # Vietnamese-RVC style: reference path includes version + embedder + pitch + energy
+        embedder_model = embedders if embedders != "custom" else (custom_embedders or "hubert_base")
+        reference_path = os.path.join(
+            configs.get("reference_path", configs.get("logs_path", "arvc/assets/logs")),
+            "".join([
+                reference_name,
+                "_",
+                rvc_version,
+                "_",
+                embedder_model,
+                "_",
+                str(pitch_guidance),
+                "_",
+                str(energy_use)
+            ])
+        )
 
         if not os.path.exists(reference_path):
-            gr_warning(translations["not_found_reference"])
-
-            custom_reference = False
-            reference_path = None
+            # Fallback: try simple reference path (legacy behavior)
+            legacy_reference_path = os.path.join(configs.get("reference_path", ""), reference_name)
+            if os.path.exists(legacy_reference_path):
+                reference_path = legacy_reference_path
+            else:
+                gr_warning(translations["not_found_reference"])
+                custom_reference = False
+                reference_path = None
     else: reference_path = None
 
     gr_info(translations["start"].format(start=translations["training"]))
 
-    p = subprocess.Popen(f'{python} {configs["train_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --save_every_epoch {save_every_epoch} --save_only_latest {save_only_latest} --save_every_weights {save_every_weights} --total_epoch {total_epoch} --batch_size {batch_size} --gpu {gpu} --pitch_guidance {pitch_guidance} --overtraining_detector {detector} --overtraining_threshold {threshold} --cleanup {clean_up} --cache_data_in_gpu {cache} --g_pretrained_path "{pretrained_G}" --d_pretrained_path "{pretrained_D}" --model_author "{model_author}" --vocoder "{vocoder}" --checkpointing {checkpointing} --deterministic {deterministic} --benchmark {benchmark} --optimizer {optimizer} --energy_use {energy_use} --use_custom_reference {custom_reference} --reference_path {reference_path} --multiscale_mel_loss {multiscale_mel_loss} --use_cosine_annealing_lr {cosine_lr} --newpytorch {newpytorch}', shell=True)
+    p = subprocess.Popen(f'{python} {configs["train_path"]} --model_name "{model_name}" --rvc_version {rvc_version} --save_every_epoch {save_every_epoch} --save_only_latest {save_only_latest} --save_every_weights {save_every_weights} --total_epoch {total_epoch} --batch_size {batch_size} --gpu {gpu} --pitch_guidance {pitch_guidance} --overtraining_detector {detector} --overtraining_threshold {threshold} --cleanup {clean_up} --cache_data_in_gpu {cache} --g_pretrained_path "{pretrained_G}" --d_pretrained_path "{pretrained_D}" --model_author "{model_author}" --vocoder "{vocoder}" --checkpointing {checkpointing} --deterministic {deterministic} --benchmark {benchmark} --optimizer {optimizer} --energy_use {energy_use} --use_custom_reference {custom_reference} --reference_path {reference_path} --multiscale_mel_loss {multiscale_mel_loss} --use_cosine_annealing_lr {cosine_lr} --newpytorch {newpytorch} --architecture {architecture}', shell=True)
     done = [False]
 
     with open(os.path.join(model_dir, "train_pid.txt"), "w") as pid_file:
@@ -361,6 +404,7 @@ def one_click_train(
         chunk_len=3.0,
         overlap_len=0.3,
         normalization_mode="post",
+        architecture="RVC",
     ):
         step1_log = log
         all_logs += f"=== Step 1: Preprocessing ===\n{log}\n\n"
@@ -393,6 +437,11 @@ def one_click_train(
         hybrid_method="hybrid[pm+crepe-tiny]",
         rms_extract=False,
         alpha=0.5,
+        include_mutes=2,
+        embedders_mix=False,
+        embedders_mix_layers=9,
+        embedders_mix_ratio=0.5,
+        architecture="RVC",
     ):
         step2_log = log
         all_logs += f"=== Step 2: Feature Extraction ===\n{log}\n\n"
@@ -437,6 +486,9 @@ def one_click_train(
         reference_name="",
         multiscale_mel_loss=False,
         cosine_lr=True,
+        architecture="RVC",
+        embedders="hubert_base",
+        custom_embedders=None,
     ):
         step3_log = log
         all_logs += f"=== Step 3: Training ===\n{log}\n\n"
@@ -455,6 +507,7 @@ def one_click_train(
         model_name=model_name,
         rvc_version=rvc_version,
         index_algorithm="Auto",
+        nprobe=9,
     ):
         step4_log = log
         all_logs += f"=== Step 4: Index Creation ===\n{log}\n\n"
