@@ -263,13 +263,10 @@ class VoiceConverter:
                 if audio_processing: audio = preprocess(audio, self.sample_rate, device=self.device)
 
                 try:
-                    # Always normalize input to peak at 1.0 for consistent model processing
-                    # This ensures the model receives properly scaled audio regardless of input volume
-                    audio_max = np.abs(audio).max()
-                    if audio_max > 1e-6:
-                        audio /= audio_max  # Normalize to peak = 1.0
-                    elif audio_max > 0:
-                        audio /= audio_max
+                    # Only normalize DOWN if clipping — never amplify quiet input
+                    # Amplifying input corrupts HuBERT features and F0 detection
+                    audio_max = np.abs(audio).max() / 0.95
+                    if audio_max > 1: audio /= audio_max
                 except (ValueError, RuntimeError) as e:
                     logger.warning(f"Audio normalization failed, copying original: {e}")
                     import shutil
@@ -341,12 +338,9 @@ class VoiceConverter:
                     padding = np.zeros(int(np.round(len(audio) / self.sample_rate * self.tgt_sr) - len(audio_output)), dtype=audio_output.dtype)
                     audio_output = np.concatenate([audio_output, padding])
 
-                # Final output loudness normalization to ensure healthy output level
-                # This compensates for the neural network's tendency to produce quiet output
-                out_peak = np.abs(audio_output).max()
-                if out_peak > 1e-6:
-                    target_peak = 10 ** (-1 / 20)  # -1 dB ≈ 0.891
-                    audio_output *= target_peak / out_peak
+                # No output loudness normalization — the pipeline already clips to [-1, 1].
+                # Amplifying quiet model output would also amplify noise and artifacts,
+                # which was causing the "robotic chirping" bug on Colab.
 
                 try:
                     self._write_audio(audio_output_path, audio_output, self.tgt_sr, export_format)
