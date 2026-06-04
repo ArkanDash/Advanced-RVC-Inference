@@ -28,7 +28,6 @@ Understanding the codebase helps you find where to contribute:
 arvc/
 ├── app/               # Gradio web UI (tabs, pages, layouts)
 │   ├── tabs/          #   inference, training, downloads, realtime, extra
-│   └── easy_gui.py    #   simplified one-click interface
 ├── engine/            # Core logic (no UI dependency)
 │   ├── inference/     #   voice conversion pipeline, TTS
 │   ├── training/      #   preprocess, extract, train, export

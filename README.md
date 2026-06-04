@@ -24,7 +24,6 @@
 - **Audio Separation** — Vocal/instrumental isolation (MDX-Net, Roformer, BS-Roformer), karaoke, reverb removal, denoising
 - **Real-Time Conversion** — Live mic voice conversion with VAD and low-latency processing
 - **Training Pipeline** — End-to-end training from dataset creation to model export with overtraining detection
-- **Easy GUI** — Simplified one-click interface for quick conversion and training
 - **CLI** — Full command-line interface via `rvc-cli`
 - **Auto Pretrained Download** — Automatically downloads pretrained models from HuggingFace
 - **ZLUDA Support** — Full AMD GPU support via ZLUDA
@@ -123,20 +122,6 @@ rvc-cli --help
 
 ---
 
-## Easy GUI
-
-A simplified interface for quick workflows:
-
-```bash
-rvc-cli serve --easy true
-```
-
-- **Quick Convert** — Simple voice conversion with minimal settings
-- **One-Click Train** — Full pipeline in a single button
-- **Download** — Quick model download from URLs
-
----
-
 ## Terms of Use
 
 The use of the converted voice for the following purposes is **strictly prohibited**:
@@ -156,7 +141,7 @@ The use of the converted voice for the following purposes is **strictly prohibit
 |---------|--------|---------|
 | [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation & pretrained models |
 | [Applio](https://github.com/IAHispano/Applio) | IAHispano | UI/UX inspiration & components |
-| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | EasyGUI inspiration |
+| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | UI inspiration |
 | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke | UVR5 audio separation |
 | [whisper](https://github.com/openai/whisper) | OpenAI | Speech-to-text transcription |
 | [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia | Vocoder implementation |

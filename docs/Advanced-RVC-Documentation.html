@@ -753,10 +753,6 @@ rvc-cli --help</code></pre>
       </tbody>
     </table>
   </div>
-
-  <h4>Easy GUI</h4>
-  <p>A simplified interface for quick workflows with minimal configuration. Provides quick voice conversion with minimal settings, one-click training for the full pipeline, and quick model download from URLs.</p>
-  <pre data-lang="bash"><code>rvc-cli serve --easy true</code></pre>
 </section>
 
 <!-- ==================== 02: FEATURES ==================== -->
@@ -769,7 +765,6 @@ rvc-cli --help</code></pre>
     <div class="feature-item"><strong>Audio Separation</strong>Vocal/instrumental isolation (MDX-Net, Roformer, BS-Roformer), karaoke, reverb removal, denoising</div>
     <div class="feature-item"><strong>Real-Time Conversion</strong>Live mic voice conversion with VAD and low-latency processing</div>
     <div class="feature-item"><strong>Training Pipeline</strong>End-to-end training from dataset creation to model export with overtraining detection</div>
-    <div class="feature-item"><strong>Easy GUI</strong>Simplified one-click interface for quick conversion and training</div>
     <div class="feature-item"><strong>CLI</strong>Full command-line interface via <code>rvc-cli</code> with 13 subcommands</div>
     <div class="feature-item"><strong>Auto Download</strong>Automatically downloads pretrained models from HuggingFace</div>
     <div class="feature-item"><strong>ZLUDA Support</strong>Full AMD GPU support via ZLUDA auto-detection</div>
@@ -1632,7 +1627,6 @@ pip install -e .
   <pre data-lang="text"><code>arvc/
 ├── app/               # Gradio web UI (tabs, pages, layouts)
 │   ├── tabs/          #   inference, training, downloads, realtime, extra
-│   └── easy_gui.py    #   simplified one-click interface
 ├── engine/            # Core logic (no UI dependency)
 │   ├── inference/     #   voice conversion pipeline, TTS
 │   ├── training/      #   preprocess, extract, train, export
@@ -1711,7 +1705,7 @@ pip install -e .
       <tbody>
         <tr><td><a href="https://github.com/PhamHuynhAnh16/Vietnamese-RVC">Vietnamese-RVC</a></td><td>Pham Huynh Anh</td><td>Core RVC implementation &amp; pretrained models</td></tr>
         <tr><td><a href="https://github.com/IAHispano/Applio">Applio</a></td><td>IAHispano</td><td>UI/UX inspiration &amp; components</td></tr>
-        <tr><td><a href="https://github.com/kalomaze/Mangio-Kalo-Tweaks">Mangio-Kalo-Tweaks</a></td><td>kalomaze</td><td>EasyGUI inspiration</td></tr>
+        <tr><td><a href="https://github.com/kalomaze/Mangio-Kalo-Tweaks">Mangio-Kalo-Tweaks</a></td><td>kalomaze</td><td>UI inspiration</td></tr>
         <tr><td><a href="https://github.com/nomadkaraoke/python-audio-separator">python-audio-separator</a></td><td>Nomad Karaoke</td><td>UVR5 audio separation</td></tr>
         <tr><td><a href="https://github.com/openai/whisper">whisper</a></td><td>OpenAI</td><td>Speech-to-text transcription</td></tr>
         <tr><td><a href="https://github.com/NVIDIA/BigVGAN">BigVGAN</a></td><td>Nvidia</td><td>Vocoder implementation</td></tr>

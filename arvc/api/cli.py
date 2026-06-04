@@ -667,9 +667,7 @@ def cmd_download(args):
 
 def cmd_serve(args):
     """Launch the web interface."""
-    easy_mode = getattr(args, 'easy', False)
-    mode_str = "Easy GUI" if easy_mode else "Full GUI"
-    logger.info("Starting web interface (%s)...", mode_str)
+    logger.info("Starting web interface...")
 
     try:
         from arvc.app.gui import launch
@@ -678,7 +676,6 @@ def cmd_serve(args):
             share=args.share,
             server_name=args.host,
             server_port=args.port,
-            easy=easy_mode,
         )
         return 0
 
@@ -717,9 +714,6 @@ Examples:
 
   # Launch web interface
   rvc-cli serve --port 8080 --share
-
-  # Launch simplified Easy GUI
-  rvc-cli serve --easy true
 
   # Download a model
   rvc-cli download -l "https://huggingface.co/user/model/resolve/main/model.pth"
@@ -929,7 +923,7 @@ For the full CLI guide, see:
     p.add_argument("--host", default="0.0.0.0", help="Host to bind (default: 0.0.0.0)")
     p.add_argument("--port", type=int, default=7860, help="Port to bind (default: 7860)")
     p.add_argument("--share", action="store_true", help="Create public share URL")
-    p.add_argument("--easy", action="store_true", help="Launch Easy GUI (simplified mode)")
+
     p.set_defaults(func=cmd_serve)
 
     # ----- info -----
