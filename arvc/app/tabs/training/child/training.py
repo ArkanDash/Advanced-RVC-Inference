@@ -1,487 +1,1020 @@
 import os
 import sys
+
 import gradio as gr
 
+sys.path.append(os.getcwd())
 
-from arvc.services.process import zip_file, fetch_pretrained_data, push_to_hub
-from arvc.services.training import preprocess, extract, create_index, training
-from arvc.utils.variables import translations, model_name, index_path, method_f0, embedders_mode, embedders_model, pretrainedD, pretrainedG, config, file_types, hybrid_f0_method, reference_list
-from arvc.ui.feedback import gr_warning, visible, unlock_f0, hoplength_show, change_models_choices, get_gpu_info, change_embedders_mode, pitch_guidance_lock, vocoders_lock, unlock_ver, unlock_vocoder, change_pretrained_choices, gpu_number_str, shutil_move, change_reference_choices
-from arvc.engine.models.optimizers import get_optimizer_choices, get_optimizer_info
-from arvc.engine.models.generators import get_vocoder_choices
+from arvc.services.process import zip_file
 
+from arvc.services.training import (
+    extract, 
+    training, 
+    preprocess, 
+    create_index 
+)
+
+from arvc.utils.variables import (
+    config, 
+    method_f0, 
+    file_types, 
+    model_name, 
+    index_path, 
+    pretrainedG, 
+    pretrainedD, 
+    translations, 
+    reference_list, 
+    embedders_mode, 
+    embedders_model, 
+    hybrid_f0_method 
+)
+
+from arvc.ui.feedback import (
+    visible, 
+    unlock_f0, 
+    gr_warning, 
+    shutil_move, 
+    get_gpu_info, 
+    vocoders_lock, 
+    unlock_ver, 
+    unlock_vocoder, 
+    hoplength_show, 
+    gpu_number_str, 
+    pitch_guidance_lock, 
+    change_models_choices, 
+    change_embedders_mode, 
+    change_reference_choices,
+    change_pretrained_choices 
+)
 
 def training_model_tab():
-    with gr.Column():
-        # ── Sub-tab 1: Dataset Preprocessing ──
-        with gr.TabItem("1. Preprocess"):
-            training_name = gr.Textbox(
-                label=translations["modelname"],
-                info=translations["training_model_name"],
-                value="",
-                placeholder=translations["modelname"],
-                interactive=True,
-            )
-            with gr.Row(equal_height=False):
-                with gr.Column(scale=1):
-                    training_sr = gr.Radio(
-                        label=translations["sample_rate"],
-                        info=translations["sample_rate_info"],
-                        choices=["24k", "32k", "40k", "44.1k", "48k"],
-                        value="48k",
-                        interactive=True,
-                    )
-                    training_ver = gr.Radio(
-                        label=translations["training_version"],
-                        info=translations["training_version_info"],
-                        choices=["v1", "v2"],
-                        value="v2",
-                        interactive=True,
-                    )
-                with gr.Column(scale=1):
-                    preprocess_split_audio_mode = gr.Radio(
-                        label=translations["split_audio_mode"],
-                        info=translations["split_audio_mode_info"],
-                        value="Automatic",
-                        choices=["Automatic", "Simple", "Skip"],
-                        interactive=True,
-                    )
-                    preprocess_normalization_mode = gr.Radio(
-                        label=translations["normalization_mode"],
-                        info=translations["normalization_mode_info"],
-                        value="none",
-                        choices=["none", "pre", "post"],
-                        interactive=True,
-                    )
-
-            # ── Architecture (RVC / SVC) — Vietnamese-RVC feature ──
-            architecture = gr.Radio(
-                label=translations.get("architecture", "Architecture"),
-                info=translations.get("architecture_info", "Model architecture: RVC (default) or SVC (Singing Voice Conversion). SVC forces pitch guidance ON and energy OFF."),
-                choices=["RVC", "SVC"],
-                value="RVC",
-                interactive=True,
-            )
-
+    with gr.Row():
+        gr.Markdown(translations.get("training_markdown", "## Training"))
+    with gr.Row():
+        with gr.Column():
             with gr.Row():
-                clean_dataset = gr.Checkbox(label=translations["clear_dataset"], value=False, interactive=True)
-                process_effects = gr.Checkbox(label=translations["preprocess_effect"], value=False, interactive=True)
-                upload = gr.Checkbox(label=translations["upload_dataset"], value=False, interactive=True)
-
-            clean_dataset_row = gr.Group(visible=False)
-            with clean_dataset_row:
-                clean_dataset_strength = gr.Slider(
-                    label=translations["clean_strength"],
-                    info=translations["clean_strength_info"],
-                    minimum=0, maximum=1, value=0.7, step=0.1, interactive=True,
-                )
-
-            simple_option = gr.Group(visible=False)
-            with simple_option:
-                chunk_len = gr.Slider(
-                    minimum=0.5, maximum=5.0, value=3.0, step=0.1,
-                    label=translations["chunk_length"], info=translations["chunk_length_info"], interactive=True,
-                )
-                overlap_len = gr.Slider(
-                    minimum=0.0, maximum=0.4, value=0.3, step=0.1,
-                    label=translations["overlap_length"], info=translations["overlap_length_info"], interactive=True,
-                )
-
-            custom_reference = gr.Checkbox(label=translations["custom_reference"], value=False, interactive=True)
-            custom_reference_row = gr.Group(visible=False)
-            with custom_reference_row:
-                with gr.Row():
-                    reference_name = gr.Dropdown(
-                        label=translations["reference_name"],
-                        info=translations["reference_name_info"],
-                        choices=reference_list,
-                        value=reference_list[0] if len(reference_list) >= 1 else "",
-                        allow_custom_value=True, interactive=True,
+                with gr.Column():
+                    modelname = gr.Textbox(
+                        label=translations["modelname"], 
+                        info=translations["training_model_name"], 
+                        value="", 
+                        placeholder=translations["modelname"], 
+                        interactive=True
                     )
-                    reference_refresh = gr.Button(translations["refresh"])
-
-            upload_dataset = gr.Files(label=translations["drop_audio"], file_types=file_types, visible=False)
-
-            preprocess_button = gr.Button(translations["preprocess_button"], variant="primary")
-            preprocess_info = gr.Textbox(label=translations["preprocess_info"], value="", interactive=False, lines=2)
-
-        # ── Sub-tab 2: Feature Extraction ──
-        with gr.TabItem("2. Extract"):
-            with gr.Row(equal_height=False):
-                with gr.Column(scale=1):
-                    onnx_f0_mode2 = gr.Checkbox(label=translations["f0_onnx_mode"], value=False, interactive=True)
-                    unlock_full_method4 = gr.Checkbox(label=translations["f0_unlock"], value=False, interactive=True)
-                    autotune = gr.Checkbox(label=translations["autotune"], value=False, interactive=True)
-                    extract_method = gr.Radio(
-                        label=translations["f0_method"],
-                        info=translations["f0_method_info"],
-                        choices=method_f0, value="rmvpe", interactive=True,
-                    )
-                    extract_hybrid_method = gr.Dropdown(
-                        label=translations["f0_method_hybrid"],
-                        info=translations["f0_method_hybrid_info"],
-                        choices=hybrid_f0_method, value=hybrid_f0_method[0],
-                        interactive=True, allow_custom_value=True, visible=False,
-                    )
-                    extract_hop_length = gr.Slider(
-                        label=translations['hop_length'], info=translations["hop_length_info"],
-                        minimum=64, maximum=512, value=160, step=1, interactive=True, visible=False,
-                    )
-                    f0_autotune_strength = gr.Slider(
-                        minimum=0, maximum=1, label=translations["autotune_rate"],
-                        info=translations["autotune_rate_info"], value=1, step=0.1,
-                        interactive=True, visible=False,
-                    )
-                    alpha = gr.Slider(
-                        label=translations["alpha_label"], info=translations["alpha_info"],
-                        minimum=0.1, maximum=1, value=0.5, step=0.1, interactive=True, visible=False,
-                    )
-
-                with gr.Column(scale=1):
-                    embed_mode2 = gr.Radio(
-                        label=translations["embed_mode"], info=translations["embed_mode_info"],
-                        value="fairseq", choices=embedders_mode, interactive=True,
-                    )
-                    extract_embedders = gr.Radio(
-                        label=translations["hubert_model"], info=translations["hubert_info"],
-                        choices=embedders_model, value="hubert_base", interactive=True,
-                    )
-                    extract_embedders_custom = gr.Textbox(
-                        label=translations["modelname"], info=translations["modelname_info"],
-                        value="", placeholder="hubert_base", interactive=True, visible=False,
-                    )
-                    training_f0 = gr.Checkbox(label=translations["training_pitch"], value=True, interactive=True)
-                    rms_extract = gr.Checkbox(label=translations["train&energy"], info=translations["train&energy_info"], value=False, interactive=True)
-
-                    # ── Include Mutes — Vietnamese-RVC feature ──
-                    include_mutes = gr.Slider(
-                        minimum=0, maximum=10, value=2, step=1,
-                        label=translations.get("include_mutes", "Include Mutes"),
-                        info=translations.get("include_mutes_info", "Number of mute audio entries per speaker in filelist. Helps model learn silence transitions. Default: 2"),
-                        interactive=True,
-                    )
-
-                    # ── Embedder Mixing — Vietnamese-RVC feature ──
-                    embedders_mix = gr.Checkbox(
-                        label=translations.get("embedders_mix", "Embedder Mix"),
-                        info=translations.get("embedders_mix_info", "Blend two transformer layer features for better tonal language support (Vietnamese-RVC)"),
-                        value=False, interactive=True,
-                    )
-                    embedders_mix_column = gr.Group(visible=False)
-                    with embedders_mix_column:
-                        embedders_mix_layers = gr.Slider(
-                            label=translations.get("embedders_mix_layers", "Mix Layers"),
-                            info=translations.get("embedders_mix_layers_info", "Number of transformer layers to blend (1-12). Higher = more blending"),
-                            minimum=1, maximum=12, value=9, step=1, interactive=True,
+                    sample_rate = gr.Radio(
+                        label=translations["sample_rate"], 
+                        info=translations["sample_rate_info"], 
+                        choices=[
+                            "24k",
+                            "32k", 
+                            "40k", 
+                            "44.1k",
+                            "48k"
+                        ], 
+                        value="48k", 
+                        interactive=True
+                    ) 
+                    rvc_version = gr.Radio(
+                        label=translations["training_version"], 
+                        info=translations["training_version_info"], 
+                        choices=[
+                            "v1", 
+                            "v2"
+                        ], 
+                        value="v2", 
+                        interactive=True
+                    ) 
+                    with gr.Group():
+                        with gr.Row():
+                            clean_dataset = gr.Checkbox(
+                                label=translations["clear_dataset"], 
+                                value=False, 
+                                interactive=True
+                            )
+                            process_effects = gr.Checkbox(
+                                label=translations["preprocess_effect"], 
+                                value=False, 
+                                interactive=True
+                            )
+                            pitch_guidance = gr.Checkbox(
+                                label=translations["training_pitch"], 
+                                value=True, 
+                                interactive=True
+                            )
+                        with gr.Row():
+                            custom_reference = gr.Checkbox(
+                                label=translations["custom_reference"], 
+                                value=False, 
+                                interactive=True
+                            )
+                            checkpointing = gr.Checkbox(
+                                label=translations["memory_efficient_training"], 
+                                value=False, 
+                                interactive=True
+                            )
+                            dataset_upload = gr.Checkbox(
+                                label=translations["upload_dataset"], 
+                                value=False, 
+                                interactive=True
+                            )
+                    with gr.Row():
+                        split_audio_mode = gr.Radio(
+                            label=translations["split_audio_mode"], 
+                            info=translations["split_audio_mode_info"], 
+                            value="Automatic", 
+                            choices=[
+                                "Automatic", 
+                                "Simple", 
+                                "Skip"
+                            ], 
+                            interactive=True
                         )
-                        embedders_mix_ratio = gr.Slider(
-                            label=translations.get("embedders_mix_ratio", "Mix Ratio"),
-                            info=translations.get("embedders_mix_ratio_info", "Blending ratio (0.1-1.0). 0.5 = equal blend of both layers"),
-                            minimum=0.1, maximum=1.0, value=0.5, step=0.1, interactive=True,
+                        normalization_mode = gr.Radio(
+                            label=translations["normalization_mode"], 
+                            info=translations["normalization_mode_info"], 
+                            value="post", 
+                            choices=[
+                                "none", 
+                                "pre", 
+                                "post"
+                            ], 
+                            interactive=True
                         )
-
-            extract_button = gr.Button(translations["extract_button"], variant="primary")
-            extract_info = gr.Textbox(label=translations["extract_info"], value="", interactive=False, lines=2)
-
-        # ── Sub-tab 3: Index Creation ──
-        with gr.TabItem("3. Index"):
-            index_algorithm = gr.Radio(
-                label=translations["index_algorithm"], info=translations["index_algorithm_info"],
-                choices=["Auto", "Faiss", "KMeans"], value="Auto", interactive=True,
-            )
-            nprobe = gr.Slider(
-                label=translations.get("nprobe", "Nprobe"),
-                info=translations.get("nprobe_info", "Number of probes for FAISS index search. Higher = more accurate but slower. Default: 9"),
-                minimum=1, maximum=64, value=9, step=1, interactive=True,
-            )
-            index_button = gr.Button(translations["create_index"], variant="secondary")
-            index_info = gr.Textbox(label=translations["create_index"], value="", interactive=False, lines=2)
-
-        # ── Sub-tab 4: Model Training ──
-        with gr.TabItem("4. Train"):
-            # ── Training Parameters ──
-            with gr.Group():
-                with gr.Row(equal_height=False):
-                    with gr.Column(scale=1):
-                        total_epochs = gr.Slider(
-                            label=translations["total_epoch"], info=translations["total_epoch_info"],
-                            minimum=1, maximum=10000, value=10, step=1, interactive=True,
+                    with gr.Row(visible=False) as custom_reference_row:
+                        with gr.Accordion(
+                            translations["custom_reference"], 
+                            open=True
+                        ):
+                            reference_name = gr.Dropdown(
+                                label=translations["reference_name"], 
+                                info=translations["reference_name_info"], 
+                                choices=reference_list, 
+                                value=reference_list[0] if len(reference_list) >= 1 else "", 
+                                allow_custom_value=True, 
+                                interactive=True
+                            )
+                            reference_refresh = gr.Button(
+                                translations["refresh"], 
+                                scale=2
+                            )
+                    with gr.Row(visible=False) as clean_dataset_row:
+                        clean_dataset_strength = gr.Slider(
+                            label=translations["clean_strength"], 
+                            info=translations["clean_strength_info"], 
+                            minimum=0, 
+                            maximum=1, 
+                            value=0.7, 
+                            step=0.1, 
+                            interactive=True
                         )
-                        save_epochs = gr.Slider(
-                            label=translations["save_epoch"], info=translations["save_epoch_info"],
-                            minimum=1, maximum=10000, value=5, step=1, interactive=True,
+                with gr.Column():
+                    preprocess_button = gr.Button(
+                        translations["preprocess_button"], 
+                        scale=2
+                    )
+                    upload_dataset = gr.Files(
+                        label=translations["drop_audio"], 
+                        file_types=file_types, 
+                        visible=False
+                    )
+                    preprocess_info = gr.Textbox(
+                        label=translations["preprocess_info"], 
+                        value="", 
+                        interactive=False, 
+                        container=True, 
+                        lines=2
+                    )
+        with gr.Column():
+            with gr.Row():
+                with gr.Column():
+                    with gr.Accordion(
+                        label=translations["f0_method"], 
+                        open=False
+                    ):
+                        with gr.Group():
+                            with gr.Row():
+                                predictor_onnx = gr.Checkbox(
+                                    label=translations.get("predictor_onnx", translations.get("f0_onnx_mode", "F0 ONNX Mode")), 
+                                    value=False, 
+                                    interactive=True
+                                )
+                                unlock_full_method = gr.Checkbox(
+                                    label=translations["f0_unlock"], 
+                                    value=False, 
+                                    interactive=True
+                                )
+                                autotune = gr.Checkbox(
+                                    label=translations["autotune"], 
+                                    value=False, 
+                                    interactive=True
+                                )
+                            f0_method = gr.Radio(
+                                label=translations["f0_method"], 
+                                info=translations["f0_method_info"], 
+                                choices=method_f0, 
+                                value="rmvpe", 
+                                interactive=True
+                            )
+                            hybrid_f0method = gr.Dropdown(
+                                label=translations["f0_method_hybrid"], 
+                                info=translations["f0_method_hybrid_info"], 
+                                choices=hybrid_f0_method, 
+                                value=hybrid_f0_method[0], 
+                                interactive=True, 
+                                allow_custom_value=True, 
+                                visible=False
+                            )
+                        hop_length = gr.Slider(
+                            label=translations['hop_length'], 
+                            info=translations["hop_length_info"], 
+                            minimum=64, 
+                            maximum=512, 
+                            value=160, 
+                            step=1, 
+                            interactive=True, 
+                            visible=False
                         )
-                        train_batch_size = gr.Slider(
-                            label=translations["batch_size"], info=translations["batch_size_info"],
-                            minimum=1, maximum=64, value=8, step=1, interactive=True,
+                        f0_autotune_strength = gr.Slider(
+                            label=translations["autotune_rate"], 
+                            info=translations["autotune_rate_info"], 
+                            minimum=0, 
+                            maximum=1, 
+                            value=1, 
+                            step=0.1, 
+                            interactive=True, 
+                            visible=False
                         )
-                    with gr.Column(scale=1):
-                        vocoders = gr.Dropdown(
-                            label=translations["vocoder"], info=translations["vocoder_info"],
-                            choices=get_vocoder_choices(), value=get_vocoder_choices()[0],
-                            interactive=True, allow_custom_value=True,
+                        alpha = gr.Slider(
+                            label=translations["alpha_label"], 
+                            info=translations["alpha_info"], 
+                            minimum=0.1, 
+                            maximum=1, 
+                            value=0.5, 
+                            step=0.1, 
+                            interactive=True, 
+                            visible=False
                         )
-                        optimizer = gr.Dropdown(
-                            label=translations["optimizer"],
-                            info=translations.get("optimizer_info", "Optimizer in training, AdamW is default."),
-                            value="AdamW", choices=get_optimizer_choices(),
-                            interactive=True, allow_custom_value=False,
+                    with gr.Accordion(
+                        label=translations["hubert_model"], 
+                        open=False
+                    ):
+                        embedders_mix = gr.Checkbox(
+                            label=translations.get("embedders_mix", "Embedder Mix"),
+                            info=translations.get("embedders_mix_info", "Blend two transformer layer features"),
+                            value=False,
+                            interactive=True
                         )
+                        with gr.Group():
+                            embedder_mode = gr.Radio(
+                                label=translations["embed_mode"], 
+                                info=translations["embed_mode_info"], 
+                                value="fairseq", 
+                                choices=embedders_mode, 
+                                interactive=True, 
+                                visible=True
+                            )
+                            embedders = gr.Radio(
+                                label=translations["hubert_model"], 
+                                info=translations["hubert_info"], 
+                                choices=embedders_model, 
+                                value="hubert_base", 
+                                interactive=True
+                            )
+                        with gr.Row():
+                            embedders_custom = gr.Textbox(
+                                label=translations["modelname"], 
+                                info=translations["modelname_info"], 
+                                value="", 
+                                placeholder="hubert_base", 
+                                interactive=True, 
+                                visible=False
+                            )
+                        with gr.Column(visible=False) as embedders_mix_column:
+                            embedders_mix_layers = gr.Slider(
+                                label=translations.get("embedders_mix_layers", "Mix Layers"), 
+                                info=translations.get("embedders_mix_layers_info", "Number of transformer layers to blend"),
+                                minimum=1, 
+                                maximum=12, 
+                                value=9, 
+                                step=1, 
+                                interactive=True
+                            )
+                            embedders_mix_ratio = gr.Slider(
+                                label=translations.get("embedders_mix_ratio", "Mix Ratio"), 
+                                info=translations.get("embedders_mix_ratio_info", "Blending ratio"), 
+                                minimum=0.1, 
+                                maximum=1, 
+                                value=0.5, 
+                                step=0.1, 
+                                interactive=True
+                            )
+                with gr.Column():
+                    extract_button = gr.Button(
+                        translations["extract_button"], 
+                        scale=2
+                    )
+                    extract_info = gr.Textbox(
+                        label=translations["extract_info"], 
+                        value="", 
+                        interactive=False, 
+                        lines=2
+                    )
+        with gr.Column():
+            with gr.Row():
+                with gr.Column():
+                    total_epochs = gr.Slider(
+                        label=translations["total_epoch"], 
+                        info=translations["total_epoch_info"], 
+                        minimum=1, 
+                        maximum=10000, 
+                        value=300, 
+                        step=1, 
+                        interactive=True
+                    )
+                    save_epochs = gr.Slider(
+                        label=translations["save_epoch"], 
+                        info=translations["save_epoch_info"], 
+                        minimum=1, 
+                        maximum=10000, 
+                        value=50, 
+                        step=1, 
+                        interactive=True
+                    )
+                with gr.Column():
+                    create_index_button = gr.Button(
+                        f"3. {translations['create_index']}", 
+                        variant="primary", 
+                        scale=2
+                    )
+                    training_button = gr.Button(
+                        f"4. {translations['training_model']}", 
+                        variant="primary", 
+                        scale=2
+                    )
+            with gr.Row():
+                with gr.Accordion(
+                    label=translations.get("setting", "Settings"), 
+                    open=False
+                ):
+                    with gr.Row():
+                        index_algorithm = gr.Radio(
+                            label=translations["index_algorithm"], 
+                            info=translations["index_algorithm_info"], 
+                            choices=[
+                                "Auto", 
+                                "Faiss", 
+                                "KMeans"
+                            ], 
+                            value="Auto", 
+                            interactive=True
+                        )
+                    with gr.Row():
+                        nprobe = gr.Slider(
+                            label=translations.get("nprobe", "Nprobe"), 
+                            info=translations.get("nprobe_info", "Number of probes for FAISS index search"), 
+                            minimum=1, 
+                            maximum=64, 
+                            value=9, 
+                            step=1, 
+                            interactive=True
+                        )
+                    with gr.Row():
+                        cache_in_gpu = gr.Checkbox(
+                            label=translations["cache_in_gpu"], 
+                            info=translations["cache_in_gpu_info"], 
+                            value=True, 
+                            interactive=True
+                        )
+                        energy = gr.Checkbox(
+                            label=translations["train&energy"], 
+                            info=translations["train&energy_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                        overtraining_detector = gr.Checkbox(
+                            label=translations["overtraining_detector"], 
+                            info=translations["overtraining_detector_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                    with gr.Row():
+                        custom_dataset = gr.Checkbox(
+                            label=translations["custom_dataset"], 
+                            info=translations["custom_dataset_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                        save_only_latest = gr.Checkbox(
+                            label=translations["save_only_latest"], 
+                            info=translations["save_only_latest_info"], 
+                            value=True, 
+                            interactive=True
+                        )
+                        save_every_weights = gr.Checkbox(
+                            label=translations["save_every_weights"], 
+                            info=translations["save_every_weights_info"], 
+                            value=True, 
+                            interactive=True
+                        )
+                    with gr.Row():
+                        cleanup_training = gr.Checkbox(
+                            label=translations["cleanup_training"], 
+                            info=translations["cleanup_training_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                        not_use_pretrain = gr.Checkbox(
+                            label=translations["not_use_pretrain_2"], 
+                            info=translations["not_use_pretrain_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                        custom_pretrain = gr.Checkbox(
+                            label=translations["custom_pretrain"], 
+                            info=translations["custom_pretrain_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                    with gr.Column():
+                        dataset_path = gr.Textbox(
+                            label=translations["dataset_folder"], 
+                            value="arvc/assets/dataset", 
+                            interactive=True, 
+                            visible=False
+                        )
+                    with gr.Column():
+                        include_mutes = gr.Slider(
+                            minimum=0, 
+                            maximum=10, 
+                            value=2, 
+                            step=1, 
+                            label=translations.get("include_mutes", "Include Mutes"), 
+                            info=translations.get("include_mutes_info", "Number of mute entries per speaker"), 
+                            interactive=True
+                        )
+                        with gr.Row(visible=False) as simple_option:
+                            chunk_len = gr.Slider(
+                                minimum=0.5, 
+                                maximum=5.0, 
+                                value=3.0, 
+                                step=0.1, 
+                                label=translations["chunk_length"], 
+                                info=translations["chunk_length_info"], 
+                                interactive=True
+                            )
+                            overlap_len = gr.Slider(
+                                minimum=0.0, 
+                                maximum=0.4, 
+                                value=0.3, 
+                                step=0.1, 
+                                label=translations["overlap_length"], 
+                                info=translations["overlap_length_info"], 
+                                interactive=True
+                            )
+                        threshold = gr.Slider(
+                            minimum=1, 
+                            maximum=100, 
+                            value=50, 
+                            step=1, 
+                            label=translations["threshold"], 
+                            info=translations.get("overtraining_threshold", translations["threshold"]),
+                            interactive=True, 
+                            visible=False
+                        )
+                        with gr.Accordion(
+                            translations["setting_cpu_gpu"], 
+                            open=False
+                        ):
+                            with gr.Row():
+                                architecture = gr.Radio(
+                                    label=translations.get("architecture", "Architecture"), 
+                                    info=translations.get("architecture_info", "Model architecture: RVC or SVC"), 
+                                    choices=[
+                                        "RVC", 
+                                        "SVC"
+                                    ], 
+                                    value="RVC", 
+                                    interactive=True
+                                )
+                            with gr.Column():
+                                gpu_number = gr.Textbox(
+                                    label=translations["gpu_number"], 
+                                    value=gpu_number_str(), 
+                                    info=translations["gpu_number_info"], 
+                                    interactive=True
+                                )
+                                gpu_str, gpu_len = get_gpu_info()
+                                gr.Textbox(
+                                    label=translations["gpu_info"], 
+                                    value=gpu_str, 
+                                    info=translations["gpu_info_2"], 
+                                    interactive=False,
+                                    lines=gpu_len
+                                )
+                                cpu_core = gr.Slider(
+                                    label=translations["cpu_core"], 
+                                    info=translations["cpu_core_info"], 
+                                    minimum=1, 
+                                    maximum=os.cpu_count(), 
+                                    value=min(os.cpu_count(), 4), 
+                                    step=1, 
+                                    interactive=True
+                                )          
+                                batch_size = gr.Slider(
+                                    label=translations["batch_size"], 
+                                    info=translations["batch_size_info"], 
+                                    minimum=1, 
+                                    maximum=64, 
+                                    value=8, 
+                                    step=1, 
+                                    interactive=True
+                                )
+                    with gr.Group():
+                        multiscale_mel_loss = gr.Checkbox(
+                            label=translations["multiscale_mel_loss"], 
+                            info=translations["multiscale_mel_loss_info"], 
+                            value=False, 
+                            interactive=True
+                        )
+                        cosine_annealing_lr = gr.Checkbox(
+                            label=translations.get("cosine_annealing_lr", "Cosine Annealing LR"), 
+                            info=translations.get("cosine_annealing_lr_info", "Use CosineAnnealingLR scheduler"), 
+                            value=False, 
+                            interactive=True
+                        )
+                        vocoders = gr.Radio(
+                            label=translations["vocoder"], 
+                            info=translations["vocoder_info"], 
+                            choices=[
+                                "Default", 
+                                "MRF-HiFi-GAN", 
+                                "RefineGAN",
+                                "BigVGAN"
+                            ], 
+                            value="Default", 
+                            interactive=True
+                        ) 
+                    with gr.Row():
+                        deterministic = gr.Checkbox(
+                            label=translations["deterministic"], 
+                            info=translations["deterministic_info"], 
+                            value=False, 
+                            interactive=config.device.startswith("cuda") and not config.is_zluda
+                        )
+                        benchmark = gr.Checkbox(
+                            label=translations["benchmark"], 
+                            info=translations["benchmark_info"], 
+                            value=False, 
+                            interactive=config.device.startswith("cuda") and not config.is_zluda
+                        )
+                    with gr.Row():
+                        optimizer = gr.Radio(
+                            label=translations["optimizer"], 
+                            info=translations.get("optimizer_info", "Optimizer in training"), 
+                            value="AdamW", 
+                            choices=[
+                                "AdamW", 
+                                "RAdam", 
+                                "AnyPrecisionAdamW",
+                                "AdaBelief",
+                                "AdaBeliefV2"
+                            ], 
+                            interactive=True
+                        )
+                    with gr.Row():
                         model_author = gr.Textbox(
-                            label=translations["training_author"],
-                            info=translations["training_author_info"],
-                            value="", placeholder=translations["training_author"], interactive=True,
-                        )
-
-            # ── PyTorch Weight Format ──
-            with gr.Group():
-                newpytorch = gr.Checkbox(
-                    label="New PyTorch 2.0+ Format",
-                    info="Default: ON = PyTorch 2.0+ parametrization format (matches Applio/VRVC). Turn OFF only for legacy weight_norm format.",
-                    value=True, interactive=True,
-                )
-
-            # ── Training Options ──
-            with gr.Group():
-                with gr.Row():
-                    cache_in_gpu = gr.Checkbox(label=translations["cache_in_gpu"], info=translations["cache_in_gpu_info"], value=True, interactive=True)
-                    overtraining_detector = gr.Checkbox(label=translations["overtraining_detector"], info=translations["overtraining_detector_info"], value=False, interactive=True)
-                    checkpointing1 = gr.Checkbox(label=translations["memory_efficient_training"], value=False, interactive=True)
-                with gr.Row():
-                    save_only_latest = gr.Checkbox(label=translations["save_only_latest"], info=translations["save_only_latest_info"], value=True, interactive=True)
-                    save_every_weights = gr.Checkbox(label=translations["save_every_weights"], info=translations["save_every_weights_info"], value=True, interactive=True)
-                    clean_up = gr.Checkbox(label=translations["cleanup_training"], info=translations["cleanup_training_info"], value=False, interactive=True)
-
-            # ── Pretrain & Dataset ──
-            with gr.Group():
-                with gr.Row():
-                    not_use_pretrain = gr.Checkbox(label=translations["not_use_pretrain_2"], info=translations["not_use_pretrain_info"], value=False, interactive=True)
-                    custom_pretrain = gr.Checkbox(label=translations["custom_pretrain"], info=translations["custom_pretrain_info"], value=False, interactive=True)
-                    custom_dataset = gr.Checkbox(label=translations["custom_dataset"], info=translations["custom_dataset_info"], value=False, interactive=True)
-
-            # ── Advanced Settings ──
-            with gr.Accordion("Advanced Settings", open=False):
-                with gr.Row():
-                    multiscale_mel_loss = gr.Checkbox(label=translations["multiscale_mel_loss"], info=translations["multiscale_mel_loss_info"], value=False, interactive=True)
-                    cosine_lr = gr.Checkbox(label="Cosine Annealing LR", info="Use CosineAnnealingLR scheduler for better training quality (recommended)", value=True, interactive=True)
-                    deterministic = gr.Checkbox(label=translations["deterministic"], info=translations["deterministic_info"], value=False, interactive=config.device.startswith("cuda"))
-                    benchmark = gr.Checkbox(label=translations["benchmark"], info=translations["benchmark_info"], value=False, interactive=config.device.startswith("cuda"))
-
-            dataset_path = gr.Textbox(label=translations["dataset_folder"], value="arvc/assets/dataset", interactive=True, visible=False)
-            threshold = gr.Slider(minimum=1, maximum=100, value=50, step=1, label=translations["threshold"], interactive=True, visible=False)
-
-            pretrain_setting = gr.Group(visible=False)
-            with pretrain_setting:
-                with gr.Accordion(translations["custom_pretrain_info"], open=True):
-                    pretrained_data = fetch_pretrained_data()
-                    _pretrained_names = list(pretrained_data.keys()) if pretrained_data else []
-                    _first_model = _pretrained_names[0] if _pretrained_names else ''
-                    _first_sr_choices = list(pretrained_data[_first_model].keys()) if _first_model and _first_model in pretrained_data else ["48k", "40k", "32k"]
-                    pretrained_model_select = gr.Dropdown(
-                        label=translations.get("select_pretrain_info", "Choose a pretrained model"),
-                        choices=_pretrained_names,
-                        value=_first_model,
-                        interactive=True, allow_custom_value=True,
-                    )
-                    pretrained_sr_select = gr.Dropdown(
-                        label=translations.get("pretrain_sr", "Sample rate"),
-                        choices=_first_sr_choices,
-                        value=_first_sr_choices[0] if _first_sr_choices else '',
-                        interactive=True,
-                    )
-                    with gr.Row():
-                        pretrained_D = gr.Dropdown(
-                            label=translations["pretrain_file"].format(dg="D"),
-                            choices=pretrainedD, value=pretrainedD[0] if len(pretrainedD) > 0 else '',
-                            interactive=True, allow_custom_value=True,
-                        )
-                        pretrained_G = gr.Dropdown(
-                            label=translations["pretrain_file"].format(dg="G"),
-                            choices=pretrainedG, value=pretrainedG[0] if len(pretrainedG) > 0 else '',
-                            interactive=True, allow_custom_value=True,
+                            label=translations["training_author"], 
+                            info=translations["training_author_info"], 
+                            value="", 
+                            placeholder=translations["training_author"], 
+                            interactive=True
                         )
                     with gr.Row():
-                        refresh_pretrain = gr.Button(translations["refresh"])
-
-            def on_pretrained_model_select(model):
-                data = fetch_pretrained_data()
-                if not data or model not in data:
-                    return gr.update(), gr.update()
-                sr_choices = list(data[model].keys())
-                return gr.update(choices=sr_choices, value=sr_choices[0]), gr.update()
-
-            def on_pretrained_sr_select(model, sr):
-                data = fetch_pretrained_data()
-                if not data or model not in data or sr not in data[model]:
-                    return gr.update(), gr.update()
-                paths = data[model][sr]
-                if isinstance(paths, str):
-                    parts = [p.strip() for p in paths.split(",")]
-                    g_val = parts[-1] if len(parts) > 1 else ''
-                    d_val = parts[0] if len(parts) > 1 else parts[0]
-                elif isinstance(paths, dict):
-                    g_val = paths.get("G", '')
-                    d_val = paths.get("D", '')
-                elif isinstance(paths, list) and len(paths) >= 2:
-                    d_val, g_val = paths[0], paths[1]
-                else:
-                    g_val = d_val = str(paths)
-                return gr.update(value=d_val), gr.update(value=g_val)
-
-            with gr.Accordion(translations["setting_cpu_gpu"], open=False):
-                with gr.Row():
-                    gpu_number = gr.Textbox(
-                        label=translations["gpu_number"], value=gpu_number_str(),
-                        info=translations["gpu_number_info"], interactive=True,
-                    )
-                    cpu_core = gr.Slider(
-                        label=translations["cpu_core"], info=translations["cpu_core_info"],
-                        minimum=1, maximum=os.cpu_count(), value=os.cpu_count(), step=1, interactive=True,
-                    )
-                gpu_info = gr.Textbox(
-                    label=translations["gpu_info"], value=get_gpu_info(),
-                    info=translations["gpu_info_2"], interactive=False,
-                )
-
-            training_button = gr.Button(translations["training_model"], variant="primary")
-            training_info = gr.Textbox(label=translations["train_info"], value="", interactive=False, lines=4)
-
-        # ── Sub-tab 5: Export Model ──
-        with gr.TabItem("5. Export"):
+                        with gr.Column():
+                            with gr.Accordion(
+                                translations.get("custom_pretrain_info", "Custom Pretrained"), 
+                                open=False, 
+                                visible=False
+                            ) as pretrain_setting:
+                                pretrained_D = gr.Dropdown(
+                                    label=translations["pretrain_file"].format(dg="D"), 
+                                    choices=pretrainedD, 
+                                    value=pretrainedD[0] if len(pretrainedD) > 0 else '', 
+                                    interactive=True, 
+                                    allow_custom_value=True
+                                )
+                                pretrained_G = gr.Dropdown(
+                                    label=translations["pretrain_file"].format(dg="G"), 
+                                    choices=pretrainedG, 
+                                    value=pretrainedG[0] if len(pretrainedG) > 0 else '', 
+                                    interactive=True, 
+                                    allow_custom_value=True
+                                )
+                                pretrained_refresh = gr.Button(
+                                    translations["refresh"], 
+                                    scale=2
+                                )
             with gr.Row():
-                model_file = gr.Dropdown(
-                    label=translations["model_name"], choices=model_name,
-                    value=model_name[0] if len(model_name) >= 1 else "",
-                    interactive=True, allow_custom_value=True,
-                )
-                index_file = gr.Dropdown(
-                    label=translations["index_path"], choices=index_path,
-                    value=index_path[0] if len(index_path) >= 1 else "",
-                    interactive=True, allow_custom_value=True,
+                training_info = gr.Textbox(
+                    label=translations["train_info"], 
+                    value="", 
+                    interactive=False, 
+                    lines=3
                 )
             with gr.Row():
-                refresh_file = gr.Button(translations["refresh"])
-                zip_model = gr.Button(translations["zip_model"], variant="primary")
-            zip_output = gr.File(label=translations["output_zip"], file_types=[".zip"], interactive=False, visible=False)
-
-            # ── Push to HuggingFace Hub ──
-            with gr.Accordion("Push to HuggingFace Hub", open=False):
-                with gr.Row():
-                    hf_model_file = gr.Dropdown(
-                        label="Model file", choices=model_name,
-                        value=model_name[0] if len(model_name) >= 1 else "",
-                        interactive=True, allow_custom_value=True,
-                    )
-                    hf_index_file = gr.Dropdown(
-                        label="Index file", choices=index_path,
-                        value=index_path[0] if len(index_path) >= 1 else "",
-                        interactive=True, allow_custom_value=True,
-                    )
-                with gr.Row():
-                    hf_token = gr.Textbox(
-                        label="HF Token",
-                        info="HuggingFace API token with write access",
-                        type="password",
-                        interactive=True,
-                    )
-                    hf_repo = gr.Textbox(
-                        label="HF Repo (model)",
-                        info="Target repository (e.g. username/model-name)",
-                        interactive=True,
-                    )
-                with gr.Row():
-                    hf_refresh = gr.Button(translations["refresh"])
-                    hf_push = gr.Button("Push to Hub", variant="primary")
-                hf_output = gr.Textbox(label="Status", value="", interactive=False, lines=2)
-
-    # ── Event Bindings ──
-    vocoders.change(fn=pitch_guidance_lock, inputs=[vocoders], outputs=[training_f0])
-    training_f0.change(fn=vocoders_lock, inputs=[training_f0, vocoders], outputs=[vocoders])
-    unlock_full_method4.change(fn=unlock_f0, inputs=[unlock_full_method4], outputs=[extract_method])
-    refresh_file.click(fn=change_models_choices, inputs=[], outputs=[model_file, index_file])
-    zip_model.click(fn=zip_file, inputs=[training_name, model_file, index_file], outputs=[zip_output])
-    hf_refresh.click(fn=change_models_choices, inputs=[], outputs=[hf_model_file, hf_index_file])
-    hf_push.click(fn=push_to_hub, inputs=[hf_model_file, hf_index_file, hf_token, hf_repo], outputs=[hf_output])
-    dataset_path.change(fn=lambda folder: os.makedirs(folder, exist_ok=True), inputs=[dataset_path], outputs=[])
-    upload.change(fn=visible, inputs=[upload], outputs=[upload_dataset])
-    overtraining_detector.change(fn=visible, inputs=[overtraining_detector], outputs=[threshold])
-    clean_dataset.change(fn=visible, inputs=[clean_dataset], outputs=[clean_dataset_row])
-    custom_dataset.change(fn=lambda custom_dataset: [visible(custom_dataset), "dataset"], inputs=[custom_dataset], outputs=[dataset_path, dataset_path])
-    custom_reference.change(fn=visible, inputs=[custom_reference], outputs=[custom_reference_row])
-    autotune.change(fn=visible, inputs=[autotune], outputs=[f0_autotune_strength])
-    preprocess_split_audio_mode.change(fn=lambda a: visible(a == "Simple"), inputs=[preprocess_split_audio_mode], outputs=[simple_option])
-    training_ver.change(fn=unlock_vocoder, inputs=[training_ver, vocoders], outputs=[vocoders])
-    vocoders.change(fn=unlock_ver, inputs=[training_ver, vocoders], outputs=[training_ver])
-    extract_method.change(fn=lambda method, hybrid: [visible(method == "hybrid"), visible(method == "hybrid"), hoplength_show(method, hybrid)], inputs=[extract_method, extract_hybrid_method], outputs=[extract_hybrid_method, alpha, extract_hop_length])
-    extract_hybrid_method.change(fn=hoplength_show, inputs=[extract_method, extract_hybrid_method], outputs=[extract_hop_length])
-    embed_mode2.change(fn=change_embedders_mode, inputs=[embed_mode2], outputs=[extract_embedders])
-    extract_embedders.change(fn=lambda extract_embedders: visible(extract_embedders == "custom"), inputs=[extract_embedders], outputs=[extract_embedders_custom])
-    reference_refresh.click(fn=change_reference_choices, inputs=[], outputs=[reference_name])
-    not_use_pretrain.change(fn=lambda a, b: visible(a and not b), inputs=[custom_pretrain, not_use_pretrain], outputs=[pretrain_setting])
-    custom_pretrain.change(fn=lambda a, b: visible(a and not b), inputs=[custom_pretrain, not_use_pretrain], outputs=[pretrain_setting])
-    pretrained_model_select.change(fn=on_pretrained_model_select, inputs=[pretrained_model_select], outputs=[pretrained_sr_select, pretrained_D])
-    pretrained_sr_select.change(fn=on_pretrained_sr_select, inputs=[pretrained_model_select, pretrained_sr_select], outputs=[pretrained_D, pretrained_G])
-    refresh_pretrain.click(fn=change_pretrained_choices, inputs=[], outputs=[pretrained_D, pretrained_G])
-    upload_dataset.upload(
-        fn=lambda files, folder: [shutil_move(f.name, os.path.join(folder, os.path.split(f.name)[1])) for f in files] if folder != "" else gr_warning(translations["dataset_folder1"]),
-        inputs=[upload_dataset, dataset_path],
-        outputs=[]
-    )
-    # ── Embedder Mix toggle — show/hide mix options ──
-    embedders_mix.change(fn=visible, inputs=[embedders_mix], outputs=[embedders_mix_column])
-
-    # ── Architecture → SVC overrides pitch_guidance & energy ──
-    def architecture_override(arch, current_f0, current_energy):
-        """When SVC is selected, force pitch guidance ON and energy OFF (VRVC behavior)."""
-        if arch == "SVC":
-            return gr.update(value=True, interactive=False), gr.update(value=False, interactive=False)
-        return gr.update(interactive=True), gr.update(interactive=True)
-
-    architecture.change(
-        fn=architecture_override,
-        inputs=[architecture, training_f0, rms_extract],
-        outputs=[training_f0, rms_extract],
-    )
-
-    preprocess_button.click(
-        fn=preprocess,
-        inputs=[
-            training_name, training_sr, cpu_core, preprocess_split_audio_mode,
-            process_effects, dataset_path, clean_dataset, clean_dataset_strength,
-            chunk_len, overlap_len, preprocess_normalization_mode, architecture
-        ],
-        outputs=[preprocess_info],
-        api_name="preprocess"
-    )
-    extract_button.click(
-        fn=extract,
-        inputs=[
-            training_name, training_ver, extract_method, training_f0, extract_hop_length,
-            cpu_core, gpu_number, training_sr, extract_embedders, extract_embedders_custom,
-            onnx_f0_mode2, embed_mode2, autotune, f0_autotune_strength, extract_hybrid_method,
-            rms_extract, alpha, include_mutes, embedders_mix, embedders_mix_layers,
-            embedders_mix_ratio, architecture
-        ],
-        outputs=[extract_info],
-        api_name="extract"
-    )
-    index_button.click(
-        fn=create_index,
-        inputs=[training_name, training_ver, index_algorithm, nprobe],
-        outputs=[index_info],
-        api_name="create_index"
-    )
-    training_button.click(
-        fn=training,
-        inputs=[
-            training_name, training_ver, save_epochs, save_only_latest, save_every_weights,
-            total_epochs, training_sr, train_batch_size, gpu_number, training_f0,
-            not_use_pretrain, custom_pretrain, pretrained_G, pretrained_D, overtraining_detector,
-            threshold, clean_up, cache_in_gpu, model_author, vocoders, checkpointing1,
-            deterministic, benchmark, optimizer, rms_extract, custom_reference, reference_name,
-            multiscale_mel_loss, cosine_lr, newpytorch, architecture,
-            extract_embedders, extract_embedders_custom
-        ],
-        outputs=[training_info],
-        api_name="training_model"
-    )
+                with gr.Column():
+                    with gr.Accordion(
+                        translations.get("export_model", "Export Model"), 
+                        open=False
+                    ):
+                        with gr.Row():
+                            model_file = gr.Dropdown(
+                                label=translations.get("model_name", "Model"), 
+                                choices=model_name, 
+                                value=model_name[0] if len(model_name) >= 1 else "", 
+                                interactive=True, 
+                                allow_custom_value=True
+                            )
+                            index_file = gr.Dropdown(
+                                label=translations.get("index_path", "Index"), 
+                                choices=index_path, 
+                                value=index_path[0] if len(index_path) >= 1 else "", 
+                                interactive=True, 
+                                allow_custom_value=True
+                            )
+                        with gr.Row():
+                            refresh_file = gr.Button(
+                                f"1. {translations['refresh']}", 
+                                scale=2
+                            )
+                            zip_model = gr.Button(
+                                translations.get("zip_model", "Zip Model"), 
+                                variant="primary", 
+                                scale=2
+                            )
+                        with gr.Row():
+                            zip_output = gr.File(
+                                label=translations.get("output_zip", "Output ZIP"), 
+                                file_types=[".zip"], 
+                                interactive=False, 
+                                visible=False
+                            )
+    with gr.Row():
+        vocoders.change(
+            fn=pitch_guidance_lock, 
+            inputs=[
+                vocoders
+            ], 
+            outputs=[
+                pitch_guidance
+            ]
+        )
+        pitch_guidance.change(
+            fn=vocoders_lock, 
+            inputs=[
+                pitch_guidance
+            ], 
+            outputs=[
+                vocoders
+            ]
+        )
+        unlock_full_method.change(
+            fn=unlock_f0, 
+            inputs=[
+                unlock_full_method
+            ], 
+            outputs=[
+                f0_method
+            ]
+        )
+    with gr.Row():
+        refresh_file.click(
+            fn=change_models_choices, 
+            inputs=[], 
+            outputs=[
+                model_file, 
+                index_file
+            ]
+        ) 
+        zip_model.click(
+            fn=zip_file, 
+            inputs=[
+                modelname, 
+                model_file, 
+                index_file
+            ], 
+            outputs=[
+                zip_output
+            ]
+        )                
+        dataset_path.change(
+            fn=lambda folder: os.makedirs(folder, exist_ok=True) if folder else None, 
+            inputs=[
+                dataset_path
+            ], 
+            outputs=[]
+        )
+    with gr.Row():
+        dataset_upload.change(
+            fn=visible, 
+            inputs=[
+                dataset_upload
+            ], 
+            outputs=[
+                upload_dataset
+            ]
+        ) 
+        overtraining_detector.change(
+            fn=visible, 
+            inputs=[
+                overtraining_detector
+            ], 
+            outputs=[
+                threshold
+            ]
+        )
+        clean_dataset.change(
+            fn=visible, 
+            inputs=[
+                clean_dataset
+            ], 
+            outputs=[
+                clean_dataset_row
+            ]
+        )
+    with gr.Row():
+        custom_dataset.change(
+            fn=lambda custom_dataset: [
+                visible(custom_dataset), 
+                "dataset"
+            ], 
+            inputs=[
+                custom_dataset
+            ], 
+            outputs=[
+                dataset_path, 
+                dataset_path
+            ]
+        )
+        rvc_version.change(
+            fn=unlock_vocoder, 
+            inputs=[
+                rvc_version, 
+                vocoders
+            ], 
+            outputs=[
+                vocoders
+            ]
+        )
+        vocoders.change(
+            inputs=[
+                rvc_version, 
+                vocoders
+            ], 
+            fn=unlock_ver, 
+            outputs=[
+                rvc_version
+            ]
+        )
+    with gr.Row():
+        custom_reference.change(
+            fn=visible, 
+            inputs=[
+                custom_reference
+            ], 
+            outputs=[
+                custom_reference_row
+            ]
+        )
+        f0_method.change(
+            fn=lambda method, hybrid: [
+                visible(method == "hybrid"), 
+                visible(method == "hybrid"), 
+                hoplength_show(method, hybrid)
+            ],
+            inputs=[
+                f0_method, 
+                hybrid_f0method
+            ], 
+            outputs=[
+                hybrid_f0method, 
+                alpha, 
+                hop_length
+            ]
+        )
+        hybrid_f0method.change(
+            fn=hoplength_show, 
+            inputs=[
+                f0_method, 
+                hybrid_f0method
+            ], 
+            outputs=[
+                hop_length
+            ]
+        )
+    with gr.Row():
+        autotune.change(
+            fn=visible, 
+            inputs=[
+                autotune
+            ], 
+            outputs=[
+                f0_autotune_strength
+            ]
+        )
+        split_audio_mode.change(
+            fn=lambda a: visible(a == "Simple"), 
+            inputs=[
+                split_audio_mode
+            ], 
+            outputs=[
+                simple_option
+            ]
+        )
+        upload_dataset.upload(
+            fn=lambda files, folder: [
+                shutil_move(f.name, os.path.join(folder, os.path.split(f.name)[1])) 
+                for f in files
+            ] if folder != "" else gr_warning(translations["dataset_folder1"]),
+            inputs=[
+                upload_dataset, 
+                dataset_path
+            ], 
+            outputs=[], 
+            api_name="upload_dataset"
+        )           
+    with gr.Row():
+        not_use_pretrain.change(
+            fn=lambda a, b: visible(a and not b), 
+            inputs=[
+                custom_pretrain, 
+                not_use_pretrain
+            ], 
+            outputs=[
+                pretrain_setting
+            ]
+        )
+        custom_pretrain.change(
+            fn=lambda a, b: visible(a and not b), 
+            inputs=[
+                custom_pretrain, 
+                not_use_pretrain
+            ], 
+            outputs=[
+                pretrain_setting
+            ]
+        )
+        pretrained_refresh.click(
+            fn=change_pretrained_choices, 
+            inputs=[], 
+            outputs=[
+                pretrained_D, 
+                pretrained_G
+            ]
+        )
+    with gr.Row():
+        embedder_mode.change(
+            fn=change_embedders_mode, 
+            inputs=[
+                embedder_mode
+            ], 
+            outputs=[
+                embedders
+            ]
+        )
+        embedders.change(
+            fn=lambda embedders: visible(embedders == "custom"), 
+            inputs=[
+                embedders
+            ], 
+            outputs=[
+                embedders_custom
+            ]
+        )
+        reference_refresh.click(
+            fn=change_reference_choices, 
+            inputs=[], 
+            outputs=[
+                reference_name
+            ]
+        )
+    with gr.Row():
+        embedders_mix.change(
+            fn=visible,
+            inputs=[
+                embedders_mix
+            ],
+            outputs=[
+                embedders_mix_column
+            ]
+        )
+    with gr.Row():
+        preprocess_button.click(
+            fn=preprocess,
+            inputs=[
+                modelname, 
+                sample_rate, 
+                cpu_core,
+                split_audio_mode, 
+                process_effects,
+                dataset_path,
+                clean_dataset,
+                clean_dataset_strength,
+                chunk_len, 
+                overlap_len,
+                normalization_mode,
+                architecture
+            ],
+            outputs=[
+                preprocess_info
+            ],
+            api_name="preprocess"
+        )
+    with gr.Row():
+        extract_button.click(
+            fn=extract,
+            inputs=[
+                modelname, 
+                rvc_version, 
+                f0_method, 
+                pitch_guidance, 
+                hop_length, 
+                cpu_core,
+                gpu_number,
+                sample_rate, 
+                embedders, 
+                embedders_custom,
+                predictor_onnx,
+                embedder_mode,
+                autotune,
+                f0_autotune_strength,
+                hybrid_f0method,
+                energy,
+                alpha,
+                include_mutes,
+                embedders_mix,
+                embedders_mix_layers,
+                embedders_mix_ratio,
+                architecture
+            ],
+            outputs=[
+                extract_info
+            ],
+            api_name="extract"
+        )
+    with gr.Row():
+        create_index_button.click(
+            fn=create_index,
+            inputs=[
+                modelname, 
+                rvc_version, 
+                index_algorithm,
+                nprobe
+            ],
+            outputs=[
+                training_info
+            ],
+            api_name="create_index"
+        )
+    with gr.Row():
+        training_button.click(
+            fn=training,
+            inputs=[
+                modelname, 
+                rvc_version, 
+                save_epochs, 
+                save_only_latest, 
+                save_every_weights, 
+                total_epochs, 
+                sample_rate,
+                batch_size, 
+                gpu_number,
+                pitch_guidance,
+                not_use_pretrain,
+                custom_pretrain,
+                pretrained_G,
+                pretrained_D,
+                overtraining_detector,
+                threshold,
+                cleanup_training,
+                cache_in_gpu,
+                model_author,
+                vocoders,
+                checkpointing,
+                deterministic, 
+                benchmark,
+                optimizer,
+                energy,
+                custom_reference,
+                reference_name,
+                multiscale_mel_loss,
+                embedders, 
+                embedders_custom,
+                cosine_annealing_lr,
+                architecture
+            ],
+            outputs=[
+                training_info
+            ],
+            api_name="training_model"
+        )
