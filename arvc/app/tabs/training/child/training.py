@@ -503,7 +503,8 @@ def training_model_tab():
                                     info=translations["gpu_number_info"], 
                                     interactive=True
                                 )
-                                gpu_str, gpu_len = get_gpu_info()
+                                gpu_str = get_gpu_info()
+                                gpu_len = max(1, len(gpu_str.split('\n'))) if isinstance(gpu_str, str) else 1
                                 gr.Textbox(
                                     label=translations["gpu_info"], 
                                     value=gpu_str, 
