@@ -137,73 +137,96 @@ def compute_window_length(n_mels: int, sample_rate: int):
 
 
 class MultiScaleMelSpectrogramLoss(torch.nn.Module):
+    """Multi-scale mel spectrogram loss for improved audio quality.
+
+    Uses 8 mel scales with dynamically computed window lengths and hop lengths,
+    following the PolTrain approach. This captures both fine spectral detail
+    and broad spectral shape across multiple resolutions, producing
+    significantly better audio quality than single-scale mel loss.
+
+    Dynamic window length computation adapts to the sample rate, ensuring
+    proper frequency resolution at each scale. The hop length is set to
+    sample_rate // 100 for consistent temporal resolution across scales.
+    """
+
     def __init__(
-        self, 
-        sample_rate = 24000, 
-        n_mels=[5, 10, 20, 40, 80, 160, 320], 
-        window_lengths=[32, 64, 128, 256, 512, 1024, 2048], 
+        self,
+        sample_rate=24000,
+        n_mels=None,
         loss_fn=torch.nn.L1Loss()
     ):
         super().__init__()
         self.sample_rate = sample_rate
         self.loss_fn = loss_fn
         self.log_base = torch.tensor(10.0).log()
-        self.stft_params = []
         self.hann_window = {}
         self.mel_banks = {}
-        self.stft_params = [(mel, win) for mel, win in zip(n_mels, window_lengths)]
 
-    def mel_spectrogram(self, wav, n_mels, window_length):
+        # 8 scales following PolTrain (adds 480 mel bands vs Applio's 7)
+        if n_mels is None:
+            n_mels = [5, 10, 20, 40, 80, 160, 320, 480]
+
+        # Dynamic window lengths and hop lengths (PolTrain approach)
+        # hop_length = sample_rate // 100 gives consistent temporal resolution
+        # across all sample rates, unlike window_length // 4
+        self.stft_params = [
+            (mel, compute_window_length(mel, sample_rate), sample_rate // 100)
+            for mel in n_mels
+        ]
+
+    def mel_spectrogram(self, wav, n_mels, window_length, hop_length):
         dtype_device = str(wav.dtype) + "_" + str(wav.device)
         win_dtype_device = str(window_length) + "_" + dtype_device
         mel_dtype_device = str(n_mels) + "_" + dtype_device
 
-        if win_dtype_device not in self.hann_window: 
+        if win_dtype_device not in self.hann_window:
             self.hann_window[win_dtype_device] = torch.hann_window(window_length, device=wav.device, dtype=torch.float32)
 
         wav = wav.float().squeeze(1)
 
         if str(wav.device).startswith(("ocl", "privateuseone")):
             stft = torch.stft(
-                wav.cpu(), 
-                n_fft=window_length, 
-                hop_length=window_length // 4, 
-                window=self.hann_window[win_dtype_device].cpu(), 
+                wav.cpu(),
+                n_fft=window_length,
+                hop_length=hop_length,
+                window=self.hann_window[win_dtype_device].cpu(),
                 return_complex=True
             )
 
-            magnitude = stft.abs().clamp_min_(1e-6).to(wav.device, dtype=torch.float32)
+            magnitude = torch.sqrt(stft.real.pow(2) + stft.imag.pow(2) + 1e-6).to(wav.device, dtype=torch.float32)
         else:
             stft = torch.stft(
-                wav, 
-                n_fft=window_length, 
-                hop_length=window_length // 4, 
-                window=self.hann_window[win_dtype_device], 
+                wav,
+                n_fft=window_length,
+                hop_length=hop_length,
+                window=self.hann_window[win_dtype_device],
                 return_complex=True
             )
 
-            magnitude = stft.abs().clamp_min_(1e-6)
+            magnitude = torch.sqrt(stft.real.pow(2) + stft.imag.pow(2) + 1e-6)
 
-        if mel_dtype_device not in self.mel_banks: 
+        if mel_dtype_device not in self.mel_banks:
             self.mel_banks[mel_dtype_device] = torch.from_numpy(
                 librosa.filters.mel(
-                    sr=self.sample_rate, 
-                    n_mels=n_mels, 
-                    n_fft=window_length, 
-                    fmin=0, 
+                    sr=self.sample_rate,
+                    n_mels=n_mels,
+                    n_fft=window_length,
+                    fmin=0,
                     fmax=None
                 )
             ).to(device=wav.device, dtype=torch.float32)
 
-        return self.mel_banks[mel_dtype_device] @ magnitude
+        mel_spec = torch.matmul(self.mel_banks[mel_dtype_device], magnitude)
+        return mel_spec
 
     def forward(self, real, fake):
         loss = 0.0
 
         for p in self.stft_params:
-            loss += self.loss_fn(
-                self.mel_spectrogram(real, *p).clamp(min=1e-5).log() / self.log_base, 
-                self.mel_spectrogram(fake, *p).clamp(min=1e-5).log() / self.log_base
-            )
+            real_mels = self.mel_spectrogram(real, *p)
+            fake_mels = self.mel_spectrogram(fake, *p)
+            real_logmels = real_mels.clamp(min=1e-5).log() / self.log_base
+            fake_logmels = fake_mels.clamp(min=1e-5).log() / self.log_base
+            loss += self.loss_fn(real_logmels, fake_logmels)
 
         return loss

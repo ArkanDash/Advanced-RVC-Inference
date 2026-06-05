@@ -111,12 +111,12 @@ def parse_arguments():
     parser.add_argument("--vocoder", type=str, default="Default")
     parser.add_argument("--checkpointing", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--deterministic", type=lambda x: bool(strtobool(x)), default=False)
-    parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--benchmark", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--optimizer", type=str, default="AdamW")
     parser.add_argument("--energy_use", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--use_custom_reference", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--reference_path", type=str, default="")
-    parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=False)
+    parser.add_argument("--multiscale_mel_loss", type=lambda x: bool(strtobool(x)), default=True)
     parser.add_argument("--use_cosine_annealing_lr", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--architecture", type=str, default="RVC", help="Model architecture: RVC or SVC")
     parser.add_argument("--compile_model", type=lambda x: bool(strtobool(x)), default=False, help="Use torch.compile() on generator for PyTorch 2.x speedup")
@@ -1219,14 +1219,23 @@ def train_and_evaluate(
             for _ in range(d_step_per_g_step):
                 with autocasts:
                     y_d_hat_r, y_d_hat_g, _, _ = net_d(
-                        wave, 
+                        wave,
                         y_hat.detach()
                     )
 
-                    loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(
-                        y_d_hat_r, 
-                        y_d_hat_g
-                    )
+                    # Use scaled loss for v3 discriminator (RefineGAN/BigVGAN)
+                    # to prevent multi-resolution sub-discriminators from dominating
+                    if disc_version == "v3":
+                        loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss_scaled(
+                            y_d_hat_r,
+                            y_d_hat_g,
+                            scale=0.25
+                        )
+                    else:
+                        loss_disc, losses_disc_r, losses_disc_g = losses.discriminator_loss(
+                            y_d_hat_r,
+                            y_d_hat_g
+                        )
 
                 optim_d.zero_grad()
 
@@ -1302,7 +1311,11 @@ def train_and_evaluate(
                 ) * config.train.c_kl
 
             loss_fm = losses.feature_loss(fmap_r, fmap_g)
-            loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
+            # Use scaled loss for v3 discriminator (RefineGAN/BigVGAN)
+            if disc_version == "v3":
+                loss_gen, losses_gen = losses.generator_loss_scaled(y_d_hat_g, scale=0.25)
+            else:
+                loss_gen, losses_gen = losses.generator_loss(y_d_hat_g)
             loss_gen_all = loss_gen + loss_fm + loss_mel + loss_kl
 
             # Energy loss (optional, off by default) — Advanced-RVC feature

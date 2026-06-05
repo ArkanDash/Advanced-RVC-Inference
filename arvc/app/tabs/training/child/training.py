@@ -534,7 +534,7 @@ def training_model_tab():
                         multiscale_mel_loss = gr.Checkbox(
                             label=translations["multiscale_mel_loss"], 
                             info=translations["multiscale_mel_loss_info"], 
-                            value=False, 
+                            value=True, 
                             interactive=True
                         )
                         cosine_annealing_lr = gr.Checkbox(
@@ -565,7 +565,7 @@ def training_model_tab():
                         benchmark = gr.Checkbox(
                             label=translations["benchmark"], 
                             info=translations["benchmark_info"], 
-                            value=False, 
+                            value=True, 
                             interactive=config.device.startswith("cuda") and not config.is_zluda
                         )
                     with gr.Row():

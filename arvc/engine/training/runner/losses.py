@@ -2,7 +2,7 @@ def feature_loss(fmap_r, fmap_g):
     loss = 0
     for dr, dg in zip(fmap_r, fmap_g):
         for rl, gl in zip(dr, dg):
-            loss += (rl.float().detach() - gl.float()).abs().mean()
+            loss += (rl.float() - gl.float()).abs().mean()
 
     return loss * 2
 
@@ -34,37 +34,42 @@ def discriminator_loss_scaled(disc_real, disc_fake, scale=1.0):
     """Scaled discriminator loss (from Applio).
 
     Downweights losses from sub-discriminators beyond the midpoint by `scale`.
-    This prevents later multi-period discriminator heads from dominating the
-    total loss, which can improve training stability.
+    This prevents multi-resolution sub-discriminator heads (v3) from dominating
+    the total loss, which can improve training stability and quality.
     """
     midpoint = len(disc_real) // 2
-    losses = []
+    r_losses, g_losses = [], []
+    loss = 0
     for i, (d_real, d_fake) in enumerate(zip(disc_real, disc_fake)):
         real_loss = (1 - d_real.float()).pow(2).mean()
         fake_loss = d_fake.float().pow(2).mean()
         total_loss = real_loss + fake_loss
         if i >= midpoint:
-            total_loss *= scale
-        losses.append(total_loss)
-    loss = sum(losses)
-    return loss, None, None
+            total_loss = total_loss * scale
+            real_loss = real_loss * scale
+            fake_loss = fake_loss * scale
+        loss += total_loss
+        r_losses.append(real_loss.item())
+        g_losses.append(fake_loss.item())
+    return loss, r_losses, g_losses
 
 def generator_loss_scaled(disc_outputs, scale=1.0):
     """Scaled generator loss (from Applio).
 
     Downweights losses from sub-discriminators beyond the midpoint by `scale`.
-    This prevents later multi-period discriminator heads from dominating the
-    total loss, which can improve training stability.
+    This prevents multi-resolution sub-discriminator heads (v3) from dominating
+    the total loss, which can improve training stability and quality.
     """
     midpoint = len(disc_outputs) // 2
-    losses = []
+    gen_losses = []
+    loss = 0
     for i, d_fake in enumerate(disc_outputs):
         loss_value = (1 - d_fake.float()).pow(2).mean()
         if i >= midpoint:
-            loss_value *= scale
-        losses.append(loss_value)
-    loss = sum(losses)
-    return loss, None, None
+            loss_value = loss_value * scale
+        gen_losses.append(loss_value)
+        loss += loss_value
+    return loss, gen_losses
 
 def kl_loss(z_p, logs_q, m_p, logs_p, z_mask):
     z_p = z_p.float()

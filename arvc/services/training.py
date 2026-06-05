@@ -381,7 +381,7 @@ def training(
     energy_use, 
     custom_reference=False, 
     reference_name="", 
-    multiscale_mel_loss=False,
+    multiscale_mel_loss=True,
     embedders="hubert_base",
     custom_embedders=None,
     cosine_annealing_lr=False,
