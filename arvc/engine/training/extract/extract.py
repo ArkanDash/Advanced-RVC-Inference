@@ -48,6 +48,7 @@ def parse_arguments():
     parser.add_argument("--embedders_mix_layers", type=int, default=9, required=False, help="Number of layers for embedder mixing")
     parser.add_argument("--embedders_mix_ratio", type=float, default=0.5, help="Mix ratio for embedder layer blending")
     parser.add_argument("--architecture", type=str, default="RVC", help="Model architecture: RVC or SVC (from Vietnamese-RVC)")
+    parser.add_argument("--predictor_onnx", type=lambda x: bool(strtobool(x)), default=False, help="Alias for --f0_onnx (from training service)")
 
     return parser.parse_args()
 
@@ -62,7 +63,7 @@ def main():
     ) = (
         args.f0_method, args.hop_length, args.cpu_cores, args.gpu,
         args.rvc_version, args.pitch_guidance, args.sample_rate,
-        args.embedder_model, args.f0_onnx, args.embedders_mode,
+        args.embedder_model, args.predictor_onnx or args.f0_onnx, args.embedders_mode,
         args.f0_autotune, args.f0_autotune_strength, args.rms_extract,
         args.alpha, args.include_mutes, args.embedders_mix,
         args.embedders_mix_layers, args.embedders_mix_ratio, args.architecture
