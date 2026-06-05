@@ -319,7 +319,7 @@ def create_index(
     model_name, 
     rvc_version, 
     index_algorithm,
-    nprobe=1
+    nprobe=9
 ):
     if not model_name: return gr_warning(translations["provide_name"])
     model_dir = os.path.join(configs["logs_path"], model_name)
@@ -385,7 +385,11 @@ def training(
     embedders="hubert_base",
     custom_embedders=None,
     cosine_annealing_lr=False,
-    architecture="RVC"
+    architecture="RVC",
+    compile_model=False,
+    use_8bit_adam=False,
+    grad_accum_steps=1,
+    newpytorch=True
 ):
     if architecture == "SVC":
         pitch_guidance = True
@@ -571,7 +575,11 @@ def training(
         "--reference_path", str(reference_path),
         "--multiscale_mel_loss", str(multiscale_mel_loss),
         "--use_cosine_annealing_lr", str(cosine_annealing_lr),
-        "--architecture", architecture
+        "--architecture", architecture,
+        "--compile_model", str(compile_model),
+        "--use_8bit_adam", str(use_8bit_adam),
+        "--grad_accum_steps", str(grad_accum_steps),
+        "--newpytorch", str(newpytorch)
     ])
 
     done = [False]

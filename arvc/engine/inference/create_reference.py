@@ -42,11 +42,16 @@ def parse_arguments():
     parser.add_argument("--proposal_pitch", type=lambda x: bool(strtobool(x)), default=False)
     parser.add_argument("--proposal_pitch_threshold", type=float, default=255.0)
     parser.add_argument("--alpha", type=float, default=0.5)
+    parser.add_argument("--predictor_onnx", type=lambda x: bool(strtobool(x)), default=False, help="Alias for --f0_onnx (from training service)")
+    parser.add_argument("--embedders_mix", type=lambda x: bool(strtobool(x)), default=False, help="Enable embedder layer mixing")
+    parser.add_argument("--embedders_mix_layers", type=int, default=9, help="Number of layers for embedder mixing")
+    parser.add_argument("--embedders_mix_ratio", type=float, default=0.5, help="Mix ratio for embedder layer blending")
     return parser.parse_args()
 
 def main():
     args = parse_arguments()
-    audio_path, reference_name, pitch_guidance, use_energy, version, embedder_model, embedders_mode, f0_method, f0_onnx, f0_up_key, filter_radius, f0_autotune, f0_autotune_strength, proposal_pitch, proposal_pitch_threshold, alpha = args.audio_path, args.reference_name, args.pitch_guidance, args.use_energy, args.version, args.embedder_model, args.embedders_mode, args.f0_method, args.f0_onnx, args.f0_up_key, args.filter_radius, args.f0_autotune, args.f0_autotune_strength, args.proposal_pitch, args.proposal_pitch_threshold, args.alpha
+    f0_onnx_val = args.predictor_onnx or args.f0_onnx
+    audio_path, reference_name, pitch_guidance, use_energy, version, embedder_model, embedders_mode, f0_method, f0_onnx, f0_up_key, filter_radius, f0_autotune, f0_autotune_strength, proposal_pitch, proposal_pitch_threshold, alpha, embedders_mix, embedders_mix_layers, embedders_mix_ratio = args.audio_path, args.reference_name, args.pitch_guidance, args.use_energy, args.version, args.embedder_model, args.embedders_mode, args.f0_method, f0_onnx_val, args.f0_up_key, args.filter_radius, args.f0_autotune, args.f0_autotune_strength, args.proposal_pitch, args.proposal_pitch_threshold, args.alpha, args.embedders_mix, args.embedders_mix_layers, args.embedders_mix_ratio
 
     create_reference(
         audio_path, 
@@ -64,7 +69,10 @@ def main():
         f0_autotune_strength, 
         proposal_pitch, 
         proposal_pitch_threshold,
-        alpha
+        alpha,
+        embedders_mix,
+        embedders_mix_layers,
+        embedders_mix_ratio
     )
 
 def create_reference(
@@ -83,7 +91,10 @@ def create_reference(
     f0_autotune_strength = 1,
     proposal_pitch = False,
     proposal_pitch_threshold = 255.0,
-    alpha = 0.5
+    alpha = 0.5,
+    embedders_mix = False,
+    embedders_mix_layers = 9,
+    embedders_mix_ratio = 0.5
 ):
     device = config.device
     is_half = config.is_half

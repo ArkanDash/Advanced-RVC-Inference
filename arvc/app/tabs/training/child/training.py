@@ -569,6 +569,35 @@ def training_model_tab():
                             interactive=config.device.startswith("cuda") and not config.is_zluda
                         )
                     with gr.Row():
+                        compile_model = gr.Checkbox(
+                            label=translations.get("compile_model", "torch.compile()"),
+                            info=translations.get("compile_model_info", "Use torch.compile() on generator for PyTorch 2.x speedup"),
+                            value=False,
+                            interactive=config.device.startswith("cuda")
+                        )
+                        use_8bit_adam = gr.Checkbox(
+                            label=translations.get("use_8bit_adam", "8-bit Adam"),
+                            info=translations.get("use_8bit_adam_info", "Use 8-bit Adam optimizer for lower VRAM (requires bitsandbytes)"),
+                            value=False,
+                            interactive=True
+                        )
+                        newpytorch = gr.Checkbox(
+                            label=translations.get("newpytorch", "PyTorch 2.0+ Format"),
+                            info=translations.get("newpytorch_info", "Use PyTorch 2.0+ parametrization format (default). Disable for legacy weight_norm."),
+                            value=True,
+                            interactive=True
+                        )
+                    with gr.Row():
+                        grad_accum_steps = gr.Slider(
+                            label=translations.get("grad_accum_steps", "Gradient Accumulation"),
+                            info=translations.get("grad_accum_steps_info", "Gradient accumulation steps (reduces VRAM with larger effective batch)"),
+                            minimum=1,
+                            maximum=16,
+                            value=1,
+                            step=1,
+                            interactive=True
+                        )
+                    with gr.Row():
                         optimizer = gr.Radio(
                             label=translations["optimizer"], 
                             info=translations.get("optimizer_info", "Optimizer in training"), 
@@ -1012,7 +1041,11 @@ def training_model_tab():
                 embedders, 
                 embedders_custom,
                 cosine_annealing_lr,
-                architecture
+                architecture,
+                compile_model,
+                use_8bit_adam,
+                grad_accum_steps,
+                newpytorch
             ],
             outputs=[
                 training_info
