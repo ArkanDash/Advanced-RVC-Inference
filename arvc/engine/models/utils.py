@@ -12,21 +12,32 @@ from pydub import AudioSegment
 
 # ── Safe FAISS import ────────────────────────────────────────────────────
 # faiss-cpu may fail with ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
-# when the AVX2-optimized native module isn't available (e.g. older CPUs, some
-# cloud VMs).  Fall back to the non-AVX2 version gracefully.
+# or "No module named 'faiss.swigfaiss_avx512'" when the AVX-optimized native
+# module isn't available (e.g. older CPUs, some cloud VMs).
+# Fall back to the non-AVX version gracefully.
 try:
     import faiss
 except ModuleNotFoundError as _faiss_err:
-    if "swigfaiss_avx2" in str(_faiss_err):
+    _faiss_msg = str(_faiss_err)
+    if "swigfaiss_avx" in _faiss_msg:
         import warnings
         warnings.warn(
-            "faiss.swigfaiss_avx2 not available — falling back to non-AVX2 faiss. "
-            "If you need AVX2 support, install a compatible faiss-cpu wheel.",
+            f"{_faiss_msg} — falling back to non-AVX faiss. "
+            "If you need AVX support, install a compatible faiss-cpu wheel.",
             stacklevel=2,
         )
-        # Force faiss to use the fallback (non-AVX2) implementation
-        import faiss.loader as _faiss_loader
-        _faiss_loader.toggle_swigfaiss_avx2 = False
+        # Force faiss to use the fallback (non-AVX) implementation
+        try:
+            import faiss.loader as _faiss_loader
+            if hasattr(_faiss_loader, "toggle_swigfaiss_avx2"):
+                _faiss_loader.toggle_swigfaiss_avx2 = False
+        except Exception:
+            pass
+        # Clear cached failed import so faiss can retry
+        if "faiss" in sys.modules:
+            del sys.modules["faiss"]
+        # Set env var that tells faiss to skip AVX
+        os.environ["FAISS_NO_AVX2"] = "1"
         import faiss
     else:
         raise
