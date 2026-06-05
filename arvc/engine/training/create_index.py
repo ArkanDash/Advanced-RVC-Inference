@@ -8,32 +8,50 @@ from multiprocessing import cpu_count
 from sklearn.cluster import MiniBatchKMeans
 
 # ── Safe FAISS import ────────────────────────────────────────────────────
-# faiss-cpu may fail with ModuleNotFoundError for swigfaiss_avx2 or
-# swigfaiss_avx512 when the AVX-optimized native module isn't available.
-# Fall back to the non-AVX version gracefully.
-try:
-    import faiss
-except ModuleNotFoundError as _faiss_err:
-    _faiss_msg = str(_faiss_err)
-    if "swigfaiss_avx" in _faiss_msg:
-        import warnings
-        warnings.warn(
-            f"{_faiss_msg} — falling back to non-AVX faiss. "
-            "If you need AVX support, install a compatible faiss-cpu wheel.",
-            stacklevel=2,
-        )
-        try:
-            import faiss.loader as _faiss_loader
-            if hasattr(_faiss_loader, "toggle_swigfaiss_avx2"):
-                _faiss_loader.toggle_swigfaiss_avx2 = False
-        except Exception:
-            pass
-        if "faiss" in sys.modules:
-            del sys.modules["faiss"]
-        os.environ["FAISS_NO_AVX2"] = "1"
-        import faiss
-    else:
+# faiss-cpu tries AVX512 → AVX2 → basic swigfaiss at import time.
+# Pre-disable AVX features via FAISS_DISABLE_CPU_FEATURES so faiss
+# skips straight to basic and avoids noisy INFO/warning logs.
+def _import_faiss():
+    """Import faiss with safe AVX fallback."""
+    if "faiss" in sys.modules:
+        return sys.modules["faiss"]
+    _prev = os.environ.get("FAISS_DISABLE_CPU_FEATURES", "")
+    os.environ["FAISS_DISABLE_CPU_FEATURES"] = "AVX512, AVX2, AVX512_SPR, SVE"
+    try:
+        import faiss as _faiss
+        return _faiss
+    except ModuleNotFoundError:
+        pass
+    finally:
+        if _prev:
+            os.environ["FAISS_DISABLE_CPU_FEATURES"] = _prev
+        else:
+            os.environ.pop("FAISS_DISABLE_CPU_FEATURES", None)
+    # Retry: clear partial import and force basic
+    for _mod in list(sys.modules.keys()):
+        if _mod.startswith("faiss"):
+            del sys.modules[_mod]
+    os.environ["FAISS_DISABLE_CPU_FEATURES"] = "AVX512, AVX2, AVX512_SPR, SVE"
+    try:
+        import faiss as _faiss
+        return _faiss
+    except ModuleNotFoundError as _faiss_err:
+        if "swigfaiss" in str(_faiss_err):
+            import warnings
+            warnings.warn(
+                f"{_faiss_err} — faiss AVX modules unavailable. "
+                "Install a compatible faiss-cpu wheel.",
+                stacklevel=3,
+            )
+            for _mod in list(sys.modules.keys()):
+                if _mod.startswith("faiss"):
+                    del sys.modules[_mod]
+            os.environ["FAISS_OPT_LEVEL"] = ""
+            import faiss as _faiss
+            return _faiss
         raise
+
+faiss = _import_faiss()
 
 # ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))

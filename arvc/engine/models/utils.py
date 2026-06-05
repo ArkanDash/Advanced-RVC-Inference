@@ -11,36 +11,61 @@ from pydub import AudioSegment
 
 
 # ── Safe FAISS import ────────────────────────────────────────────────────
-# faiss-cpu may fail with ModuleNotFoundError("No module named 'faiss.swigfaiss_avx2'")
-# or "No module named 'faiss.swigfaiss_avx512'" when the AVX-optimized native
-# module isn't available (e.g. older CPUs, some cloud VMs).
-# Fall back to the non-AVX version gracefully.
-try:
-    import faiss
-except ModuleNotFoundError as _faiss_err:
-    _faiss_msg = str(_faiss_err)
-    if "swigfaiss_avx" in _faiss_msg:
-        import warnings
-        warnings.warn(
-            f"{_faiss_msg} — falling back to non-AVX faiss. "
-            "If you need AVX support, install a compatible faiss-cpu wheel.",
-            stacklevel=2,
-        )
-        # Force faiss to use the fallback (non-AVX) implementation
-        try:
-            import faiss.loader as _faiss_loader
-            if hasattr(_faiss_loader, "toggle_swigfaiss_avx2"):
-                _faiss_loader.toggle_swigfaiss_avx2 = False
-        except Exception:
-            pass
-        # Clear cached failed import so faiss can retry
-        if "faiss" in sys.modules:
-            del sys.modules["faiss"]
-        # Set env var that tells faiss to skip AVX
-        os.environ["FAISS_NO_AVX2"] = "1"
-        import faiss
-    else:
+# faiss-cpu tries AVX512 → AVX2 → basic swigfaiss at import time.
+# When AVX native modules are missing it logs INFO messages and falls back,
+# but on some systems the ModuleNotFoundError propagates instead of being
+# caught internally.  We handle both cases:
+#   1. Pre-disable AVX features via FAISS_DISABLE_CPU_FEATURES so faiss
+#      never attempts the AVX path (avoids noisy INFO logs).
+#   2. If import still fails with a swigfaiss_avx* error, force the basic
+#      loader and retry.
+def _import_faiss():
+    """Import faiss with safe AVX fallback."""
+    # If faiss is already loaded, return it
+    if "faiss" in sys.modules:
+        return sys.modules["faiss"]
+
+    # First try: disable AVX features so faiss skips straight to basic
+    _prev = os.environ.get("FAISS_DISABLE_CPU_FEATURES", "")
+    os.environ["FAISS_DISABLE_CPU_FEATURES"] = "AVX512, AVX2, AVX512_SPR, SVE"
+    try:
+        import faiss as _faiss
+        return _faiss
+    except ModuleNotFoundError:
+        pass
+    finally:
+        if _prev:
+            os.environ["FAISS_DISABLE_CPU_FEATURES"] = _prev
+        else:
+            os.environ.pop("FAISS_DISABLE_CPU_FEATURES", None)
+
+    # Second try: clear any partial import and retry with env set
+    for _mod in list(sys.modules.keys()):
+        if _mod.startswith("faiss"):
+            del sys.modules[_mod]
+    os.environ["FAISS_DISABLE_CPU_FEATURES"] = "AVX512, AVX2, AVX512_SPR, SVE"
+    try:
+        import faiss as _faiss
+        return _faiss
+    except ModuleNotFoundError as _faiss_err:
+        _faiss_msg = str(_faiss_err)
+        if "swigfaiss" in _faiss_msg:
+            import warnings
+            warnings.warn(
+                f"{_faiss_msg} — faiss AVX modules unavailable. "
+                "Install a compatible faiss-cpu wheel or set FAISS_OPT_LEVEL.",
+                stacklevel=3,
+            )
+            # Last resort: try to force the basic loader
+            for _mod in list(sys.modules.keys()):
+                if _mod.startswith("faiss"):
+                    del sys.modules[_mod]
+            os.environ["FAISS_OPT_LEVEL"] = ""
+            import faiss as _faiss
+            return _faiss
         raise
+
+faiss = _import_faiss()
 
 
 from arvc.utils import huggingface
