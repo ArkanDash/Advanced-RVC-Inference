@@ -634,7 +634,7 @@ hr {
     <div class="cover-line"></div>
     <div class="cover-meta">
       <span class="cover-meta-item"><span>MIT</span> License</span>
-      <span class="cover-meta-item"><span>43</span> Optimizers</span>
+      <span class="cover-meta-item"><span>5</span> Optimizers</span>
       <span class="cover-meta-item"><span>4</span> Vocoders</span>
       <span class="cover-meta-item"><span>30+</span> F0 Methods</span>
     </div>
@@ -671,7 +671,7 @@ hr {
     <a class="toc-item" href="#optimizer-guide">
       <div class="toc-item-number">05</div>
       <div class="toc-item-title">Optimizer Guide</div>
-      <div class="toc-item-desc">43 optimizers — ratings, features, recommendations</div>
+      <div class="toc-item-desc">5 optimizers — ratings, features, recommendations</div>
     </a>
     <a class="toc-item" href="#configuration">
       <div class="toc-item-number">06</div>
@@ -967,7 +967,7 @@ rvc-cli create-dataset -i &lt;directory&gt; [options]</code></pre>
   <hr>
 
   <h3>train — Model Training</h3>
-  <p>Train a new RVC voice model. Supports 43 optimizers and 4 vocoders for maximum flexibility and quality.</p>
+  <p>Train a new RVC voice model. Supports 5 optimizers and 4 vocoders for maximum flexibility and quality.</p>
   <pre data-lang="bash"><code>rvc-cli train &lt;model_name&gt; [options]</code></pre>
 
   <h4>Required Arguments</h4>
@@ -992,7 +992,7 @@ rvc-cli create-dataset -i &lt;directory&gt; [options]</code></pre>
     <li><span class="arg-name">--vocoder</span> <span class="arg-desc">Vocoder — Default, BigVGAN, MRF-HiFi-GAN, RefineGAN (default: Default)</span></li>
     <li><span class="arg-name">--energy</span> <span class="arg-desc">Use RMS energy</span></li>
     <li><span class="arg-name">--overtrain_detect</span> <span class="arg-desc">Enable overtraining detection</span></li>
-    <li><span class="arg-name">--optimizer</span> <span class="arg-desc">Optimizer — 43 available (default: AdamW). Top rated: ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam</span></li>
+    <li><span class="arg-name">--optimizer</span> <span class="arg-desc">Optimizer — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2 (default: AdamW)</span></li>
     <li><span class="arg-name">--multiscale_loss</span> <span class="arg-desc">Use multi-scale mel loss</span></li>
     <li><span class="arg-name">--use_reference</span> <span class="arg-desc">Use custom reference set</span></li>
     <li><span class="arg-name">--reference_path</span> <span class="arg-desc">Path to reference set</span></li>
@@ -1282,7 +1282,7 @@ done</code></pre>
 <!-- ==================== 05: OPTIMIZER GUIDE ==================== -->
 <section class="doc-container doc-section" id="optimizer-guide">
   <h2>Optimizer Reference Guide</h2>
-  <p>Advanced RVC Inference supports <strong>43 optimizers</strong> for model training, each with different characteristics, strengths, and use cases. This guide provides detailed descriptions, ratings, and recommendations for RVC/audio model training.</p>
+  <p>Advanced RVC Inference supports <strong>5 optimizers</strong> for model training, carefully selected from the broader optimizer landscape to cover the most effective choices for RVC/audio model training. This guide provides detailed descriptions, ratings, and recommendations.</p>
 
   <h3>Quick Reference</h3>
   <div class="table-wrapper">
@@ -1579,7 +1579,8 @@ done</code></pre>
       <tbody>
         <tr><td><span class="env-var">ARVC_ASSETS_PATH</span></td><td>Path to assets directory</td><td><code>assets</code></td></tr>
         <tr><td><span class="env-var">ARVC_CONFIGS_PATH</span></td><td>Path to configs directory</td><td><code>configs</code></td></tr>
-        <tr><td><span class="env-var">ARVC_WEIGHTS_PATH</span></td><td>Path to weights directory</td><td><code>assets/weights</code></td></tr>
+        <tr><td><span class="env-var">ARVC_WEIGHTS_PATH</span></td><td>Path to weights directory</td><td><code>assets/logs</code></td></tr>
+        <tr><td><span class="env-var">ARVC_DATASETS_PATH</span></td><td>Path to datasets directory</td><td><code>datasets</code></td></tr>
         <tr><td><span class="env-var">ARVC_LOGS_PATH</span></td><td>Path to logs directory</td><td><code>assets/logs</code></td></tr>
       </tbody>
     </table>
@@ -1588,7 +1589,7 @@ done</code></pre>
   <h3>Model and Index Files</h3>
   <p>Place your model files (<code>.pth</code> or <code>.onnx</code>) in the weights directory. Place index files (<code>.index</code>) in the logs directory under the model name subfolder.</p>
   <pre data-lang="bash"><code># Model files
-arvc/assets/weights/
+arvc/assets/logs/
 
 # Index files
 arvc/assets/logs/&lt;model_name&gt;/</code></pre>
@@ -1703,13 +1704,17 @@ pip install -e .
     <table>
       <thead><tr><th>Project</th><th>Author</th><th>Purpose</th></tr></thead>
       <tbody>
-        <tr><td><a href="https://github.com/PhamHuynhAnh16/Vietnamese-RVC">Vietnamese-RVC</a></td><td>Pham Huynh Anh</td><td>Core RVC implementation &amp; pretrained models</td></tr>
-        <tr><td><a href="https://github.com/IAHispano/Applio">Applio</a></td><td>IAHispano</td><td>UI/UX inspiration &amp; components</td></tr>
-        <tr><td><a href="https://github.com/kalomaze/Mangio-Kalo-Tweaks">Mangio-Kalo-Tweaks</a></td><td>kalomaze</td><td>UI inspiration</td></tr>
-        <tr><td><a href="https://github.com/nomadkaraoke/python-audio-separator">python-audio-separator</a></td><td>Nomad Karaoke</td><td>UVR5 audio separation</td></tr>
+        <tr><td><a href="https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI">RVC</a></td><td>RVC Project</td><td>Original Retrieval-based Voice Conversion framework</td></tr>
+        <tr><td><a href="https://github.com/PhamHuynhAnh16/Vietnamese-RVC">Vietnamese-RVC</a></td><td>Phạm Huỳnh Anh</td><td>Core RVC implementation, pretrained models, training pipeline (SVC architecture, embedder mix, F0 autotune)</td></tr>
+        <tr><td><a href="https://github.com/kalomaze/Mangio-Kalo-Tweaks">Mangio-Kalo-Tweaks</a></td><td>kalomaze</td><td>UI inspiration, feature extraction improvements</td></tr>
+        <tr><td><a href="https://github.com/Politrees/PolTrain">PolTrain</a></td><td>Politrees</td><td>Multi-scale mel spectrogram loss (8 scales with dynamic windows), training quality improvements</td></tr>
+        <tr><td><a href="https://github.com/IAHispano/Applio">Applio</a></td><td>IAHispano</td><td>Scaled v3 discriminator loss, feature loss gradient fix, UI/UX inspiration &amp; components</td></tr>
+        <tr><td><a href="https://github.com/nomadkaraoke/python-audio-separator">python-audio-separator</a></td><td>Nomad Karaoke</td><td>UVR5 audio separation pipeline</td></tr>
         <tr><td><a href="https://github.com/openai/whisper">whisper</a></td><td>OpenAI</td><td>Speech-to-text transcription</td></tr>
-        <tr><td><a href="https://github.com/NVIDIA/BigVGAN">BigVGAN</a></td><td>Nvidia</td><td>Vocoder implementation</td></tr>
+        <tr><td><a href="https://github.com/NVIDIA/BigVGAN">BigVGAN</a></td><td>Nvidia</td><td>BigVGAN vocoder implementation</td></tr>
+        <tr><td><a href="https://huggingface.co/R-Kentaren/Ultimate-RVC-Models">Ultimate-RVC-Models</a></td><td>R-Kentaren</td><td>Pretrained model hosting on HuggingFace</td></tr>
         <tr><td><a href="https://github.com/vlsid/ZLUDA">ZLUDA</a></td><td>vlsid</td><td>AMD GPU CUDA compatibility layer</td></tr>
+        <tr><td><a href="https://github.com/TimDettmers/bitsandbytes">bitsandbytes</a></td><td>Tim Dettmers</td><td>8-bit Adam optimizer for reduced VRAM</td></tr>
       </tbody>
     </table>
   </div>

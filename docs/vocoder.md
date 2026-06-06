@@ -143,3 +143,12 @@ Use **BigVGAN** — it consistently achieves the highest objective and subjectiv
 - Pre-trained weights for non-Default vocoders follow the naming pattern: `{VocoderName}_f0G48k.pth`
 - BigVGAN and RefineGAN use the v3 discriminator during training
 - The vocoder registry is in `arvc/engine/models/generators/__init__.py`
+
+### Training Quality Improvements
+
+The training pipeline includes several quality improvements that work with all vocoders:
+
+- **Multi-Scale Mel Spectrogram Loss** — 8 scales with dynamic window sizes (from [PolTrain](https://github.com/Politrees/PolTrain)), enabled by default. Provides better spectral detail at multiple resolutions simultaneously.
+- **Scaled v3 Discriminator Loss** — Downweights losses from sub-discriminator heads beyond the midpoint (from [Applio](https://github.com/IAHispano/Applio)). Prevents multi-resolution sub-discriminator heads in BigVGAN/RefineGAN from dominating the total loss, improving training stability and quality.
+- **Feature Loss Gradient Fix** — Removed `.detach()` from feature loss computation (from [Applio](https://github.com/IAHispano/Applio)), allowing gradients to flow through the feature matching loss for better generator training.
+- **cuDNN Benchmark** — Enabled by default for faster training on CUDA. Automatically disabled for ZLUDA and non-CUDA backends.

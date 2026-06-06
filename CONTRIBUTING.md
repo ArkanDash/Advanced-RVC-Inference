@@ -26,20 +26,39 @@ Understanding the codebase helps you find where to contribute:
 
 ```
 arvc/
-├── app/               # Gradio web UI (tabs, pages, layouts)
-│   ├── tabs/          #   inference, training, downloads, realtime, extra
-├── engine/            # Core logic (no UI dependency)
-│   ├── inference/     #   voice conversion pipeline, TTS
-│   ├── training/      #   preprocess, extract, train, export
-│   ├── uvr/           #   audio separation (UVR5)
-│   ├── realtime/      #   live mic conversion
-│   └── models/        #   model loading, backends (CUDA, DirectML, OpenCL)
-├── services/          # Business logic layer (bridges UI ↔ engine)
-├── ui/                # UI helpers (feedback, dropdown updates, formatting)
-├── utils/             # Shared utilities (variables, download helpers)
-├── configs/           # Configuration files (config.json, training configs)
-└── assets/            # Runtime assets (models, languages, presets, weights)
-    └── languages/     #   44 translation JSON files
+├── app/                    # Gradio web UI (tabs, pages, layouts)
+│   ├── tabs/               #   inference, training, downloads, realtime, extra
+├── engine/                 # Core logic (no UI dependency)
+│   ├── inference/          #   voice conversion pipeline, TTS
+│   ├── training/           #   preprocess, extract, train, export
+│   │   ├── preprocess/     #     audio slicing & normalization
+│   │   ├── extract/        #     embedding & F0 extraction
+│   │   └── runner/         #     training loop, losses, data loading
+│   ├── uvr/                #   audio separation (UVR5)
+│   ├── realtime/           #   live mic conversion
+│   └── models/             #   model loading, generators, optimizers, backends
+│       ├── generators/     #     HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
+│       ├── optimizers/     #     AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
+│       ├── embedders/      #     Hubert, ContentVec
+│       ├── predictors/     #     F0 predictors (RMVPE, Crepe, FCPE, etc.)
+│       └── backends/       #     CUDA, DirectML, OpenCL, XPU, ZLUDA
+├── services/               # Business logic layer (bridges UI ↔ engine)
+├── ui/                     # UI helpers (feedback, dropdown updates, formatting)
+├── utils/                  # Shared utilities (variables, download helpers)
+├── configs/                # Configuration files (training configs, model templates)
+│   ├── v1/                 #   V1 model configs
+│   ├── v2/                 #   V2 model configs
+│   ├── ringformer_v2/      #   RingFormer V2 configs
+│   └── pcph_gan/           #   PCPH-GAN configs
+├── datasets/               # Training datasets (organized per model)
+├── assets/                 # Runtime assets
+│   ├── models/             #   Pretrained models, embedders, predictors, UVR5
+│   ├── logs/               #   Training logs, checkpoints, weights, indexes
+│   ├── audios/             #   Audio files (input, output, TTS, UVR)
+│   ├── f0/                 #   F0 cache files
+│   ├── languages/          #   44 translation JSON files
+│   └── presets/            #   Inference presets
+└── _version.py             # Version management
 ```
 
 **Key rule**: `engine/` should never import from `app/` or `services/`. Keep the core independent.

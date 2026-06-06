@@ -20,16 +20,32 @@
 
 ## Features
 
+### Inference
 - **Voice Inference** — Single & batch conversion, TTS, pitch shifting, formant shifting, audio cleaning, Whisper transcription
-- **Audio Separation** — Vocal/instrumental isolation (MDX-Net, Roformer, BS-Roformer), karaoke, reverb removal, denoising
 - **Real-Time Conversion** — Live mic voice conversion with VAD and low-latency processing
-- **Training Pipeline** — End-to-end training from dataset creation to model export with overtraining detection
-- **CLI** — Full command-line interface via `rvc-cli`
-- **Auto Pretrained Download** — Automatically downloads pretrained models from HuggingFace
-- **ZLUDA Support** — Full AMD GPU support via ZLUDA
 - **30+ F0 Methods** — rmvpe, crepe, fcpe, harvest, hybrid, and many more
-- **Training Optimizations** — Gradient accumulation, torch.compile(), 8-bit Adam, DDP tuning
+- **F0 Autotune** — Automatic pitch correction with configurable strength
+- **Audio Cleaning** — Built-in denoising for cleaner output
+
+### Audio Processing
+- **Audio Separation** — Vocal/instrumental isolation (MDX-Net, Roformer, BS-Roformer), karaoke, reverb removal, denoising
+- **Auto Pretrained Download** — Automatically downloads pretrained models from HuggingFace
+
+### Training Pipeline
+- **End-to-End Training** — Dataset creation → preprocessing → feature extraction → training → model export
+- **4 Vocoders** — HiFi-GAN NSF (Default), BigVGAN, MRF-HiFi-GAN, RefineGAN
+- **5 Optimizers** — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
+- **Training Quality Improvements** — Multi-scale mel spectrogram loss (8 scales), scaled v3 discriminator loss, proper feature loss gradient flow, cuDNN benchmark
+- **Advanced Options** — Gradient accumulation, torch.compile(), 8-bit Adam, cosine annealing LR, overtraining detection
+- **Architecture Support** — RVC and SVC (from Vietnamese-RVC)
+- **Embedder Mix** — Layer-wise embedding mixing with configurable ratios (from Vietnamese-RVC)
+
+### Platform & Integration
+- **CLI** — Full command-line interface via `rvc-cli`
+- **ZLUDA Support** — Full AMD GPU support via ZLUDA
+- **XPU Support** — Intel GPU support via XPU backend
 - **Push to Hub** — Upload trained models directly to HuggingFace Hub
+- **44 Languages** — Full UI translation support
 
 ---
 
@@ -45,6 +61,22 @@ Advanced RVC Inference supports the same vocoders as [Vietnamese-RVC](https://gi
 | **RefineGAN** | U-Net based vocoder with parallel residual blocks and anti-aliased resampling. High-fidelity spectral detail. | Yes |
 
 When training without pitch guidance (`pitch_guidance=False`), a plain HiFi-GAN generator (no NSF) is used automatically regardless of the selected vocoder.
+
+---
+
+## Supported Optimizers
+
+Advanced RVC Inference provides **5 carefully selected optimizers** for model training, covering the most effective choices for RVC/audio model training:
+
+| Optimizer | Category | Rating | Best For |
+|-----------|----------|--------|----------|
+| **AdamW** | PyTorch Built-in | ⭐⭐⭐⭐⭐ | General-purpose, most reliable (default) |
+| **RAdam** | PyTorch Built-in | ⭐⭐⭐⭐ | Warmup-free training, short training runs |
+| **AnyPrecisionAdamW** | Mixed-Precision | ⭐⭐⭐⭐ | Bfloat16 training, long runs with Kahan summation |
+| **AdaBelief** | Belief-Based | ⭐⭐⭐ | Better conditioned adaptive learning rates |
+| **AdaBeliefV2** | Belief-Based | ⭐⭐⭐ | Stable deep training with AMSGrad + InverseSqrt scheduler |
+
+See the [Optimizer Reference Guide](docs/optimizer.md) for detailed descriptions, hyperparameters, and recommendations.
 
 ---
 
@@ -122,6 +154,56 @@ rvc-cli --help
 
 ---
 
+## Project Structure
+
+```
+arvc/
+├── app/                    # Gradio web UI (tabs, pages, layouts)
+│   ├── tabs/               #   inference, training, downloads, realtime, extra
+├── engine/                 # Core logic (no UI dependency)
+│   ├── inference/          #   Voice conversion pipeline, TTS
+│   ├── training/           #   preprocess, extract, train, export
+│   │   ├── preprocess/     #   Audio slicing & normalization
+│   │   ├── extract/        #   Embedding & F0 extraction
+│   │   └── runner/         #   Training loop, losses, data loading
+│   ├── uvr/                #   Audio separation (UVR5)
+│   ├── realtime/           #   Live mic conversion
+│   └── models/             #   Model loading, generators, optimizers, embedders
+│       ├── generators/     #   HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
+│       ├── optimizers/     #   AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
+│       ├── embedders/      #   Hubert, ContentVec embedders
+│       ├── predictors/     #   F0 predictors (RMVPE, Crepe, FCPE, etc.)
+│       └── backends/       #   CUDA, DirectML, OpenCL, XPU, ZLUDA
+├── services/               # Business logic layer (bridges UI <-> engine)
+├── ui/                     # UI helpers (feedback, dropdown updates, formatting)
+├── utils/                  # Shared utilities (variables, download helpers)
+├── configs/                # Configuration files (training configs, model templates)
+│   ├── v1/                 #   V1 model configs (32k, 40k, 48k)
+│   ├── v2/                 #   V2 model configs (24k, 32k, 40k, 48k)
+│   ├── ringformer_v2/      #   RingFormer V2 configs
+│   └── pcph_gan/           #   PCPH-GAN configs
+├── datasets/               # Training datasets (organized per model)
+├── assets/                 # Runtime assets
+│   ├── models/             #   Pretrained models, embedders, predictors, UVR5
+│   │   ├── pretrained_v1/  #     V1 pretrained G/D weights
+│   │   ├── pretrained_v2/  #     V2 pretrained G/D weights
+│   │   ├── pretrained_custom/ #  Custom pretrained weights
+│   │   ├── embedders/      #     Hubert/ContentVec models
+│   │   ├── predictors/     #     F0 predictor models
+│   │   └── uvr5/           #     UVR5 separation models
+│   ├── logs/               #   Training logs, checkpoints, extracted features, indexes
+│   ├── audios/             #   Audio files (input, output, TTS, UVR results)
+│   ├── f0/                 #   F0 cache files
+│   ├── binary/             #   Binary resources
+│   ├── languages/          #   44 translation JSON files
+│   └── presets/            #   Inference presets
+└── _version.py             # Version management
+```
+
+**Key rule**: `engine/` should never import from `app/` or `services/`. Keep the core independent.
+
+---
+
 ## Terms of Use
 
 The use of the converted voice for the following purposes is **strictly prohibited**:
@@ -135,17 +217,55 @@ The use of the converted voice for the following purposes is **strictly prohibit
 
 ---
 
+## Changelog
+
+### v2.1.0
+- **VRVC Training Integration** — Cloned Vietnamese-RVC training pipeline including architecture selector (RVC/SVC), embedder mix, include mutes, nprobe, alpha, and F0 autotune with configurable strength
+- **Training Quality Fixes** — Multi-scale mel spectrogram loss (8 scales with dynamic windows from PolTrain), proper feature loss gradient flow (removed `.detach()` from Applio), scaled v3 discriminator loss for BigVGAN/RefineGAN, cuDNN benchmark enabled by default
+- **Optimizer Cleanup** — Reduced from 43 optimizers to 5 proven choices (AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2)
+- **Directory Structure** — Cleaned up assets: datasets moved to `arvc/datasets/`, weights merged into `arvc/assets/logs/`
+- **EasyGUI Removed** — Deleted `easy_gui.py` and all references; Web UI is the only interface
+- **Bug Fixes** — Fixed robotic chirping (#69), `get_gpu_info()` unpack error, faiss AVX512/AVX2 import crash, missing `--predictor_onnx` argument, synced all training params across UI → service → subprocess
+- **Colab Updates** — Removed EasyGUI toggle and CLI Usage section from main notebook
+
+---
+
 ## Credits
 
+This project builds upon the work of many open-source projects and contributors. We gratefully acknowledge the following:
+
+### Core RVC Foundation
 | Project | Author | Purpose |
 |---------|--------|---------|
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation & pretrained models |
-| [Applio](https://github.com/IAHispano/Applio) | IAHispano | UI/UX inspiration & components |
-| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | UI inspiration |
-| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke | UVR5 audio separation |
+| [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project | Original Retrieval-based Voice Conversion framework |
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation, pretrained models, training pipeline (SVC architecture, embedder mix, F0 autotune) |
+| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | UI inspiration, feature extraction improvements |
+
+### Training Improvements
+| Project | Author | Purpose |
+|---------|--------|---------|
+| [PolTrain](https://github.com/Politrees/PolTrain) | Politrees | Multi-scale mel spectrogram loss (8 scales with dynamic windows), training quality improvements |
+| [Applio](https://github.com/IAHispano/Applio) | IAHispano | Scaled v3 discriminator loss, feature loss gradient fix, UI/UX inspiration & components |
+
+### Audio & Models
+| Project | Author | Purpose |
+|---------|--------|---------|
+| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke | UVR5 audio separation pipeline |
 | [whisper](https://github.com/openai/whisper) | OpenAI | Speech-to-text transcription |
-| [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia | Vocoder implementation |
+| [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia | BigVGAN vocoder implementation |
+| [Ultimate-RVC-Models](https://huggingface.co/R-Kentaren/Ultimate-RVC-Models) | R-Kentaren | Pretrained model hosting on HuggingFace |
+
+### Hardware & Platform Support
+| Project | Author | Purpose |
+|---------|--------|---------|
 | [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid | AMD GPU CUDA compatibility layer |
+| [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers | 8-bit Adam optimizer for reduced VRAM |
+
+### Contributors
+| Contributor | Contribution |
+|-------------|-------------|
+| [ArkanDash](https://github.com/ArkanDash) | Project creator and maintainer |
+| [BF667](https://github.com/BF667) | VRVC training integration, training quality fixes, bug fixes, optimizer cleanup, directory restructure |
 
 ---
 

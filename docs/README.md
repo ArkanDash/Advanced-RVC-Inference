@@ -305,11 +305,11 @@ rvc-cli train <model_name> [options]
 - `--pitch_guidance`: Use pitch guidance (default: True)
 - `--pretrained_g`: Path to pre-trained G weights
 - `--pretrained_d`: Path to pre-trained D weights
-- `--vocoder`: Vocoder - HiFi-GAN, Default, MRF-HiFi-GAN, RefineGAN, BigVGAN, RingFormer, PCPH-GAN, Vocos, HiFi-GAN-v3, JVSF-HiFi-GAN, WaveGlow, NSF-APNet, FullBand-MRF (default: HiFi-GAN)
+- `--vocoder`: Vocoder - Default, BigVGAN, MRF-HiFi-GAN, RefineGAN (default: Default)
 - `--energy`: Use RMS energy
 - `--overtrain_detect`: Enable overtraining detection
-- `--optimizer`: Optimizer - 43 optimizers available (default: AdamW). Top rated: ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam. Full list: AdamW, ScheduleFreeAdamW, Muon, Sophia, Lion, Prodigy, NAdam, RAdam, Adan, AnyPrecisionAdamW, Ranger21, AdaFactor, DAdaptAdam, Adam, PAdam, Apollo, CAME, NovoGrad, ScheduleFreeAdam, DAdaptAdaGrad, SGD, RMSprop, AdaBelief, AdaBeliefV2, LAMB, LARS, Adagrad, Adadelta, Adamax, ASGD, DAdaptSGD, QHAdam, SWATS, Shampoo, SOAP, A2Grad, AggMo, PID, Yogi, Fromage, SM3, ScheduleFreeSGD, Nero
-- `--multiscale_loss`: Use multi-scale mel loss
+- `--optimizer`: Optimizer - AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2 (default: AdamW)
+- `--multiscale_loss`: Use multi-scale mel loss (8-scale mel spectrogram loss)
 - `--use_reference`: Use custom reference set
 - `--reference_path`: Path to reference set
 
@@ -432,19 +432,25 @@ rvc-cli list-f0-methods
 |----------|-------------|---------|
 | `ARVC_ASSETS_PATH` | Path to assets directory | `assets` |
 | `ARVC_CONFIGS_PATH` | Path to configs directory | `configs` |
-| `ARVC_WEIGHTS_PATH` | Path to weights directory | `assets/weights` |
+| `ARVC_WEIGHTS_PATH` | Path to weights directory | `assets/logs` |
 | `ARVC_LOGS_PATH` | Path to logs directory | `assets/logs` |
+| `ARVC_DATASETS_PATH` | Path to datasets directory | `datasets` |
 
 ### Model and Index Files
 
 Place your model files (`.pth` or `.onnx`) in:
 ```
-arvc/assets/weights/
+arvc/assets/logs/
 ```
 
 Place index files (`.index`) in:
 ```
 arvc/assets/logs/<model_name>/
+```
+
+Place training datasets in:
+```
+arvc/datasets/<model_name>/
 ```
 
 ## Examples
