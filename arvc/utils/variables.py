@@ -21,7 +21,8 @@ PACKAGE_ROOT = Path(__file__).parent.parent.resolve()
 ASSETS_PATH = PACKAGE_ROOT / "assets"
 CONFIGS_PATH = PACKAGE_ROOT / "configs"
 LOGS_PATH = ASSETS_PATH / "logs"
-WEIGHTS_PATH = ASSETS_PATH / "weights"
+WEIGHTS_PATH = LOGS_PATH  # Trained models saved in logs/ (same dir as training data)
+DATASETS_PATH = PACKAGE_ROOT / "datasets"
 
 # Initialize logger
 logger = logging.getLogger(__name__)

@@ -16,7 +16,7 @@ def read_model_tab():
     with gr.Row():
         read_button = gr.Button(translations["readmodel"], variant="primary", scale=2)
     with gr.Column():
-        model_path = gr.Textbox(label=translations["model_path"], value="", placeholder="assets/weights/Model.pth", info=translations["model_path_info"], interactive=True)
+        model_path = gr.Textbox(label=translations["model_path"], value="", placeholder="assets/logs/Model.pth", info=translations["model_path_info"], interactive=True)
         output_info = gr.Textbox(label=translations["modelinfo"], value="", interactive=False, scale=6)
     with gr.Row():
         model.upload(fn=lambda model: shutil_move(model.name, configs["weights_path"]), inputs=[model], outputs=[model_path])

@@ -20,8 +20,8 @@ def fushion_tab():
             model_a = gr.File(label=f"{translations['model_name']} 1", file_types=[".pth", ".onnx"]) 
             model_b = gr.File(label=f"{translations['model_name']} 2", file_types=[".pth", ".onnx"])
         with gr.Row():
-            model_path_a = gr.Textbox(label=f"{translations['model_path']} 1", value="", placeholder="assets/weights/Model_1.pth")
-            model_path_b = gr.Textbox(label=f"{translations['model_path']} 2", value="", placeholder="assets/weights/Model_2.pth")
+            model_path_a = gr.Textbox(label=f"{translations['model_path']} 1", value="", placeholder="assets/logs/Model_1.pth")
+            model_path_b = gr.Textbox(label=f"{translations['model_path']} 2", value="", placeholder="assets/logs/Model_2.pth")
     with gr.Row():
         ratio = gr.Slider(minimum=0, maximum=1, label=translations["model_ratio"], info=translations["model_ratio_info"], value=0.5, interactive=True)
     with gr.Row():

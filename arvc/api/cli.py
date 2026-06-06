@@ -171,7 +171,7 @@ def show_info():
         from arvc.utils.variables import WEIGHTS_PATH
         weights_path = Path(WEIGHTS_PATH)
     except ImportError:
-        weights_path = Path("arvc/assets/weights")
+        weights_path = Path("arvc/assets/logs")
 
     if weights_path.exists():
         models = list(weights_path.glob("*.pth")) + list(weights_path.glob("*.onnx"))
@@ -194,7 +194,7 @@ def list_models():
         from arvc.utils.variables import WEIGHTS_PATH
         weights_path = Path(WEIGHTS_PATH)
     except ImportError:
-        weights_path = Path("arvc/assets/weights")
+        weights_path = Path("arvc/assets/logs")
 
     if not weights_path.exists():
         logger.warning("No models directory found.")

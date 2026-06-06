@@ -138,7 +138,7 @@ class Config:
         path_keys = [
             "convert_path", "separate_path", "create_dataset_path", "preprocess_path",
             "extract_path", "create_index_path", "train_path", "create_reference_path",
-            "csv_path", "weights_path", "logs_path", "binary_path", "f0_path",
+            "csv_path", "weights_path", "logs_path", "datasets_path", "binary_path", "f0_path",
             "language_path", "presets_path", "embedders_path", "predictors_path",
             "pretrained_custom_path", "pretrained_v1_path", "pretrained_v2_path",
             "speaker_diarization_path", "uvr5_path", "audios_path", "uvr_path",

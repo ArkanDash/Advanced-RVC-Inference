@@ -16,7 +16,7 @@ def convert_model_tab():
     with gr.Row():
         convert_onnx = gr.Button(translations["convert_model"], variant="primary", scale=2)
     with gr.Row():
-        model_pth_path = gr.Textbox(label=translations["model_path"], value="", placeholder="assets/weights/Model.pth", info=translations["model_path_info"], interactive=True)
+        model_pth_path = gr.Textbox(label=translations["model_path"], value="", placeholder="assets/logs/Model.pth", info=translations["model_path_info"], interactive=True)
     with gr.Row():
         output_model2 = gr.File(label=translations["output_model_path"], file_types=[".pth", ".onnx"], interactive=False, visible=False)
     with gr.Row():

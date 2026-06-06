@@ -438,7 +438,7 @@ def training_model_tab():
                     with gr.Column():
                         dataset_path = gr.Textbox(
                             label=translations["dataset_folder"], 
-                            value="arvc/assets/dataset", 
+                            value="arvc/datasets", 
                             interactive=True, 
                             visible=False
                         )

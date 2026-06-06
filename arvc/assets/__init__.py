@@ -4,25 +4,25 @@ Asset files for Advanced RVC Inference.
 This package contains resource files including:
 - Audio samples
 - Binary files
-- Dataset templates
 - F0 models
 - Language packs
-- Logs
-- Model weights
+- Logs (training data + trained model output)
+- Model weights (embedders, predictors, pretrained, UVR5)
 - Presets
-- UVR5 models
+- ZLUDA scripts
+
+Datasets are stored separately at arvc/datasets/.
+Training logs and trained model .pth files are both in arvc/assets/logs/.
 """
 
 __all__ = [
     "audios",
     "binary",
-    "dataset",
     "f0",
     "languages",
     "logs",
     "models",
     "presets",
-    "weights",
     "zluda",
 ]
 
@@ -50,13 +50,8 @@ def get_audio_path() -> Path:
     return get_asset_path("audios")
 
 
-def get_weights_path() -> Path:
-    """Get the path to model weights."""
-    return get_asset_path("weights")
-
-
 def get_logs_path() -> Path:
-    """Get the path to log files."""
+    """Get the path to log files and trained models."""
     return get_asset_path("logs")
 
 
