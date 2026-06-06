@@ -222,9 +222,10 @@ Tests are limited right now, so adding new ones is a great contribution.
 
 ## Recognition
 
-Contributors are recognized in:
+Contributors and collaborators are recognized in:
 
-- The [README credits](README.md#credits)
+- The [README credits & collaborators](README.md#credits)
+- The [HTML documentation](docs/Advanced-RVC-Documentation.html#credits-license)
 - Release notes
 - Community channels
 

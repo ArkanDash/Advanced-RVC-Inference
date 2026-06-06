@@ -261,11 +261,11 @@ This project builds upon the work of many open-source projects and contributors.
 | [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid | AMD GPU CUDA compatibility layer |
 | [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers | 8-bit Adam optimizer for reduced VRAM |
 
-### Contributors
-| Contributor | Contribution |
-|-------------|-------------|
-| [ArkanDash](https://github.com/ArkanDash) | Project creator and maintainer |
-| [BF667](https://github.com/BF667) | VRVC training integration, training quality fixes, bug fixes, optimizer cleanup, directory restructure |
+### Collaborators
+| Collaborator | Role | Contribution |
+|-------------|------|-------------|
+| [ArkanDash](https://github.com/ArkanDash) | Creator & Maintainer | Project creator, core architecture, ongoing maintenance and development |
+| [BF667](https://github.com/BF667) | Collaborator | VRVC training integration, training quality fixes (multi-scale mel loss, feature loss gradient fix, scaled v3 discriminator loss), bug fixes (#69 robotic chirping, GPU info unpack, faiss AVX crash, missing CLI args), optimizer cleanup (43→5), directory restructure, documentation updates |
 
 ---
 
