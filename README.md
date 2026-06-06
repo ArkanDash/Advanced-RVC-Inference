@@ -235,37 +235,37 @@ The use of the converted voice for the following purposes is **strictly prohibit
 This project builds upon the work of many open-source projects and contributors. We gratefully acknowledge the following:
 
 ### Core RVC Foundation
-| Project | Author | Purpose |
-|---------|--------|---------|
-| [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project | Original Retrieval-based Voice Conversion framework |
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh | Core RVC implementation, pretrained models, training pipeline (SVC architecture, embedder mix, F0 autotune) |
-| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze | UI inspiration, feature extraction improvements |
+| Project | Author |
+|---------|--------|
+| [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project |
+| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh |
+| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze |
 
 ### Training Improvements
-| Project | Author | Purpose |
-|---------|--------|---------|
-| [PolTrain](https://github.com/Politrees/PolTrain) | Politrees | Multi-scale mel spectrogram loss (8 scales with dynamic windows), training quality improvements |
-| [Applio](https://github.com/IAHispano/Applio) | IAHispano | Scaled v3 discriminator loss, feature loss gradient fix, UI/UX inspiration & components |
+| Project | Author |
+|---------|--------|
+| [PolTrain](https://github.com/Politrees/PolTrain) | Politrees |
+| [Applio](https://github.com/IAHispano/Applio) | IAHispano |
 
 ### Audio & Models
-| Project | Author | Purpose |
-|---------|--------|---------|
-| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke | UVR5 audio separation pipeline |
-| [whisper](https://github.com/openai/whisper) | OpenAI | Speech-to-text transcription |
-| [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia | BigVGAN vocoder implementation |
-| [Ultimate-RVC-Models](https://huggingface.co/R-Kentaren/Ultimate-RVC-Models) | R-Kentaren | Pretrained model hosting on HuggingFace |
+| Project | Author |
+|---------|--------|
+| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke |
+| [whisper](https://github.com/openai/whisper) | OpenAI |
+| [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia |
+| [Ultimate-RVC-Models](https://huggingface.co/R-Kentaren/Ultimate-RVC-Models) | R-Kentaren |
 
 ### Hardware & Platform Support
-| Project | Author | Purpose |
-|---------|--------|---------|
-| [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid | AMD GPU CUDA compatibility layer |
-| [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers | 8-bit Adam optimizer for reduced VRAM |
+| Project | Author |
+|---------|--------|
+| [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid |
+| [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers |
 
 ### Collaborators
-| Collaborator | Role | Contribution |
-|-------------|------|-------------|
-| [ArkanDash](https://github.com/ArkanDash) | Creator & Maintainer | Project creator, core architecture, ongoing maintenance and development |
-| [BF667](https://github.com/BF667) | Collaborator | VRVC training integration, training quality fixes (multi-scale mel loss, feature loss gradient fix, scaled v3 discriminator loss), bug fixes (#69 robotic chirping, GPU info unpack, faiss AVX crash, missing CLI args), optimizer cleanup (43→5), directory restructure, documentation updates |
+| Collaborator | Role |
+|-------------|------|
+| [ArkanDash](https://github.com/ArkanDash) | Creator & Maintainer |
+| [BF667](https://github.com/BF667) | Collaborator |
 
 ---
 
