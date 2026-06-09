@@ -616,5 +616,5 @@
     "pretrained_v1_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v1/",
     "pretrained_v2_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v2/",
     "search_api_url": "https://voice-models.com/fetch_data.php",
-    "new_pytorch_weight_norm": false
+    "new_pytorch_weight_norm": true
 }

@@ -55,6 +55,27 @@ import subprocess
 from pathlib import Path
 from typing import Optional, List
 
+# BooleanOptionalAction requires Python 3.9+
+BooleanOptionalAction = getattr(argparse, 'BooleanOptionalAction', None)
+if BooleanOptionalAction is None:
+    # Fallback for Python 3.8: use a simple store_true/store_false pair
+    class BooleanOptionalAction(argparse.Action):
+        def __init__(self, option_strings, dest, default=None, **kwargs):
+            self.option_strings = []
+            self.pos_strings = []
+            for s in option_strings:
+                if s.startswith('--no-'):
+                    self.neg_strings = [s]
+                else:
+                    self.pos_strings = [s]
+            super().__init__(option_strings=option_strings, dest=dest, nargs=0, default=default, **kwargs)
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            if option_string in getattr(self, 'neg_strings', []):
+                setattr(namespace, self.dest, False)
+            else:
+                setattr(namespace, self.dest, True)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -577,6 +598,7 @@ def cmd_train(args):
             cmd.append("--energy_use")
         if args.overtrain_detect:
             cmd.append("--overtraining_detector")
+            cmd.extend(["--threshold", str(args.overtrain_threshold)])
         if args.optimizer:
             cmd.extend(["--optimizer", args.optimizer])
         if args.multiscale_loss:
@@ -587,6 +609,22 @@ def cmd_train(args):
             cmd.append("--checkpointing")
         if args.cosine_lr:
             cmd.append("--use_cosine_annealing_lr")
+        if args.architecture != "RVC":
+            cmd.extend(["--architecture", args.architecture])
+        if args.embedder_model and args.embedder_model != "hubert_base":
+            cmd.extend(["--embedders", args.embedder_model])
+        if args.embedders_mode and args.embedders_mode != "fairseq":
+            cmd.extend(["--embedders_mode", args.embedders_mode])
+        if args.deterministic:
+            cmd.append("--deterministic")
+        if args.benchmark:
+            cmd.append("--benchmark")
+        if args.compile_model:
+            cmd.append("--compile_model")
+        if args.use_8bit_adam:
+            cmd.append("--use_8bit_adam")
+        if args.gradient_accumulation and args.gradient_accumulation > 1:
+            cmd.extend(["--grad_accum_steps", str(args.gradient_accumulation)])
 
         logger.info("Training started. This may take a while...")
 
@@ -823,7 +861,7 @@ For the full CLI guide, see:
     p.add_argument("--sample_rate", type=int, default=48000, help="Sample rate (default: 48000)")
     p.add_argument("--clean_dataset", action="store_true", help="Apply data cleaning")
     p.add_argument("--clean_strength", type=float, default=0.7, help="Cleaning strength (default: 0.7)")
-    p.add_argument("--separate", action="store_true", default=True, help="Separate vocals (default: True)")
+    p.add_argument("--separate", action=BooleanOptionalAction, default=True, help="Separate vocals")
     p.add_argument("--separator_model", default="MDXNET_Main", help="Separation model")
     p.add_argument("--separator_reverb", action="store_true", help="Separate reverb")
     p.add_argument("--reverb_model", default="MDX-Reverb", help="Reverb model")
@@ -847,7 +885,7 @@ For the full CLI guide, see:
     p.add_argument("--version", choices=["v1", "v2"], default="v2", help="RVC version (default: v2)")
     p.add_argument("--f0_method", default="rmvpe", help="F0 extraction method (default: rmvpe)")
     p.add_argument("--f0_onnx", action="store_true", help="Use ONNX F0 predictor")
-    p.add_argument("--pitch_guidance", action="store_true", default=True, help="Use pitch guidance (default: True)")
+    p.add_argument("--pitch_guidance", action=BooleanOptionalAction, default=True, help="Use pitch guidance")
     p.add_argument("--hop_length", type=int, default=128, help="Hop length (default: 128)")
     p.add_argument("--cpu_cores", type=int, default=2, help="CPU cores (default: 2)")
     p.add_argument("--gpu", help="GPU index (default: CPU)")
@@ -882,22 +920,31 @@ For the full CLI guide, see:
     p.add_argument("--epochs", type=int, default=300, help="Total training epochs (default: 300)")
     p.add_argument("--batch_size", type=int, default=8, help="Batch size (default: 8)")
     p.add_argument("--save_every", type=int, default=50, help="Save checkpoint every N epochs (default: 50)")
-    p.add_argument("--save_latest", action="store_true", default=True, help="Save only latest checkpoint (default: True)")
-    p.add_argument("--save_weights", action="store_true", default=True, help="Save all model weights (default: True)")
+    p.add_argument("--save_latest", action=BooleanOptionalAction, default=True, help="Save only latest checkpoint")
+    p.add_argument("--save_weights", action=BooleanOptionalAction, default=True, help="Save all model weights")
     p.add_argument("--gpu", default="0", help="GPU index (default: 0)")
     p.add_argument("--cache_gpu", action="store_true", help="Cache data in GPU")
-    p.add_argument("--pitch_guidance", action="store_true", default=True, help="Use pitch guidance (default: True)")
+    p.add_argument("--pitch_guidance", action=BooleanOptionalAction, default=True, help="Use pitch guidance")
     p.add_argument("--pretrained_g", help="Path to pre-trained G weights")
     p.add_argument("--pretrained_d", help="Path to pre-trained D weights")
     p.add_argument("--vocoder", choices=["Default", "MRF-HiFi-GAN", "RefineGAN", "BigVGAN"], default="Default", help="Vocoder (default: Default)")
     p.add_argument("--energy", action="store_true", help="Use RMS energy")
     p.add_argument("--overtrain_detect", action="store_true", help="Enable overtraining detection")
+    p.add_argument("--overtrain_threshold", type=int, default=50, help="Overtraining detection threshold (default: 50)")
     p.add_argument("--optimizer", choices=["AdamW", "RAdam", "AnyPrecisionAdamW", "AdaBelief", "AdaBeliefV2"], default="AdamW", help="Optimizer (default: AdamW)")
     p.add_argument("--multiscale_loss", action="store_true", help="Use multi-scale mel loss")
     p.add_argument("--use_reference", action="store_true", help="Use custom reference set")
     p.add_argument("--reference_path", help="Path to reference set")
     p.add_argument("--checkpointing", action="store_true", help="Enable checkpointing")
     p.add_argument("--cosine_lr", action="store_true", help="Use CosineAnnealingLR scheduler for better training quality")
+    p.add_argument("--architecture", choices=["RVC", "SVC"], default="RVC", help="Model architecture (default: RVC)")
+    p.add_argument("--embedder_model", default="hubert_base", help="Embedder model (default: hubert_base)")
+    p.add_argument("--embedders_mode", default="fairseq", help="Embedder mode (default: fairseq)")
+    p.add_argument("--deterministic", action="store_true", help="Enable deterministic training")
+    p.add_argument("--benchmark", action="store_true", help="Enable cuDNN benchmark mode")
+    p.add_argument("--compile_model", action="store_true", help="Use torch.compile() on generator")
+    p.add_argument("--use_8bit_adam", action="store_true", help="Use 8-bit Adam optimizer (requires bitsandbytes)")
+    p.add_argument("--gradient_accumulation", type=int, default=1, help="Gradient accumulation steps (default: 1)")
     p.set_defaults(func=cmd_train)
 
     # ----- create-ref -----
@@ -906,7 +953,7 @@ For the full CLI guide, see:
     p.add_argument("audio_file", help="Path to audio file")
     p.add_argument("-n", "--name", default="reference", help="Reference name (default: reference)")
     p.add_argument("--version", choices=["v1", "v2"], default="v2", help="RVC version (default: v2)")
-    p.add_argument("--pitch_guidance", action="store_true", default=True, help="Use pitch guidance (default: True)")
+    p.add_argument("--pitch_guidance", action=BooleanOptionalAction, default=True, help="Use pitch guidance")
     p.add_argument("--energy", action="store_true", help="Use RMS energy")
     p.add_argument("--embedder_model", default="hubert_base", help="Embedder model")
     p.add_argument("--f0_method", default="rmvpe", help="F0 method (default: rmvpe)")
