@@ -481,6 +481,10 @@ def cmd_extract(args):
             cmd.extend(["--gpu", "-"])
         if args.rms_extract:
             cmd.append("--rms_extract")
+        if args.predictor_onnx:
+            cmd.append("--predictor_onnx")
+        if args.embedders_mode and args.embedders_mode != "fairseq":
+            cmd.extend(["--embedders_mode", args.embedders_mode])
 
         result = subprocess.run(cmd, timeout=3600)
         if result.returncode != 0:
@@ -848,6 +852,8 @@ For the full CLI guide, see:
     p.add_argument("--cpu_cores", type=int, default=2, help="CPU cores (default: 2)")
     p.add_argument("--gpu", help="GPU index (default: CPU)")
     p.add_argument("--embedder_model", default="hubert_base", help="Embedder model (default: hubert_base)")
+    p.add_argument("--embedders_mode", default="fairseq", help="Embedder mode (default: fairseq)")
+    p.add_argument("--predictor_onnx", action="store_true", help="Use ONNX F0 predictor (alias for --f0_onnx)")
     p.add_argument("--rms_extract", action="store_true", help="Extract RMS energy")
     p.set_defaults(func=cmd_extract)
 
