@@ -155,7 +155,7 @@ def create_pipeline(model_path=None, index_path=None, f0_method="rmvpe", f0_onnx
 
     if inference.use_f0:
         from arvc.engine.models.predictors.Generator import Generator
-        predictor = Generator(sample_rate=sample_rate, hop_length=hop_length, f0_min=50.0, f0_max=1100.0, alpha=0.5, is_half=config.is_half, device=config.device, f0_onnx_mode=f0_onnx, del_onnx_model=False) 
+        predictor = Generator(sample_rate=sample_rate, hop_length=hop_length, f0_min=50.0, f0_max=1100.0, alpha=0.5, is_half=config.is_half, device=config.device, predictor_onnx=f0_onnx, delete_predictor_onnx=False) 
     else: predictor = None
 
     if inference.energy:

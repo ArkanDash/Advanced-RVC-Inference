@@ -151,8 +151,8 @@ def create_reference(
                 alpha=alpha, 
                 is_half=is_half, 
                 device=device, 
-                f0_onnx_mode=f0_onnx, 
-                del_onnx_model=True
+                predictor_onnx=f0_onnx, 
+                delete_predictor_onnx=True
             )
 
             pitch, pitchf = generator.calculator(
