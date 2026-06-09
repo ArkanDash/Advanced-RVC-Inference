@@ -419,12 +419,10 @@ def cmd_create_dataset(args):
         if args.clean_dataset:
             cmd.extend(["--clean_dataset", "--clean_strength", str(args.clean_strength)])
 
-        if not args.separate:
-            cmd.extend(["--separate", "False"])
-        else:
-            cmd.extend(["--separator_reverb", str(args.separate_reverb)])
-            if args.separator_model:
-                cmd.extend(["--model_name", args.separator_model])
+        cmd.extend(["--separate", str(args.separate)])
+        if args.separate:
+            cmd.extend(["--separate_reverb", str(args.separate_reverb)])
+            cmd.extend(["--model_name", args.separator_model])
             if args.reverb_model:
                 cmd.extend(["--reverb_model", args.reverb_model])
 
@@ -863,7 +861,7 @@ For the full CLI guide, see:
     p.add_argument("--clean_strength", type=float, default=0.7, help="Cleaning strength (default: 0.7)")
     p.add_argument("--separate", action=BooleanOptionalAction, default=True, help="Separate vocals")
     p.add_argument("--separator_model", default="MDXNET_Main", help="Separation model")
-    p.add_argument("--separator_reverb", action="store_true", help="Separate reverb")
+    p.add_argument("--separate_reverb", action="store_true", help="Separate reverb")
     p.add_argument("--reverb_model", default="MDX-Reverb", help="Reverb model")
     p.add_argument("--skip_start", type=int, default=0, help="Seconds to skip at start (default: 0)")
     p.add_argument("--skip_end", type=int, default=0, help="Seconds to skip at end (default: 0)")

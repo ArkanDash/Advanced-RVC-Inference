@@ -319,13 +319,13 @@ def downloader(
         ydl_opts = {
             "format": "bestaudio/best", 
             "outtmpl": os.path.join(dataset_temp, f"{name}"), 
+            "cookies": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "config.txt"),
             "postprocessors": [{
                 "key": "FFmpegExtractAudio", 
                 "preferredcodec": "wav", 
                 "preferredquality": "192"
             }], 
             "no_warnings": True, 
-            "noplaylist": True, 
             "noplaylist": True, 
             "verbose": False
         }
