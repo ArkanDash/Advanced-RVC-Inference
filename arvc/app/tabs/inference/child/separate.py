@@ -9,6 +9,13 @@ from arvc.services.separate import separate_music
 from arvc.ui.feedback import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
 from arvc.utils.variables import translations, uvr_model, karaoke_models, reverb_models, vr_models, denoise_models, mdx_models, paths_for_files, sample_rate_choice, configs, file_types, export_format_choices
 
+# Ensure model dicts are actually dicts (defensive against corrupted config)
+_karaoke_keys = list(karaoke_models.keys()) if isinstance(karaoke_models, dict) and karaoke_models else []
+_reverb_keys = list(reverb_models.keys()) if isinstance(reverb_models, dict) and reverb_models else []
+_denoise_keys = list(denoise_models.keys()) if isinstance(denoise_models, dict) and denoise_models else []
+_vr_keys = list(vr_models.keys()) if isinstance(vr_models, dict) else []
+_mdx_keys = list(mdx_models.keys()) if isinstance(mdx_models, dict) else []
+
 def separate_tab():
     with gr.Row(): 
         gr.Markdown(translations["4_part"])
@@ -24,9 +31,9 @@ def separate_tab():
                     enable_post_process = gr.Checkbox(label=translations["enable_post_process"], value=False, interactive=False)
                 with gr.Row():
                     model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0] if uvr_model else "", choices=uvr_model, interactive=True)
-                    karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0] if karaoke_models else "", choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
-                    reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0] if reverb_models else "", choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
-                    denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0] if denoise_models else "", choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
+                    karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=_karaoke_keys[0] if _karaoke_keys else "", choices=_karaoke_keys, interactive=True, visible=separate_backing.value)
+                    reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=_reverb_keys[0] if _reverb_keys else "", choices=_reverb_keys, interactive=True, visible=separate_reverb.value)
+                    denoise_model = gr.Dropdown(label=translations["denoise_model"], value=_denoise_keys[0] if _denoise_keys else "", choices=_denoise_keys, interactive=True, visible=enable_denoise.value and model_name.value in _vr_keys)
     with gr.Row():
         with gr.Column():
             drop_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)    
@@ -73,7 +80,7 @@ def separate_tab():
         main_vocals = gr.Audio(interactive=False, label=translations["main_vocal"], visible=separate_backing.value)
         backing_vocals = gr.Audio(interactive=False, label=translations["backing_vocal"], visible=separate_backing.value)
     with gr.Row():
-        model_name.change(fn=lambda a: valueFalse_interactive(a in list(mdx_models.keys()) + list(vr_models.keys())), inputs=[model_name], outputs=[enable_denoise])
+        model_name.change(fn=lambda a: valueFalse_interactive(a in _mdx_keys + _vr_keys), inputs=[model_name], outputs=[enable_denoise])
         separate_backing.change(fn=lambda a, b: valueFalse_interactive(a or b), inputs=[separate_backing, separate_reverb], outputs=[enable_denoise])
         separate_reverb.change(fn=lambda a, b: valueFalse_interactive(a or b), inputs=[separate_backing, separate_reverb], outputs=[enable_denoise])
     with gr.Row():

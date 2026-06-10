@@ -114,28 +114,74 @@ def launch(
                 f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
             )
 
-            from arvc.app.tabs.inference.inference import inference_tab
-            from arvc.app.tabs.realtime.realtime import realtime_tab
-            from arvc.app.tabs.training.training import training_tab
-            from arvc.app.tabs.downloads.downloads import download_tab
-            from arvc.app.tabs.extra.extra import extra_tab
+            # Import tabs with error tracing to pinpoint failures
+            try:
+                from arvc.app.tabs.inference.inference import inference_tab
+            except Exception as import_err:
+                logger.error(f"Failed to import inference_tab: {import_err}")
+                import traceback; logger.error(traceback.format_exc().strip())
+                inference_tab = None
+            try:
+                from arvc.app.tabs.realtime.realtime import realtime_tab
+            except Exception as import_err:
+                logger.error(f"Failed to import realtime_tab: {import_err}")
+                import traceback; logger.error(traceback.format_exc().strip())
+                realtime_tab = None
+            try:
+                from arvc.app.tabs.training.training import training_tab
+            except Exception as import_err:
+                logger.error(f"Failed to import training_tab: {import_err}")
+                import traceback; logger.error(traceback.format_exc().strip())
+                training_tab = None
+            try:
+                from arvc.app.tabs.downloads.downloads import download_tab
+            except Exception as import_err:
+                logger.error(f"Failed to import download_tab: {import_err}")
+                import traceback; logger.error(traceback.format_exc().strip())
+                download_tab = None
+            try:
+                from arvc.app.tabs.extra.extra import extra_tab
+            except Exception as import_err:
+                logger.error(f"Failed to import extra_tab: {import_err}")
+                import traceback; logger.error(traceback.format_exc().strip())
+                extra_tab = None
 
             with gr.Tabs():
                 with gr.TabItem("Inference"):
-                    inference_tab()
+                    try:
+                        if inference_tab: inference_tab()
+                    except Exception as tab_err:
+                        logger.error(f"Failed to build inference tab: {tab_err}")
+                        import traceback; logger.error(traceback.format_exc().strip())
                     if client_mode:
                         from arvc.app.tabs.realtime.realtime_client import (
                             realtime_client_tab,
                         )
                         realtime_client_tab()
                     else:
-                        realtime_tab()
+                        try:
+                            if realtime_tab: realtime_tab()
+                        except Exception as tab_err:
+                            logger.error(f"Failed to build realtime tab: {tab_err}")
+                            import traceback; logger.error(traceback.format_exc().strip())
                 
                 with gr.TabItem("Models"):
-                    download_tab()
-                    training_tab()
+                    try:
+                        if download_tab: download_tab()
+                    except Exception as tab_err:
+                        logger.error(f"Failed to build downloads tab: {tab_err}")
+                        import traceback; logger.error(traceback.format_exc().strip())
+                    try:
+                        if training_tab: training_tab()
+                    except Exception as tab_err:
+                        logger.error(f"Failed to build training tab: {tab_err}")
+                        import traceback; logger.error(traceback.format_exc().strip())
                 
-                extra_tab(app)
+                try:
+                    if extra_tab: extra_tab(app)
+                except Exception as tab_err:
+                    logger.error(f"Failed to build extra tab: {tab_err}")
+                    import traceback; logger.error(traceback.format_exc().strip())
 
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])
@@ -275,7 +321,7 @@ def launch(
     except Exception as e:
         import traceback
         logger.error(f"Failed to launch web interface: {e}")
-        logger.debug(traceback.format_exc())
+        logger.error(traceback.format_exc().strip())
         logger.info("Try running with: rvc-gui --share=False")
         return 1
 

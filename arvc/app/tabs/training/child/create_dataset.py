@@ -8,6 +8,12 @@ from arvc.services.training import create_dataset
 from arvc.ui.feedback import visible, valueFalse_interactive, create_dataset_change
 from arvc.utils.variables import translations, sample_rate_choice, uvr_model, reverb_models, denoise_models, vr_models, mdx_models
 
+# Ensure model dicts are actually dicts (defensive against corrupted config)
+_reverb_keys = list(reverb_models.keys()) if isinstance(reverb_models, dict) and reverb_models else []
+_denoise_keys = list(denoise_models.keys()) if isinstance(denoise_models, dict) and denoise_models else []
+_vr_keys = list(vr_models.keys()) if isinstance(vr_models, dict) else []
+_mdx_keys = list(mdx_models.keys()) if isinstance(mdx_models, dict) else []
+
 def create_dataset_tab():
     with gr.Row():
         gr.Markdown(translations["create_dataset_markdown_2"])
@@ -29,8 +35,8 @@ def create_dataset_tab():
         create_dataset_button = gr.Button(translations["createdataset"], variant="primary", scale=2, min_width=4000)
     with gr.Row(visible=False) as row_2:
         model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0] if uvr_model else "", choices=uvr_model, interactive=True)
-        reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0] if reverb_models else "", choices=list(reverb_models.keys()), interactive=True)
-        denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0] if denoise_models else "", choices=list(denoise_models.keys()), interactive=True, visible=False)
+        reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=_reverb_keys[0] if _reverb_keys else "", choices=_reverb_keys, interactive=True)
+        denoise_model = gr.Dropdown(label=translations["denoise_model"], value=_denoise_keys[0] if _denoise_keys else "", choices=_denoise_keys, interactive=True, visible=False)
     with gr.Row():
         with gr.Column(visible=False) as row_3:
             with gr.Group():
@@ -237,7 +243,7 @@ def create_dataset_tab():
         )
     with gr.Row():
         model_name.change(
-            fn=lambda a: valueFalse_interactive(a in list(mdx_models.keys()) + list(vr_models.keys())), 
+            fn=lambda a: valueFalse_interactive(a in _mdx_keys + _vr_keys),
             inputs=[model_name], 
             outputs=[enable_denoise]
         )
