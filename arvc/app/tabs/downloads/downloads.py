@@ -66,7 +66,7 @@ def download_tab():
             # CSV download section
             with gr.Row(visible=False) as csv_row:
                 download_csv_model = gr.Dropdown(
-                    choices=list(model_name.keys()) if model_name else [],
+                    choices=list(model_options.keys()) if model_options else (model_name if model_name else []),
                     label=translations.get("select_model", "Select Model"),
                     interactive=True,
                 )

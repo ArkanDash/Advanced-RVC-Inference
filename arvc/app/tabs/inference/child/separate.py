@@ -23,10 +23,10 @@ def separate_tab():
                     high_end_process = gr.Checkbox(label=translations["high_end_process"], value=False, interactive=False)
                     enable_post_process = gr.Checkbox(label=translations["enable_post_process"], value=False, interactive=False)
                 with gr.Row():
-                    model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
-                    karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0], choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
-                    reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
-                    denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
+                    model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0] if uvr_model else "", choices=uvr_model, interactive=True)
+                    karaoke_model = gr.Dropdown(label=translations["separator_backing_model"], value=list(karaoke_models.keys())[0] if karaoke_models else "", choices=list(karaoke_models.keys()), interactive=True, visible=separate_backing.value)
+                    reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0] if reverb_models else "", choices=list(reverb_models.keys()), interactive=True, visible=separate_reverb.value)
+                    denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0] if denoise_models else "", choices=list(denoise_models.keys()), interactive=True, visible=enable_denoise.value and model_name.value in list(vr_models.keys()))
     with gr.Row():
         with gr.Column():
             drop_audio = gr.Files(label=translations["drop_audio"], file_types=file_types)    

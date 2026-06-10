@@ -266,4 +266,7 @@ def update_sample_rate_dropdown(model):
     data = fetch_pretrained_data()
     if not data or model not in data:
         return {"choices": [], "value": None, "__type__": "update"}
-    if model != translations["success"]: return {"choices": list(data[model].keys()), "value": list(data[model].keys())[0], "__type__": "update"}
+    model_data = data[model]
+    if not isinstance(model_data, dict):
+        return {"choices": [], "value": None, "__type__": "update"}
+    if model != translations["success"]: return {"choices": list(model_data.keys()), "value": list(model_data.keys())[0] if model_data else None, "__type__": "update"}

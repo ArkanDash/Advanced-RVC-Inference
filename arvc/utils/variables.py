@@ -289,9 +289,9 @@ except Exception:
     pass
 
 # Global state
-models = {}
-model_name = {}
-model_options = {}
+models = {}       # {filename: url}  — populated from CSV by _load_model_urls()
+model_name = {}   # reassigned below to List[str] via _list_model_names()
+model_options = {}  # {display_name: url}  — populated by search_models() & _load_model_urls()
 
 # F0 methods
 method_f0 = [
@@ -525,13 +525,23 @@ theme = configs.get("theme", "NeoPy/Soft")
 edgetts = configs.get("edge_tts", ["vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"])
 google_tts_voice = configs.get("google_tts_voice", ["vi", "en"])
 
-# VR models
-vr_models = configs.get("vr_models", "")
-mdx_models = configs.get("mdx_models", "")
-karaoke_models = configs.get("karaoke_models", "")
-reverb_models = configs.get("reverb_models", "")
-denoise_models = configs.get("denoise_models", "")
+# VR models — ensure they are always dicts even if config is corrupted
+_vr = configs.get("vr_models", {})
+_mdx = configs.get("mdx_models", {})
+_karaoke = configs.get("karaoke_models", {})
+_reverb = configs.get("reverb_models", {})
+_denoise = configs.get("denoise_models", {})
+
+vr_models = _vr if isinstance(_vr, dict) else {}
+mdx_models = _mdx if isinstance(_mdx, dict) else {}
+karaoke_models = _karaoke if isinstance(_karaoke, dict) else {}
+reverb_models = _reverb if isinstance(_reverb, dict) else {}
+denoise_models = _denoise if isinstance(_denoise, dict) else {}
 uvr_model = list(vr_models.keys()) + list(mdx_models.keys())
+
+# Ensure uvr_model is never empty (fallback to dict key names)
+if not uvr_model:
+    uvr_model = list(vr_models.keys()) + list(mdx_models.keys())
 
 # Sample rates
 sample_rate_choice = [8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 96000]
@@ -597,3 +607,7 @@ def _load_model_urls():
 
 
 _load_model_urls()
+
+# Populate model_options from CSV data so the Downloads tab
+# "Download from CSV" dropdown is not empty.
+model_options = dict(models)  # shallow copy: {filename: url}

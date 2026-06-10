@@ -98,11 +98,18 @@ def launch(
         start_time = time.time()
 
         # Build the UI
-        with gr.Blocks(
-            title=f"Advanced RVC Inference",
-            theme=theme,
-            js=js_code if client_mode else None,
-        ) as app:
+        # Gradio 6.0+ moved theme/js to launch(); we pass them to
+        # Blocks() only if the installed version still accepts them.
+        import packaging.version as pv
+        _gradio_ver = pv.parse(gr.__version__)
+        _use_blocks_theme = _gradio_ver < pv.parse("6.0")
+
+        blocks_kwargs = dict(title="Advanced RVC Inference")
+        if _use_blocks_theme:
+            blocks_kwargs["theme"] = theme
+            blocks_kwargs["js"] = js_code if client_mode else None
+
+        with gr.Blocks(**blocks_kwargs) as app:
             gr.HTML(
                 f"<h1 style='text-align: center;'>Advanced RVC Inference</h1>"
             )
@@ -148,6 +155,20 @@ def launch(
         # Launch the app
         logger.info("Starting Gradio server...")
 
+        # Gradio 6.0+ accepts theme/js in launch()
+        launch_kwargs = dict(
+            server_name=server_name,
+            server_port=port,
+            show_error=show_error,
+            inbrowser=inbrowser or "--open" in sys.argv,
+            share=share,
+            allowed_paths=allowed_paths_list,
+        )
+        if not _use_blocks_theme:
+            launch_kwargs["theme"] = theme
+            if client_mode:
+                launch_kwargs["js"] = js_code
+
         # Build allowed paths list - include package assets directory
         def get_package_assets_path():
             """Get assets directory path, handling both source and installed cases."""
@@ -190,14 +211,7 @@ def launch(
         logger.debug(f"Allowed paths: {allowed_paths_list}")
 
         try:
-            app.launch(
-                server_name=server_name,
-                server_port=port,
-                show_error=show_error,
-                inbrowser=inbrowser or "--open" in sys.argv,
-                share=share,
-                allowed_paths=allowed_paths_list,
-            )
+            app.launch(**launch_kwargs)
 
             # Log successful startup
             startup_time = time.time() - start_time
@@ -216,8 +230,7 @@ def launch(
                 logger.info("Retrying with share=False (local access only)...")
 
                 # Try again without share
-                app.launch(
-                    theme=theme,
+                retry_kwargs = dict(
                     server_name=server_name,
                     server_port=port,
                     show_error=show_error,
@@ -225,6 +238,12 @@ def launch(
                     share=False,
                     allowed_paths=allowed_paths_list,
                 )
+                if not _use_blocks_theme:
+                    retry_kwargs["theme"] = theme
+                    if client_mode:
+                        retry_kwargs["js"] = js_code
+
+                app.launch(**retry_kwargs)
 
                 logger.warning("Share link disabled - using local access only")
                 logger.info(f"Access locally at: http://{server_name}:{port}")
@@ -254,7 +273,9 @@ def launch(
             logger.error(f"Failed to start server: {e}")
         return 1
     except Exception as e:
+        import traceback
         logger.error(f"Failed to launch web interface: {e}")
+        logger.debug(traceback.format_exc())
         logger.info("Try running with: rvc-gui --share=False")
         return 1
 
@@ -270,6 +291,7 @@ def create_app():
 
     try:
         import gradio as gr
+        import packaging.version as pv
 
         from arvc.utils.variables import (
             config,
@@ -282,12 +304,15 @@ def create_app():
         from arvc.app.mainjs import js_code
 
         client_mode = "--client" in sys.argv
+        _gradio_ver = pv.parse(gr.__version__)
+        _use_blocks_theme = _gradio_ver < pv.parse("6.0")
 
-        with gr.Blocks(
-            title="Advanced RVC Inference",
-            js=js_code if client_mode else None,
-            theme=theme,
-        ) as app:
+        blocks_kwargs = dict(title="Advanced RVC Inference")
+        if _use_blocks_theme:
+            blocks_kwargs["theme"] = theme
+            blocks_kwargs["js"] = js_code if client_mode else None
+
+        with gr.Blocks(**blocks_kwargs) as app:
             gr.HTML("<h1 style='text-align: center;'>Advanced RVC Inference</h1>")
 
             from arvc.app.tabs.inference.inference import inference_tab

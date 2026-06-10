@@ -28,9 +28,9 @@ def create_dataset_tab():
     with gr.Row():
         create_dataset_button = gr.Button(translations["createdataset"], variant="primary", scale=2, min_width=4000)
     with gr.Row(visible=False) as row_2:
-        model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0], choices=uvr_model, interactive=True)
-        reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0], choices=list(reverb_models.keys()), interactive=True)
-        denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0], choices=list(denoise_models.keys()), interactive=True, visible=False)
+        model_name = gr.Dropdown(label=translations["separator_model"], value=uvr_model[0] if uvr_model else "", choices=uvr_model, interactive=True)
+        reverb_model = gr.Dropdown(label=translations["dereveb_model"], value=list(reverb_models.keys())[0] if reverb_models else "", choices=list(reverb_models.keys()), interactive=True)
+        denoise_model = gr.Dropdown(label=translations["denoise_model"], value=list(denoise_models.keys())[0] if denoise_models else "", choices=list(denoise_models.keys()), interactive=True, visible=False)
     with gr.Row():
         with gr.Column(visible=False) as row_3:
             with gr.Group():

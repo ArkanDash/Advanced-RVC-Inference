@@ -53,8 +53,8 @@ AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a",
 
 # Constants for model types
 MODEL_TYPES = {
-    "vr": list(vr_models.keys()),
-    "mdx": list(mdx_models.keys()),
+    "vr": list(vr_models.keys()) if isinstance(vr_models, dict) else [],
+    "mdx": list(mdx_models.keys()) if isinstance(mdx_models, dict) else [],
 }
 
 # Constants for F0 methods that require hop length

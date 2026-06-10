@@ -40,6 +40,7 @@ matplotlib>=3.7.2
 
 # Implementation and web framework
 gradio>=5.23.3
+packaging>=23.0
 requests>=2.32.3
 aiohttp
 pysrt
