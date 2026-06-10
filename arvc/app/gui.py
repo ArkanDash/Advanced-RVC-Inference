@@ -152,23 +152,6 @@ def launch(
         server_name = configs.get("server_name", server_name)
         share = share or "--share" in sys.argv
 
-        # Launch the app
-        logger.info("Starting Gradio server...")
-
-        # Gradio 6.0+ accepts theme/js in launch()
-        launch_kwargs = dict(
-            server_name=server_name,
-            server_port=port,
-            show_error=show_error,
-            inbrowser=inbrowser or "--open" in sys.argv,
-            share=share,
-            allowed_paths=allowed_paths_list,
-        )
-        if not _use_blocks_theme:
-            launch_kwargs["theme"] = theme
-            if client_mode:
-                launch_kwargs["js"] = js_code
-
         # Build allowed paths list - include package assets directory
         def get_package_assets_path():
             """Get assets directory path, handling both source and installed cases."""
@@ -209,6 +192,23 @@ def launch(
             logger.debug(f"Added package assets path to allowed_paths: {assets_path}")
         
         logger.debug(f"Allowed paths: {allowed_paths_list}")
+
+        # Launch the app
+        logger.info("Starting Gradio server...")
+
+        # Gradio 6.0+ accepts theme/js in launch()
+        launch_kwargs = dict(
+            server_name=server_name,
+            server_port=port,
+            show_error=show_error,
+            inbrowser=inbrowser or "--open" in sys.argv,
+            share=share,
+            allowed_paths=allowed_paths_list,
+        )
+        if not _use_blocks_theme:
+            launch_kwargs["theme"] = theme
+            if client_mode:
+                launch_kwargs["js"] = js_code
 
         try:
             app.launch(**launch_kwargs)
