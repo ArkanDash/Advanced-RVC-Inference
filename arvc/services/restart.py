@@ -11,11 +11,13 @@ from arvc.utils.variables import python, translations, configs_json
 
 def restart_app(app):
     gr_info(translations["30s"])
+    # SECURITY PATCH: was `os.system("cls"/"clear")` — spawns a shell just to
+    # clear the screen. Use ANSI escape codes instead (no shell, no injection).
     try:
-        os.system("cls" if platform.system() == "Windows" else "clear")
+        print("\033[2J\033[H", end="", flush=True)
     except Exception:
         pass
-    
+
     app.close()
     subprocess.run([python, os.path.join("arvc", "app", "gui.py")] + [arg for arg in sys.argv[1:] if arg != "--open"])
 

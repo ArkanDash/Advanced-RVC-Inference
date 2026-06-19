@@ -412,14 +412,19 @@ def load_faiss_index(index_path):
     return index, big_npy
 
 def load_model(model_path, weights_only=True, log_severity_level=3):
+    """Load an RVC model checkpoint with safe deserialization.
+
+    SECURITY PATCH: the `weights_only` parameter is no longer honoured as
+    `False` from callers — we always use `safe_torch_load` which forces
+    `weights_only=True`. Loading an untrusted `.pth` with the legacy pickle
+    fallback was an arbitrary-code-execution vector.
+    """
     if not os.path.isfile(model_path): return None
 
     if model_path.endswith(".pth"):
-        try:
-            return torch.load(model_path, map_location="cpu", weights_only=weights_only)
-        except TypeError:
-            # Older PyTorch versions don't support weights_only
-            return torch.load(model_path, map_location="cpu")
+        # SECURITY: never allow weights_only=False, even if the caller asks.
+        from arvc.engine.models.safe_load import safe_torch_load
+        return safe_torch_load(model_path, map_location="cpu", weights_only=True)
     else:
         from arvc.engine.models.onnx.wrapper import ONNXRVC
         return ONNXRVC(model_path, config.providers, log_severity_level=log_severity_level)

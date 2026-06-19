@@ -95,8 +95,17 @@ def onnx_exporter(input_path, output_path, is_half=False, device="cpu"):
         if is_half:
             try:
                 import onnxconverter_common
-            except:
-                os.system(f"{sys.executable} -m pip install onnxconverter_common")
+            except ImportError:
+                # SECURITY PATCH: was `os.system(f"{sys.executable} -m pip install onnxconverter_common")`
+                # — shell injection if `sys.executable` ever contained spaces or shell metacharacters.
+                # Use subprocess.run with a list argument (no shell) and check=False so a failed
+                # install doesn't crash ONNX export.
+                import subprocess
+                subprocess.run(
+                    [sys.executable, "-m", "pip", "install", "onnxconverter_common"],
+                    shell=False,
+                    check=False,
+                )
                 import onnxconverter_common
 
             model = onnxconverter_common.convert_float_to_float16(model, keep_io_types=True)

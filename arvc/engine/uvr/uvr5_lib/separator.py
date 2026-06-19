@@ -180,7 +180,12 @@ class Separator:
 
     def load_model_data_from_yaml(self, yaml_config_filename):
         model_data_yaml_filepath = os.path.join(self.model_file_dir, yaml_config_filename) if not os.path.exists(yaml_config_filename) else yaml_config_filename
-        model_data = yaml.load(open(model_data_yaml_filepath, encoding="utf-8"), Loader=yaml.FullLoader)
+        # SECURITY PATCH: was `yaml.load(..., Loader=yaml.FullLoader)` — FullLoader
+        # is NOT safe against arbitrary Python object construction via custom tags.
+        # Use safe_load which only allows primitive types.
+        from arvc.engine.models.safe_load import safe_yaml_load
+        with open(model_data_yaml_filepath, encoding="utf-8") as f:
+            model_data = safe_yaml_load(f)
         return model_data
 
     def load_model_data_using_hash(self, model_path):

@@ -555,7 +555,10 @@ if "--allow_all_disk" in sys.argv and sys.platform == "win32":
     try:
         import win32api
     except ImportError:
-        os.system(f"{python} -m pip install pywin32")
+        # SECURITY PATCH: was `os.system(f"{python} -m pip install pywin32")` —
+        # shell injection if `python` path contains spaces or shell metacharacters.
+        import subprocess
+        subprocess.run([python, "-m", "pip", "install", "pywin32"], shell=False, check=False)
         import win32api
 
     allow_disk = win32api.GetLogicalDriveStrings().split("\x00")[:-1]
