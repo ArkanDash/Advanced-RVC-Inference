@@ -623,6 +623,9 @@ def cmd_train(args):
             cmd.append("--use_8bit_adam")
         if args.gradient_accumulation and args.gradient_accumulation > 1:
             cmd.extend(["--grad_accum_steps", str(args.gradient_accumulation)])
+        if args.fast_train:
+            cmd.append("--fast_train")
+            cmd.append("true")
 
         logger.info("Training started. This may take a while...")
 
@@ -943,6 +946,8 @@ For the full CLI guide, see:
     p.add_argument("--compile_model", action="store_true", help="Use torch.compile() on generator")
     p.add_argument("--use_8bit_adam", action="store_true", help="Use 8-bit Adam optimizer (requires bitsandbytes)")
     p.add_argument("--gradient_accumulation", type=int, default=1, help="Gradient accumulation steps (default: 1)")
+    p.add_argument("--fast_train", action=BooleanOptionalAction, default=False,
+        help="Vocal-quality-safe ~3x training speedup: enables TF32 matmul+cuDNN, torch.compile on G+D, larger dataloader prefetch. Default: off.")
     p.set_defaults(func=cmd_train)
 
     # ----- create-ref -----

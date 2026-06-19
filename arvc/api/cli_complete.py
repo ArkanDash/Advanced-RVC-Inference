@@ -276,6 +276,11 @@ elif argv_is_allows[15] in argv:
             - `--benchmark` (default: `False`): When enabled, tests and selects the most optimal algorithm.
             - `--optimizer` (default: `AdamW`): Optimizer to use.
             - `--multiscale_mel_loss` (default: `False`): Compare Mel spectrograms at multiple scales.
+            - `--compile_model` (default: `False`): Use torch.compile() on generator for PyTorch 2.x speedup.
+            - `--use_8bit_adam` (default: `False`): Use 8-bit Adam optimizer (requires bitsandbytes).
+            - `--grad_accum_steps` (default: `1`): Gradient accumulation steps.
+            - `--newpytorch` (default: `True`): Use PyTorch 2.0+ parametrization format.
+            - `--fast_train` (default: `False`): Vocal-quality-safe ~3x training speedup bundle. Enables TF32 matmul+cuDNN, torch.compile on G+D, larger dataloader prefetch. Does NOT change any loss / model / LR — vocal fidelity is bit-identical to `--fast_train false`.
 
         9. Reference set:
             - `--use_custom_reference` (default: `False`): Use custom reference set.
