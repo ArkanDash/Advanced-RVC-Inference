@@ -9,6 +9,9 @@ sys.path.append(os.getcwd())
 from arvc.utils.feedback import gr_info, gr_warning, gr_error
 from arvc.utils.variables import config, logger, translations, configs
 
+# SECURITY PATCH: hardened checkpoint loading — never use weights_only=False.
+from arvc.engine.models.safe_load import safe_torch_load
+
 def fushion_model_pth(name, pth_1, pth_2, ratio):
     if not name.endswith(".pth"): name = name + ".pth"
 
@@ -35,8 +38,9 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
         return opt
     
     try:
-        ckpt1 = torch.load(pth_1, map_location="cpu", weights_only=False)
-        ckpt2 = torch.load(pth_2, map_location="cpu", weights_only=False)
+        # SECURITY PATCH: was weights_only=False (arbitrary code execution via malicious .pth)
+        ckpt1 = safe_torch_load(pth_1, map_location="cpu")
+        ckpt2 = safe_torch_load(pth_2, map_location="cpu")
 
         if ckpt1["sr"] != ckpt2["sr"]: 
             gr_warning(translations["sr_not_same"])
@@ -124,7 +128,9 @@ def model_info(path):
             logger.debug(e)
             return translations["format_not_valid"]
     
-    if path.endswith(".pth"): model_data = torch.load(path, map_location="cpu", weights_only=False)
+    if path.endswith(".pth"):
+        # SECURITY PATCH: was weights_only=False (arbitrary code execution via malicious .pth)
+        model_data = safe_torch_load(path, map_location="cpu")
     else:        
         import onnx
 

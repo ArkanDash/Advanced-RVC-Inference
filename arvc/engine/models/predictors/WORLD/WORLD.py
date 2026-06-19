@@ -19,8 +19,13 @@ class PYWORLD:
         self.world_file_path = os.path.join(self.world_path, f"{model_type}{suffix}")
 
         if not os.path.exists(self.world_file_path):
+            # SECURITY PATCH: was `pickle.load(f)` — arbitrary code execution
+            # via malicious .bin. The world.bin file is expected to contain a
+            # plain dict[str, bytes] of compiled shared libraries, which the
+            # restricted unpickler handles safely.
+            from arvc.engine.models.safe_load import safe_pickle_load
             with open(model_path, "rb") as f:
-                model = pickle.load(f)
+                model = safe_pickle_load(f)
 
             with open(self.world_file_path, "wb") as w:
                 w.write(model[model_type])

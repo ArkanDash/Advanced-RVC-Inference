@@ -21,7 +21,10 @@ def hook_on_loading_state_dict_checkpoint(state_dict):
     return map_old_state_dict_weights(state_dict, KEYS_MAPPING)
 
 def torch_patched_state_dict_load(path, device="cpu"):
-    return hook_on_loading_state_dict_checkpoint(torch.load(path, map_location=device, weights_only=False))
+    # SECURITY PATCH: was `torch.load(path, map_location=device, weights_only=False)`.
+    # Use safe_torch_load which forces weights_only=True.
+    from arvc.engine.models.safe_load import safe_torch_load
+    return hook_on_loading_state_dict_checkpoint(safe_torch_load(path, map_location=device))
 
 @main_process_only
 def torch_save(obj, path):
@@ -57,9 +60,11 @@ def _cycliclrloader(obj, path, end_of_epoch):
     del end_of_epoch  
 
     try:
-        obj.load_state_dict(torch.load(path, map_location="cpu", weights_only=False), strict=True)
+        # SECURITY PATCH: was weights_only=False
+        from arvc.engine.models.safe_load import safe_torch_load
+        obj.load_state_dict(safe_torch_load(path, map_location="cpu"), strict=True)
     except TypeError:
-        obj.load_state_dict(torch.load(path, map_location="cpu", weights_only=False))
+        obj.load_state_dict(safe_torch_load(path, map_location="cpu"))
 
 DEFAULT_LOAD_HOOKS = {torch.nn.Module: torch_recovery, torch.optim.Optimizer: torch_recovery, torch.optim.lr_scheduler.ReduceLROnPlateau: torch_recovery, torch.cuda.amp.grad_scaler.GradScaler: torch_recovery}
 DEFAULT_SAVE_HOOKS = { torch.nn.Module: torch_save, torch.optim.Optimizer: torch_save, torch.optim.lr_scheduler.ReduceLROnPlateau: torch_save, torch.cuda.amp.grad_scaler.GradScaler: torch_save}
@@ -518,5 +523,7 @@ class InputNormalization(torch.nn.Module):
     @mark_as_loader
     def _load(self, path, end_of_epoch=False):
         del end_of_epoch  
-        stats = torch.load(path, map_location="cpu", weights_only=False)
+        # SECURITY PATCH: was weights_only=False
+        from arvc.engine.models.safe_load import safe_torch_load
+        stats = safe_torch_load(path, map_location="cpu")
         self._load_statistics_dict(stats)

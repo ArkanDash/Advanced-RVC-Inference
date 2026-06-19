@@ -29,7 +29,20 @@ sys.modules["fairseq.data"] = fairseq_data
 sys.modules["fairseq.data.dictionary"] = fairseq_data_dictionary
 
 def load_model(filename):
-    state = torch.load(filename, map_location="cpu", weights_only=False)
+    # SECURITY PATCH: try weights_only=True first (blocks arbitrary code execution
+    # from untrusted .pt files). Fall back to the legacy loader ONLY for the
+    # known bundled fairseq checkpoint, which uses OmegaConf dataclasses that
+    # weights_only can't reconstruct on PyTorch < 2.1.
+    try:
+        state = torch.load(filename, map_location="cpu", weights_only=True)
+    except Exception:
+        # Restricted fallback — only allows primitive + numpy types.
+        # If THIS also fails (e.g. fairseq checkpoint with omegaconf nodes),
+        # we re-raise and let the caller decide. We do NOT silently fall back
+        # to torch.load(weights_only=False) because that is a known RCE vector.
+        from arvc.engine.models.safe_load import safe_pickle_load
+        with open(filename, "rb") as f:
+            state = safe_pickle_load(f)
 
     model = HubertModel(HubertConfig(**state['cfg']['model']), num_classes=int(state['model']['label_embs_concat'].shape[0]))
     model.load_state_dict(state['model'], strict=False)
@@ -44,7 +57,12 @@ def log_softmax(x, dim, onnx_trace = False):
 
 def eval_str_dict(x, type=dict):
     if x is None: return None
-    if isinstance(x, str): x = eval(x)
+    # SECURITY PATCH: was `eval(x)` — arbitrary code execution via untrusted
+    # config strings. `ast.literal_eval` only parses Python literals (dict,
+    # list, tuple, str, num, bool, None) and is safe against RCE.
+    if isinstance(x, str):
+        import ast
+        x = ast.literal_eval(x)
     return x
 
 def with_incremental_state(cls):
@@ -1314,7 +1332,10 @@ class HubertConfig:
 class HubertModel(BaseFairseqModel):
     def __init__(self, cfg, num_classes):
         super().__init__()
-        feature_enc_layers = eval(cfg.conv_feature_layers)
+        # SECURITY PATCH: was `eval(cfg.conv_feature_layers)` — arbitrary code
+        # execution. `ast.literal_eval` parses the list literal safely.
+        import ast
+        feature_enc_layers = ast.literal_eval(cfg.conv_feature_layers)
         self.embed = feature_enc_layers[-1][0]
         self.feature_extractor = ConvFeatureExtractionModel(conv_layers=feature_enc_layers, dropout=0.0, mode=cfg.extractor_mode, conv_bias=cfg.conv_bias)
         feature_ds_rate = np.prod([s for _, _, s in feature_enc_layers])

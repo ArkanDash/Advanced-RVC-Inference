@@ -21,17 +21,37 @@ def check_amd_gpu(gpu):
 def get_amd_gpu_windows():
     gpus = ""
 
+    # SECURITY PATCH: was `subprocess.check_output("wmic ...", shell=True)` and
+    # `subprocess.check_output('powershell "..."', shell=True)` — shell injection
+    # risk if any path ever contains metacharacters. Use list args (no shell).
     try:
-        gpus = subprocess.check_output("wmic path win32_VideoController get name", shell=True, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        gpus = subprocess.check_output('powershell "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name"', shell=True, stderr=subprocess.DEVNULL)
+        gpus = subprocess.check_output(
+            ["wmic", "path", "win32_VideoController", "get", "name"],
+            shell=False, stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        try:
+            gpus = subprocess.check_output(
+                [
+                    "powershell",
+                    "-NoProfile",
+                    "-Command",
+                    "Get-CimInstance Win32_VideoController | Select-Object -ExpandProperty Name",
+                ],
+                shell=False, stderr=subprocess.DEVNULL,
+            )
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            return []
 
     return [gpu.strip() for gpu in gpus.decode().split('\n')[1:] if check_amd_gpu(gpu)]
 
 def get_amd_gpu_linux():
+    # SECURITY PATCH: was `subprocess.check_output("lspci | grep VGA", shell=True)`
+    # — shell injection risk. Run `lspci` directly and filter in Python.
     try:
-        return [gpu for gpu in subprocess.check_output("lspci | grep VGA", shell=True).decode().split('\n') if check_amd_gpu(gpu)]
-    except:
+        out = subprocess.check_output(["lspci", "-mm"], shell=False).decode()
+        return [line for line in out.split('\n') if 'VGA' in line and check_amd_gpu(line)]
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return []
 
 def get_gpu_list():

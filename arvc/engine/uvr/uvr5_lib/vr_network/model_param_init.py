@@ -24,8 +24,12 @@ def int_keys(pairs):
 class ModelParameters(object):
     def __init__(self, config_path="", key_in_bin=None):
         if config_path.endswith(".bin"):
+            # SECURITY PATCH: was `pickle.load(f)` — arbitrary code execution
+            # via malicious .bin. UVR5 .bin configs are plain dicts of params
+            # and are safe to load via the restricted unpickler.
+            from arvc.engine.models.safe_load import safe_pickle_load
             with open(config_path, "rb") as f:
-                data = pickle.load(f)
+                data = safe_pickle_load(f)
                 self.param = data[key_in_bin]
         else:
             with open(config_path, "r", encoding="utf-8") as f:
