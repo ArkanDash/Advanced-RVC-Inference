@@ -46,7 +46,8 @@ def load_model(name = "base", device = "cpu"):
     alignment_heads = _ALIGNMENT_HEADS[name]
 
     with open(checkpoint_file, "rb") as fp:
-        checkpoint = torch.load(fp, map_location="cpu", weights_only=True)
+        from arvc.engine.models.safe_load import safe_torch_load
+        checkpoint = safe_torch_load(fp)
 
     del checkpoint_file
 

@@ -57,7 +57,8 @@ class VRSeparator(CommonSeparator):
         else:
             self.model_run = nets.determine_model_capacity(self.model_params.param["bins"] * 2, nn_arch_size)
 
-        self.model_run.load_state_dict(torch.load(self.model_path, map_location="cpu", weights_only=True))
+        from arvc.engine.models.safe_load import safe_torch_load
+        self.model_run.load_state_dict(safe_torch_load(self.model_path))
         self.model_run.to(self.torch_device)
 
         y_spec, v_spec = self.inference_vr(self.loading_mix(), self.torch_device, self.aggressiveness)

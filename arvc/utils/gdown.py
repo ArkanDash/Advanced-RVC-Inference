@@ -12,6 +12,42 @@ from urllib.parse import urlparse, parse_qs, unquote
 
 from arvc.utils.variables import translations
 
+# SECURITY PATCH: hard limits for the Google Drive downloader.
+# - MAX_DOWNLOAD_BYTES: rejects files larger than 8 GB (RVC models / datasets
+#   are never this large; an attacker could otherwise fill the disk).
+# - ALLOWED_EXTENSIONS: only saves files with model-friendly extensions to
+#   prevent disguised executable payloads (.exe, .sh, .bat) being written
+#   next to the user's model library.
+MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024 * 1024  # 8 GB
+ALLOWED_EXTENSIONS = (
+    ".pth", ".pt", ".onnx", ".index", ".zip", ".tar", ".tar.gz",
+    ".tgz", ".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
+    ".json", ".npy", ".npz", ".bin", ".txt", ".ckpt",
+)
+
+
+def _sanitize_filename(name: str) -> str:
+    """Strip path separators and return a basename-only string.
+
+    SECURITY PATCH: was `os.path.basename(url)` — Google Drive's
+    `Content-Disposition` header is fully attacker-controlled, so a malicious
+    shared file named `../../../../etc/cron.d/evil` would be joined into a
+    system path. We force the result to a single filename component.
+    """
+    if not name:
+        return "gdown_download"
+    # Replace any path separator characters with underscores
+    name = name.replace(os.path.sep, "_").replace("/", "_").replace("\\", "_")
+    # Strip leading dots / dashes to prevent hidden-file or arg-injection quirks
+    name = name.lstrip(".-")
+    # Verify extension
+    lower = name.lower()
+    if not any(lower.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        # Append .bin to unknown extensions instead of rejecting — caller
+        # may rename later, but we never write a .exe / .sh / .bat to disk.
+        name = name + ".bin"
+    return name
+
 def parse_url(url):
     parsed = urlparse(url)
     is_download_link = parsed.path.endswith("/uc")
@@ -96,16 +132,48 @@ def gdown_download(url=None, output=None):
             filename_from_url = (match.group(1).replace(os.path.sep, "_") if match else os.path.basename(url))
         else: filename_from_url = os.path.basename(url)
 
+        # SECURITY PATCH: sanitize attacker-controlled filename + add extension whitelist
+        filename_from_url = _sanitize_filename(filename_from_url)
         output = os.path.join(output or ".", filename_from_url)
-        tmp_file = tempfile.mktemp(suffix=tempfile.template, prefix=os.path.basename(output), dir=os.path.dirname(output))
+
+        # SECURITY PATCH: was `tempfile.mktemp(...)` — TOCTOU symlink race.
+        # Replace with `mkstemp` which atomically creates the file with a
+        # file descriptor we own, then close it and reopen in append mode.
+        fd, tmp_file = tempfile.mkstemp(
+            suffix=tempfile.template,
+            prefix=os.path.basename(output),
+            dir=os.path.dirname(output),
+        )
+        os.close(fd)
         f = open(tmp_file, "ab")
 
-        if tmp_file is not None and f.tell() != 0: res = sess.get(url, headers={"Range": f"bytes={f.tell()}-"}, stream=True, verify=True)
+        if tmp_file is not None and f.tell() != 0:
+            res = sess.get(
+                url,
+                headers={"Range": f"bytes={f.tell()}-"},
+                stream=True,
+                verify=True,
+                timeout=300,  # SECURITY PATCH: was no timeout → hung server hangs worker
+            )
 
         try:
-            with tqdm.tqdm(desc=os.path.basename(output), total=int(res.headers.get("Content-Length", 0)), ncols=100, unit="byte") as pbar:
+            total_expected = int(res.headers.get("Content-Length", 0))
+            # SECURITY PATCH: enforce hard size cap to prevent disk-fill DoS
+            if total_expected and total_expected > MAX_DOWNLOAD_BYTES:
+                raise ValueError(
+                    f"Download size {total_expected} bytes exceeds the "
+                    f"{MAX_DOWNLOAD_BYTES}-byte safety limit. Aborting."
+                )
+            with tqdm.tqdm(desc=os.path.basename(output), total=total_expected, ncols=100, unit="byte") as pbar:
+                bytes_written = 0
                 for chunk in res.iter_content(chunk_size=512 * 1024):
                     f.write(chunk)
+                    bytes_written += len(chunk)
+                    if bytes_written > MAX_DOWNLOAD_BYTES:
+                        raise ValueError(
+                            f"Streamed download exceeded the {MAX_DOWNLOAD_BYTES}-byte "
+                            f"safety limit. Aborting mid-stream."
+                        )
                     pbar.update(len(chunk))
 
                 pbar.close()
@@ -114,7 +182,16 @@ def gdown_download(url=None, output=None):
             try:
                 os.rename(tmp_file, output)
             except OSError:
-                pass
+                # SECURITY PATCH: was silent `pass` — at least log the failure
+                # so the caller knows `output` is missing.
+                try:
+                    os.remove(tmp_file)
+                except OSError:
+                    pass
+                raise RuntimeError(
+                    f"Failed to move downloaded file from '{tmp_file}' to '{output}'. "
+                    f"Partial download was discarded."
+                )
             sess.close()
 
         return output

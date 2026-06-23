@@ -24,7 +24,8 @@ class DJCM:
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
             model = DJCMM(1, 1, 1)
-            model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+            from arvc.engine.models.safe_load import safe_torch_load
+            model.load_state_dict(safe_torch_load(model_path))
             model = model.to(device).eval()
             self.model = model.half() if is_half else model.float()
 

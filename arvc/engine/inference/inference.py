@@ -144,7 +144,15 @@ def convert_audio(
     alpha=0.5,
     sid=0
 ):
-    model_path = os.path.join(configs["weights_path"], model) if not os.path.exists(model) else model
+    # SECURITY PATCH: validate model path stays inside weights_path.
+    # `model` comes from the GUI/CLI and could contain `../../foo.pth` to
+    # escape the weights directory and overwrite arbitrary files.
+    from arvc.engine.models.safe_load import validate_path_within
+    if os.path.exists(model):
+        model_path = validate_path_within(model, [], allow_absolute=True)
+    else:
+        candidate = os.path.join(configs["weights_path"], model)
+        model_path = validate_path_within(candidate, [configs["weights_path"]])
 
     return_none = [None]*6
     return_none[5] = {"visible": True, "__type__": "update"}
@@ -1146,7 +1154,13 @@ def convert_tts(
     alpha=0.5,
     sid=0
 ):
-    model_path = os.path.join(configs["weights_path"], model) if not os.path.exists(model) else model
+    # SECURITY PATCH: validate model path stays inside weights_path.
+    from arvc.engine.models.safe_load import validate_path_within
+    if os.path.exists(model):
+        model_path = validate_path_within(model, [], allow_absolute=True)
+    else:
+        candidate = os.path.join(configs["weights_path"], model)
+        model_path = validate_path_within(candidate, [configs["weights_path"]])
 
     if (
         not model_path or 

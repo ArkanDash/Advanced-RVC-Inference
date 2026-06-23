@@ -12,6 +12,15 @@ sys.path.append(os.getcwd())
 from arvc.utils import huggingface
 from arvc.utils.feedback import gr_info, gr_warning
 from arvc.utils.variables import python, translations, configs, file_types, logger
+from arvc.engine.models.safe_load import validate_path_within
+
+
+def _safe_model_dir(model_name: str) -> str:
+    """SECURITY PATCH: validate `model_name` (user-controlled GUI/CLI input)
+    stays inside `logs_path` after path-join. Prevents path-traversal attacks
+    via `model_name = '../../foo'` from the GUI text input."""
+    candidate = os.path.join(configs["logs_path"], model_name)
+    return validate_path_within(candidate, [configs["logs_path"]])
 
 def getname(path):
     return os.path.basename(path).replace(".py", "")
@@ -205,7 +214,7 @@ def preprocess(
             return gr_warning(translations["not_found_data"])
     
     start_time = datetime.datetime.now()
-    model_dir = os.path.join(configs["logs_path"], model_name)
+    model_dir = _safe_model_dir(model_name)
     if os.path.exists(model_dir): shutil.rmtree(model_dir, ignore_errors=True)
 
     p = subprocess.Popen([
@@ -265,7 +274,7 @@ def extract(
     sr = int(float(sample_rate.rstrip("k")) * 1000)
 
     if not model_name: return gr_warning(translations["provide_name"])
-    model_dir = os.path.join(configs["logs_path"], model_name)
+    model_dir = _safe_model_dir(model_name)
 
     if configs.get("check_data", False):
         try:
@@ -322,7 +331,7 @@ def create_index(
     nprobe=9
 ):
     if not model_name: return gr_warning(translations["provide_name"])
-    model_dir = os.path.join(configs["logs_path"], model_name)
+    model_dir = _safe_model_dir(model_name)
 
     if configs.get("check_data", False):
         try:
@@ -399,7 +408,7 @@ def training(
     sr = int(float(sample_rate.rstrip("k")) * 1000)
     if not model_name: return gr_warning(translations["provide_name"])
 
-    model_dir = os.path.join(configs["logs_path"], model_name)
+    model_dir = _safe_model_dir(model_name)
     if os.path.exists(os.path.join(model_dir, "train_pid.txt")): 
         os.remove(os.path.join(model_dir, "train_pid.txt"))
 

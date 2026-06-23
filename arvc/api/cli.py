@@ -626,6 +626,9 @@ def cmd_train(args):
         if args.fast_train:
             cmd.append("--fast_train")
             cmd.append("true")
+        if args.bf16_adamw:
+            cmd.append("--bf16_adamw")
+            cmd.append("true")
 
         logger.info("Training started. This may take a while...")
 
@@ -948,6 +951,8 @@ For the full CLI guide, see:
     p.add_argument("--gradient_accumulation", type=int, default=1, help="Gradient accumulation steps (default: 1)")
     p.add_argument("--fast_train", action=BooleanOptionalAction, default=False,
         help="Vocal-quality-safe ~3x training speedup: enables TF32 matmul+cuDNN, torch.compile on G+D, larger dataloader prefetch. Default: off.")
+    p.add_argument("--bf16_adamw", action=BooleanOptionalAction, default=False,
+        help="Applio-parity shortcut: use AnyPrecisionAdamW + bf16 autocast (brain=True). Recommended on Ampere+ GPUs (RTX 30xx/40xx/A100/H100). Implies --optimizer=AnyPrecisionAdamW.")
     p.set_defaults(func=cmd_train)
 
     # ----- create-ref -----

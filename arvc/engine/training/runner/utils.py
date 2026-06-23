@@ -42,8 +42,9 @@ def replace_keys_in_dict(d, old_key_part, new_key_part):
 def load_checkpoint(logger, checkpoint_path, model, optimizer=None, load_opt=1):
     assert os.path.isfile(checkpoint_path), translations["not_found_checkpoint"].format(checkpoint_path=checkpoint_path)
 
+    from arvc.engine.models.safe_load import safe_torch_load
     checkpoint_dict = convert_old_to_new(
-        torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+        safe_torch_load(checkpoint_path)
     )
 
     new_state_dict = {

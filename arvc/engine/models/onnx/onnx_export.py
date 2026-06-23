@@ -19,7 +19,8 @@ FEATS_LENGTH = 200
 def onnx_exporter(input_path, output_path, is_half=False, device="cpu"):
     if not device.startswith("cuda"): device = "cpu"
 
-    cpt = (torch.load(input_path, map_location="cpu", weights_only=True) if os.path.isfile(input_path) else None)
+    from arvc.engine.models.safe_load import safe_torch_load
+    cpt = (safe_torch_load(input_path) if os.path.isfile(input_path) else None)
     cpt["config"][-3] = cpt["weight"]["emb_g.weight"].shape[0]
 
     model_name, model_author, epochs, steps, version, f0, model_hash, vocoder, creation_date, energy_use = cpt.get("model_name", None), cpt.get("author", None), cpt.get("epoch", None), cpt.get("step", None), cpt.get("version", "v1"), cpt.get("f0", 1), cpt.get("model_hash", None), cpt.get("vocoder", "Default"), cpt.get("creation_date", None), cpt.get("energy", False)
@@ -112,7 +113,10 @@ def onnx_exporter(input_path, output_path, is_half=False, device="cpu"):
 
         onnx.save(model, output_path)
         return output_path
-    except:
+    except Exception:
+        # SECURITY/RELIABILITY PATCH: was bare `except:` which swallowed
+        # KeyboardInterrupt/SystemExit. Use `except Exception:` so user
+        # interrupts propagate normally.
         import traceback
         logger.error(traceback.format_exc())
 

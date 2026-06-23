@@ -30,7 +30,8 @@ class CREPE:
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
             model = MODEL(model_size)
-            ckpt = torch.load(model_path, map_location="cpu", weights_only=True)
+            from arvc.engine.models.safe_load import safe_torch_load
+            ckpt = safe_torch_load(model_path)
             model.load_state_dict(ckpt)
             model.eval()
             self.model = model.to(device)

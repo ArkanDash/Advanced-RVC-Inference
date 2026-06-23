@@ -133,7 +133,7 @@ class Separator:
         HF_download_file(url, output_path)
 
     def list_supported_model_files(self):
-        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/uvr_models.json")
+        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/uvr_models.json", timeout=30)  # SECURITY PATCH: was no timeout
         response.raise_for_status()
         model_downloads_list = response.json()
 
@@ -190,7 +190,7 @@ class Separator:
 
     def load_model_data_using_hash(self, model_path):
         model_hash = self.get_model_hash(model_path)
-        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/model_data.json")
+        response = requests.get("https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/json/model_data.json", timeout=30)  # SECURITY PATCH: was no timeout
         response.raise_for_status()
         model_data_object = response.json()
 

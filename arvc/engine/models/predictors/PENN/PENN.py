@@ -81,7 +81,8 @@ class PENN:
             from arvc.engine.models.predictors.PENN.fcn import FCN
 
             model = FCN(256, PITCH_BINS, (2, 2))
-            ckpt = torch.load(model_path, map_location="cpu", weights_only=True)
+            from arvc.engine.models.safe_load import safe_torch_load
+            ckpt = safe_torch_load(model_path)
             model.load_state_dict(ckpt['model'])
             model.eval()
             self.model = model.to(device)
