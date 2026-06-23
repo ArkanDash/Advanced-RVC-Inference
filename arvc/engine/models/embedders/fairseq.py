@@ -29,17 +29,13 @@ sys.modules["fairseq.data"] = fairseq_data
 sys.modules["fairseq.data.dictionary"] = fairseq_data_dictionary
 
 def load_model(filename):
-    # SECURITY PATCH: try weights_only=True first (blocks arbitrary code execution
-    # from untrusted .pt files). Fall back to the legacy loader ONLY for the
-    # known bundled fairseq checkpoint, which uses OmegaConf dataclasses that
-    # weights_only can't reconstruct on PyTorch < 2.1.
+    # SECURITY PATCH: route through safe_torch_load (forces weights_only=True).
+    # Restricted fallback only allows primitive + numpy types — never falls
+    # back to torch.load(weights_only=False), which is a known RCE vector.
     try:
-        state = torch.load(filename, map_location="cpu", weights_only=True)
+        from arvc.engine.models.safe_load import safe_torch_load
+        state = safe_torch_load(filename)
     except Exception:
-        # Restricted fallback — only allows primitive + numpy types.
-        # If THIS also fails (e.g. fairseq checkpoint with omegaconf nodes),
-        # we re-raise and let the caller decide. We do NOT silently fall back
-        # to torch.load(weights_only=False) because that is a known RCE vector.
         from arvc.engine.models.safe_load import safe_pickle_load
         with open(filename, "rb") as f:
             state = safe_pickle_load(f)

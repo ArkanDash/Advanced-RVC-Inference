@@ -4,13 +4,42 @@ import requests
 
 try:
     import wget
-except:
+except ImportError:
+    # SECURITY PATCH: was bare `except:` — would swallow KeyboardInterrupt.
     wget = None
 
 # Maximum number of retries for failed downloads
 MAX_RETRIES = 3
 # Timeout in seconds for each request
 REQUEST_TIMEOUT = 300
+# SECURITY PATCH: hard size cap and extension whitelist — same as the other
+# downloader modules. Prevents disk-fill DoS via a 100 GB file hosted on
+# HuggingFace, and prevents disguised .exe payloads being saved next to
+# the user's model library.
+MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024 * 1024  # 8 GB
+ALLOWED_EXTENSIONS = (
+    ".pth", ".pt", ".onnx", ".index", ".zip", ".tar", ".tar.gz",
+    ".tgz", ".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
+    ".json", ".npy", ".npz", ".bin", ".txt", ".ckpt",
+)
+
+
+def _sanitize_filename(name: str) -> str:
+    """Force attacker-controlled HF filename to a single basename component.
+
+    Used for the URL basename path. HF URLs are typically trusted, but a
+    user can be tricked into pasting a malicious HF URL with a path
+    segment like `../../../../etc/cron.d/evil` — this guard prevents that.
+    """
+    if not name:
+        return "hf_download.bin"
+    name = os.path.basename(name)
+    name = name.replace(os.path.sep, "_").replace("/", "_").replace("\\", "_")
+    name = name.lstrip(".-")
+    lower = name.lower()
+    if not any(lower.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        name = name + ".bin"
+    return name
 
 def HF_download_file(url, output_path=None):
     """Download a file from HuggingFace (regular repo or Storage Bucket).
@@ -37,6 +66,8 @@ def HF_download_file(url, output_path=None):
 
     # Determine output path
     url_filename = os.path.basename(url)
+    # SECURITY PATCH: sanitize the URL-derived filename before joining
+    url_filename = _sanitize_filename(url_filename)
     if output_path is None:
         output_path = url_filename
     elif os.path.isdir(output_path):
@@ -72,6 +103,12 @@ def HF_download_file(url, output_path=None):
 
             if response.status_code == 200:
                 content_length = int(response.headers.get("content-length", 0))
+                # SECURITY PATCH: enforce size cap up front to prevent disk-fill DoS
+                if content_length and content_length > MAX_DOWNLOAD_BYTES:
+                    raise ValueError(
+                        f"Download size {content_length} bytes exceeds the "
+                        f"{MAX_DOWNLOAD_BYTES}-byte safety limit. Aborting."
+                    )
                 progress_bar = tqdm.tqdm(
                     total=content_length if content_length > 0 else None,
                     desc=url_filename,
@@ -80,9 +117,23 @@ def HF_download_file(url, output_path=None):
                     leave=False,
                 )
 
+                bytes_written = 0
                 with open(output_path, "wb") as f:
                     for chunk in response.iter_content(chunk_size=10 * 1024 * 1024):
                         if chunk:  # filter out keep-alive new chunks
+                            # SECURITY PATCH: enforce streaming size cap
+                            bytes_written += len(chunk)
+                            if bytes_written > MAX_DOWNLOAD_BYTES:
+                                progress_bar.close()
+                                f.close()
+                                try:
+                                    os.remove(output_path)
+                                except OSError:
+                                    pass
+                                raise ValueError(
+                                    f"Streamed download exceeded the "
+                                    f"{MAX_DOWNLOAD_BYTES}-byte safety limit. Aborting."
+                                )
                             progress_bar.update(len(chunk))
                             f.write(chunk)
 

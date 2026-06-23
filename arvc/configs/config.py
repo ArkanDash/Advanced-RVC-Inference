@@ -77,7 +77,12 @@ class Config:
         self.translations = self.multi_language()
 
         self.gpu_mem = None
-        self.per_preprocess = 3.7
+        # ACCURACY PATCH (Applio parity): was 3.7 — produces ~26% FEWER
+        # training chunks than Applio. Match Applio's PERCENTAGE=3.0 here
+        # so a 10-min dataset yields ~222 chunks instead of ~176. This is
+        # the largest plausible cause of "less accurate than Applio on
+        # small datasets".
+        self.per_preprocess = 3.0
 
         # Lazy backend detection
         self._is_zluda = None

@@ -22,7 +22,8 @@ class PESTO:
             from arvc.engine.models.predictors.PESTO.model import PPESTO, Resnet1d
             from arvc.engine.models.predictors.PESTO.preprocessor import Preprocessor
 
-            ckpt = torch.load(model_path, map_location="cpu", weights_only=True)
+            from arvc.engine.models.safe_load import safe_torch_load
+            ckpt = safe_torch_load(model_path)
             model = PPESTO(Resnet1d(**ckpt["hparams"]["encoder"]), preprocessor=Preprocessor(hop_size=step_size, sampling_rate=sample_rate, **ckpt["hcqt_params"]), crop_kwargs=ckpt["hparams"]["pitch_shift"], reduction=ckpt["hparams"]["reduction"])
             model.load_state_dict(ckpt["state_dict"], strict=False)
 

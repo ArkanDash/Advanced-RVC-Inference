@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import torch
 import hashlib
 import datetime
@@ -10,7 +11,37 @@ from collections import OrderedDict
 from arvc.utils.variables import logger, translations, config
 from arvc.engine.models.weight_norm import convert_new_to_old
 
-def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, version, hps, model_author, vocoder, energy_use, speakers_id, architecture):
+def extract_model(
+    ckpt,
+    sr,
+    pitch_guidance,
+    name,
+    model_path,
+    epoch,
+    step,
+    version,
+    hps,
+    model_author,
+    vocoder,
+    energy_use,
+    speakers_id,
+    architecture,
+    embedder_model=None,
+    dataset_length=None,
+    overtrain_info="",
+):
+    """Extract a deployable .pth from a training checkpoint.
+
+    ACCURACY PATCH (Applio parity): added 3 optional kwargs:
+      - `embedder_model`: which HuBERT/contentvec variant was used during
+        training. Lets inference auto-select the matching embedder instead
+        of falling back to defaults — important for accuracy when a non-
+        default embedder was used at training time.
+      - `dataset_length`: total training audio duration (provenance).
+      - `overtrain_info`: overtraining detector summary string.
+    All three are persisted into the .pth metadata and are backward-
+    compatible (default to None / "" — older loaders just ignore them).
+    """
     try:
         logger.info(translations["savemodel"].format(model_dir=model_path, epoch=epoch, step=step))
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
@@ -31,8 +62,19 @@ def extract_model(ckpt, sr, pitch_guidance, name, model_path, epoch, step, versi
         opt["speakers_id"] = speakers_id
         opt["architecture"] = architecture
 
+        # ACCURACY PATCH (Applio parity): provenance fields.
+        # `embedder_model` is the most important of the three — lets inference
+        # pick the matching embedder automatically. `dataset_length` and
+        # `overtrain_info` are user-facing metadata only.
+        if embedder_model is not None:
+            opt["embedder_model"] = embedder_model
+        if dataset_length is not None:
+            opt["dataset_length"] = dataset_length
+        if overtrain_info:
+            opt["overtrain_info"] = overtrain_info
+
         torch.save(
-            convert_new_to_old(opt), 
+            convert_new_to_old(opt),
             model_path
         )
     except Exception as e:

@@ -22,9 +22,10 @@ class RMVPE:
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
             from arvc.engine.models.predictors.RMVPE.e2e import E2E
+            from arvc.engine.models.safe_load import safe_torch_load
             model = E2E(4, 1, (2, 2), 5, 4, 1, 16, hpa=hpa)
 
-            model.load_state_dict(torch.load(model_path, map_location="cpu", weights_only=True))
+            model.load_state_dict(safe_torch_load(model_path))
             model.eval()
             if is_half: model = model.half()
             self.model = model.to(device)

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import json
 import torch
 import logging
 import librosa
@@ -133,16 +134,27 @@ class PreProcess:
                     normalization_mode,
                 )
             elif cut_preprocess == "Automatic":
+                # ACCURACY PATCH (Applio parity for 10-min datasets):
+                # Previously this branch hard-coded `self.per` (=3.7s,
+                # now 3.0s) and OVERLAP=0.3 — ignoring the CLI flags
+                # --chunk_len / --overlap_len that users passed.
+                # Now we honor them so users can boost overlap (e.g. 0.5
+                # → 17% overlap) for small datasets to extract more
+                # training chunks from limited audio. Defaults fall back
+                # to the safe `self.per` / OVERLAP values so existing
+                # behavior is preserved when the CLI flags are absent.
+                _chunk = chunk_len if chunk_len and chunk_len > 0 else self.per
+                _overlap = overlap_len if overlap_len is not None else OVERLAP
                 idx1 = 0
                 for audio_segment in self.slicer.slice(audio):
                     i = 0
 
                     while 1:
-                        start = int(self.sr * (self.per - OVERLAP) * i)
+                        start = int(self.sr * (_chunk - _overlap) * i)
                         i += 1
 
-                        if len(audio_segment[start:]) > (self.per + OVERLAP) * self.sr:
-                            self.process_audio_segment(audio_segment[start : start + int(self.per * self.sr)], sid, idx0, idx1, normalization_mode)
+                        if len(audio_segment[start:]) > (_chunk + _overlap) * self.sr:
+                            self.process_audio_segment(audio_segment[start : start + int(_chunk * self.sr)], sid, idx0, idx1, normalization_mode)
                             idx1 += 1
                         else:
                             self.process_audio_segment(audio_segment[start:], sid, idx0, idx1, normalization_mode)
@@ -156,6 +168,27 @@ def format_duration(seconds):
     """Format seconds into HH:MM:SS string (from Vietnamese-RVC)."""
     return f"{int(seconds // 3600):02}:{int((seconds % 3600) // 60):02}:{int(seconds % 60):02}"
 
+def save_dataset_duration(file_path, dataset_duration):
+    """Persist total dataset duration to model_info.json (Applio parity).
+
+    This is consumed by `extract_model()` to embed `dataset_length` in the
+    saved .pth as provenance metadata — lets users see at inference time
+    how much data the model was trained on.
+    """
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        data = {}
+
+    data.update({
+        "total_dataset_duration": format_duration(dataset_duration),
+        "total_seconds": float(dataset_duration),
+    })
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
 def process_file(args):
     pp, file, cut_preprocess, process_effects, clean_dataset, clean_strength, chunk_len, overlap_len, normalization_mode = args
     file_path, idx0, sid = file
@@ -163,6 +196,20 @@ def process_file(args):
 
 def preprocess_training_set(input_root, sr, num_processes, exp_dir, per, cut_preprocess, process_effects, clean_dataset, clean_strength, chunk_len, overlap_len, normalization_mode, architecture="RVC"):
     start_time = time.time()
+
+    # SECURITY/UX PATCH (Applio parity): fail fast with a clear error if the
+    # dataset path is missing or not a directory — was silent walk that
+    # crashed later in preparing_files.py with cryptic errors.
+    if not input_root or not isinstance(input_root, str):
+        logger.error("Dataset path must be a non-empty string.")
+        sys.exit(1)
+    if not os.path.exists(input_root):
+        logger.error(f"Dataset path does not exist: '{input_root}'")
+        sys.exit(1)
+    if not os.path.isdir(input_root):
+        logger.error(f"Dataset path is not a directory: '{input_root}'")
+        sys.exit(1)
+
     pp = PreProcess(sr, exp_dir, per, architecture)
     logger.info(translations["start_preprocess"].format(num_processes=num_processes))
     dataset_length = 0
@@ -182,18 +229,37 @@ def preprocess_training_set(input_root, sr, num_processes, exp_dir, per, cut_pre
         except ValueError:
             raise ValueError(f"{translations['not_integer']} '{os.path.basename(root)}'.")
 
+    # SECURITY/UX PATCH (Applio parity): explicit empty-dataset check.
+    if len(files) == 0:
+        logger.error(
+            f"No audio files found in '{input_root}'. "
+            f"Accepted extensions: {file_types}."
+        )
+        sys.exit(1)
+
     with tqdm(total=len(files), ncols=100, unit="f") as pbar:
         with ProcessPoolExecutor(max_workers=num_processes) as executor:
             futures = [executor.submit(process_file, (pp, file, cut_preprocess, process_effects, clean_dataset, clean_strength, chunk_len, overlap_len, normalization_mode)) for file in files]
             for future in as_completed(futures):
                 try:
-                    dataset_length += future.result() 
+                    dataset_length += future.result()
                 except Exception as e:
                     raise RuntimeError(f"{translations['process_error']}: {e}")
                 pbar.update(1)
 
     elapsed_time = time.time() - start_time
     logger.info(f"Dataset duration: {format_duration(dataset_length)}")  # VRVC: log total dataset duration
+
+    # ACCURACY PATCH (Applio parity): persist total dataset duration so
+    # extract_model() can embed it in the saved .pth as provenance.
+    try:
+        save_dataset_duration(
+            os.path.join(exp_dir, "model_info.json"),
+            dataset_duration=dataset_length,
+        )
+    except Exception as e:
+        logger.debug(f"Could not save model_info.json: {e}")
+
     logger.info(translations["preprocess_success"].format(elapsed_time=f"{elapsed_time:.2f}"))
 
 def main():

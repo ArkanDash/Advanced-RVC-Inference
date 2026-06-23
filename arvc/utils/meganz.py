@@ -4,7 +4,7 @@ import sys
 import json
 import tqdm
 import codecs
-import random
+import secrets
 import base64
 import struct
 import shutil
@@ -16,6 +16,33 @@ from Crypto.Util import Counter
 
 
 from arvc.utils.variables import translations
+
+# SECURITY PATCH: same hard limits we apply across all downloaders.
+MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024 * 1024  # 8 GB
+ALLOWED_EXTENSIONS = (
+    ".pth", ".pt", ".onnx", ".index", ".zip", ".tar", ".tar.gz",
+    ".tgz", ".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", ".mp4",
+    ".json", ".npy", ".npz", ".bin", ".txt", ".ckpt",
+)
+
+
+def _sanitize_filename(name: str) -> str:
+    """Force attacker-controlled MEGA file name to a single basename component.
+
+    SECURITY PATCH: MEGA file attributes ('n' field) are fully attacker-
+    controlled. A malicious MEGA link could set the name to
+    `'../../../../etc/cron.d/evil'` and we'd write through the traversal.
+    """
+    if not name:
+        return "mega_download.bin"
+    name = os.path.basename(name)  # strip any path components
+    name = name.replace(os.path.sep, "_").replace("/", "_").replace("\\", "_")
+    name = name.lstrip(".-")
+    lower = name.lower()
+    if not any(lower.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        name = name + ".bin"
+    return name
+
 
 def makebyte(x):
     return codecs.latin_1_encode(x)[0]
@@ -43,7 +70,10 @@ def decrypt_attr(attr, key):
     return json.loads(attr[4:]) if attr[:6] == 'MEGA{"' else False
 
 def _api_request(data):
-    sequence_num = random.randint(0, 0xFFFFFFFF)
+    # SECURITY PATCH: was `random.randint` — predictable sequence numbers
+    # allow request-replay correlation by a network attacker. `secrets.randbits`
+    # is cryptographically secure.
+    sequence_num = secrets.randbits(32)
     params = {'id': sequence_num}
     sequence_num += 1
 
@@ -79,8 +109,17 @@ def mega_download_file(file_handle, file_key, dest_path=None):
     if 'g' not in file_data: raise Exception(translations["file_not_access"])
 
     file_size = file_data['s']
+    # SECURITY PATCH: cap file size before we start the download to prevent
+    # disk-fill DoS via a maliciously large MEGA file.
+    if file_size > MAX_DOWNLOAD_BYTES:
+        raise ValueError(
+            f"MEGA file size {file_size} bytes exceeds the "
+            f"{MAX_DOWNLOAD_BYTES}-byte safety limit. Aborting."
+        )
     attribs = decrypt_attr(base64_url_decode(file_data['at']), k)
-    input_file = requests.get(file_data['g'], stream=True).raw
+    # SECURITY PATCH: was `requests.get(file_data['g'], stream=True)` with
+    # no timeout — a hung MEGA CDN endpoint hangs the worker indefinitely.
+    input_file = requests.get(file_data['g'], stream=True, timeout=300).raw
 
     temp_output_file = tempfile.NamedTemporaryFile(mode='w+b', prefix='megapy_', delete=False)
     k_str = a32_to_str(k)
@@ -112,7 +151,11 @@ def mega_download_file(file_handle, file_key, dest_path=None):
 
     if (file_mac[0] ^ file_mac[1], file_mac[2] ^ file_mac[3]) != file_key[6:8]: raise ValueError(translations["mac_not_match"])
 
-    file_path = os.path.join(dest_path, attribs['n'])
+    # SECURITY PATCH: was `os.path.join(dest_path, attribs['n'])` —
+    # attribs['n'] is the MEGA file name and is fully attacker-controlled.
+    # Sanitize to a single basename component with a known-safe extension.
+    safe_name = _sanitize_filename(attribs.get('n', 'mega_download.bin'))
+    file_path = os.path.join(dest_path, safe_name)
     if os.path.exists(file_path): os.remove(file_path)
 
     shutil.move(temp_output_file.name, file_path)

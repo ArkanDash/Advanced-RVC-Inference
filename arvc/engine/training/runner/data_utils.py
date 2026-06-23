@@ -127,7 +127,8 @@ class TextAudioLoader(tdata.Dataset):
             spec = get_spectrogram(audio_norm)
         elif os.path.exists(spec_filename):
             try:
-                spec = torch.load(spec_filename, weights_only=True)
+                from arvc.engine.models.safe_load import safe_torch_load
+                spec = safe_torch_load(spec_filename)
             except Exception:
                 spec = get_spectrogram(audio_norm)
                 torch.save(spec, spec_filename, _use_new_zipfile_serialization=False)

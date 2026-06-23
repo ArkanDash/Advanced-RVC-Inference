@@ -61,7 +61,12 @@ class Config:
         self.translations = self._load_translations()
 
         self.gpu_mem = None
-        self.per_preprocess = 3.7
+        # ACCURACY PATCH (Applio parity): was 3.7 — produces ~26% FEWER
+        # training chunks than Applio for the same audio, which is the
+        # largest plausible cause of "ARVC less accurate than Applio on
+        # small (10-min) datasets". Match Applio's PERCENTAGE=3.0 here so
+        # a 10-minute dataset yields ~222 chunks instead of ~176.
+        self.per_preprocess = 3.0
         self.device = self._get_default_device()
         self.gpu_name = self._get_gpu_name()
         self.providers = self._get_providers()
@@ -581,7 +586,8 @@ def _load_model_urls():
                                 codecs.decode(
                                     "uggcf://qbpf.tbbtyr.pbz/fcernqfurrgf/q/1gNHnDeRULtEfz1Yieaw14USUQjWJy0Oq9k0DrCrjApb/rkcbeg?sbezng=pfi&tvq=1977693859",
                                     "rot13",
-                                )
+                                ),
+                                timeout=30,  # SECURITY PATCH: was no timeout — hung Google Sheets hangs app startup
                             ).readlines()
                         ]
                     )
