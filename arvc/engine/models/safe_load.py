@@ -246,10 +246,64 @@ def validate_path_within(path: str, base_dirs: list[str], allow_absolute: bool =
     )
 
 
+# ── safe_onnxruntime_import ────────────────────────────────────────────────
+
+def safe_onnxruntime_import():
+    """Lazily import `onnxruntime` with a friendly error if it fails.
+
+    The classic failure mode is `ImportError: libcudart.so.13: cannot open
+    shared object file` — this happens when `onnxruntime-gpu` was installed
+    against a CUDA version that doesn't match the system CUDA runtime
+    (e.g. on Colab, where the system has CUDA 12 but `onnxruntime-gpu`
+    newer than 1.20 wants CUDA 13).
+
+    Returns the `onnxruntime` module on success. Returns `None` on failure
+    AND logs a one-line warning so the rest of the pipeline can still run
+    (most RVC code paths only need onnxruntime for the ONNX F0 predictor,
+    which is optional — falling back to PyTorch predictors works fine).
+
+    Callers should handle `None` gracefully:
+
+        ort = safe_onnxruntime_import()
+        if ort is not None:
+            sess = ort.InferenceSession(...)
+        else:
+            # fall back to PyTorch predictor
+            ...
+    """
+    import logging
+    _log = logging.getLogger("arvc.safe_load")
+
+    try:
+        import onnxruntime
+        return onnxruntime
+    except ImportError as e:
+        # Distinguish "not installed" from "installed but broken linkage"
+        msg = str(e)
+        if "libcudart" in msg or "libonnxruntime" in msg or "cannot open shared object" in msg:
+            _log.warning(
+                "[onnxruntime] Failed to load (CUDA runtime mismatch). "
+                "ONNX predictors will be disabled — PyTorch predictors will be used instead. "
+                f"Error: {msg}"
+            )
+            _log.warning(
+                "[onnxruntime] Fix: install a matching version, e.g. "
+                "`pip install onnxruntime-gpu==1.20.1` (CUDA 12) or "
+                "`pip install onnxruntime` (CPU-only)."
+            )
+        else:
+            _log.warning(
+                "[onnxruntime] Not installed. ONNX predictors disabled. "
+                f"Install with `pip install onnxruntime` if needed. Error: {msg}"
+            )
+        return None
+
+
 __all__ = [
     "safe_torch_load",
     "safe_pickle_load",
     "safe_pickle_loads",
     "safe_yaml_load",
     "validate_path_within",
+    "safe_onnxruntime_import",
 ]

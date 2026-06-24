@@ -2,8 +2,13 @@
 pip>=23.3
 wheel
 omegaconf>=2.0.6
-onnxruntime; sys_platform == 'darwin'
-onnxruntime-gpu; sys_platform != 'darwin'
+# ROBUSTNESS PATCH: pin onnxruntime to a CUDA-12-compatible version.
+# onnxruntime-gpu>=1.21 wants CUDA 13 (libcudart.so.13) and crashes on
+# Colab / most Linux setups that ship CUDA 12. 1.20.1 is the last
+# release that works with CUDA 12.x. CPU users can override this with
+# `pip install onnxruntime` after install.
+onnxruntime==1.20.1; sys_platform == 'darwin'
+onnxruntime-gpu==1.20.1; sys_platform != 'darwin'
 
 # Core dependencies
 PyYAML>=6.0

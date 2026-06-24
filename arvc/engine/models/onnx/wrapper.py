@@ -1,12 +1,22 @@
 import json
 import onnx
 import torch
-import onnxruntime
 
 import numpy as np
 
+from arvc.engine.models.safe_load import safe_onnxruntime_import
+
+# Lazy/safe onnxruntime import — survives CUDA runtime mismatch.
+onnxruntime = safe_onnxruntime_import()
+
 class ONNXRVC:
     def __init__(self, model_path, providers, log_severity_level = 3):
+        if onnxruntime is None:
+            raise RuntimeError(
+                "ONNX RVC inference unavailable: onnxruntime failed to import. "
+                "Install with `pip install onnxruntime` (CPU) or "
+                "`pip install onnxruntime-gpu==1.20.1` (CUDA 12)."
+            )
         sess_options = onnxruntime.SessionOptions()
         sess_options.log_severity_level = log_severity_level
 

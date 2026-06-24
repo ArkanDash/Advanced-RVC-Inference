@@ -24,9 +24,85 @@ LOGS_PATH = ASSETS_PATH / "logs"
 WEIGHTS_PATH = LOGS_PATH  # Trained models saved in logs/ (same dir as training data)
 DATASETS_PATH = PACKAGE_ROOT / "datasets"
 
+
+# ── Logger setup (clean, readable format) ─────────────────────────────────
+# Format: HH:MM:SS LEVEL message
+# Color codes for terminal (auto-disabled if not a TTY or on Windows without
+# colorama). Levels: DEBUG=gray, INFO=white, WARNING=yellow, ERROR=red,
+# CRITICAL=red+bold.
+class _ColorFormatter(logging.Formatter):
+    """Color-coded log formatter for terminals, plain text for files/Colab."""
+
+    _COLORS = {
+        logging.DEBUG:     "\033[90m",   # gray
+        logging.INFO:      "\033[97m",   # bright white
+        logging.WARNING:   "\033[93m",   # yellow
+        logging.ERROR:     "\033[91m",   # red
+        logging.CRITICAL:  "\033[1;91m", # bold red
+    }
+    _RESET = "\033[0m"
+
+    def __init__(self, use_color: bool):
+        super().__init__()
+        self.use_color = use_color
+        # Plain format: "HH:MM:SS  LEVEL  message"
+        # (no logger name — keeps output focused on what the user cares about)
+        self._plain = logging.Formatter(
+            fmt="%(asctime)s  %(levelname)-7s  %(message)s",
+            datefmt="%H:%M:%S",
+        )
+        self._colored = logging.Formatter(
+            fmt="%(asctime)s  %(levelname)-7s  %(message)s",
+            datefmt="%H:%M:%S",
+        )
+
+    def format(self, record):
+        if not self.use_color:
+            return self._plain.format(record)
+        # Colored mode: pad the levelname FIRST (7 chars), then wrap in color.
+        # This keeps the column alignment correct even though ANSI escape
+        # codes are zero-width but inserted as visible chars by some terminals.
+        color = self._COLORS.get(record.levelno, "")
+        level_str = f"{record.levelname:<7}"
+        record.levelname = f"{color}{level_str}{self._RESET}"
+        record.msg = f"{color}{record.getMessage()}{self._RESET}"
+        out = self._plain.format(record)
+        return out
+
+
+def _is_color_supported() -> bool:
+    """True if stdout is a TTY that supports ANSI colors."""
+    if not sys.stdout.isatty():
+        return False
+    if sys.platform == "win32":
+        try:
+            import colorama
+            colorama.init()
+            return True
+        except ImportError:
+            return False
+    return True
+
+
+def _setup_logger(log):
+    """Attach a clean, color-coded StreamHandler to `log`."""
+    # Don't double-add handlers if called twice
+    if any(isinstance(h, logging.StreamHandler) for h in log.handlers):
+        return
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(_ColorFormatter(use_color=_is_color_supported()))
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    log.propagate = False
+
+
 # Initialize logger
 logger = logging.getLogger(__name__)
-logger.propagate = False
+_setup_logger(logger)
+
+# Also style the root "arvc" logger so submodules inherit the clean format
+_arvc_root = logging.getLogger("arvc")
+_setup_logger(_arvc_root)
 
 # Create singleton config instance
 _config_instance = None

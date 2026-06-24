@@ -1,12 +1,22 @@
 import librosa
-import onnxruntime
 
 import numpy as np
+
+from arvc.engine.models.safe_load import safe_onnxruntime_import
+
+# Lazy/safe onnxruntime import — survives CUDA runtime mismatch.
+onnxruntime = safe_onnxruntime_import()
 
 SAMPLE_RATE, HOP_LENGTH, FRAME_LENGTH = 16000, 256, 1024
 
 class SWIFT:
     def __init__(self, model_path, fmin = 50, fmax = 1100, confidence_threshold = 0.9, providers = ["CPUExecutionProvider"]):
+        if onnxruntime is None:
+            raise RuntimeError(
+                "SWIFT predictor unavailable: onnxruntime failed to import. "
+                "Install with `pip install onnxruntime` (CPU) or "
+                "`pip install onnxruntime-gpu==1.20.1` (CUDA 12)."
+            )
         self.fmin = fmin
         self.fmax = fmax
         self.confidence_threshold = confidence_threshold
