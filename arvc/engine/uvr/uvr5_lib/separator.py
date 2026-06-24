@@ -6,9 +6,17 @@ import torch
 import hashlib
 import requests
 import warnings
-import onnxruntime
 
 from importlib import import_module
+
+# SECURITY/ROBUSTNESS PATCH: was `import onnxruntime` at module level.
+# If onnxruntime-gpu has a CUDA runtime mismatch (e.g. libcudart.so.13
+# missing on Colab which has CUDA 12), this would crash the entire
+# import chain: create_dataset.py → separate_music.py → separator.py.
+# Use lazy import so the rest of the module works even when onnxruntime
+# is broken — the ONNX code paths just become unavailable.
+from arvc.engine.models.safe_load import safe_onnxruntime_import
+onnxruntime = safe_onnxruntime_import()
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
@@ -69,7 +77,9 @@ class Separator:
 
     def setup_torch_device(self):
         hardware_acceleration_enabled = False
-        ort_providers = onnxruntime.get_available_providers()
+        # ROBUSTNESS PATCH: onnxruntime may be None if import failed
+        # (CUDA mismatch). Fall back to CPU-only providers list.
+        ort_providers = onnxruntime.get_available_providers() if onnxruntime is not None else ["CPUExecutionProvider"]
         self.torch_device_cpu = torch.device("cpu")
 
         if not config.cpu_mode:

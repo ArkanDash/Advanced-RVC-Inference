@@ -4,12 +4,16 @@ import torch
 
 import numpy as np
 import torch.nn as nn
-import onnxruntime as ort
 import torch.nn.functional as F
 
 from einops import rearrange
 import torch.nn.utils.parametrize as parametrize
 from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+
+# ROBUSTNESS PATCH: was `import onnxruntime as ort` at module level.
+# Use safe import so the module doesn't crash on onnxruntime CUDA mismatch.
+from arvc.engine.models.safe_load import safe_onnxruntime_import
+ort = safe_onnxruntime_import()
 
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 
