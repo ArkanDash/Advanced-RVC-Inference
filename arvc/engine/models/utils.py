@@ -176,8 +176,9 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
 
         return modelname + suffix
 
-    results = []
+    results = {}  # {filename: bool}
     count = configs.get("num_of_restart", 5)
+    failed_assets = set()
 
     for _ in range(count):
         if "hybrid" in f0_method:
@@ -186,20 +187,35 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
 
             for method in methods:
                 modelname = get_modelname(method, f0_onnx)
-                if modelname is not None: results.append(download_predictor(modelname))
+                if modelname is not None:
+                    results[modelname] = download_predictor(modelname)
         else:
             modelname = get_modelname(f0_method, f0_onnx)
-            if modelname is not None: results.append(download_predictor(modelname))
+            if modelname is not None:
+                results[modelname] = download_predictor(modelname)
 
-        if hubert in embedders_model + spin_model + whisper_model:
-            if embedders_mode != "transformers": hubert += ".pt" if embedders_mode in ["fairseq", "whisper"] else ".onnx"
-            results.append(download_embedder(embedders_mode, hubert))
+        embedder_file = hubert
+        if hubert in embedders_model or hubert in spin_model or hubert in whisper_model:
+            if embedders_mode == "onnx":
+                embedder_file = hubert + ".onnx"
+            elif embedders_mode in ["fairseq", "whisper"]:
+                embedder_file = hubert + ".pt"
+            results[embedder_file] = download_embedder(embedders_mode, embedder_file)
 
-        if all(results): return
-        else: results = []
+        failed_assets = {k for k, v in results.items() if not v}
+        if not failed_assets: return
 
-    logger.warning(translations["check_assets_error"].format(count=count))
-    sys.exit(1)
+        # Log which specific assets failed so the user can diagnose
+        logger.warning(
+            "Asset download attempt %d/%d failed for: %s. Retrying...",
+            _ + 1, count, ", ".join(sorted(failed_assets))
+        )
+
+    raise RuntimeError(
+        f"Failed to download required assets after {count} attempts. "
+        f"Missing: {', '.join(sorted(failed_assets))}. "
+        "Check your internet connection or HuggingFace availability and try again."
+    )
     
 def check_spk_diarization(model_size, speechbrain=True):
     whisper_model = os.path.join(configs["speaker_diarization_path"], "models", f"{model_size}.pt")

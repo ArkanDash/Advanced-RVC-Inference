@@ -30,8 +30,9 @@ def separate_music(
     separate_backing,
     separate_reverb
 ):
-    # Force output to the specific UVR directory
-    output_dirs = configs.get("uvr_path", os.path.join("arvc", "assets", "audios", "uvr"))
+    # Use the caller-provided output_dir; fall back to config default
+    if not output_dirs:
+        output_dirs = configs.get("uvr_path", os.path.join("arvc", "assets", "audios", "uvr"))
     
     # Ensure the directory exists
     os.makedirs(output_dirs, exist_ok=True)

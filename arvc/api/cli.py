@@ -417,11 +417,12 @@ def cmd_create_dataset(args):
         ]
 
         if args.clean_dataset:
-            cmd.extend(["--clean_dataset", "--clean_strength", str(args.clean_strength)])
+            cmd.extend(["--clean_dataset", "True", "--clean_strength", str(args.clean_strength)])
 
-        cmd.extend(["--separate", str(args.separate)])
+        cmd.extend(["--separate", "True" if args.separate else "False"])
+
         if args.separate:
-            cmd.extend(["--separate_reverb", str(args.separate_reverb)])
+            cmd.extend(["--separate_reverb", "True" if args.separate_reverb else "False"])
             cmd.extend(["--model_name", args.separator_model])
             if args.reverb_model:
                 cmd.extend(["--reverb_model", args.reverb_model])
@@ -490,18 +491,15 @@ def cmd_extract(args):
             "--embedder_model", args.embedder_model,
         ]
 
-        if args.f0_onnx:
-            cmd.append("--f0_onnx")
+        cmd.extend(["--f0_onnx", "True" if args.f0_onnx else "False"])
         if not args.pitch_guidance:
             cmd.extend(["--pitch_guidance", "False"])
         if args.gpu is not None:
             cmd.extend(["--gpu", str(args.gpu)])
         else:
             cmd.extend(["--gpu", "-"])
-        if args.rms_extract:
-            cmd.append("--rms_extract")
-        if args.predictor_onnx:
-            cmd.append("--predictor_onnx")
+        cmd.extend(["--rms_extract", "True" if args.rms_extract else "False"])
+        cmd.extend(["--predictor_onnx", "True" if args.predictor_onnx else "False"])
         if args.embedders_mode and args.embedders_mode != "fairseq":
             cmd.extend(["--embedders_mode", args.embedders_mode])
 
@@ -535,10 +533,9 @@ def cmd_preprocess(args):
 
         if args.dataset_path:
             cmd.extend(["--dataset_path", args.dataset_path])
-        if args.process_effects:
-            cmd.append("--process_effects")
+        cmd.extend(["--process_effects", "True" if args.process_effects else "False"])
         if args.clean_dataset:
-            cmd.extend(["--clean_dataset", "--clean_strength", str(args.clean_strength)])
+            cmd.extend(["--clean_dataset", "True", "--clean_strength", str(args.clean_strength)])
         if args.chunk_len:
             cmd.extend(["--chunk_len", str(args.chunk_len)])
         if args.overlap_len:
@@ -582,8 +579,7 @@ def cmd_train(args):
             cmd.extend(["--save_only_latest", "False"])
         if not args.save_weights:
             cmd.extend(["--save_every_weights", "False"])
-        if args.cache_gpu:
-            cmd.append("--cache_data_in_gpu")
+        cmd.extend(["--cache_data_in_gpu", "True" if args.cache_gpu else "False"])
         if not args.pitch_guidance:
             cmd.extend(["--pitch_guidance", "False"])
         if args.pretrained_g:
@@ -592,43 +588,34 @@ def cmd_train(args):
             cmd.extend(["--d_pretrained_path", args.pretrained_d])
         if args.vocoder != "Default":
             cmd.extend(["--vocoder", args.vocoder])
-        if args.energy:
-            cmd.append("--energy_use")
+        cmd.extend(["--energy_use", "True" if args.energy else "False"])
+        cmd.extend(["--overtraining_detector", "True" if args.overtrain_detect else "False"])
         if args.overtrain_detect:
-            cmd.append("--overtraining_detector")
             cmd.extend(["--threshold", str(args.overtrain_threshold)])
         if args.optimizer:
             cmd.extend(["--optimizer", args.optimizer])
-        if args.multiscale_loss:
-            cmd.append("--multiscale_mel_loss")
+        cmd.extend(["--multiscale_mel_loss", "True" if args.multiscale_loss else "False"])
+        cmd.extend(["--use_custom_reference", "True" if args.use_reference else "False"])
         if args.use_reference:
-            cmd.extend(["--use_custom_reference", "--reference_path", args.reference_path])
-        if args.checkpointing:
-            cmd.append("--checkpointing")
-        if args.cosine_lr:
-            cmd.append("--use_cosine_annealing_lr")
+            cmd.extend(["--reference_path", args.reference_path])
+        cmd.extend(["--checkpointing", "True" if args.checkpointing else "False"])
+        cmd.extend(["--use_cosine_annealing_lr", "True" if args.cosine_lr else "False"])
         if args.architecture != "RVC":
             cmd.extend(["--architecture", args.architecture])
         if args.embedder_model and args.embedder_model != "hubert_base":
             cmd.extend(["--embedders", args.embedder_model])
         if args.embedders_mode and args.embedders_mode != "fairseq":
             cmd.extend(["--embedders_mode", args.embedders_mode])
-        if args.deterministic:
-            cmd.append("--deterministic")
-        if args.benchmark:
-            cmd.append("--benchmark")
-        if args.compile_model:
-            cmd.append("--compile_model")
-        if args.use_8bit_adam:
-            cmd.append("--use_8bit_adam")
+        cmd.extend(["--deterministic", "True" if args.deterministic else "False"])
+        cmd.extend(["--benchmark", "True" if args.benchmark else "False"])
+        cmd.extend(["--compile_model", "True" if args.compile_model else "False"])
+        cmd.extend(["--use_8bit_adam", "True" if args.use_8bit_adam else "False"])
         if args.gradient_accumulation and args.gradient_accumulation > 1:
             cmd.extend(["--grad_accum_steps", str(args.gradient_accumulation)])
-        if args.fast_train:
-            cmd.append("--fast_train")
-            cmd.append("true")
-        if args.bf16_adamw:
-            cmd.append("--bf16_adamw")
-            cmd.append("true")
+        cmd.extend(["--fast_train", "True" if args.fast_train else "False"])
+        cmd.extend(["--bf16_adamw", "True" if args.bf16_adamw else "False"])
+
+        cmd.extend(["--newpytorch", "True"])
 
         logger.info("Training started. This may take a while...")
 
@@ -661,16 +648,14 @@ def cmd_create_ref(args):
 
         if not args.pitch_guidance:
             cmd.extend(["--pitch_guidance", "False"])
-        if args.energy:
-            cmd.append("--energy_use")
+        cmd.extend(["--energy_use", "True" if args.energy else "False"])
         if args.embedder_model:
             cmd.extend(["--embedder_model", args.embedder_model])
         if args.f0_method:
             cmd.extend(["--f0_method", args.f0_method])
         if args.pitch_shift != 0:
             cmd.extend(["--f0_up_key", str(args.pitch_shift)])
-        if args.f0_autotune:
-            cmd.append("--f0_autotune")
+        cmd.extend(["--f0_autotune", "True" if args.f0_autotune else "False"])
         if args.alpha != 0.5:
             cmd.extend(["--alpha", str(args.alpha)])
 
@@ -824,7 +809,7 @@ For the full CLI guide, see:
     p.add_argument("--embedders_mode", default="fairseq", help="Embedder mode (default: fairseq)")
     p.add_argument("--f0_file", default="", help="Path to pre-existing F0 file")
     p.add_argument("--proposal_pitch", action="store_true", help="Use proposal pitch estimation")
-    p.add_argument("--proposal_pitch_threshold", type=float, default=0.05, help="Pitch estimation threshold")
+    p.add_argument("--proposal_pitch_threshold", type=float, default=255.0, help="Pitch estimation threshold")
     p.add_argument("--audio_processing", action="store_true", help="Enable audio processing")
     p.add_argument("--alpha", type=float, default=0.5, help="Alpha blending (default: 0.5)")
     p.set_defaults(func=cmd_infer)
