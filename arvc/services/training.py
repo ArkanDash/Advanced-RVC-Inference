@@ -551,23 +551,33 @@ def training(
     # 3. Embedder models (HuBERT, etc.) for feature extraction were missing
     # 4. When extract step was skipped or models deleted, training crashed
     # ═══════════════════════════════════════════════════════════════
+    
+    # Model status message for UI (v2.2.1+)
+    model_status_msg = translations.get("download_predictor", "🔄 Checking and downloading required models...")
+    
     try:
         _embedder_for_download = embedders if embedders != "custom" else custom_embedders
         _f0_method_for_download = "rmvpe"  # Default F0 method for training
         
-        gr_info(translations.get("download_predictor", "Downloading required predictor and embedder models..."))
+        yield (
+            translations.get("download_predictor", "⏳ Downloading required predictor and embedder models..."), 
+            model_status_msg
+        )
         
         # Check and download both predictor (F0) and embedder (HuBERT) models
-        # Use False for f0_onnx since training typically uses .pt predictors
         check_assets(
             f0_method=_f0_method_for_download,
             hubert=_embedder_for_download,
             f0_onnx=False,
             embedders_mode="fairseq"
         )
-        gr_info(translations.get("download_predictor_success", "Predictor and embedder models ready."))
+        
+        model_status_msg = translations.get("download_predictor_success", "✅ All required models ready! Starting training...")
+        yield ("", model_status_msg)
     except Exception as e:
-        gr_warning(translations.get("download_predictor_error", f"Warning: Model download issue: {e}. Training may fail if models are missing."))
+        model_status_msg = translations.get("download_predictor_error", f"⚠️ Model download warning: {e}. Training may fail if models are missing.")
+        yield ("", model_status_msg)
+    
     
     if custom_reference:
         embedder_model = embedders if embedders != "custom" else custom_embedders
@@ -646,4 +656,5 @@ def training(
         if len(lines) > 50: 
             log = "\n".join(lines[-50:])
 
-        yield log
+        # v2.2.1+: Yield both training log and model status for UI
+        yield (log, model_status_msg)

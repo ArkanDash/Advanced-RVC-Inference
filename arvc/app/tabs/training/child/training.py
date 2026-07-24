@@ -49,7 +49,15 @@ from arvc.ui.feedback import (
 
 def training_model_tab():
     with gr.Row():
-        gr.Markdown(translations.get("training_markdown", "## Training"))
+        # v2.2.1: Enhanced training header with feature highlights
+        gr.Markdown(translations.get(
+            "training_markdown", 
+            "## Training\n\n"
+            "### ✨ v2.2.1 Improvements:\n"
+            "- **🔧 Auto Model Download** — Predictor & embedder models download automatically before training\n"
+            "- **🛡️ Robust Data Loading** — Handles corrupted files gracefully, no more crashes on bad data\n"
+            "- **📊 Better Error Messages** — Clear status indicators for model downloads and training progress"
+        ))
     with gr.Row():
         with gr.Column():
             with gr.Row():
@@ -645,11 +653,24 @@ def training_model_tab():
                                     scale=2
                                 )
             with gr.Row():
+                # v2.2.1: Model download status indicator
+                # Shows which models (predictor, embedder) are available or will be auto-downloaded
+                model_status = gr.Textbox(
+                    label=translations.get("model_status", "Model Status (v2.2.1+)"), 
+                    value=translations.get(
+                        "model_status_info", 
+                        "✓ Auto-Download Enabled: Predictor (RMVPE) and Embedder (HuBERT) models will download automatically before training starts."
+                    ), 
+                    interactive=False, 
+                    lines=2,
+                    container=True
+                )
+            with gr.Row():
                 training_info = gr.Textbox(
                     label=translations["train_info"], 
                     value="", 
                     interactive=False, 
-                    lines=3
+                    lines=5  # Increased lines for better visibility of download + training progress
                 )
             with gr.Row():
                 with gr.Column():
@@ -1048,7 +1069,8 @@ def training_model_tab():
                 newpytorch
             ],
             outputs=[
-                training_info
+                training_info,  # Main training log output
+                model_status   # Model download status (v2.2.1+)
             ],
             api_name="training_model"
         )
