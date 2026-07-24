@@ -11,7 +11,7 @@
 </div>
 
 > [!NOTE]
-> v2.2.0 ships a major security hardening pass, a ~3× training speedup bundle (`--fast_train` + `--bf16_adamw`), and Applio-parity accuracy patches for small (10-minute) datasets. See the [Changelog](#changelog) below for the full breakdown. Pull requests are still welcome and will be reviewed.
+> **v2.2.1** fixes a critical training bug where predictor (RMVPE/FCPE) and embedder (HuBERT) models were **not downloading automatically** during training, causing "model not found" errors. Also includes improved data validation and corrupted file handling. See the [Changelog](#changelog) below for details.
 
 > [!NOTE]
 > If you want to use old version switch to v1 branch.
@@ -33,9 +33,11 @@
 
 ### Training Pipeline
 - **End-to-End Training** — Dataset creation → preprocessing → feature extraction → training → model export
+- **🔧 Auto Model Download** — Predictor (RMVPE/FCPE) and embedder (HuBERT) models download automatically before training starts — no more "model not found" errors!
 - **4 Vocoders** — HiFi-GAN NSF (Default), BigVGAN, MRF-HiFi-GAN, RefineGAN
 - **5 Optimizers** — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
 - **Training Quality Improvements** — Multi-scale mel spectrogram loss (8 scales), scaled v3 discriminator loss, proper feature loss gradient flow, cuDNN benchmark
+- **Robust Data Loading** — Safe numpy loading with NaN/Inf handling, corrupted file recovery, increased sequence length limits (900→1800)
 - **Advanced Options** — Gradient accumulation, torch.compile(), 8-bit Adam, cosine annealing LR, overtraining detection
 - **Architecture Support** — RVC and SVC (from Vietnamese-RVC)
 - **Embedder Mix** — Layer-wise embedding mixing with configurable ratios (from Vietnamese-RVC)
@@ -252,6 +254,36 @@ The use of the converted voice for the following purposes is **strictly prohibit
 ---
 
 ## Changelog
+
+### v2.2.1
+
+**🔧 Critical Bug Fix: Predictor & Embedder Auto-Download**
+- **Fixed:** Training process now automatically downloads required predictor models (RMVPE, FCPE, etc.) and embedder models (HuBERT, ContentVec) **before** training starts
+- **Root Cause:** Previous code only downloaded pretrained G/D weights but skipped F0 predictors and content embedders, causing silent failures when:
+  - Extraction step was skipped or interrupted
+  - Models were deleted from cache
+  - Fresh installation without prior extraction run
+- **Files Changed:**
+  - `arvc/services/training.py` — Added `check_assets()` call at training start to ensure all models are available
+  - `arvc/engine/models/utils.py` — Added `os.makedirs()` in `download_embedder()` and `download_predictor()` to prevent FileNotFoundError when directories don't exist
+
+**🛡️ Data Validation & Robustness Improvements**
+- **Safe Numpy Loading:** New `safe_load_numpy()` function handles corrupted `.npy` files gracefully:
+  - Detects and replaces NaN/Inf values with zeros
+  - Returns fallback tensors instead of crashing on corrupted files
+  - Prevents silent data corruption from propagating through training
+- **Pitch Data Validation:** 
+  - Pitch values clamped to valid range [0, 255] for embedding safety
+  - F0 values clamped to reasonable vocal range [0, 1100] Hz
+  - Energy values sanitized to prevent gradient explosions
+- **Audio Validation:** Checks for NaN/Inf/silent audio during loading
+- **Spectrogram Cache Validation:** Corrupted cached spectrograms are regenerated automatically
+- **Increased Sequence Length Limit:** MAX_SEQUENCE_LENGTH doubled from 900→1800 for better long-context voice learning
+
+**Enhanced Feature Extraction**
+- Improved F0 estimation accuracy with better post-processing parameters
+- Added proper feature normalization before model input
+- Better alignment handling when phone/spec lengths mismatch
 
 ### v2.2.0
 

@@ -6,6 +6,49 @@ small (10-minute) datasets.
 
 ---
 
+## 🔧 v2.2.1: Auto Model Download Fix
+
+**Problem:** Training would fail silently or crash because predictor models
+(RMVPE, FCPE) and embedder models (HuBERT, ContentVec) were not being
+downloaded automatically.
+
+**Solution:** The `training()` function in `arvc/services/training.py` now calls
+`check_assets()` **before** launching the training subprocess:
+
+```python
+# From arvc/services/training.py (v2.2.1+)
+check_assets(
+    f0_method="rmvpe",           # Default F0 predictor
+    hubert=embedders_model,      # HuBERT/ContentVec embedder
+    f0_onnx=False,
+    embedders_mode="fairseq"
+)
+```
+
+**What gets downloaded automatically:**
+
+| Model Type | Examples | Used For |
+|-----------|----------|----------|
+| **F0 Predictors** | `rmvpe.pt`, `fcpe_*.pt`, `crepe_*.pth` | Pitch extraction during feature extraction |
+| **Embedders** | `hubert_base.pt`, `contentvec_base.pt` | Content feature extraction from audio |
+
+**When it runs:** At the start of every training session, before the subprocess
+is launched. If models already exist locally, they are skipped (fast check).
+
+**Error handling:** Download failures produce a warning but don't block training —
+the error will surface later if the model is actually needed.
+
+### Directory Creation Fix
+
+Both `download_embedder()` and `download_predictor()` now call:
+```python
+os.makedirs(os.path.dirname(model_path), exist_ok=True)
+```
+This prevents `FileNotFoundError` when the `predictors/` or `embedders/`
+directories don't exist yet (fresh install, deleted cache, etc.).
+
+---
+
 ## TL;DR
 
 ```bash
