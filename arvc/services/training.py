@@ -13,6 +13,7 @@ from arvc.utils import huggingface
 from arvc.utils.feedback import gr_info, gr_warning
 from arvc.utils.variables import python, translations, configs, file_types, logger
 from arvc.engine.models.safe_load import validate_path_within
+from arvc.engine.models.utils import check_assets, download_embedder
 
 
 def _safe_model_dir(model_name: str) -> str:
@@ -529,6 +530,33 @@ def training(
         pretrained_G = pretrained_D = None
         gr_warning(translations["not_use_pretrain"])
 
+    # ═══════════════════════════════════════════════════════════════
+    # BUG FIX: Download predictor & embedder models BEFORE training starts
+    # 
+    # Root cause: Training was failing because:
+    # 1. Only pretrained G/D weights were downloaded
+    # 2. Predictor models (RMVPE, FCPE, etc.) for F0 extraction were missing
+    # 3. Embedder models (HuBERT, etc.) for feature extraction were missing
+    # 4. When extract step was skipped or models deleted, training crashed
+    # ═══════════════════════════════════════════════════════════════
+    try:
+        _embedder_for_download = embedders if embedders != "custom" else custom_embedders
+        _f0_method_for_download = "rmvpe"  # Default F0 method for training
+        
+        gr_info(translations.get("download_predictor", "Downloading required predictor and embedder models..."))
+        
+        # Check and download both predictor (F0) and embedder (HuBERT) models
+        # Use False for f0_onnx since training typically uses .pt predictors
+        check_assets(
+            f0_method=_f0_method_for_download,
+            hubert=_embedder_for_download,
+            f0_onnx=False,
+            embedders_mode="fairseq"
+        )
+        gr_info(translations.get("download_predictor_success", "Predictor and embedder models ready."))
+    except Exception as e:
+        gr_warning(translations.get("download_predictor_error", f"Warning: Model download issue: {e}. Training may fail if models are missing."))
+    
     if custom_reference:
         embedder_model = embedders if embedders != "custom" else custom_embedders
 

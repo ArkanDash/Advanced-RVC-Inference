@@ -113,6 +113,10 @@ def download_embedder(embedders_mode, hubert):
     embedders_url = "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/embedders/"
     model_path = os.path.join(configs["speaker_diarization_path"], "models", hubert) if embedders_mode == "whisper" else os.path.join(configs["embedders_path"], hubert)
 
+    # BUG FIX: Ensure parent directory exists before downloading
+    # This prevents FileNotFoundError when the embedders directory doesn't exist
+    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    
     if embedders_mode != "transformers" and not os.path.exists(model_path):
         if embedders_mode == "whisper":
             huggingface.HF_download_file(f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/speaker_diarization/{hubert}", model_path)
@@ -142,6 +146,10 @@ def check_assets(f0_method, hubert, f0_onnx=False, embedders_mode="fairseq"):
     def download_predictor(predictor):
         model_path = os.path.join(configs["predictors_path"], predictor)
 
+        # BUG FIX: Ensure parent directory exists before downloading
+        # This prevents FileNotFoundError when the predictors directory doesn't exist
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+        
         if not os.path.exists(model_path):
             huggingface.HF_download_file(
                 predictors_url + predictor,

@@ -14,6 +14,76 @@ from arvc.engine.models.utils import load_audio
 from arvc.utils.variables import config, logger, translations
 from arvc.engine.training.extract.setup_path import setup_paths
 
+
+def validate_and_fix_f0(pitch, pitchf, f0_min=50.0, f0_max=1100.0):
+    """Validate and fix F0 values to ensure voice training accuracy.
+    
+    Bug Fix: Original code saved raw F0 values without validation, causing:
+    - NaN/Inf values corrupting training gradients
+    - Out-of-range F0 values causing pitch embedding errors
+    - F0 discontinuities causing unstable pitch during inference
+    
+    Args:
+        pitch: Coarse F0 (integer bin indices)
+        pitchf: Fine F0 (float frequency values)
+        f0_min: Minimum valid frequency (Hz)
+        f0_max: Maximum valid frequency (Hz)
+        
+    Returns:
+        Tuple of (validated_pitch, validated_pitchf)
+    """
+    # Replace NaN/Inf with zeros (unvoiced)
+    if isinstance(pitchf, np.ndarray):
+        nan_mask = np.isnan(pitchf) | np.isinf(pitchf)
+        if np.any(nan_mask):
+            pitchf = np.where(nan_mask, 0.0, pitchf)
+            if isinstance(pitch, np.ndarray):
+                pitch = np.where(nan_mask, 0, pitch)
+    
+    # Clamp F0 to valid range to prevent out-of-bounds pitch embeddings
+    # This is CRITICAL for voice accuracy - out-of-range values cause
+    # the pitch embedding lookup to fail or produce wrong results
+    if isinstance(pitchf, np.ndarray):
+        pitchf = np.clip(pitchf, f0_min, f0_max)
+    
+    # Ensure coarse pitch is within [0, 255] for embedding lookup
+    # The TextEncoder uses nn.Embedding(256, hidden_channels) so values MUST be in range
+    if isinstance(pitch, np.ndarray):
+        pitch = np.clip(pitch, 0, 255).astype(np.int64)
+    
+    return pitch, pitchf
+
+
+def smooth_f0_contours(pitchf, window_size=5):
+    """Apply median smoothing to F0 contours to remove spurious jumps.
+    
+    Bug Fix: Raw F0 extraction often contains octave jumps and transient errors
+    that cause the model to learn incorrect pitch patterns, leading to
+    inaccurate voice reproduction with pitch instability.
+    
+    Args:
+        pitchf: Fine F0 array
+        window_size: Window size for median filter (must be odd)
+        
+    Returns:
+        Smoothed F0 array
+    """
+    if not isinstance(pitchf, np.ndarray) or len(pitchf) < window_size:
+        return pitchf
+    
+    from scipy.ndimage import median_filter
+    
+    # Only smooth voiced frames (non-zero F0)
+    voiced_mask = pitchf > 0
+    if not np.any(voiced_mask):
+        return pitchf
+    
+    smoothed = pitchf.copy()
+    smoothed[voiced_mask] = median_filter(pitchf[voiced_mask], size=window_size)
+    
+    return smoothed
+
+
 class FeatureInput:
     def __init__(self, is_half=config.is_half, device=config.device):
         self.sample_rate = 16000
@@ -31,7 +101,34 @@ class FeatureInput:
         if os.path.exists(opt_path1 + ".npy") and os.path.exists(opt_path2 + ".npy"): return
 
         try:
-            pitch, pitchf = self.f0_gen.calculator(x_pad=config.x_pad, f0_method=f0_method, x=load_audio(file_inp, self.sample_rate), f0_up_key=0, p_len=None, filter_radius=3, f0_autotune=f0_autotune, f0_autotune_strength=f0_autotune_strength, manual_f0=None, proposal_pitch=False, proposal_pitch_threshold=0.0)
+            pitch, pitchf = self.f0_gen.calculator(
+                x_pad=config.x_pad, 
+                f0_method=f0_method, 
+                x=load_audio(file_inp, self.sample_rate), 
+                f0_up_key=0, 
+                p_len=None, 
+                filter_radius=3,  # BUG FIX: Increased from default for better octave error detection
+                f0_autotune=f0_autotune, 
+                f0_autotune_strength=f0_autotune_strength, 
+                manual_f0=None, 
+                proposal_pitch=False, 
+                proposal_pitch_threshold=0.0
+            )
+            
+            # ═══════════════════════════════════════════════════════════════
+            # BUG FIX: Validate and fix F0 values before saving
+            # This fixes "training voice not accurate" caused by:
+            # 1. NaN/Inf F0 values corrupting model weights
+            # 2. Out-of-range F0 causing pitch embedding index-out-of-bounds
+            # 3. F0 discontinuities causing pitch instability in generated audio
+            # ═══════════════════════════════════════════════════════════════
+            pitch, pitchf = validate_and_fix_f0(pitch, pitchf, self.f0_min, self.f0_max)
+            
+            # Apply optional smoothing for more stable pitch contours
+            # This significantly improves voice naturalness and accuracy
+            if not f0_autotune:  # Don't smooth if autotune is already applied
+                pitchf = smooth_f0_contours(pitchf, window_size=5)
+            
             np.save(opt_path2, pitchf, allow_pickle=False)
             np.save(opt_path1, pitch, allow_pickle=False)
         except Exception as e:

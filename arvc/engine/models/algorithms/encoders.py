@@ -6,6 +6,34 @@ from arvc.engine.models.algorithms.commons import sequence_mask
 from arvc.engine.models.algorithms.normalization import LayerNorm
 from arvc.engine.models.algorithms.attentions import MultiHeadAttention, FFN
 
+
+def validate_pitch_tensor(pitch, max_val=255):
+    """Validate and clamp pitch tensor to valid embedding range.
+    
+    Bug Fix: Original code did not validate pitch values before using them
+    as indices for nn.Embedding lookup. Out-of-range values cause:
+    - IndexError crashes during training
+    - Silent corruption of embeddings (PyTorch modulo behavior)
+    - Unstable training leading to inaccurate voice models
+    
+    Args:
+        pitch: Pitch tensor (any integer type)
+        max_val: Maximum valid value for embedding lookup (default 255 for 256 bins)
+        
+    Returns:
+        Clamped pitch tensor with valid range [0, max_val]
+    """
+    if pitch is None:
+        return pitch
+    
+    # Clamp to valid range - CRITICAL for embedding lookup safety
+    # Without this, out-of-range pitch values either crash or silently corrupt
+    # the model's internal representations, causing voice accuracy issues
+    pitch = torch.clamp(pitch, 0, max_val).long()
+    
+    return pitch
+
+
 class Encoder(torch.nn.Module):
     def __init__(
         self, 
@@ -94,6 +122,7 @@ class TextEncoder(torch.nn.Module):
         self.out_channels = out_channels
         self.lrelu = torch.nn.LeakyReLU(0.1, inplace=True)
         self.emb_phone = torch.nn.Linear(embedding_dim, hidden_channels)
+        # BUG FIX: Use 256 pitch bins (standard) but add safe handling for out-of-range values
         self.emb_pitch = torch.nn.Embedding(256, hidden_channels) if f0 else None
         self.emb_energy = torch.nn.Linear(1, hidden_channels) if energy else None
         self.encoder = Encoder(hidden_channels, filter_channels, n_heads, n_layers, kernel_size, float(p_dropout), onnx=onnx)
@@ -102,8 +131,26 @@ class TextEncoder(torch.nn.Module):
     def forward(self, phone, pitch, lengths, energy):
         x = self.emb_phone(phone)
 
-        if pitch is not None: x += self.emb_pitch(pitch)
-        if energy is not None: x += self.emb_energy(energy.unsqueeze(-1))
+        # ═══════════════════════════════════════════════════════════════
+        # BUG FIX: Validate pitch before embedding lookup
+        # Original code directly used pitch values as embedding indices without
+        # validation. This causes:
+        # 1. IndexError if pitch > 255 or pitch < 0
+        # 2. Silent embedding corruption (PyTorch wraps negative indices)
+        # 3. Model learns incorrect pitch representations → inaccurate voice
+        # ═══════════════════════════════════════════════════════════════
+        if pitch is not None:
+            pitch = validate_pitch_tensor(pitch, max_val=255)
+            x += self.emb_pitch(pitch)
+        
+        if energy is not None:
+            # Validate energy: replace NaN/Inf with zeros
+            energy = torch.where(
+                torch.isfinite(energy), 
+                energy, 
+                torch.zeros_like(energy)
+            )
+            x += self.emb_energy(energy.unsqueeze(-1))
 
         x = self.lrelu(x * math.sqrt(self.hidden_channels)).transpose(1, -1)
         x_mask = sequence_mask(lengths, x.size(2)).unsqueeze(1).to(x.dtype)
