@@ -38,15 +38,27 @@ def log_read(done, name, start_time):
 
     def read_logs():
         logs = []
-
-        with open(log_file, "r", encoding="utf-8") as f:
-            for line in f:
-                try:
-                    if ("DEBUG" in line or name not in line or line.strip() == ""): continue
-                    timestamp = datetime.datetime.strptime(line.split("|")[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
-                    if timestamp >= start_time: logs.append(line)
-                except ValueError:
-                    continue
+        
+        # BUG FIX: Handle missing log file gracefully
+        # The app.log may not exist on first run, in Colab, or when logging 
+        # hasn't been configured yet. Return empty string instead of crashing.
+        if not os.path.exists(log_file):
+            return ""
+        
+        try:
+            with open(log_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        if ("DEBUG" in line or name not in line or line.strip() == ""): continue
+                        timestamp = datetime.datetime.strptime(line.split("|")[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+                        if timestamp >= start_time: logs.append(line)
+                    except ValueError:
+                        continue
+        except (IOError, OSError, PermissionError) as e:
+            # If we can't read the log file, return empty rather than crashing
+            logger.debug(f"Could not read log file {log_file}: {e}")
+            return ""
+        
         return "".join(logs)
 
     while 1:
