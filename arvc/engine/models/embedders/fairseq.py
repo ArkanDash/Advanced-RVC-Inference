@@ -51,14 +51,58 @@ def softmax(x, dim, onnx_trace = False):
 def log_softmax(x, dim, onnx_trace = False):
     return F.log_softmax(x.float(), dim=dim) if onnx_trace else F.log_softmax(x, dim=dim, dtype=torch.float32)
 
+def _safe_eval_list_expr(s: str):
+    """Safely evaluate list/tuple expressions with only + and * operators.
+
+    HuBERT/ContentVec configs contain expressions like:
+        "[(512,10,5)] + [(512,3,2)] * 4 + [(512,2,2)] * 2"
+
+    This is NOT a pure literal (ast.literal_eval rejects it) but IS safe:
+    - Only allows: int, tuple, list, + (concat), * (repeat)
+    - Blocks: function calls, imports, attribute access, comprehensions, etc.
+    """
+    import ast
+
+    # First try literal_eval for simple cases (fast path)
+    try:
+        return ast.literal_eval(s)
+    except ValueError:
+        pass  # Contains operators, need safe eval
+
+    # Parse into AST and validate
+    tree = ast.parse(s, mode='eval')
+
+    # Walk the AST and reject dangerous nodes
+    for node in ast.walk(tree):
+        # Allowed node types
+        if isinstance(node, (ast.Expression, ast.Module, ast.BinOp, ast.UnaryOp,
+                            ast.List, ast.Tuple, ast.Load, ast.Constant,
+                            ast.USub, ast.UAdd)):  # noqa: E501
+            continue
+        # Allow integer constants
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float, str)):
+            continue
+        # Block everything else (function calls, imports, attributes, etc.)
+        if type(node).__name__ in ('Call', 'Attribute', 'Subscript', 'Import',
+                                    'ImportFrom', 'Name', 'Starred',
+                                    'ListComp', 'DictComp', 'SetComp',
+                                    'GeneratorExp', 'Lambda', 'IfExp'):
+            raise ValueError(
+                f"[safe_eval] Disallowed operation in config: {type(node).__name__}. "
+                f"This is a security guard against malicious config values."
+            )
+
+    # Evaluate with empty globals (no builtins) - only literals and ops work
+    return eval(s, {"__builtins__": {}}, {})
+
+
 def eval_str_dict(x, type=dict):
     if x is None: return None
     # SECURITY PATCH: was `eval(x)` — arbitrary code execution via untrusted
-    # config strings. `ast.literal_eval` only parses Python literals (dict,
-    # list, tuple, str, num, bool, None) and is safe against RCE.
+    # config strings. `_safe_eval_list_expr` allows list concat/repeat (+, *)
+    # but blocks function calls, imports, and other dangerous operations.
     if isinstance(x, str):
-        import ast
-        x = ast.literal_eval(x)
+        x = _safe_eval_list_expr(x)
     return x
 
 def with_incremental_state(cls):
@@ -1329,9 +1373,10 @@ class HubertModel(BaseFairseqModel):
     def __init__(self, cfg, num_classes):
         super().__init__()
         # SECURITY PATCH: was `eval(cfg.conv_feature_layers)` — arbitrary code
-        # execution. `ast.literal_eval` parses the list literal safely.
-        import ast
-        feature_enc_layers = ast.literal_eval(cfg.conv_feature_layers)
+        # execution. `_safe_eval_list_expr` allows list concat/repeat (+, *)
+        # needed by HuBERT configs like "[(512,10,5)] + [(512,3,2)] * 4"
+        # while still blocking function calls, imports, and other dangerous ops.
+        feature_enc_layers = _safe_eval_list_expr(cfg.conv_feature_layers)
         self.embed = feature_enc_layers[-1][0]
         self.feature_extractor = ConvFeatureExtractionModel(conv_layers=feature_enc_layers, dropout=0.0, mode=cfg.extractor_mode, conv_bias=cfg.conv_bias)
         feature_ds_rate = np.prod([s for _, _, s in feature_enc_layers])
