@@ -54,7 +54,22 @@ def extract_model(
         opt["f0"] = int(pitch_guidance)
         opt["version"] = version
         opt["creation_date"] = datetime.datetime.now().isoformat()
-        opt["model_hash"] = hashlib.sha256(f"{str(ckpt)} {epoch} {step} {datetime.datetime.now().isoformat()}".encode()).hexdigest()
+        # BUG FIX: Original hash used `str(ckpt)` which returns "OrderedDict([...])"
+        # (a string repr without actual weight values) + datetime.now() (microsecond
+        # precision), making the hash effectively random — calling extract_model
+        # twice on the same checkpoint produced different hashes, defeating the
+        # purpose of deduplication/verification. Now we hash the actual tensor
+        # data via torch.save into a buffer for a deterministic, content-based hash.
+        try:
+            import io
+            _buf = io.BytesIO()
+            torch.save(ckpt, _buf)
+            opt["model_hash"] = hashlib.sha256(_buf.getvalue()).hexdigest()
+        except Exception:
+            # Fallback: deterministic hash from sorted key names + shapes (no data,
+            # but at least reproducible per model structure)
+            _struct_str = "|".join(f"{k}:{tuple(v.shape)}" for k, v in ckpt.items())
+            opt["model_hash"] = hashlib.sha256(_struct_str.encode()).hexdigest()
         opt["model_name"] = name
         opt["author"] = model_author
         opt["vocoder"] = vocoder

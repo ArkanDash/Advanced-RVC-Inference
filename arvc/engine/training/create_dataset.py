@@ -21,8 +21,14 @@ if _project_root not in sys.path:
 from arvc.utils.variables import config, logger, translations
 from arvc.engine.uvr.separate_music import _separate, vr_models
 
-dataset_temp = "dataset_temp"
-DATASET_DIR = os.path.join("arvc", "assets", "dataset")
+# BUG FIX #34: Original used relative paths (`"dataset_temp"` and
+# `os.path.join("arvc", "assets", "dataset")`) which are resolved against
+# the current working directory, NOT the package root. When run from a
+# different CWD (CLI vs Gradio UI), files were saved to wrong locations.
+# Use absolute paths based on this file's location.
+_PACKAGE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+dataset_temp = os.path.join(_PACKAGE_ROOT, "assets", "dataset_temp")
+DATASET_DIR = os.path.join(_PACKAGE_ROOT, "assets", "dataset")
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -341,7 +347,12 @@ def downloader(
 def read_file(file):
     try:
         data, sr = sf.read(file, dtype=np.float32)
-    except:
+    except Exception:
+        # BUG FIX #35: Original used bare `except:` which catches
+        # KeyboardInterrupt, SystemExit, and MemoryError — all of which
+        # should propagate. Changed to `except Exception` to only catch
+        # expected errors (e.g., file format issues) while allowing
+        # system signals to pass through.
         data, sr = librosa.load(file, sr=None)
 
     return data, sr

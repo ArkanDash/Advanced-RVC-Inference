@@ -62,7 +62,9 @@ def process_file_rms(files, device, threads):
                 feats = module(feats if device.startswith(("ocl", "privateuseone")) else feats.to(device))
                 
             np.save(out_file_path, feats.float().cpu().numpy(), allow_pickle=False)
-        except:
+        except Exception:
+            # BUG FIX: Original used bare `except:` which catches
+            # KeyboardInterrupt, SystemExit, and MemoryError.
             logger.debug(traceback.format_exc())
 
     with tqdm.tqdm(total=len(files), ncols=100, unit="p", leave=True) as pbar:

@@ -76,7 +76,19 @@ class TextAudioLoader(tdata.Dataset):
 
             if self.min_text_len <= len(text) and len(text) <= self.max_text_len:
                 audiopaths_and_text_new.append(item)
-                lengths.append(os.path.getsize(audiopath) // (3 * self.hop_length))
+                # BUG FIX: Original used `os.path.getsize(audiopath) // (3 * self.hop_length)`
+                # where the magic number 3 doesn't match any common audio format
+                # (16-bit PCM = 2 bytes/sample, 32-bit float = 4 bytes/sample).
+                # This caused incorrect bucketing in DistributedBucketSampler.
+                # Use soundfile to get accurate frame count.
+                try:
+                    import soundfile as sf
+                    info = sf.info(audiopath)
+                    lengths.append(int(info.frames / self.hop_length))
+                except Exception:
+                    # Fallback: estimate from file size assuming 16-bit mono PCM
+                    # (2 bytes/sample) — better than the original magic 3.
+                    lengths.append(os.path.getsize(audiopath) // (2 * self.hop_length))
 
         self.audiopaths_and_text = audiopaths_and_text_new
         self.lengths = lengths
@@ -390,13 +402,17 @@ class DistributedBucketSampler(tdata.distributed.DistributedSampler):
         return iter(self.batches)
 
     def _bisect(self, x, lo=0, hi=None):
+        # BUG FIX: Original code used strict `<` for the lower bound check,
+        # causing items whose length exactly equals a boundary value to be
+        # silently dropped (returned -1). Changed to `<=` so boundary values
+        # are correctly placed in the appropriate bucket.
         if hi is None: hi = len(self.boundaries) - 1
 
         if hi > lo:
             mid = (hi + lo) // 2
 
-            if self.boundaries[mid] < x and x <= self.boundaries[mid + 1]: return mid
-            elif x <= self.boundaries[mid]: return self._bisect(x, lo, mid)
+            if self.boundaries[mid] <= x <= self.boundaries[mid + 1]: return mid
+            elif x < self.boundaries[mid]: return self._bisect(x, lo, mid)
             else: return self._bisect(x, mid + 1, hi)
         else: return -1
 

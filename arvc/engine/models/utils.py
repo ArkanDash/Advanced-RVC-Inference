@@ -329,23 +329,29 @@ def restore(segments, total_len, dtype=np.float32):
 
 def extract_features(model, feats, version, device="cpu", mix=False, mix_layers=9, mix_ratio=0.5):
     """Extract features from the embedder model.
-    
+
     VRVC addition: supports embedder layer mixing for improved feature quality.
     When mix=True, features from two different transformer layers are blended
     together, which can improve performance for tonal languages (Vietnamese, Chinese, etc.)
     """
     with torch.no_grad():
         output_layer = 9 if version == "v1" else 12
-        logits = model.extract_features(**{"source": feats, "padding_mask": torch.BoolTensor(feats.shape).fill_(False).to(device), "output_layer": output_layer})
-        feats = model.final_proj(logits[0]) if version == "v1" else logits[0]
+        # BUG FIX: Save original raw-audio input before overwriting `feats` with
+        # projected features. The original code passed the PROJECTED features as
+        # `source` to the second extract_features call (which expects raw audio),
+        # producing garbage features and corrupting training when embedders_mix=True.
+        padding_mask = torch.BoolTensor(feats.shape).fill_(False).to(device)
+        logits = model.extract_features(source=feats, padding_mask=padding_mask, output_layer=output_layer)
+        feats_out = model.final_proj(logits[0]) if version == "v1" else logits[0]
 
-        # VRVC: embedder layer mixing — blend features from two layers
+        # VRVC: embedder layer mixing — blend features from two layers.
+        # Use the ORIGINAL raw audio input (`feats`), not the projected output.
         if mix and len(logits) > 1:
-            mix_layer_feats = model.extract_features(**{"source": feats, "padding_mask": torch.BoolTensor(feats.shape).fill_(False).to(device), "output_layer": mix_layers})
+            mix_layer_feats = model.extract_features(source=feats, padding_mask=padding_mask, output_layer=mix_layers)
             mix_feats = mix_layer_feats[0] if version != "v1" else model.final_proj(mix_layer_feats[0])
-            feats = feats * mix_ratio + mix_feats * (1 - mix_ratio)
+            feats_out = feats_out * mix_ratio + mix_feats * (1 - mix_ratio)
 
-    return feats
+    return feats_out
 
 def autotune_f0(note_dict, f0, f0_autotune_strength):
     autotuned_f0 = np.zeros_like(f0)

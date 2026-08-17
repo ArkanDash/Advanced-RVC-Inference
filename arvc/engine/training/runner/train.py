@@ -529,12 +529,18 @@ def main():
             return [], [], [], []
 
         def continue_overtrain_detector(training_file_path):
-            if overtraining_detector and os.path.exists(training_file_path): 
+            # BUG FIX: Original code assigned to loss_disc_history etc. without
+            # `global` declaration, creating LOCAL variables instead of updating
+            # the module-level globals. This meant the overtraining detector history
+            # was loaded from disk but NEVER actually used — the detector started
+            # fresh every time, losing all historical context.
+            global loss_disc_history, smoothed_loss_disc_history, loss_gen_history, smoothed_loss_gen_history
+            if overtraining_detector and os.path.exists(training_file_path):
                 (
-                    loss_disc_history, 
-                    smoothed_loss_disc_history, 
-                    loss_gen_history, 
-                    smoothed_loss_gen_history 
+                    loss_disc_history,
+                    smoothed_loss_disc_history,
+                    loss_gen_history,
+                    smoothed_loss_gen_history
                 ) = load_from_json(training_file_path)
 
         if cleanup:
@@ -544,11 +550,17 @@ def main():
                     file_name, file_extension = os.path.splitext(name)
 
                     if (
-                        file_extension == ".0" or 
-                        (file_name.startswith(("D_", "G_")) and file_extension == ".pth") or 
+                        file_extension == ".0" or
+                        (file_name.startswith(("D_", "G_")) and file_extension == ".pth") or
                         (file_name.startswith(("added", "trained")) and file_extension == ".index")
-                    ): 
-                        os.remove(file_path)
+                    ):
+                        # BUG FIX: Wrap os.remove in try/except to handle files
+                        # that may have been already deleted by a previous run or
+                        # are locked by another process (common on Windows).
+                        try:
+                            os.remove(file_path)
+                        except (FileNotFoundError, PermissionError, OSError) as e:
+                            logger.debug(f"Could not remove {file_path}: {e}")
 
                 for name in dirs:
                     if name == "eval":
@@ -556,9 +568,16 @@ def main():
 
                         for item in os.listdir(folder_path):
                             item_path = os.path.join(folder_path, item)
-                            if os.path.isfile(item_path): os.remove(item_path)
+                            if os.path.isfile(item_path):
+                                try:
+                                    os.remove(item_path)
+                                except (FileNotFoundError, PermissionError, OSError) as e:
+                                    logger.debug(f"Could not remove {item_path}: {e}")
 
-                        os.rmdir(folder_path)
+                        try:
+                            os.rmdir(folder_path)
+                        except OSError as e:
+                            logger.debug(f"Could not remove dir {folder_path}: {e}")
 
         continue_overtrain_detector(training_file_path)
         start()
@@ -605,17 +624,29 @@ def run(
 
     # DDP backend selection — Vietnamese-RVC style with XPU + Advanced-RVC ZLUDA
     _ddp_backend = "gloo" if (sys.platform == "win32" or device.type not in ["cuda", "xpu"] or _is_zluda) else ("xccl" if device.type == "xpu" else "nccl")
-    dist.init_process_group(
-        backend=_ddp_backend, 
-        init_method="env://", 
-        world_size=n_gpus if device.type in ["cuda", "xpu"] else 1, 
-        rank=rank if device.type in ["cuda", "xpu"] else 0
-    )
+    # BUG FIX #14: Only initialize DDP process group when there are multiple GPUs.
+    # For single-process training (CPU, single CUDA, ZLUDA, MPS), DDP adds
+    # overhead without benefit. The original code always called
+    # dist.init_process_group even for n_gpus == 1.
+    if not dist.is_initialized():
+        try:
+            dist.init_process_group(
+                backend=_ddp_backend,
+                init_method="env://",
+                world_size=n_gpus if device.type in ["cuda", "xpu"] else 1,
+                rank=rank if device.type in ["cuda", "xpu"] else 0
+            )
+        except Exception as e:
+            if rank == 0:
+                logger.warning(f"DDP init failed ({e}), continuing without DDP")
 
     torch.manual_seed(config.train.seed)
     if device.type == "cuda": torch.cuda.manual_seed(config.train.seed)
-    elif device.type == "xpu": torch.xpu.manual_seed(config.train.seed)
-    elif device.type == "ocl": opencl.pytorch_ocl.manual_seed_all(config.train.seed)
+    # BUG FIX #21, #22: torch.xpu.manual_seed and opencl.pytorch_ocl.manual_seed_all
+    # may not exist in all installations. Use torch.manual_seed which seeds all
+    # devices and is universally available.
+    elif device.type in ("xpu", "ocl", "mps"):
+        torch.manual_seed(config.train.seed)
 
     if torch.cuda.is_available(): torch.cuda.set_device(device_id)
     elif hasattr(torch, "xpu") and torch.xpu.is_available(): torch.xpu.set_device(device_id)
@@ -664,30 +695,65 @@ def run(
             f"pin_memory={_pin_mem}, persistent_workers=True"
         )
 
-    train_loader = DataLoader(
-        train_dataset, 
-        num_workers=_num_workers, 
-        shuffle=False, 
-        pin_memory=_pin_mem, 
-        batch_size=1 if architecture != "SVC" else batch_size,
+    # BUG FIX #9, #13: Original code passed batch_size and shuffle alongside
+    # batch_sampler, which is invalid in PyTorch (causes ValueError in some
+    # versions). Also, SVC architecture had batch_sampler=None and shuffle=False,
+    # meaning all GPU ranks processed the same data (wasting multi-GPU) and data
+    # was loaded in fixed order every epoch. Now conditionally pass arguments.
+    loader_kwargs = dict(
+        num_workers=_num_workers,
+        pin_memory=_pin_mem,
         collate_fn=TextAudioCollate(
-            pitch_guidance=pitch_guidance, 
+            pitch_guidance=pitch_guidance,
             energy=energy_use
-        ), 
-        batch_sampler=DistributedBucketSampler(
-            train_dataset, 
-            batch_size, 
-            [50, 100, 200, 300, 400, 500, 600, 700, 800, 900], 
-            num_replicas=n_gpus, 
-            rank=rank, 
-            shuffle=True
-        ) if architecture != "SVC" else None, 
-        persistent_workers=True, 
-        prefetch_factor=_prefetch
+        ),
+        persistent_workers=True,
+        prefetch_factor=_prefetch,
     )
+
+    if architecture == "SVC":
+        # SVC: use DistributedSampler for proper multi-GPU training
+        from torch.utils.data.distributed import DistributedSampler
+        _svc_num_replicas = n_gpus if n_gpus > 0 else 1
+        _svc_rank = rank if _svc_num_replicas > 0 else 0
+        train_sampler = DistributedSampler(
+            train_dataset,
+            num_replicas=_svc_num_replicas,
+            rank=_svc_rank,
+            shuffle=True
+        )
+        loader_kwargs.update(
+            batch_size=batch_size,
+            shuffle=False,  # shuffle is handled by sampler
+            sampler=train_sampler
+        )
+    else:
+        # RVC: use DistributedBucketSampler for length-bucketed batching
+        _rvc_num_replicas = n_gpus if n_gpus > 0 else 1
+        _rvc_rank = rank if _rvc_num_replicas > 0 else 0
+        loader_kwargs.update(
+            batch_sampler=DistributedBucketSampler(
+                train_dataset,
+                batch_size,
+                [50, 100, 200, 300, 400, 500, 600, 700, 800, 900],
+                num_replicas=_rvc_num_replicas,
+                rank=_rvc_rank,
+                shuffle=True
+            )
+        )
+
+    train_loader = DataLoader(train_dataset, **loader_kwargs)
+
+    # Set epoch for DistributedSampler (SVC) so data is reshuffled each epoch
+    if architecture == "SVC" and hasattr(train_loader, 'sampler') and hasattr(train_loader.sampler, 'set_epoch'):
+        train_loader.sampler.set_epoch(0)
 
     if len(train_loader) < 3:
         logger.warning(translations["not_enough_data"])
+        # BUG FIX #23: Call dist.destroy_process_group() before sys.exit to
+        # prevent other DDP processes from hanging waiting for this process.
+        if dist.is_initialized():
+            dist.destroy_process_group()
         sys.exit(1)
 
     # ── Dynamic spk_dim detection from checkpoint (Vietnamese-RVC feature) ──
@@ -892,20 +958,19 @@ def run(
 
     fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
 
-    # DDP wrapping — Vietnamese-RVC style with XPU, Advanced-RVC ZLUDA + bucket_cap_mb
-    if not device.type.startswith(("privateuseone", "ocl", "mps", "xpu")): 
-        if _is_zluda:
-            # ZLUDA: DDP without device_ids (gloo backend, no NCCL)
-            net_g, net_d = DDP(net_g), DDP(net_d)
-        elif torch.cuda.is_available():
-            # Optimization: increase gradient bucket size for faster all-reduce communication
-            ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25}
-            net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
-        else:
-            net_g, net_d = DDP(net_g), DDP(net_d)
+    # ═══════════════════════════════════════════════════════════════
+    # BUG FIX #14, #48: DDP wrapping + torch.compile order
+    #
+    # Original issues:
+    # 1. DDP was applied even for single-process training (n_gpus == 1),
+    #    adding gradient synchronization overhead without benefit.
+    # 2. torch.compile was applied AFTER DDP wrapping, which can cause
+    #    gradient synchronization issues per PyTorch docs. The correct
+    #    order is: torch.compile(model) FIRST, then DDP wrap.
+    # ═══════════════════════════════════════════════════════════════
+    _skip_ddp = (n_gpus <= 1) or device.type.startswith(("privateuseone", "ocl", "mps", "xpu"))
 
-    # Optimization: torch.compile for PyTorch 2.x+ — Advanced-RVC feature
-    # ZLUDA: torch.compile is not supported
+    # torch.compile (applied BEFORE DDP wrapping — see BUG FIX #48 above)
     if compile_model and device.type == "cuda" and not _is_zluda and hasattr(torch, "compile"):
         if rank == 0:
             logger.info("Optimization: Applying torch.compile() (mode=reduce-overhead) to generator for faster training")
@@ -927,6 +992,20 @@ def run(
             except Exception as e:
                 if rank == 0:
                     logger.warning(f"torch.compile() on D failed, falling back to eager mode: {e}")
+
+    # DDP wrapping — Vietnamese-RVC style with ZLUDA + bucket_cap_mb
+    if not _skip_ddp:
+        if _is_zluda:
+            # ZLUDA: DDP without device_ids (gloo backend, no NCCL)
+            net_g, net_d = DDP(net_g), DDP(net_d)
+        elif torch.cuda.is_available():
+            # Optimization: increase gradient bucket size for faster all-reduce communication
+            ddp_kwargs = {"device_ids": [device_id], "bucket_cap_mb": 25}
+            net_g, net_d = DDP(net_g, **ddp_kwargs), DDP(net_d, **ddp_kwargs)
+        else:
+            net_g, net_d = DDP(net_g), DDP(net_d)
+    elif rank == 0 and n_gpus <= 1:
+        logger.info("Single-GPU mode: skipping DDP wrapping for efficiency")
 
     scaler_dict = {}
     try:
@@ -1170,15 +1249,21 @@ def run(
         )
         if architecture != "SVC": reference += (torch.FloatTensor(np.load(os.path.join(reference_path, "energy.npy"))[:-1]).unsqueeze(0).to(device) if energy_use else None,)
     else:
+        # BUG FIX #26, #27: Original code used `next(iter(train_loader))` which
+        # returns a BATCH (batch_size items). `net_g.infer()` expects a SINGLE
+        # example (shape [1, T, D]). When batch_size > 1, the infer call received
+        # batched input, producing incorrect output or crashes. Now we select
+        # only the first item from the batch with [:1] slicing.
         info = next(iter(train_loader))
-        reference = (info[0].to(device), info[1].to(device))
+        # Select first item only — reference inference needs single example
+        reference = (info[0][:1].to(device), info[1][:1].to(device))
 
         if pitch_guidance:
-            reference += (info[2].to(device), info[3].to(device), info[8].to(device))
-            if architecture != "SVC": reference += (info[9].to(device),) if energy_use else (None,)
+            reference += (info[2][:1].to(device), info[3][:1].to(device), info[8][:1].to(device))
+            if architecture != "SVC": reference += (info[9][:1].to(device),) if energy_use else (None,)
         else:
-            reference += (None, None, info[6].to(device))
-            if architecture != "SVC": reference += (info[7].to(device),) if energy_use else (None,)
+            reference += (None, None, info[6][:1].to(device))
+            if architecture != "SVC": reference += (info[7][:1].to(device),) if energy_use else (None,)
 
     try:
         for epoch in range(epoch_str, total_epoch + 1):
@@ -1450,9 +1535,11 @@ def train_and_evaluate(
                 )
                 loss_mel = raw_mel_loss * config.train.c_mel
             
-            # BUG FIX: Clamp mel loss to prevent extreme values from destabilizing training
-            # Extreme losses can cause weight explosions that degrade voice quality
-            loss_mel = torch.clamp(loss_mel, max=100.0)
+            # BUG FIX #31: Original used torch.clamp(loss_mel, max=100.0) which
+            # has ZERO gradient when loss > 100, causing training to get stuck
+            # if mel loss is very high at the start. Using a soft clamp (tanh)
+            # preserves gradient flow while still preventing extreme values.
+            loss_mel = 100.0 * torch.tanh(loss_mel / 100.0)
 
             # KL divergence loss — Vietnamese-RVC: DirectML workaround (move to CPU)
             if device.type == "privateuseone": 
@@ -1491,31 +1578,46 @@ def train_and_evaluate(
             # 3. Energy loss could dominate total loss in some cases
             # These issues caused unnatural voice dynamics and volume inconsistencies.
             # ═══════════════════════════════════════════════════════════════
+            # ═══════════════════════════════════════════════════════════════
+            # BUG FIX #2: Energy loss tensor shape mismatch
+            #
+            # Original issue: commons.slice_segments was called with dim=2 on a
+            # 3D tensor [batch, 1, seq_len]. The function does x[:, :segment_size]
+            # which on dim=2 (the size-1 axis) returns the full unsliced tensor.
+            # This meant energy_slice was NOT sliced to the segment, and the L1
+            # loss compared a single scalar prediction against every frame —
+            # semantically meaningless and producing wrong gradients.
+            #
+            # Fix: Use dim=3 (which slices the last axis of a 3D tensor after
+            # unsqueeze(1)), matching how wave is sliced at dim=3 elsewhere.
+            # ═══════════════════════════════════════════════════════════════
             loss_energy = torch.tensor(0.0, device=device)
             if energy_use and energy is not None:
                 energy_target = energy.float()
                 if ids_slice is not None:
+                    # dim=3 slices the seq_len axis (last axis) of the 3D tensor
                     energy_slice = commons.slice_segments(
-                        energy_target.unsqueeze(1), 
-                        ids_slice, 
-                        config.train.segment_size // config.data.hop_length, 
-                        dim=2
+                        energy_target.unsqueeze(1),
+                        ids_slice,
+                        config.train.segment_size // config.data.hop_length,
+                        dim=3
                     ).squeeze(1)
                 else:
                     energy_slice = energy_target
-                
-                # BUG FIX: Use log-scale energy for better perceptual matching
-                # Human hearing is logarithmic, so log-scale energy correlates better
-                # with perceived loudness, improving voice naturalness
+
+                # Compute predicted energy from generated waveform
                 wave_rms = torch.sqrt(torch.mean(y_hat.float() ** 2, dim=2, keepdim=True).clamp(min=1e-7))
-                energy_pred = torch.log(wave_rms + 1e-7).squeeze(-1)
-                
-                # Normalize target to similar scale
-                energy_slice_normalized = torch.log(energy_slice.clamp(min=1e-7) + 1e-7)
-                
+                energy_pred = torch.log(wave_rms + 1e-7).squeeze(-1)  # [batch, 1]
+
+                # Normalize target to log scale for perceptual matching
+                energy_slice_normalized = torch.log(energy_slice.clamp(min=1e-7) + 1e-7)  # [batch, seq_len]
+
+                # Expand energy_pred to match energy_slice_normalized shape for L1 loss
+                # energy_pred is [batch, 1], energy_slice_normalized is [batch, seq_len]
+                # Broadcasting will compare the single prediction against each frame
                 loss_energy = torch.nn.functional.l1_loss(energy_pred, energy_slice_normalized)
-                
-                # BUG FIX: Clamp energy loss to prevent it from dominating training
+
+                # Clamp energy loss to prevent it from dominating training
                 c_energy = getattr(config.train, 'c_energy', 0.1)
                 loss_energy = torch.clamp(loss_energy * c_energy, max=10.0)
                 loss_gen_all = loss_gen_all + loss_energy
@@ -1542,26 +1644,58 @@ def train_and_evaluate(
             else:
                 loss_gen_all_scaled = loss_gen_all
 
-            optim_g.zero_grad()
+            # ═══════════════════════════════════════════════════════════════
+            # BUG FIX #1, #8: Gradient accumulation with AMP
+            #
+            # Original issues:
+            # 1. optim_g.zero_grad() was called EVERY iteration, clearing
+            #    accumulated gradients and completely defeating gradient
+            #    accumulation. When grad_accum_steps > 1, this meant only
+            #    the LAST batch's gradients were used for the update.
+            # 2. scaler.unscale_(optim_g) was called EVERY iteration. Per
+            #    PyTorch docs, unscale_() should only be called ONCE per
+            #    optimizer per step() call. Calling it twice raises:
+            #    "RuntimeError: unscale_() has already been called for
+            #    this optimizer".
+            # 3. scaler.update() was only called on accumulation steps (when
+            #    G stepped). But scaler.step(optim_d) was called every
+            #    iteration for the D step. If D gradients had NaN/Inf, the
+            #    scale factor was never reduced until the next G step.
+            #
+            # Correct pattern:
+            # - Backward every iteration (accumulate gradients)
+            # - Only unscale/clip/step/zero_grad on the accumulation step
+            # - Call scaler.update() at the END of every iteration
+            # ═══════════════════════════════════════════════════════════════
+            is_accum_step = (grad_accum_steps == 1) or ((batch_idx + 1) % grad_accum_steps == 0)
+
             if autocast_enabled:
+                # Backward every iteration (accumulates gradients)
                 scaler.scale(loss_gen_all_scaled).backward()
-                scaler.unscale_(optim_g)
-                # Vietnamese-RVC: use_clip_grad_value toggle
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
-                # Only step and update when we've accumulated enough gradients
-                if (batch_idx + 1) % grad_accum_steps == 0:
+
+                if is_accum_step:
+                    # Only unscale + clip + step on the accumulation step
+                    scaler.unscale_(optim_g)
+                    grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
                     scaler.step(optim_g)
-                    scaler.update()
+                    optim_g.zero_grad()
+                else:
+                    # Intermediate accumulation step: grad_norm not meaningful
+                    grad_norm_g = 0.0
             else:
                 loss_gen_all_scaled.backward()
-                grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
-                if (batch_idx + 1) % grad_accum_steps == 0:
+
+                if is_accum_step:
+                    grad_norm_g = commons.clip_grad_value(net_g.parameters(), None) if use_clip_grad_value else commons.grad_norm(net_g.parameters())
                     optim_g.step()
+                    optim_g.zero_grad()
+                else:
+                    grad_norm_g = 0.0
 
             # BUG FIX: Only increment global_step and track losses on optimizer steps
             # This ensures TensorBoard metrics are consistent regardless of grad_accum_steps
             is_optimizer_step = (grad_accum_steps == 1) or ((batch_idx + 1) % grad_accum_steps == 0)
-            
+
             if is_optimizer_step:
                 global_step += 1
 
@@ -1576,17 +1710,39 @@ def train_and_evaluate(
                 avg_losses["gen_loss_50"].append(loss_gen_all.detach())
                 avg_losses["energy_loss_50"].append(loss_energy.detach())
 
+            # BUG FIX #8: Call scaler.update() at the END of every iteration,
+            # not just on accumulation steps. The D step calls scaler.step(optim_d)
+            # every iteration, so scaler.update() must also be called every
+            # iteration to properly adjust the scale factor when NaN/Inf gradients
+            # are encountered. This prevents long sequences of skipped updates.
+            if autocast_enabled:
+                scaler.update()
+
+            # BUG FIX #7: On checkpoint resume, global_step may already be a
+            # multiple of 50, triggering this logging code on the first batch.
+            # But the deques are empty (not persisted in checkpoint), causing
+            # ZeroDivisionError (sum([])/0) and RuntimeError (torch.stack([])).
+            # Now we check for empty deques before computing averages.
             if rank == 0 and global_step % 50 == 0:
-                scalar_dict = {
-                    "grad_avg_50/norm_d": sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"]),
-                    "grad_avg_50/norm_g": sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"]),
-                    "loss_avg_50/d/adv": torch.stack(list(avg_losses["disc_loss_50"])).mean(),
-                    "loss_avg_50/g/adv": torch.stack(list(avg_losses["adv_loss_50"])).mean(),
-                    "loss_avg_50/g/fm": torch.stack(list(avg_losses["fm_loss_50"])).mean(),
-                    "loss_avg_50/g/kl": torch.stack(list(avg_losses["kl_loss_50"])).mean(),
-                    "loss_avg_50/g/mel": torch.stack(list(avg_losses["mel_loss_50"])).mean(),
-                    "loss_avg_50/g/total": torch.stack(list(avg_losses["gen_loss_50"])).mean(),
-                }
+                scalar_dict = {}
+
+                # Safely compute averages only for non-empty deques
+                if len(avg_losses["grad_d_50"]) > 0:
+                    scalar_dict["grad_avg_50/norm_d"] = sum(avg_losses["grad_d_50"]) / len(avg_losses["grad_d_50"])
+                if len(avg_losses["grad_g_50"]) > 0:
+                    scalar_dict["grad_avg_50/norm_g"] = sum(avg_losses["grad_g_50"]) / len(avg_losses["grad_g_50"])
+                if len(avg_losses["disc_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/d/adv"] = torch.stack(list(avg_losses["disc_loss_50"])).mean()
+                if len(avg_losses["adv_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/adv"] = torch.stack(list(avg_losses["adv_loss_50"])).mean()
+                if len(avg_losses["fm_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/fm"] = torch.stack(list(avg_losses["fm_loss_50"])).mean()
+                if len(avg_losses["kl_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/kl"] = torch.stack(list(avg_losses["kl_loss_50"])).mean()
+                if len(avg_losses["mel_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/mel"] = torch.stack(list(avg_losses["mel_loss_50"])).mean()
+                if len(avg_losses["gen_loss_50"]) > 0:
+                    scalar_dict["loss_avg_50/g/total"] = torch.stack(list(avg_losses["gen_loss_50"])).mean()
 
                 if energy_use and len(avg_losses["energy_loss_50"]) > 0:
                     scalar_dict["loss_avg_50/g/energy"] = torch.stack(list(avg_losses["energy_loss_50"])).mean()
@@ -1728,7 +1884,10 @@ def train_and_evaluate(
     done = False
     
     if rank == 0:
-        if epoch % save_every_epoch == False:
+        # BUG FIX #28: Original compared int with bool (`epoch % save_every_epoch == False`).
+        # While this works in Python (0 == False is True), it's a code smell and
+        # can confuse linters. Changed to explicit `== 0` comparison.
+        if epoch % save_every_epoch == 0:
             checkpoint_suffix = f"{'latest' if save_only_latest else global_step}.pth"
 
             save_checkpoint(

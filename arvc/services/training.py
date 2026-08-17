@@ -27,9 +27,13 @@ def getname(path):
     return os.path.basename(path).replace(".py", "")
 
 def if_done(done, p):
-    while 1:
-        if p.poll() is None: time.sleep(0.5)
-        else: break
+    # BUG FIX #49: Original code used a busy-wait loop polling p.poll() every
+    # 0.5s. This wastes CPU cycles. Using p.wait() blocks efficiently until
+    # the process completes, with zero CPU overhead.
+    try:
+        p.wait()
+    except Exception:
+        pass
 
     done[0] = True
 
@@ -237,14 +241,17 @@ def preprocess(
         "--dataset_path", dataset,
         "--sample_rate", str(sr),
         "--cpu_cores", str(cpu_core),
-        "--cut_preprocess", cut_preprocess,
+        # BUG FIX #36: cut_preprocess was not converted to str(). subprocess.Popen
+        # requires all args to be strings. If cut_preprocess is not a string (e.g.,
+        # a Gradio component object), this would raise TypeError.
+        "--cut_preprocess", str(cut_preprocess),
         "--process_effects", str(process_effects),
         "--clean_dataset", str(clean_dataset),
         "--clean_strength", str(clean_strength),
         "--chunk_len", str(chunk_len),
         "--overlap_len", str(overlap_len),
-        "--normalization_mode", normalization_mode,
-        "--architecture", architecture
+        "--normalization_mode", str(normalization_mode),
+        "--architecture", str(architecture)
     ])
 
     done = [False]

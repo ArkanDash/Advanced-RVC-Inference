@@ -88,15 +88,20 @@ def save_checkpoint(logger, model, optimizer, learning_rate, iteration, checkpoi
     logger.info(translations["save_model"].format(checkpoint_path=checkpoint_path, iteration=iteration))
 
 def summarize(
-    writer, 
-    global_step, 
-    scalars={}, 
-    histograms={}, 
-    images={}, 
-    audios={}, 
+    writer,
+    global_step,
+    scalars={},
+    histograms={},
+    images={},
+    audios={},
     audio_sample_rate=22050
 ):
     for k, v in scalars.items():
+        # BUG FIX: Detach tensors before logging to prevent GPU memory leak.
+        # Without .detach(), the computation graph is retained, causing OOM over
+        # many epochs as gradients accumulate.
+        if torch.is_tensor(v):
+            v = v.detach()
         writer.add_scalar(k, v, global_step)
 
     for k, v in histograms.items():
@@ -134,19 +139,27 @@ def plot_spectrogram_to_numpy(spectrogram):
 
     try:
         data = np.array(
-            fig.canvas.renderer.buffer_rgba(), 
+            fig.canvas.renderer.buffer_rgba(),
             dtype=np.uint8
         ).reshape(
             fig.canvas.get_width_height()[::-1] + (4,)
         )[:, :, :3]
-    except:
-        data = np.fromstring(
-            fig.canvas.tostring_rgb(), 
-            dtype=np.uint8, 
-            sep=""
-        ).reshape(
-            fig.canvas.get_width_height()[::-1] + (3,)
-        )
+    except Exception:
+        # BUG FIX: np.fromstring is deprecated since NumPy 1.14 and removed in
+        # NumPy 2.0+. Use np.frombuffer which is the modern, supported API.
+        try:
+            data = np.frombuffer(
+                fig.canvas.tostring_rgb(),
+                dtype=np.uint8
+            ).reshape(
+                fig.canvas.get_width_height()[::-1] + (3,)
+            )
+        except Exception:
+            # Final fallback: use buffer_rgba with RGB conversion
+            rgba = np.array(fig.canvas.renderer.buffer_rgba(), dtype=np.uint8)
+            data = rgba[:, :, :3].reshape(
+                fig.canvas.get_width_height()[::-1] + (3,)
+            )
 
     return data
 

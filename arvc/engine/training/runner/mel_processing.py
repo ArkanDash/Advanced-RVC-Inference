@@ -174,6 +174,17 @@ class MultiScaleMelSpectrogramLoss(torch.nn.Module):
             for mel in n_mels
         ]
 
+    @property
+    def num_scales(self):
+        """Number of mel scales used by this loss function.
+
+        BUG FIX: train.py uses getattr(fn_mel_loss, 'num_scales', 3) to normalize
+        the mel loss. Without this property, the default of 3 was always returned,
+        causing the mel loss to be ~2.67x larger than intended (8 scales / 3 default).
+        This skewed the loss balance and made mel loss dominate over KL/FM/adv losses.
+        """
+        return len(self.stft_params)
+
     def mel_spectrogram(self, wav, n_mels, window_length, hop_length):
         dtype_device = str(wav.dtype) + "_" + str(wav.device)
         win_dtype_device = str(window_length) + "_" + dtype_device

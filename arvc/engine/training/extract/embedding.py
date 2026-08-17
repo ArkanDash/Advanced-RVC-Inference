@@ -12,7 +12,7 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from arvc.utils.variables import logger, translations, config
+from arvc.utils.variables import logger, translations, config, configs
 from arvc.engine.training.extract.setup_path import setup_paths
 from arvc.engine.models.utils import load_audio, load_embedders_model, extract_features
 
@@ -161,9 +161,17 @@ def create_mute_file(version, embedder_model, embedders_mode, is_half):
     logger.info(translations.get("start_extract_hubert", "Starting embedding extraction"))
 
     mute_wav_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "logs", "mute", "sliced_audios_16k", "mute.wav")
-    mute_out_path = os.path.join("..", "assets", "logs", "mute", f"{version}_extracted", f"mute_{embedder_model}.npy")
+    # BUG FIX: Original used a RELATIVE path (`os.path.join("..", "assets", ...)`)
+    # which is resolved against the current working directory, NOT the package
+    # root. When run from a different CWD (CLI vs Gradio UI), the mute file was
+    # saved to the wrong location, causing `mute_file()` in preparing_files.py
+    # to fail finding it. Use an absolute path based on this file's location.
+    mute_out_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "..", "..", "assets", "logs", "mute",
+        f"{version}_extracted", f"mute_{embedder_model}.npy"
+    )
 
-    # Fall back to the VRVC standard mute path
+    # Fall back to the VRVC standard mute path (uses `configs` from variables)
     if not os.path.exists(mute_wav_path):
         mute_wav_path = os.path.join(configs.get("logs_path", "assets/logs"), "mute", "sliced_audios_16k", "mute.wav")
 

@@ -38,18 +38,30 @@ def mute_file(embedders_mode, embedder_model, mute_base_path, rvc_version):
 
 def generate_config(rvc_version, sample_rate, model_path, architecture="RVC"):
     """Generate config file for the model if it doesn't exist.
-    
+
     VRVC addition: architecture parameter — SVC mode sets hop_length=441.
     """
     config_save_path = os.path.join(model_path, "config.json")
     if not os.path.exists(config_save_path):
+        # BUG FIX: Original used `os.getcwd()` which is the current working
+        # directory, NOT the package root. When run from a different CWD
+        # (CLI vs Gradio UI vs Colab), the config template was not found.
+        # Use the package root based on this file's location instead.
+        _package_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         src_config_path = os.path.join(
-            os.getcwd(), 
-            "arvc", 
-            "configs", 
-            rvc_version, 
+            _package_root,
+            "arvc",
+            "configs",
+            rvc_version,
             f"{sample_rate}.json"
         )
+        # Fallback: try configs_path from main configs (more robust)
+        if not os.path.exists(src_config_path):
+            src_config_path = os.path.join(
+                configs.get("configs_path", os.path.join(_package_root, "arvc", "configs")),
+                rvc_version,
+                f"{sample_rate}.json"
+            )
         if os.path.exists(src_config_path):
             shutil.copy(src_config_path, config_save_path)
         else:
