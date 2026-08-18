@@ -3,6 +3,11 @@
 This document summarizes all training-related bugs identified and fixed in the
 Advanced-RVC-Inference codebase.
 
+> **Note (v2.2.2):** File paths below reflect the package reorganization
+> (see [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) for the
+> migration cheat-sheet). The most common change is
+> `arvc/services/training.py` → `arvc/services/training/training.py`.
+
 ## Files Modified
 
 1. `arvc/engine/training/runner/train.py` — Main training script (10 fixes)
@@ -15,7 +20,7 @@ Advanced-RVC-Inference codebase.
 8. `arvc/engine/training/extract/rms.py` — RMS energy extraction (1 fix)
 9. `arvc/engine/training/create_dataset.py` — Dataset creation (2 fixes)
 10. `arvc/engine/models/utils.py` — Feature extraction (1 fix)
-11. `arvc/services/training.py` — Training service layer (2 fixes)
+11. `arvc/services/training/training.py` — Training service layer (2 fixes)
 
 ---
 
@@ -211,13 +216,13 @@ mute file was saved to the wrong location.
 **Fix:** Use an absolute path based on the file's location.
 
 ### FIX 25: `cut_preprocess` Not Converted to str()
-**File:** `arvc/services/training.py`
+**File:** `arvc/services/training/training.py`
 **Bug:** `subprocess.Popen` requires all args to be strings, but `cut_preprocess`
 was not converted.
 **Fix:** Added `str(cut_preprocess)`.
 
 ### FIX 26: `if_done` Busy-Waits with `time.sleep(0.5)`
-**File:** `arvc/services/training.py`
+**File:** `arvc/services/training/training.py`
 **Bug:** Busy-wait loop polling `p.poll()` every 0.5s wastes CPU cycles.
 **Fix:** Replaced with `p.wait()` which blocks efficiently.
 

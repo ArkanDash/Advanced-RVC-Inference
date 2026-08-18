@@ -330,7 +330,7 @@ class VoiceConverter:
 
                 pbar.update(1)
                 if clean_audio:
-                    from arvc.utils.noisereduce import TorchGate
+                    from arvc.engine.inference.noisereduce import TorchGate
                     if not hasattr(self, "tg"): self.tg = TorchGate(self.tgt_sr, prop_decrease=clean_strength).to(self.device)
                     audio_output = self.tg(torch.from_numpy(audio_output).unsqueeze(0).to(self.device).float()).squeeze(0).cpu().detach().numpy()
 

@@ -45,7 +45,7 @@ from arvc.utils.variables import (
     vr_models, mdx_models, embedders_model, 
     spin_model, whisper_model
 )
-from arvc.services.process import fetch_pretrained_data
+from arvc.services.system.process import fetch_pretrained_data
 
 # Constants for supported audio formats
 AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".ogg", ".opus", ".m4a", 

@@ -23,7 +23,7 @@ from arvc.services.downloads import (
     download_pretrained_model,
     search_models,
 )
-from arvc.services.process import fetch_pretrained_data, update_sample_rate_dropdown
+from arvc.services.system.process import fetch_pretrained_data, update_sample_rate_dropdown
 
 
 def download_tab():

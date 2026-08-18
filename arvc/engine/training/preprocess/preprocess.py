@@ -112,7 +112,7 @@ class PreProcess:
 
             if clean_dataset: 
                 if not hasattr(self, "tg"): 
-                    from arvc.utils.noisereduce import TorchGate
+                    from arvc.engine.inference.noisereduce import TorchGate
                     self.tg = TorchGate(self.sr, prop_decrease=clean_strength).to(self.device)
                 audio = self.tg(torch.from_numpy(audio).unsqueeze(0).to(self.device).float()).squeeze(0).cpu().detach().numpy()
 

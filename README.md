@@ -11,6 +11,9 @@
 </div>
 
 > [!NOTE]
+> **v2.2.2** is a **package tidy-up release** — `arvc/utils/` and `arvc/services/` were reorganized into cleaner domain subpackages. **No behavior changes.** Old imports keep working thanks to re-export shims. See the [Changelog](#changelog) below for the migration cheat-sheet.
+
+> [!NOTE]
 > **v2.2.1** fixes a critical training bug where predictor (RMVPE/FCPE) and embedder (HuBERT) models were **not downloading automatically** during training, causing "model not found" errors. Also includes improved data validation and corrupted file handling. See the [Changelog](#changelog) below for details.
 
 > [!NOTE]
@@ -194,26 +197,39 @@ complete security audit trail.
 
 ```
 arvc/
+├── api/                    # CLI entry points (rvc-cli → arvc.api.cli:main)
 ├── app/                    # Gradio web UI (tabs, pages, layouts)
-│   ├── tabs/               #   inference, training, downloads, realtime, extra
+│   └── tabs/               #   inference, training, downloads, realtime, extra
 ├── engine/                 # Core logic (no UI dependency)
-│   ├── inference/          #   Voice conversion pipeline, TTS
+│   ├── inference/          #   Voice conversion pipeline, TTS, noisereduce
 │   ├── training/           #   preprocess, extract, train, export
-│   │   ├── preprocess/     #   Audio slicing & normalization
-│   │   ├── extract/        #   Embedding & F0 extraction
-│   │   └── runner/         #   Training loop, losses, data loading
+│   │   ├── preprocess/     #     Audio slicing & normalization
+│   │   ├── extract/        #     Embedding & F0 extraction
+│   │   └── runner/         #     Training loop, losses, data loading
 │   ├── uvr/                #   Audio separation (UVR5)
 │   ├── realtime/           #   Live mic conversion
+│   ├── speaker/            #   Speaker diarization & embedding
 │   └── models/             #   Model loading, generators, optimizers, embedders
-│       ├── generators/     #   HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
-│       ├── optimizers/     #   AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
-│       ├── embedders/      #   Hubert, ContentVec embedders
-│       ├── predictors/     #   F0 predictors (RMVPE, Crepe, FCPE, etc.)
-│       └── backends/       #   CUDA, DirectML, OpenCL, XPU, ZLUDA
-├── services/               # Business logic layer (bridges UI <-> engine)
+│       ├── algorithms/     #     VITS-style primitives (synthesizers, discriminators, …)
+│       ├── generators/     #     HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
+│       ├── optimizers/     #     AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, PolOpt
+│       ├── embedders/      #     Hubert, ContentVec, PPG, transformers
+│       ├── predictors/     #     F0 predictors (RMVPE, Crepe, FCPE, PESTO, PENN, DJCM, SWIFT, WORLD)
+│       ├── backends/       #     CUDA, DirectML, OpenCL, XPU, ZLUDA
+│       └── onnx/           #     ONNX export & wrapper
+├── services/               # Business logic layer (bridges UI ↔ engine)
+│   ├── inference/          #   csrt, f0_extract, presets, separate, tts
+│   ├── training/           #   training orchestration
+│   ├── realtime/           #   realtime server + client
+│   ├── system/             #   process, restart, model_utils, utils
+│   └── downloads/          #   download orchestration
 ├── ui/                     # UI helpers (feedback, dropdown updates, formatting)
-├── utils/                  # Shared utilities (variables, download helpers)
+├── utils/                  # Shared utilities
+│   ├── variables.py        #   Global paths, Config singleton, logger, translations
+│   ├── feedback.py         #   Headless-safe logger (gr_info, gr_warning, gr_error)
+│   └── downloaders/        #   File-host backends (gdown, huggingface, mediafire, meganz, pixeldrain)
 ├── configs/                # Configuration files (training configs, model templates)
+│   ├── config.py           #   Runtime Config singleton (device, providers, paths)
 │   ├── v1/                 #   V1 model configs (32k, 40k, 48k)
 │   ├── v2/                 #   V2 model configs (24k, 32k, 40k, 48k)
 │   ├── ringformer_v2/      #   RingFormer V2 configs
@@ -226,17 +242,22 @@ arvc/
 │   │   ├── pretrained_custom/ #  Custom pretrained weights
 │   │   ├── embedders/      #     Hubert/ContentVec models
 │   │   ├── predictors/     #     F0 predictor models
+│   │   ├── speaker_diarization/ # Speaker-diarization model + assets
 │   │   └── uvr5/           #     UVR5 separation models
-│   ├── logs/               #   Training logs, checkpoints, extracted features, indexes
+│   ├── logs/               #   Training logs, checkpoints, weights, indexes, feature caches
 │   ├── audios/             #   Audio files (input, output, TTS, UVR results)
 │   ├── f0/                 #   F0 cache files
-│   ├── binary/             #   Binary resources
+│   ├── binary/             #   Binary resources (e.g., ZLUDA helpers)
 │   ├── languages/          #   44 translation JSON files
-│   └── presets/            #   Inference presets
+│   ├── presets/            #   Inference presets
+│   └── zluda/              #   ZLUDA launcher (Windows AMD GPUs)
 └── _version.py             # Version management
 ```
 
-**Key rule**: `engine/` should never import from `app/` or `services/`. Keep the core independent.
+**Key rules**:
+- `engine/` should never import from `app/` or `services/`. Keep the core independent.
+- `services/` may import from `engine/` and `utils/`, but NOT from `app/` or `ui/`.
+- See [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) for the full deep-dive (dependency graph, where-to-add-new-code table, backward-compat notes).
 
 ---
 
@@ -254,6 +275,59 @@ The use of the converted voice for the following purposes is **strictly prohibit
 ---
 
 ## Changelog
+
+### v2.2.2
+
+**📦 Package Tidy-Up (no behavior changes — pure reorganization)**
+
+The `arvc/` package was reorganized for clarity. All moves are
+backward-compatible thanks to `__init__.py` re-export shims, but the *new*
+canonical paths are the ones to use going forward.
+
+- **`arvc/utils/` slimmed down** — 5 file-host downloaders (`gdown`,
+  `huggingface`, `mediafire`, `meganz`, `pixeldrain`) moved into a new
+  `arvc/utils/downloaders/` subpackage. `noisereduce.py` moved to
+  `arvc/engine/inference/noisereduce.py` (it's a torch-dependent audio
+  utility that belongs with the inference pipeline). `utils/__init__.py`
+  rewritten with lazy-import `__getattr__` so `import arvc` doesn't pull
+  in every downloader.
+- **`arvc/services/` grouped by domain** — the 12 flat service files are now
+  in 5 domain subpackages: `services/inference/` (csrt, f0_extract, presets,
+  separate, tts), `services/training/` (training), `services/realtime/`
+  (realtime, realtime_client), `services/system/` (process, restart,
+  model_utils, utils), `services/downloads/` (downloads). Each subpackage
+  `__init__.py` re-exports its modules' public names, so old imports like
+  `from arvc.services.training import X` keep working.
+- **New doc**: [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) —
+  the canonical reference for the package layout, dependency rules, and a
+  "where to add new code" lookup table.
+- **Updated docs**: README.md and CONTRIBUTING.md "Project Structure"
+  sections refreshed. `TRAINING_BUG_FIXES.md` file references updated to
+  new paths.
+
+**Migration cheat-sheet** (only needed if you imported these directly):
+
+| Old path | New canonical path |
+|----------|---------------------|
+| `arvc.utils.gdown` | `arvc.utils.downloaders.gdown` |
+| `arvc.utils.huggingface` | `arvc.utils.downloaders.huggingface` |
+| `arvc.utils.mediafire` | `arvc.utils.downloaders.mediafire` |
+| `arvc.utils.meganz` | `arvc.utils.downloaders.meganz` |
+| `arvc.utils.pixeldrain` | `arvc.utils.downloaders.pixeldrain` |
+| `arvc.utils.noisereduce` | `arvc.engine.inference.noisereduce` |
+| `arvc.services.csrt` | `arvc.services.inference.csrt` |
+| `arvc.services.f0_extract` | `arvc.services.inference.f0_extract` |
+| `arvc.services.presets` | `arvc.services.inference.presets` |
+| `arvc.services.separate` | `arvc.services.inference.separate` |
+| `arvc.services.tts` | `arvc.services.inference.tts` |
+| `arvc.services.training` | `arvc.services.training.training` (or `arvc.services.training` — re-exported) |
+| `arvc.services.realtime` | `arvc.services.realtime.realtime` (or `arvc.services.realtime` — re-exported) |
+| `arvc.services.realtime_client` | `arvc.services.realtime.realtime_client` |
+| `arvc.services.process` | `arvc.services.system.process` |
+| `arvc.services.restart` | `arvc.services.system.restart` |
+| `arvc.services.model_utils` | `arvc.services.system.model_utils` |
+| `arvc.services.utils` | `arvc.services.system.utils` |
+| `arvc.services.downloads` | `arvc.services.downloads.downloads` (or `arvc.services.downloads` — re-exported) |
 
 ### v2.2.1
 

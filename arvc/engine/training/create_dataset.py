@@ -231,7 +231,7 @@ def create_dataset(
         # Initialize TorchGate here using the target sample_rate
         tg = None
         if clean_dataset: 
-            from arvc.utils.noisereduce import TorchGate
+            from arvc.engine.inference.noisereduce import TorchGate
             tg = TorchGate(sample_rate, prop_decrease=clean_strength).to(config.device)
         
         for audio in audio_path:

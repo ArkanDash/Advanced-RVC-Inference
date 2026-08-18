@@ -54,7 +54,7 @@ class RVC_Realtime:
         else: self.vad = None
 
         if self.clean_audio:
-            from arvc.utils.noisereduce import TorchGate
+            from arvc.engine.inference.noisereduce import TorchGate
             self.tg = TorchGate(self.sample_rate, prop_decrease=self.clean_strength).to(config.device)
         else: self.tg = None
 

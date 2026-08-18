@@ -9,6 +9,10 @@ into the Advanced-RVC-Inference codebase from three community forks:
 
 These complement the bug fixes documented in `TRAINING_BUG_FIXES.md`.
 
+> **Note (v2.2.2):** File paths below reflect the package reorganization
+> (see [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) for the
+> migration cheat-sheet).
+
 ---
 
 ## Files Modified

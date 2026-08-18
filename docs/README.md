@@ -2,6 +2,19 @@
 
 A comprehensive command-line interface for the Advanced RVC Inference framework. This CLI provides access to all the powerful features of RVC including voice conversion, model training, audio separation, and more - all from the terminal.
 
+## Related Documentation
+
+| Document | Description |
+|----------|-------------|
+| [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md) | Canonical reference for the `arvc/` package layout, dependency rules, and where to add new code |
+| [../TRAINING_BUG_FIXES.md](../TRAINING_BUG_FIXES.md) | Audit trail of all training pipeline bug fixes (30 fixes) |
+| [../TRAINING_FEATURES_BACKPORTS.md](../TRAINING_FEATURES_BACKPORTS.md) | Features backported from Vietnamese-RVC, Applio, and PolTrain |
+| [TRAINING_BOOST.md](TRAINING_BOOST.md) | `--fast_train` / `--bf16_adamw` usage guide with GPU-specific recipes |
+| [SECURITY_PATCHES.md](SECURITY_PATCHES.md) | Security hardening audit trail with verification commands |
+| [optimizer.md](optimizer.md) | Reference for the 5 supported training optimizers |
+| [vocoder.md](vocoder.md) | Reference for the 4 supported vocoders |
+| [Advanced-RVC-Documentation.pdf](Advanced-RVC-Documentation.pdf) | Full PDF documentation |
+
 ## Table of Contents
 
 - [Installation](#installation)
