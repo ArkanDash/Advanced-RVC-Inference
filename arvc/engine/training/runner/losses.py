@@ -2,7 +2,11 @@ def feature_loss(fmap_r, fmap_g):
     loss = 0
     for dr, dg in zip(fmap_r, fmap_g):
         for rl, gl in zip(dr, dg):
-            loss += (rl.float() - gl.float()).abs().mean()
+            # Detach real features (from Vietnamese-RVC): during the G step,
+            # fmap_r comes from a real-wave forward pass through D. Without
+            # .detach(), the autograd graph is built for the real path even
+            # though the G optimizer never updates D params — pure waste.
+            loss += (rl.float().detach() - gl.float()).abs().mean()
 
     return loss * 2
 

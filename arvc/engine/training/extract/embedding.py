@@ -26,6 +26,18 @@ def process_file_embedding(files, embedder_model, embedders_mode, device, versio
     model = load_embedders_model(embedder_model, embedders_mode)
     if isinstance(model, torch.nn.Module): model = model.to(device).to(torch.float16 if is_half else torch.float32).eval()
 
+    # BACKPORT (Vietnamese-RVC): torch.compile the embedder when compile_all
+    # is enabled. This gives a 1.3-2x speedup on feature extraction, which is
+    # significant because embedding extraction is typically the bottleneck of
+    # the preprocessing pipeline. Only applied on CUDA (Triton requirement).
+    try:
+        from arvc.utils.variables import config as _cfg
+        if getattr(_cfg, "compile_all", False) and device.startswith("cuda"):
+            _mode = getattr(_cfg, "compile_mode", None)
+            model = torch.compile(model, mode=_mode) if _mode else torch.compile(model)
+    except Exception as e:
+        logger.debug(f"torch.compile embedder skipped: {e}")
+
     failed = 0
     saved = 0
     lock = threading.Lock()

@@ -71,13 +71,14 @@ from arvc.engine.training.runner.mel_processing import (
 )
 
 from arvc.engine.training.runner.utils import (
-    HParams, 
-    summarize, 
-    load_checkpoint, 
-    save_checkpoint, 
+    HParams,
+    summarize,
+    load_checkpoint,
+    save_checkpoint,
     load_wav_to_torch,
-    latest_checkpoint_path, 
+    latest_checkpoint_path,
     plot_spectrogram_to_numpy,
+    mel_spectrogram_similarity,
 )
 from arvc.engine.models.weight_norm import configure_weight_norm, use_new_pytorch
 
@@ -956,7 +957,28 @@ def run(
             )
         )
 
-    fn_mel_loss = MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate) if multiscale_mel_loss else torch.nn.L1Loss()
+    # BACKPORT (Applio): Vocoder-conditional multiscale_mel_loss auto-enable.
+    # RefineGAN and BigVGAN vocoders produce waveforms whose spectral
+    # characteristics vary significantly across frequency bands. A single-scale
+    # L1 mel loss fails to capture these differences, leading to subtle
+    # artifacts (buzzing, muffled high-end) that get baked into the model.
+    # Auto-enable multiscale mel loss for these vocoders even if the user
+    # explicitly disabled it — they almost certainly didn't intend to lose
+    # quality on vocoder-incompatible setups.
+    _effective_multiscale_mel_loss = multiscale_mel_loss
+    if not _effective_multiscale_mel_loss and vocoder in ("RefineGAN", "BigVGAN"):
+        if rank == 0:
+            logger.warning(
+                f"vocoder='{vocoder}' requires multiscale_mel_loss for best "
+                f"quality. Auto-enabling multiscale_mel_loss=True."
+            )
+        _effective_multiscale_mel_loss = True
+
+    fn_mel_loss = (
+        MultiScaleMelSpectrogramLoss(sample_rate=config.data.sample_rate)
+        if _effective_multiscale_mel_loss
+        else torch.nn.L1Loss()
+    )
 
     # ═══════════════════════════════════════════════════════════════
     # BUG FIX #14, #48: DDP wrapping + torch.compile order
@@ -1178,19 +1200,21 @@ def run(
             logger.debug(e)
             sys.exit(1)
 
-    # Scheduler selection — Vietnamese-RVC style with AdaBelief / AdaBeliefV2 / CosineAnnealing
-    if optimizer_choice == "AdaBelief" or use_cosine_annealing_lr:
+    # Scheduler selection — Vietnamese-RVC style with AdaBelief / AdaBeliefV2 / PolOpt / CosineAnnealing
+    # PolOpt (from PolTrain by Politrees) pairs with CosineAnnealingLR, matching
+    # the configuration used in PolTrain where it produced the best results.
+    if optimizer_choice == "PolOpt" or optimizer_choice == "AdaBelief" or use_cosine_annealing_lr:
         scheduler_g, scheduler_d = (
             torch.optim.lr_scheduler.CosineAnnealingLR(
-                optim_g, 
-                T_max=total_epoch, 
-                eta_min=1e-6, 
+                optim_g,
+                T_max=total_epoch,
+                eta_min=1e-6,
                 last_epoch=epoch_str - 2
-            ), 
+            ),
             torch.optim.lr_scheduler.CosineAnnealingLR(
-                optim_d, 
-                T_max=total_epoch, 
-                eta_min=1e-6, 
+                optim_d,
+                T_max=total_epoch,
+                eta_min=1e-6,
                 last_epoch=epoch_str - 2
             )
         )
@@ -1494,14 +1518,19 @@ def train_and_evaluate(
 
             # ═══════════════════════════════════════════════════════════════
             # BUG FIX: Improved Mel loss calculation with proper normalization
-            # 
+            #
             # Original issues:
             # 1. Division by 3.0 magic number was arbitrary and not adaptive
             # 2. No clamping of extreme loss values causing gradient instability
             # 3. Inconsistent loss scaling between multiscale and single-scale modes
             # These issues caused unstable training and suboptimal voice quality.
             # ═══════════════════════════════════════════════════════════════
-            if multiscale_mel_loss: 
+            # BACKPORT (Applio): use isinstance check instead of the
+            # multiscale_mel_loss flag — this correctly handles the case where
+            # multiscale_mel_loss was auto-enabled by the vocoder-conditional
+            # logic in run() (e.g. RefineGAN/BigVGAN).
+            _is_multiscale = isinstance(fn_mel_loss, MultiScaleMelSpectrogramLoss)
+            if _is_multiscale:
                 raw_mel_loss = fn_mel_loss(wave, y_hat)
                 # BUG FIX: Use proper normalization based on number of scales
                 # MultiScaleMelSpectrogramLoss typically uses 3 scales, so we normalize
@@ -1790,16 +1819,20 @@ def train_and_evaluate(
         )
 
         scalar_dict = {
-            "loss/g/total": loss_gen_all, 
-            "loss/d/adv": loss_disc, 
-            "learning_rate": optim_g.param_groups[0]["lr"], 
-            "grad/norm_d": grad_norm_d, 
-            "grad/norm_g": grad_norm_g, 
+            "loss/g/total": loss_gen_all,
+            "loss/d/adv": loss_disc,
+            "learning_rate": optim_g.param_groups[0]["lr"],
+            "grad/norm_d": grad_norm_d,
+            "grad/norm_g": grad_norm_g,
             "loss/g/adv": loss_gen,
-            "loss/g/fm": loss_fm, 
-            "loss/g/mel": loss_mel, 
+            "loss/g/fm": loss_fm,
+            "loss/g/mel": loss_mel,
             "loss/g/kl": loss_kl,
-            "loss/g/energy": loss_energy if energy_use else torch.tensor(0.0, device=device)
+            "loss/g/energy": loss_energy if energy_use else torch.tensor(0.0, device=device),
+            # BACKPORT (PolTrain): human-readable 0-100% mel similarity score.
+            # Much easier to monitor than raw L1 mel loss — 100% means perfect
+            # reconstruction. Computed from y_hat_mel vs y_mel above.
+            "metric/mel_similarity": mel_spectrogram_similarity(y_hat_mel, y_mel),
         }
 
         scalar_dict.update({f"loss/g/{i}": v for i, v in enumerate(losses_gen)})
@@ -2003,6 +2036,13 @@ def train_and_evaluate(
 
             model_add.append(
                 os.path.join(weights_path, f"{model_name}_{epoch}e_{global_step}s.pth")
+            )
+            # BACKPORT (PolTrain): explicit "_last.pth" marker for the final
+            # epoch. Downstream tooling (inference scripts, model browsers,
+            # upload scripts) can simply look for "{model_name}_last.pth"
+            # instead of globbing for the highest epoch number.
+            model_add.append(
+                os.path.join(weights_path, f"{model_name}_last.pth")
             )
 
             done = True

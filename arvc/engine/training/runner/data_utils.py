@@ -110,6 +110,27 @@ class TextAudioLoader(tdata.Dataset):
         elif self.energy: energy, sid = extra
         else: sid = extra[0]
 
+        # BACKPORT (Applio): support relative paths in filelist.txt.
+        # Makes filelists portable across machines (e.g. user trains on
+        # /home/userA/datasets/... but uploads to a server where the dataset
+        # is mounted at /data/...). If the path is relative, try resolving
+        # against the spec_dirs first, then against CWD as a final fallback.
+        _audio_path = audiopath_and_text[0]
+        if not os.path.isabs(_audio_path) and not os.path.exists(_audio_path):
+            _resolved = None
+            for _base in (self.spec_dirs or []):
+                _candidate = os.path.join(_base, os.path.basename(_audio_path))
+                if os.path.exists(_candidate):
+                    _resolved = _candidate
+                    break
+            if _resolved is None and self.spec_dirs:
+                # Try the first spec_dir as a base
+                _candidate = os.path.join(self.spec_dirs[0], _audio_path)
+                if os.path.exists(_candidate):
+                    _resolved = _candidate
+            if _resolved is not None:
+                audiopath_and_text = (_resolved,) + tuple(audiopath_and_text[1:])
+
         spec, wav = self.get_audio(audiopath_and_text[0])
         dv = self.get_sid(sid)
 

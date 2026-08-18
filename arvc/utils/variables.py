@@ -147,6 +147,58 @@ class Config:
         self.gpu_name = self._get_gpu_name()
         self.providers = self._get_providers()
         self.is_half = self._is_fp16()
+
+        # ── Precision / compile flags (backported from Vietnamese-RVC) ─────
+        # tf32: enables TF32 tensor cores on Ampere+ GPUs. ~3x matmul
+        #       speedup over FP32 with negligible accuracy loss. Safe default.
+        # compile_all: torch.compile the embedder + (optionally) the
+        #              training model for 1.3-2x speedup. Requires Triton.
+        # compile_mode: "default" / "reduce-overhead" / "max-autotune".
+        # int8: 8-bit optimizer state (bitsandbytes) — saves VRAM.
+        # brain: BF16 mixed precision (Ampere+ or XPU).
+        import torch as _torch
+        _cuda_avail = _torch.cuda.is_available()
+        try:
+            _major = _torch.cuda.get_device_capability(0)[0] if _cuda_avail else None
+        except Exception:
+            _major = None
+
+        self.cuda_tf32 = (
+            _cuda_avail
+            and hasattr(_torch.cuda, "is_tf32_supported")
+            and _major is not None
+            and _major >= 8
+            and _torch.cuda.is_tf32_supported()
+        )
+        self.cuda_bf16 = (
+            _cuda_avail
+            and hasattr(_torch.cuda, "is_bf16_supported")
+            and _major is not None
+            and _major >= 8
+            and _torch.cuda.is_bf16_supported()
+        )
+        self.tf32_support = self.device.startswith("cuda") and self.cuda_tf32
+        self.bf16_support = self.device.startswith(("cuda", "xpu")) and self.cuda_bf16
+
+        # Apply only when hardware supports it and user opts in
+        self.brain = self.brain and self.bf16_support and not self.cpu_mode
+        self.tf32 = (
+            self.configs.get("tf32", False)
+            and self.tf32_support
+            and not self.is_zluda
+            and not self.cpu_mode
+        )
+        if self.tf32:
+            _torch.backends.cuda.matmul.allow_tf32 = True
+            _torch.backends.cudnn.allow_tf32 = True
+
+        self.int8 = self.configs.get("int8", False)
+        # compile_all only meaningful on CUDA — Triton is Linux/Windows-only
+        self.compile_all = self.device.startswith("cuda") and self.configs.get("compile_all", False)
+        self.compile_mode = self.configs.get("compile_mode", None)
+        if self.compile_all:
+            self._setup_compile(_torch)
+
         self.x_pad, self.x_query, self.x_center, self.x_max = self._device_config()
 
     @staticmethod
@@ -206,6 +258,48 @@ class Config:
         if not fp16:
             self.per_preprocess = 3.0
         return fp16
+
+    def _setup_compile(self, torch_module):
+        """Validate and prepare environment for torch.compile (from Vietnamese-RVC).
+
+        Sets up Triton detection, persistent inductor cache, and graph-capture
+        optimizations. If Triton is not available, compile_all is silently
+        disabled and the config file is updated so the user doesn't get
+        confusing errors on next startup.
+        """
+        import importlib
+
+        # Triton is required by TorchInductor (the default backend).
+        try:
+            importlib.import_module("triton")
+        except ModuleNotFoundError:
+            logger.warning(
+                "compile_all=True but Triton is not installed. "
+                "Disabling compile_all. Install triton with: pip install triton"
+            )
+            self.compile_all = False
+            self.configs["compile_all"] = False
+            self._save_configs()
+            return
+
+        # Persistent inductor cache (avoids recompilation on every startup)
+        cache_dir = self.configs.get("compile_cache_dir", "none")
+        if cache_dir != "none":
+            try:
+                os.makedirs(cache_dir, exist_ok=True)
+                os.environ["TORCHINDUCTOR_CACHE_DIR"] = cache_dir
+            except Exception as e:
+                logger.debug(f"Could not set TORCHINDUCTOR_CACHE_DIR: {e}")
+
+        try:
+            import torch._inductor.config as inductor_config
+            import torch._dynamo as _dynamo
+            # Capture scalar outputs (e.g. loss.item()) without breaking the graph
+            _dynamo.config.capture_scalar_outputs = True
+            # Freeze constants into the graph (smaller graph, faster compile)
+            inductor_config.freezing = True
+        except Exception as e:
+            logger.debug(f"Could not fully configure torch.compile: {e}")
 
     @property
     def is_zluda(self) -> bool:

@@ -2,10 +2,12 @@ import os
 import sys
 import glob
 import torch
+import torch.nn.functional as F
 
 import numpy as np
 import soundfile as sf
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 
 from collections import OrderedDict
 
@@ -123,6 +125,13 @@ def latest_checkpoint_path(dir_path, regex="G_*.pth"):
     return checkpoints[-1] if checkpoints else None
 
 def plot_spectrogram_to_numpy(spectrogram):
+    """Render a mel spectrogram to a numpy RGB array for TensorBoard.
+
+    BACKPORT (PolTrain): normalize to dB range [-10, 0] with a fixed colorbar
+    so spectrograms are directly comparable across epochs. The original
+    auto-scaling meant early-epoch (noisy) and late-epoch (clean) spectrograms
+    looked similar because the color range rescaled each time.
+    """
     global MATPLOTLIB_FLAG
 
     if not MATPLOTLIB_FLAG:
@@ -130,7 +139,24 @@ def plot_spectrogram_to_numpy(spectrogram):
         MATPLOTLIB_FLAG = True
 
     fig, ax = plt.subplots(figsize=(10, 2))
-    plt.colorbar(ax.imshow(spectrogram, aspect="auto", origin="lower", interpolation="none"), ax=ax)
+    # Convert to dB if the spectrogram looks linear (values >> 1.0)
+    spec_db = spectrogram
+    try:
+        if np.max(spectrogram) > 1.0:
+            spec_db = 10 * np.log10(np.maximum(spectrogram, 1e-10))
+    except Exception:
+        pass
+
+    # Use fixed dB range so images are comparable across epochs
+    im = ax.imshow(
+        spec_db,
+        aspect="auto",
+        origin="lower",
+        interpolation="none",
+        cmap="viridis",
+        norm=Normalize(vmin=-10, vmax=0),
+    )
+    plt.colorbar(im, ax=ax, format="%+2.0f dB")
     plt.xlabel("Frames")
     plt.ylabel("Channels")
     plt.tight_layout()
@@ -162,6 +188,34 @@ def plot_spectrogram_to_numpy(spectrogram):
             )
 
     return data
+
+
+def mel_spectrogram_similarity(y_hat_mel, y_mel):
+    """Compute a 0-100% similarity score between generated and real mel spectrograms.
+
+    BACKPORT (PolTrain): converts the L1 mel loss into a human-interpretable
+    similarity percentage. 100% = identical, 0% = completely different.
+    Much easier to monitor in TensorBoard than the raw L1 loss value.
+
+    Args:
+        y_hat_mel: Generated mel spectrogram (predicted).
+        y_mel: Real mel spectrogram (ground truth).
+
+    Returns:
+        torch.Tensor: Scalar similarity score in [0, 100].
+    """
+    device = y_hat_mel.device
+    y_mel = y_mel.to(device)
+
+    # Trim to matching length if shapes differ (e.g. due to rounding)
+    if y_hat_mel.shape != y_mel.shape:
+        trimmed_shape = tuple(min(a, b) for a, b in zip(y_hat_mel.shape, y_mel.shape))
+        y_hat_mel = y_hat_mel[..., :trimmed_shape[-1]]
+        y_mel = y_mel[..., :trimmed_shape[-1]]
+
+    loss_mel = F.l1_loss(y_hat_mel, y_mel)
+    similarity = 100.0 - (loss_mel * 100.0)
+    return similarity.clamp(0.0, 100.0)
 
 def load_wav_to_torch(full_path):
     data, sample_rate = sf.read(full_path, dtype=np.float32)

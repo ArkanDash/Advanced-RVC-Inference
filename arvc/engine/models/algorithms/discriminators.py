@@ -129,7 +129,11 @@ class DiscriminatorR(torch.nn.Module):
 
     def forward(self, x):
         fmap = []
-        x = self.spectrogram(x).unsqueeze(1)
+        # AMP safety (from Vietnamese-RVC): cast to float32 before STFT to
+        # avoid NaN/Inf in fp16 autocast. torch.stft is not numerically
+        # stable in fp16 on all backends — this matches the universal pattern
+        # used by DiscriminatorP and the main mel loss.
+        x = self.spectrogram(x.float()).unsqueeze(1).to(x.dtype)
         
         for layer in self.convs:
             x = F.leaky_relu(layer(x), self.lrelu_slope)

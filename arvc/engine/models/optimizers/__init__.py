@@ -21,16 +21,17 @@ Usage:
 
 import torch
 
-# Import the 5 supported optimizers
+# Import the 6 supported optimizers
 from arvc.engine.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
 from arvc.engine.models.optimizers.adabelief import AdaBelief
 from arvc.engine.models.optimizers.adabeliefv2 import AdaBeliefV2
+from arvc.engine.models.optimizers.polopt import PolOpt
 
 
 # ============================================================
 # OPTIMIZER REGISTRY
 # ============================================================
-# Only 5 optimizers — the ones proven to work well for RVC
+# 6 optimizers — the ones proven to work well for RVC
 # and exposed in the UI.
 
 OPTIMIZER_REGISTRY = {
@@ -83,6 +84,16 @@ OPTIMIZER_REGISTRY = {
         "supports_fused": False,
         "supports_weight_decay": True,
         "description": "Improved AdaBelief with AMSGrad support and better bias correction. More stable variance estimates for training deep generative models.",
+    },
+    "PolOpt": {
+        "class": PolOpt,
+        "rating": 4.5,
+        "category": "Belief-Based",
+        "supports_betas": True,
+        "supports_eps": True,
+        "supports_fused": False,
+        "supports_weight_decay": True,
+        "description": "Yogi + AdaBelief hybrid (from PolTrain by Politrees). Uses sign-of-diff second-moment update to prevent denominator collapse during GAN oscillations. Includes trust-region clamping to protect acoustic filters from gradient spikes. Recommended for v3/RefineGAN vocoders.",
     },
 }
 

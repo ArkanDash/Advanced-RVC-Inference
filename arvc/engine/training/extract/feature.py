@@ -11,7 +11,7 @@ import numpy as np
 sys.path.append(os.getcwd())
 
 from arvc.engine.models.utils import load_audio
-from arvc.utils.variables import config, logger, translations
+from arvc.utils.variables import config, configs, logger, translations
 from arvc.engine.training.extract.setup_path import setup_paths
 
 
@@ -87,8 +87,13 @@ def smooth_f0_contours(pitchf, window_size=5):
 class FeatureInput:
     def __init__(self, is_half=config.is_half, device=config.device):
         self.sample_rate = 16000
-        self.f0_max = 1100.0
-        self.f0_min = 50.0
+        # Configurable f0_min/f0_max (from Vietnamese-RVC): allows customization
+        # for non-standard vocal ranges (soprano, bass, instruments) via the
+        # config dict. Defaults remain 50–1100 Hz which covers human voice.
+        _f0_min = configs.get("f0_min", 50)
+        _f0_max = configs.get("f0_max", 1100)
+        self.f0_max = float(_f0_max)
+        self.f0_min = float(_f0_min)
         self.device = device
         self.is_half = is_half
 
@@ -152,7 +157,11 @@ def run_pitch_extraction(exp_dir, f0_method, hop_length, num_processes, devices,
     output_root1, output_root2 = output_roots if len(output_roots) == 2 else (output_roots[0], None)
 
     logger.info(translations["extract_f0_method"].format(num_processes=num_processes, f0_method=f0_method))
-    num_processes = 1 if config.device.startswith(("ocl", "privateuseone")) and ("crepe" in f0_method or "fcpe" in f0_method or "rmvpe" in f0_method or "penn" in f0_method or "swift" in f0_method) else num_processes
+    # BUG FIX (from Vietnamese-RVC): "pesto" was missing from the list of f0
+    # methods that force num_processes=1 on OCL/privateuseone backends.
+    # PESTO uses ONNX runtime under the hood, which crashes on DirectML when
+    # run in parallel — same as crepe/fcpe/rmvpe/penn/swift.
+    num_processes = 1 if config.device.startswith(("ocl", "privateuseone")) and ("crepe" in f0_method or "fcpe" in f0_method or "rmvpe" in f0_method or "penn" in f0_method or "swift" in f0_method or "pesto" in f0_method) else num_processes
     paths = [(os.path.join(input_root, name), os.path.join(output_root1, name) if output_root1 else None, os.path.join(output_root2, name) if output_root2 else None, os.path.join(input_root, name)) for name in sorted(os.listdir(input_root)) if "spec" not in name]
 
     start_time = time.time()
