@@ -359,63 +359,6 @@ The use of the converted voice for the following purposes is **strictly prohibit
 - Impersonation of the original owner of the voice with malicious intentions
 - Fraudulent purposes that lead to identity theft or fraudulent phone calls
 
----
-
-## Changelog
-
-### v2.3.0
-
-**📦 Major Restructuring — Clean Package Architecture**
-
-Complete project reorganization for cleaner, more maintainable codebase:
-
-- **New Modular Structure** — Code organized into focused modules: `rvc/`, `uvr/`, `whisper/`, `tts/`, `downloader/`, `engine/`
-- **Removed All Duplicates** — Deleted 31,000+ lines of duplicate code from legacy `engine/`, `Utils/`, `ui/`, `services/` folders
-- **New Optimizers** — Added Ranger2020 (RAdam + Lookahead + GC) and Prodigy (D-Adaptation) from Codename RVC Fork v4
-- **Enhanced Loss Functions** — Phase loss, envelope loss, KL-divergence loss, MultiScaleSTFTLoss
-- **Training Enhancements** — LR warmup scheduler, KL annealer, gradient clip scheduling, decoder freezing
-- **Clean Imports** — All paths updated to new structure (`arvc.rvc.*`, `arvc.uvr.*`, etc.)
-
-**Migration guide**:
-
-| Old path (deleted) | New path |
-|-------------------|----------|
-| `arvc.engine.inference.*` | `arvc.rvc.inference.*` |
-| `arvc.engine.models.*` | `arvc.rvc.models.*` |
-| `arvc.engine.training.*` | `arvc.rvc.training.*` |
-| `arvc.services.*` | Merged into respective modules |
-| `arvc.Utils.*` | `arvc.utils.*` |
-| `arvc.ui.*` | `arvc.utils.*` |
-
-### v2.2.2
-
-**📦 Package Tidy-Up**
-
-- Reorganized package structure for clarity
-- Added domain-based service grouping
-- Updated documentation
-
-### v2.2.1
-
-**🔧 Critical Bug Fix: Predictor & Embedder Auto-Download**
-- Fixed: Training now auto-downloads predictor/embedder models before starting
-- Safe numpy loading with NaN/Inf handling
-- Increased sequence length limit (900→1800)
-
-### v2.2.0
-
-**🔒 Security Hardening + 🚀 Training Speedup (~3× faster)**
-- Safe deserialization for all `torch.load()` calls
-- Path traversal guards on 20+ sites
-- New `--fast_train` and `--bf16_adamw` flags
-- Applio-parity accuracy improvements
-
-### v2.1.0
-
-- VRVC Training Integration (Vietnamese-RVC pipeline)
-- Multi-scale mel spectrogram loss (8 scales)
-- Optimizer cleanup (5 proven choices)
-- EasyGUI removed — Web UI only
 
 ---
 
@@ -428,7 +371,6 @@ This project builds upon the work of many open-source projects and contributors.
 |---------|--------|
 | [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project |
 | [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh |
-| [Mangio-Kalo-Tweaks](https://github.com/kalomaze/Mangio-Kalo-Tweaks) | kalomaze |
 
 ### Training Improvements
 | Project | Author |
