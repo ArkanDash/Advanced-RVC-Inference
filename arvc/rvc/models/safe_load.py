@@ -24,7 +24,7 @@ This module:
 
 Usage
 -----
-    from arvc.engine.models.safe_load import (
+    from arvc.rvc.models.safe_load import (
         safe_torch_load, safe_pickle_load, safe_yaml_load
     )
 

@@ -1,10 +1,10 @@
 import math
 import torch
 
-from arvc.engine.models.algorithms.modules import WaveNet
-from arvc.engine.models.algorithms.commons import sequence_mask
-from arvc.engine.models.algorithms.normalization import LayerNorm
-from arvc.engine.models.algorithms.attentions import MultiHeadAttention, FFN
+from arvc.rvc.models.algorithms.modules import WaveNet
+from arvc.rvc.models.algorithms.commons import sequence_mask
+from arvc.rvc.models.algorithms.normalization import LayerNorm
+from arvc.rvc.models.algorithms.attentions import MultiHeadAttention, FFN
 
 
 def validate_pitch_tensor(pitch, max_val=255):

@@ -11,11 +11,11 @@ from tqdm import tqdm
 
 
 from arvc.utils.variables import configs
-from arvc.engine.uvr.uvr5_lib import spec_utils
-from arvc.engine.uvr.uvr5_lib.vr_network import nets
-from arvc.engine.uvr.uvr5_lib.vr_network import nets_new
-from arvc.engine.uvr.uvr5_lib.common_separator import CommonSeparator
-from arvc.engine.uvr.uvr5_lib.vr_network.model_param_init import ModelParameters
+from arvc.uvr.uvr5_lib import spec_utils
+from arvc.uvr.uvr5_lib.vr_network import nets
+from arvc.uvr.uvr5_lib.vr_network import nets_new
+from arvc.uvr.uvr5_lib.common_separator import CommonSeparator
+from arvc.uvr.uvr5_lib.vr_network.model_param_init import ModelParameters
 
 class VRSeparator(CommonSeparator):
     def __init__(self, common_config, arch_config):
@@ -57,7 +57,7 @@ class VRSeparator(CommonSeparator):
         else:
             self.model_run = nets.determine_model_capacity(self.model_params.param["bins"] * 2, nn_arch_size)
 
-        from arvc.engine.models.safe_load import safe_torch_load
+        from arvc.rvc.models.safe_load import safe_torch_load
         self.model_run.load_state_dict(safe_torch_load(self.model_path))
         self.model_run.to(self.torch_device)
 

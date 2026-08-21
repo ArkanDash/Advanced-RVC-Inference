@@ -22,8 +22,8 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from arvc.utils import strtobool
-from arvc.engine.models.utils import load_audio
-from arvc.engine.training.preprocess.slicer2 import Slicer
+from arvc.rvc.models.utils import load_audio
+from arvc.rvc.training.preprocess.slicer2 import Slicer
 from arvc.utils.variables import config, logger, translations, configs
 
 if not getattr(config, 'debug_mode', False):
@@ -112,7 +112,7 @@ class PreProcess:
 
             if clean_dataset: 
                 if not hasattr(self, "tg"): 
-                    from arvc.engine.inference.noisereduce import TorchGate
+                    from arvc.rvc.inference.noisereduce import TorchGate
                     self.tg = TorchGate(self.sr, prop_decrease=clean_strength).to(self.device)
                 audio = self.tg(torch.from_numpy(audio).unsqueeze(0).to(self.device).float()).squeeze(0).cpu().detach().numpy()
 

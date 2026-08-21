@@ -97,7 +97,7 @@ def gr_error(message: str, **kwargs) -> None:
 def _get_backends():
     """Lazily import backends (avoids import errors in headless environments)."""
     try:
-        from arvc.engine.models.backends import directml, opencl
+        from arvc.rvc.models.backends import directml, opencl
         return directml, opencl
     except ImportError:
         return None, None

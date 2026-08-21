@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import torch.nn.utils.parametrize as parametrize
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 
 
 class LayerNorm(torch.nn.Module):

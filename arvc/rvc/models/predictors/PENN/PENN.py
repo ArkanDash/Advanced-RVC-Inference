@@ -9,8 +9,8 @@ import numpy as np
 import torch.nn.functional as F
 
 
-from arvc.engine.models.predictors.PENN.core import bins_to_cents, cents_to_frequency
-from arvc.engine.models.predictors.PENN.core import PITCH_BINS, CENTS_PER_BIN, OCTAVE, frequency_to_bins, seconds_to_samples, entropy, interpolate
+from arvc.rvc.models.predictors.PENN.core import bins_to_cents, cents_to_frequency
+from arvc.rvc.models.predictors.PENN.core import PITCH_BINS, CENTS_PER_BIN, OCTAVE, frequency_to_bins, seconds_to_samples, entropy, interpolate
 
 SAMPLE_RATE, WINDOW_SIZE = 8000, 1024
 
@@ -78,10 +78,10 @@ class PENN:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
-            from arvc.engine.models.predictors.PENN.fcn import FCN
+            from arvc.rvc.models.predictors.PENN.fcn import FCN
 
             model = FCN(256, PITCH_BINS, (2, 2))
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             ckpt = safe_torch_load(model_path)
             model.load_state_dict(ckpt['model'])
             model.eval()

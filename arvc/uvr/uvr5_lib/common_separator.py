@@ -8,7 +8,7 @@ import soundfile as sf
 from pydub import AudioSegment
 
 
-from arvc.engine.uvr.uvr5_lib.spec_utils import normalize
+from arvc.uvr.uvr5_lib.spec_utils import normalize
 
 class CommonSeparator:
     VOCAL_STEM = "Vocals"

@@ -12,7 +12,7 @@ Includes 8+ optimizers proven to work well for RVC/SVC training:
 - Advanced (from Codename RVC Fork v4): Ranger2020, Prodigy
 
 Usage:
-    from arvc.engine.models.optimizers import get_optimizer_class, OPTIMIZER_REGISTRY
+    from arvc.rvc.models.optimizers import get_optimizer_class, OPTIMIZER_REGISTRY
 
     # Get optimizer class by name
     opt_class = get_optimizer_class("Ranger2020")
@@ -25,12 +25,12 @@ Usage:
 import torch
 
 # Import all supported optimizers
-from arvc.engine.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
-from arvc.engine.models.optimizers.adabelief import AdaBelief
-from arvc.engine.models.optimizers.adabeliefv2 import AdaBeliefV2
-from arvc.engine.models.optimizers.polopt import PolOpt
-from arvc.engine.models.optimizers.ranger2020 import Ranger2020
-from arvc.engine.models.optimizers.prodigy import Prodigy
+from arvc.rvc.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
+from arvc.rvc.models.optimizers.adabelief import AdaBelief
+from arvc.rvc.models.optimizers.adabeliefv2 import AdaBeliefV2
+from arvc.rvc.models.optimizers.polopt import PolOpt
+from arvc.rvc.models.optimizers.ranger2020 import Ranger2020
+from arvc.rvc.models.optimizers.prodigy import Prodigy
 
 
 # ============================================================

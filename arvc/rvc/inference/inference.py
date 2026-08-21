@@ -147,7 +147,7 @@ def convert_audio(
     # SECURITY PATCH: validate model path stays inside weights_path.
     # `model` comes from the GUI/CLI and could contain `../../foo.pth` to
     # escape the weights directory and overwrite arbitrary files.
-    from arvc.engine.models.safe_load import validate_path_within
+    from arvc.rvc.models.safe_load import validate_path_within
     if os.path.exists(model):
         model_path = validate_path_within(model, [], allow_absolute=True)
     else:
@@ -193,7 +193,7 @@ def convert_audio(
     if use_audio:
         output_audio = os.path.join(configs["audios_path"], input_audio_name)
 
-        from arvc.engine.models.utils import pydub_load
+        from arvc.rvc.models.utils import pydub_load
         
         def get_audio_file(label):
             matching_files = [f for f in os.listdir(output_audio) if label in f]
@@ -739,7 +739,7 @@ def whisper_process(
     out_queue, 
     word_timestamps=True
 ):
-    from arvc.engine.speaker.whisper import load_model
+    from arvc.whisper.speaker.whisper import load_model
 
     try:
         segments = load_model(
@@ -809,11 +809,11 @@ def convert_with_whisper(
     from pydub import AudioSegment
     from sklearn.cluster import AgglomerativeClustering
 
-    from arvc.engine.models.utils import clear_gpu_cache
-    from arvc.engine.speaker.audio import Audio
-    from arvc.engine.speaker.segment import Segment
-    from arvc.engine.models.utils import check_spk_diarization, pydub_load
-    from arvc.engine.speaker.embedding import SpeechBrainPretrainedSpeakerEmbedding
+    from arvc.rvc.models.utils import clear_gpu_cache
+    from arvc.whisper.speaker.audio import Audio
+    from arvc.whisper.speaker.segment import Segment
+    from arvc.rvc.models.utils import check_spk_diarization, pydub_load
+    from arvc.whisper.speaker.embedding import SpeechBrainPretrainedSpeakerEmbedding
     
     check_spk_diarization(model_size)
     model_pth_1, model_pth_2 = (
@@ -1155,7 +1155,7 @@ def convert_tts(
     sid=0
 ):
     # SECURITY PATCH: validate model path stays inside weights_path.
-    from arvc.engine.models.safe_load import validate_path_within
+    from arvc.rvc.models.safe_load import validate_path_within
     if os.path.exists(model):
         model_path = validate_path_within(model, [], allow_absolute=True)
     else:

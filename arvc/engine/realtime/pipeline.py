@@ -9,15 +9,15 @@ import torchaudio.transforms as tat
 sys.path.append(os.getcwd())
 
 from arvc.utils.variables import config
-from arvc.engine.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
-from arvc.engine.models.weight_norm import convert_old_to_new
+from arvc.rvc.models.utils import load_embedders_model, extract_features, change_rms, load_faiss_index, load_model
+from arvc.rvc.models.weight_norm import convert_old_to_new
 
 class Inference:
     def get_synthesizer(self, model_path):
         model = load_model(model_path)
 
         if model_path.endswith(".pth"):
-            from arvc.engine.models.algorithms.synthesizers import Synthesizer
+            from arvc.rvc.models.algorithms.synthesizers import Synthesizer
 
             self.tgt_sr = model["config"][-1]
             model["config"][-3] = model["weight"]["emb_g.weight"].shape[0]
@@ -154,12 +154,12 @@ def create_pipeline(model_path=None, index_path=None, f0_method="rmvpe", f0_onnx
     inference = inference.get_synthesizer(model_path)
 
     if inference.use_f0:
-        from arvc.engine.models.predictors.Generator import Generator
+        from arvc.rvc.models.predictors.Generator import Generator
         predictor = Generator(sample_rate=sample_rate, hop_length=hop_length, f0_min=50.0, f0_max=1100.0, alpha=0.5, is_half=config.is_half, device=config.device, predictor_onnx=f0_onnx, delete_predictor_onnx=False) 
     else: predictor = None
 
     if inference.energy:
-        from arvc.engine.training.extract.rms import RMSEnergyExtractor
+        from arvc.rvc.training.extract.rms import RMSEnergyExtractor
         rms = RMSEnergyExtractor(frame_length=2048, hop_length=160, center=True, pad_mode="reflect").to(config.device).eval()
     else: rms = None
 

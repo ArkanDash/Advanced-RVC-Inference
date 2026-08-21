@@ -12,7 +12,7 @@ if _project_root not in sys.path:
 
 from arvc.utils import strtobool
 
-from arvc.engine.uvr.uvr5_lib.separator import Separator
+from arvc.uvr.uvr5_lib.separator import Separator
 from arvc.utils.variables import config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models
 
 def parse_arguments():

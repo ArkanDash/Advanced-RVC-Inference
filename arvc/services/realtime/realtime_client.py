@@ -13,7 +13,7 @@ except ImportError:
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.models.utils import clear_gpu_cache
+from arvc.rvc.models.utils import clear_gpu_cache
 from arvc.utils.variables import configs, translations, logger
 from arvc.engine.realtime.realtime import VoiceChanger, RVC_Realtime
 

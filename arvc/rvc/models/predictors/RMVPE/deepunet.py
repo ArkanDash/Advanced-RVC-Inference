@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 
-from arvc.engine.models.predictors.RMVPE.yolo import YOLO13Encoder, YOLO13FullPADDecoder, HyperACE
+from arvc.rvc.models.predictors.RMVPE.yolo import YOLO13Encoder, YOLO13FullPADDecoder, HyperACE
 
 class ConvBlockRes(nn.Module):
     def __init__(

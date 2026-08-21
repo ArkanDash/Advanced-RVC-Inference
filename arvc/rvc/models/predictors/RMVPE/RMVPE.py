@@ -6,7 +6,7 @@ import numpy as np
 import torch.nn.functional as F
 
 
-from arvc.engine.models.predictors.RMVPE.mel import MelSpectrogram
+from arvc.rvc.models.predictors.RMVPE.mel import MelSpectrogram
 
 N_MELS, N_CLASS = 128, 360
 
@@ -21,8 +21,8 @@ class RMVPE:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
-            from arvc.engine.models.predictors.RMVPE.e2e import E2E
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.predictors.RMVPE.e2e import E2E
+            from arvc.rvc.models.safe_load import safe_torch_load
             model = E2E(4, 1, (2, 2), 5, 4, 1, 16, hpa=hpa)
 
             model.load_state_dict(safe_torch_load(model_path))

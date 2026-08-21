@@ -12,8 +12,8 @@ sys.path.append(os.getcwd())
 from arvc.utils import huggingface
 from arvc.utils.feedback import gr_info, gr_warning
 from arvc.utils.variables import python, translations, configs, file_types, logger
-from arvc.engine.models.safe_load import validate_path_within
-from arvc.engine.models.utils import check_assets, download_embedder
+from arvc.rvc.models.safe_load import validate_path_within
+from arvc.rvc.models.utils import check_assets, download_embedder
 
 
 def _safe_model_dir(model_name: str) -> str:

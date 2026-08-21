@@ -34,11 +34,11 @@ def strtobool(val):
 warnings.filterwarnings("ignore")
 
 from arvc.ui.feedback import replace_export_format
-from arvc.engine.inference.pipeline import Pipeline
+from arvc.rvc.inference.pipeline import Pipeline
 from arvc.utils.variables import config, logger, translations
-from arvc.engine.inference.audio_processing import preprocess, postprocess
-from arvc.engine.models.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
-from arvc.engine.models.weight_norm import convert_old_to_new
+from arvc.rvc.inference.audio_processing import preprocess, postprocess
+from arvc.rvc.models.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
+from arvc.rvc.models.weight_norm import convert_old_to_new
 
 for l in ["torch", "faiss", "omegaconf", "httpx", "httpcore", "faiss.loader", "numba.core", "urllib3", "transformers", "matplotlib"]:
     logging.getLogger(l).setLevel(logging.ERROR)
@@ -330,7 +330,7 @@ class VoiceConverter:
 
                 pbar.update(1)
                 if clean_audio:
-                    from arvc.engine.inference.noisereduce import TorchGate
+                    from arvc.rvc.inference.noisereduce import TorchGate
                     if not hasattr(self, "tg"): self.tg = TorchGate(self.tgt_sr, prop_decrease=clean_strength).to(self.device)
                     audio_output = self.tg(torch.from_numpy(audio_output).unsqueeze(0).to(self.device).float()).squeeze(0).cpu().detach().numpy()
 
@@ -420,7 +420,7 @@ class VoiceConverter:
     def setup(self):
         if self.cpt is not None:
             if self.loaded_model.endswith(".pth"):
-                from arvc.engine.models.algorithms.synthesizers import Synthesizer
+                from arvc.rvc.models.algorithms.synthesizers import Synthesizer
 
                 self.tgt_sr = self.cpt["config"][-1]
                 self.cpt["config"][-3] = self.cpt["weight"]["emb_g.weight"].shape[0]

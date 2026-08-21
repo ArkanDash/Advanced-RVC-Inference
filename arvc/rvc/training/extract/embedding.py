@@ -13,8 +13,8 @@ import numpy as np
 sys.path.append(os.getcwd())
 
 from arvc.utils.variables import logger, translations, config, configs
-from arvc.engine.training.extract.setup_path import setup_paths
-from arvc.engine.models.utils import load_audio, load_embedders_model, extract_features
+from arvc.rvc.training.extract.setup_path import setup_paths
+from arvc.rvc.models.utils import load_audio, load_embedders_model, extract_features
 
 def process_file_embedding(files, embedder_model, embedders_mode, device, version, is_half, threads, embedders_mix=False, embedders_mix_layers=9, embedders_mix_ratio=0.5):
     """Extract embeddings from audio files using the specified embedder model.

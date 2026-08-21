@@ -7,7 +7,7 @@ from random import shuffle
 sys.path.append(os.getcwd())
 
 from arvc.utils.variables import configs, config, logger
-from arvc.engine.training.extract.embedding import create_mute_file
+from arvc.rvc.training.extract.embedding import create_mute_file
 
 def mute_file(embedders_mode, embedder_model, mute_base_path, rvc_version):
     """Get the path to the mute feature file based on embedder configuration.

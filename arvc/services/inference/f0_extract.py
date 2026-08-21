@@ -16,8 +16,8 @@ def f0_extract(audio, f0_method, f0_onnx):
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from arvc.engine.models.utils import check_assets, load_audio
-    from arvc.engine.models.predictors.Generator import Generator
+    from arvc.rvc.models.utils import check_assets, load_audio
+    from arvc.rvc.models.predictors.Generator import Generator
 
     check_assets(f0_method, "", f0_onnx, "")
 

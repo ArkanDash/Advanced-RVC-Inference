@@ -17,7 +17,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from arvc.utils.variables import config, logger, translations, configs
-from arvc.engine.models.utils import check_assets, load_audio, load_embedders_model, extract_features
+from arvc.rvc.models.utils import check_assets, load_audio, load_embedders_model, extract_features
 
 warnings.filterwarnings("ignore")
 
@@ -141,7 +141,7 @@ def create_reference(
         pbar.update(1)
 
         if pitch_guidance:
-            from arvc.engine.models.predictors.Generator import Generator
+            from arvc.rvc.models.predictors.Generator import Generator
 
             generator = Generator(
                 sample_rate=SAMPLE_RATE, 
@@ -175,7 +175,7 @@ def create_reference(
         pbar.update(1)
 
         if use_energy:
-            from arvc.engine.training.extract.rms import RMSEnergyExtractor
+            from arvc.rvc.training.extract.rms import RMSEnergyExtractor
             rms = RMSEnergyExtractor(frame_length=FRAME_LENGTH, hop_length=HOP_SIZE, center=True, pad_mode="reflect").to(device).eval()
 
             with torch.no_grad():

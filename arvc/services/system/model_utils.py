@@ -10,7 +10,7 @@ from arvc.utils.feedback import gr_info, gr_warning, gr_error
 from arvc.utils.variables import config, logger, translations, configs
 
 # SECURITY PATCH: hardened checkpoint loading — never use weights_only=False.
-from arvc.engine.models.safe_load import safe_torch_load
+from arvc.rvc.models.safe_load import safe_torch_load
 
 def fushion_model_pth(name, pth_1, pth_2, ratio):
     if not name.endswith(".pth"): name = name + ".pth"
@@ -108,7 +108,7 @@ def onnx_export(model_path):
     try:
         gr_info(translations["start_onnx_export"])
 
-        from arvc.engine.models.onnx.onnx_export import onnx_exporter
+        from arvc.rvc.models.onnx.onnx_export import onnx_exporter
         output = onnx_exporter(model_path, model_path.replace(".pth", ".onnx"), is_half=config.is_half, device=config.device)
 
         gr_info(translations["success"])

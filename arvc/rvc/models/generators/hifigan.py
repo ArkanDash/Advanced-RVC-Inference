@@ -3,11 +3,11 @@ import sys
 import torch
 
 import torch.nn.utils.parametrize as parametrize
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 
 
-from arvc.engine.models.algorithms.commons import init_weights
-from arvc.engine.models.algorithms.residuals import ResBlock, LRELU_SLOPE
+from arvc.rvc.models.algorithms.commons import init_weights
+from arvc.rvc.models.algorithms.residuals import ResBlock, LRELU_SLOPE
 
 class HiFiGANGenerator(torch.nn.Module):
     def __init__(self, initial_channel, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=0):

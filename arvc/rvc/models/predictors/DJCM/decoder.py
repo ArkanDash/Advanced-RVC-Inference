@@ -6,8 +6,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from arvc.engine.models.predictors.DJCM.encoder import ResEncoderBlock
-from arvc.engine.models.predictors.DJCM.utils import ResConvBlock, BiGRU, init_bn, init_layer, N_CLASS, WINDOW_LENGTH
+from arvc.rvc.models.predictors.DJCM.encoder import ResEncoderBlock
+from arvc.rvc.models.predictors.DJCM.utils import ResConvBlock, BiGRU, init_bn, init_layer, N_CLASS, WINDOW_LENGTH
 
 class ResDecoderBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_blocks, stride):

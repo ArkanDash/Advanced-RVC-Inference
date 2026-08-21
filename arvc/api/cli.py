@@ -126,7 +126,7 @@ def show_version():
             version_info.append(f"GPU Memory: {gpu_mem} GB")
             # ZLUDA detection
             try:
-                from arvc.engine.models.backends import zluda
+                from arvc.rvc.models.backends import zluda
                 if zluda.is_available():
                     version_info.append(f"ZLUDA: Detected (AMD GPU via CUDA compatibility)")
             except ImportError:
@@ -175,7 +175,7 @@ def show_info():
             info.append(f"  GPU Name: {gpu_name}")
             # ZLUDA detection
             try:
-                from arvc.engine.models.backends import zluda
+                from arvc.rvc.models.backends import zluda
                 if zluda.is_available():
                     info.append("  ZLUDA: Detected (AMD GPU via CUDA compatibility layer)")
                     info.append(f"  Backend: HIP/ROCm (via ZLUDA)")
@@ -286,7 +286,7 @@ def cmd_infer(args):
     logger.info("Starting voice conversion inference...")
 
     try:
-        from arvc.engine.inference.inference import convert
+        from arvc.rvc.inference.inference import convert
 
         # Validate inputs
         if not args.input or not Path(args.input).exists():

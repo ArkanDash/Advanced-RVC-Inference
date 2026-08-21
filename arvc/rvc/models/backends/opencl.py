@@ -10,7 +10,7 @@ except:
     pytorch_ocl = None
 
 
-from arvc.engine.models.backends.utils import GRU
+from arvc.rvc.models.backends.utils import GRU
 
 torch_available = pytorch_ocl != None
 if torch_available: adaptive_orig = torch.nn.AdaptiveAvgPool2d

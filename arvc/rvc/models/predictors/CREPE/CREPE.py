@@ -7,7 +7,7 @@ import scipy.stats
 import numpy as np
 
 
-from arvc.engine.models.predictors.CREPE.model import MODEL
+from arvc.rvc.models.predictors.CREPE.model import MODEL
 
 CENTS_PER_BIN, PITCH_BINS, SAMPLE_RATE, WINDOW_SIZE = 20, 360, 16000, 1024
 
@@ -30,7 +30,7 @@ class CREPE:
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
             model = MODEL(model_size)
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             ckpt = safe_torch_load(model_path)
             model.load_state_dict(ckpt)
             model.eval()

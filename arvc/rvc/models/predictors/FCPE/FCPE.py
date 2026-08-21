@@ -8,18 +8,18 @@ import torch.nn.functional as F
 
 from einops import rearrange
 import torch.nn.utils.parametrize as parametrize
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 
 # ROBUSTNESS PATCH: was `import onnxruntime as ort` at module level.
 # Use safe import so the module doesn't crash on onnxruntime CUDA mismatch.
-from arvc.engine.models.safe_load import safe_onnxruntime_import
+from arvc.rvc.models.safe_load import safe_onnxruntime_import
 ort = safe_onnxruntime_import()
 
 os.environ["LRU_CACHE_CAPACITY"] = "3"
 
-from arvc.engine.models.predictors.FCPE.wav2mel import Wav2Mel
-from arvc.engine.models.predictors.FCPE.encoder import EncoderLayer, ConformerNaiveEncoder
-from arvc.engine.models.predictors.FCPE.utils import l2_regularization, batch_interp_with_replacement_detach, decrypt_model, DotDict
+from arvc.rvc.models.predictors.FCPE.wav2mel import Wav2Mel
+from arvc.rvc.models.predictors.FCPE.encoder import EncoderLayer, ConformerNaiveEncoder
+from arvc.rvc.models.predictors.FCPE.utils import l2_regularization, batch_interp_with_replacement_detach, decrypt_model, DotDict
 
 @torch.no_grad()
 def cent_to_f0(cent):
@@ -244,7 +244,7 @@ class FCPEInfer_LEGACY:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(decrypt_model(configs, model_path), sess_options=sess_options, providers=providers)
         else:
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             ckpt = safe_torch_load(model_path)
             self.args = DotDict(ckpt["config"])
             model = FCPE_LEGACY(input_channel=self.args.model.input_channel, out_dims=self.args.model.out_dims, n_layers=self.args.model.n_layers, n_chans=self.args.model.n_chans, loss_mse_scale=self.args.loss.loss_mse_scale, loss_l2_regularization=self.args.loss.loss_l2_regularization, loss_l2_regularization_scale=self.args.loss.loss_l2_regularization_scale, loss_grad1_mse=self.args.loss.loss_grad1_mse, loss_grad1_mse_scale=self.args.loss.loss_grad1_mse_scale, f0_max=self.f0_max, f0_min=self.f0_min, confidence=self.args.model.confidence)
@@ -295,7 +295,7 @@ class FCPEInfer:
             sess_options.log_severity_level = 3
             self.model = ort.InferenceSession(decrypt_model(configs, model_path), sess_options=sess_options, providers=providers)
         else:
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             ckpt = safe_torch_load(model_path)
             ckpt["config_dict"]["model"]["conv_dropout"] = ckpt["config_dict"]["model"]["atten_dropout"] = 0.0
             self.args = DotDict(ckpt["config_dict"])

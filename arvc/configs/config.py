@@ -99,7 +99,7 @@ class Config:
         """Lazy ZLUDA detection."""
         if self._is_zluda is None:
             try:
-                from arvc.engine.models.backends import zluda
+                from arvc.rvc.models.backends import zluda
                 self._is_zluda = zluda.is_available()
             except Exception:
                 self._is_zluda = False
@@ -229,14 +229,14 @@ class Config:
 
             # Check alternative backends lazily
             try:
-                from arvc.engine.models.backends import directml
+                from arvc.rvc.models.backends import directml
                 if directml.is_available():
                     return "privateuseone:0"
             except Exception:
                 pass
 
             try:
-                from arvc.engine.models.backends import opencl
+                from arvc.rvc.models.backends import opencl
                 if opencl.is_available():
                     return "ocl:0"
             except Exception:

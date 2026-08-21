@@ -4,14 +4,14 @@ import torch
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.speaker.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
+from arvc.whisper.speaker.whisper import Whisper, ModelDimensions, log_mel_spectrogram, pad_or_trim
 
 class WhisperModel(torch.nn.Module):
     def __init__(self, model_path, device):
         super().__init__()
         # SECURITY PATCH: was `torch.load(model_path, map_location="cpu")` with
         # no weights_only — arbitrary code execution via malicious .pt.
-        from arvc.engine.models.safe_load import safe_torch_load
+        from arvc.rvc.models.safe_load import safe_torch_load
         checkpoint = safe_torch_load(model_path, map_location="cpu")
         dims = ModelDimensions(**checkpoint["dims"])
         self.final_proj = torch.nn.Linear(dims.n_text_state, 768)

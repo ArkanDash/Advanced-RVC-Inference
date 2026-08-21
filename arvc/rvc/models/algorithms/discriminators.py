@@ -3,10 +3,10 @@ import torch.nn.functional as F
 
 from torch.utils.checkpoint import checkpoint
 from torch.nn.utils.parametrizations import spectral_norm
-from arvc.engine.models.weight_norm import weight_norm
+from arvc.rvc.models.weight_norm import weight_norm
 
-from arvc.engine.models.algorithms.commons import get_padding
-from arvc.engine.models.algorithms.residuals import LRELU_SLOPE
+from arvc.rvc.models.algorithms.commons import get_padding
+from arvc.rvc.models.algorithms.residuals import LRELU_SLOPE
 
 class MultiPeriodDiscriminator(torch.nn.Module):
     def __init__(self, version, use_spectral_norm=False, checkpointing=False):

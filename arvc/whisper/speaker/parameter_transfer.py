@@ -3,8 +3,8 @@ import sys
 import inspect
 
 
-from arvc.engine.speaker.speechbrain import fetch, run_on_main
-from arvc.engine.speaker.features import DEFAULT_TRANSFER_HOOKS, DEFAULT_LOAD_HOOKS
+from arvc.whisper.speaker.speechbrain import fetch, run_on_main
+from arvc.whisper.speaker.features import DEFAULT_TRANSFER_HOOKS, DEFAULT_LOAD_HOOKS
 
 def get_default_hook(obj, default_hooks):
     for cls in inspect.getmro(type(obj)):

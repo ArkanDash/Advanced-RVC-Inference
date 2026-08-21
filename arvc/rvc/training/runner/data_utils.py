@@ -7,8 +7,8 @@ import torch.utils.data as tdata
 
 
 from arvc.utils.variables import translations
-from arvc.engine.training.runner.mel_processing import spectrogram_torch
-from arvc.engine.training.runner.utils import load_filepaths_and_text, load_wav_to_torch
+from arvc.rvc.training.runner.mel_processing import spectrogram_torch
+from arvc.rvc.training.runner.utils import load_filepaths_and_text, load_wav_to_torch
 
 
 def safe_load_numpy(path):
@@ -259,7 +259,7 @@ class TextAudioLoader(tdata.Dataset):
             spec = get_spectrogram(audio_norm)
         elif os.path.exists(spec_filename):
             try:
-                from arvc.engine.models.safe_load import safe_torch_load
+                from arvc.rvc.models.safe_load import safe_torch_load
                 spec = safe_torch_load(spec_filename)
                 # BUG FIX: Validate cached spectrogram - corrupted caches are common
                 # and cause persistent training issues that are hard to diagnose

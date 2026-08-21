@@ -5,7 +5,7 @@ import uuid
 import torch
 import types
 
-from arvc.engine.models.weight_norm import weight_norm as _weight_norm, remove_weight_norm as _remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm as _weight_norm, remove_weight_norm as _remove_weight_norm
 import contextlib
 
 import numpy as np
@@ -33,10 +33,10 @@ def load_model(filename):
     # Restricted fallback only allows primitive + numpy types — never falls
     # back to torch.load(weights_only=False), which is a known RCE vector.
     try:
-        from arvc.engine.models.safe_load import safe_torch_load
+        from arvc.rvc.models.safe_load import safe_torch_load
         state = safe_torch_load(filename)
     except Exception:
-        from arvc.engine.models.safe_load import safe_pickle_load
+        from arvc.rvc.models.safe_load import safe_pickle_load
         with open(filename, "rb") as f:
             state = safe_pickle_load(f)
 

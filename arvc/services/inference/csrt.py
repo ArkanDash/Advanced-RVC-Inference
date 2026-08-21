@@ -4,8 +4,8 @@ import sys
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.inference.inference import whisper_process
-from arvc.engine.models.utils import check_spk_diarization
+from arvc.rvc.inference.inference import whisper_process
+from arvc.rvc.models.utils import check_spk_diarization
 from arvc.utils.feedback import gr_info, gr_warning
 from arvc.utils.feedback import process_output
 from arvc.utils.variables import config, translations, configs, logger

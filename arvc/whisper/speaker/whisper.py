@@ -22,7 +22,7 @@ from functools import cached_property, lru_cache
 
 
 from arvc.utils.variables import configs, logger
-from arvc.engine.models.backends import directml, opencl
+from arvc.rvc.models.backends import directml, opencl
 
 LANGUAGES = {"en": "english", "zh": "chinese", "de": "german", "es": "spanish", "ru": "russian", "ko": "korean", "fr": "french", "ja": "japanese", "pt": "portuguese", "tr": "turkish", "pl": "polish", "ca": "catalan", "nl": "dutch", "ar": "arabic", "sv": "swedish", "it": "italian", "id": "indonesian", "hi": "hindi", "fi": "finnish", "vi": "vietnamese", "he": "hebrew", "uk": "ukrainian", "el": "greek", "ms": "malay", "cs": "czech", "ro": "romanian", "da": "danish", "hu": "hungarian", "ta": "tamil", "no": "norwegian", "th": "thai", "ur": "urdu", "hr": "croatian", "bg": "bulgarian", "lt": "lithuanian", "la": "latin", "mi": "maori", "ml": "malayalam", "cy": "welsh", "sk": "slovak", "te": "telugu", "fa": "persian", "lv": "latvian", "bn": "bengali", "sr": "serbian", "az": "azerbaijani", "sl": "slovenian", "kn": "kannada", "et": "estonian", "mk": "macedonian", "br": "breton", "eu": "basque", "is": "icelandic", "hy": "armenian", "ne": "nepali", "mn": "mongolian", "bs": "bosnian", "kk": "kazakh", "sq": "albanian", "sw": "swahili", "gl": "galician", "mr": "marathi", "pa": "punjabi", "si": "sinhala", "km": "khmer", "sn": "shona", "yo": "yoruba", "so": "somali", "af": "afrikaans", "oc": "occitan", "ka": "georgian", "be": "belarusian", "tg": "tajik", "sd": "sindhi", "gu": "gujarati", "am": "amharic", "yi": "yiddish", "lo": "lao", "uz": "uzbek", "fo": "faroese", "ht": "haitian creole", "ps": "pashto", "tk": "turkmen", "nn": "nynorsk", "mt": "maltese", "sa": "sanskrit", "lb": "luxembourgish", "my": "myanmar", "bo": "tibetan", "tl": "tagalog", "mg": "malagasy", "as": "assamese", "tt": "tatar", "haw": "hawaiian", "ln": "lingala", "ha": "hausa", "ba": "bashkir", "jw": "javanese", "su": "sundanese", "yue": "cantonese"}
 TO_LANGUAGE_CODE = {**{language: code for code, language in LANGUAGES.items()}, "burmese": "my", "valencian": "ca", "flemish": "nl", "haitian": "ht", "letzeburgesch": "lb", "pushto": "ps", "panjabi": "pa", "moldavian": "ro", "moldovan": "ro", "sinhalese": "si", "castilian": "es", "mandarin": "zh"}
@@ -46,7 +46,7 @@ def load_model(name = "base", device = "cpu"):
     alignment_heads = _ALIGNMENT_HEADS[name]
 
     with open(checkpoint_file, "rb") as fp:
-        from arvc.engine.models.safe_load import safe_torch_load
+        from arvc.rvc.models.safe_load import safe_torch_load
         checkpoint = safe_torch_load(fp)
 
     del checkpoint_file
@@ -267,7 +267,7 @@ def log_mel_spectrogram(audio, n_mels = 80, padding = 0, device = None):
 
     if not torch.is_tensor(audio):
         if isinstance(audio, str): 
-            from arvc.engine.models.utils import load_audio
+            from arvc.rvc.models.utils import load_audio
             audio = load_audio(audio, sample_rate=SAMPLE_RATE).astype(np.float32)
         audio = torch.from_numpy(audio)
 
@@ -276,7 +276,7 @@ def log_mel_spectrogram(audio, n_mels = 80, padding = 0, device = None):
 
     if str(audio.device).startswith(("ocl", "privateuseone")):
         if stft is None: 
-            from arvc.engine.models.backends.utils import STFT
+            from arvc.rvc.models.backends.utils import STFT
             stft = STFT(N_FFT, HOP_LENGTH, N_FFT).to(audio.device)
         fft = stft.transform(audio.unsqueeze(0), eps=1e-9).squeeze(0)
     else:

@@ -8,10 +8,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint
 import torch.nn.utils.parametrize as parametrize
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 
 
-from arvc.engine.models.algorithms.commons import init_weights, get_padding
+from arvc.rvc.models.algorithms.commons import init_weights, get_padding
 
 class ResBlock(nn.Module):
     def __init__(self, channels, kernel_size = 7, dilation = (1, 3, 5), leaky_relu_slope = 0.2):

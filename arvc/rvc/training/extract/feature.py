@@ -10,9 +10,9 @@ import numpy as np
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.models.utils import load_audio
+from arvc.rvc.models.utils import load_audio
 from arvc.utils.variables import config, configs, logger, translations
-from arvc.engine.training.extract.setup_path import setup_paths
+from arvc.rvc.training.extract.setup_path import setup_paths
 
 
 def validate_and_fix_f0(pitch, pitchf, f0_min=50.0, f0_max=1100.0):
@@ -99,7 +99,7 @@ class FeatureInput:
 
     def process_file(self, file_info, f0_method, hop_length, f0_onnx, f0_autotune, f0_autotune_strength, alpha):
         if not hasattr(self, "f0_gen"): 
-            from arvc.engine.models.predictors.Generator import Generator
+            from arvc.rvc.models.predictors.Generator import Generator
             self.f0_gen = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, False)
 
         inp_path, opt_path1, opt_path2, file_inp = file_info

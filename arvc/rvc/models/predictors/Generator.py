@@ -12,10 +12,10 @@ from scipy.signal import medfilt
 from librosa import yin, pyin, piptrack
 
 
-from arvc.engine.models.predictors.CREPE.filter import mean, median
-from arvc.engine.models.predictors.WORLD.SWIPE import swipe, stonemask
+from arvc.rvc.models.predictors.CREPE.filter import mean, median
+from arvc.rvc.models.predictors.WORLD.SWIPE import swipe, stonemask
 from arvc.utils.variables import config, configs, logger, translations
-from arvc.engine.models.utils import autotune_f0, proposal_f0_up_key, circular_write
+from arvc.rvc.models.utils import autotune_f0, proposal_f0_up_key, circular_write
 
 
 @nb.jit(nopython=True)
@@ -470,7 +470,7 @@ class Generator:
     
     def get_f0_mangio_crepe(self, x, p_len, model="full"):
         if not hasattr(self, "mangio_crepe"):
-            from arvc.engine.models.predictors.CREPE.CREPE import CREPE
+            from arvc.rvc.models.predictors.CREPE.CREPE import CREPE
 
             self.mangio_crepe = CREPE(
                 os.path.join(
@@ -502,7 +502,7 @@ class Generator:
     
     def get_f0_crepe(self, x, p_len, model="full", filter_radius=3):
         if not hasattr(self, "crepe"):
-            from arvc.engine.models.predictors.CREPE.CREPE import CREPE
+            from arvc.rvc.models.predictors.CREPE.CREPE import CREPE
 
             self.crepe = CREPE(
                 os.path.join(
@@ -531,7 +531,7 @@ class Generator:
     
     def get_f0_fcpe(self, x, p_len, legacy=False, previous=False, filter_radius=3):
         if not hasattr(self, "fcpe"): 
-            from arvc.engine.models.predictors.FCPE.FCPE import FCPE
+            from arvc.rvc.models.predictors.FCPE.FCPE import FCPE
 
             self.fcpe = FCPE(
                 configs, 
@@ -566,7 +566,7 @@ class Generator:
     
     def get_f0_rmvpe(self, x, p_len, clipping=False, filter_radius=3, hpa=False, previous=False):
         if not hasattr(self, "rmvpe"): 
-            from arvc.engine.models.predictors.RMVPE.RMVPE import RMVPE
+            from arvc.rvc.models.predictors.RMVPE.RMVPE import RMVPE
 
             self.rmvpe = RMVPE(
                 os.path.join(
@@ -607,7 +607,7 @@ class Generator:
     
     def get_f0_pyworld(self, x, p_len, filter_radius, model="harvest", use_stonemask=True):
         if not hasattr(self, "pw"): 
-            from arvc.engine.models.predictors.WORLD.WORLD import PYWORLD
+            from arvc.rvc.models.predictors.WORLD.WORLD import PYWORLD
 
             self.pw = PYWORLD(
                 os.path.join(configs["predictors_path"], "world"), 
@@ -691,7 +691,7 @@ class Generator:
 
     def get_f0_penn(self, x, p_len, filter_radius=3):
         if not hasattr(self, "penn"):
-            from arvc.engine.models.predictors.PENN.PENN import PENN
+            from arvc.rvc.models.predictors.PENN.PENN import PENN
 
             self.penn = PENN(
                 os.path.join(
@@ -721,7 +721,7 @@ class Generator:
 
     def get_f0_mangio_penn(self, x, p_len):
         if not hasattr(self, "mangio_penn"):
-            from arvc.engine.models.predictors.PENN.PENN import PENN
+            from arvc.rvc.models.predictors.PENN.PENN import PENN
 
             self.mangio_penn = PENN(
                 os.path.join(
@@ -755,7 +755,7 @@ class Generator:
 
     def get_f0_djcm(self, x, p_len, clipping=False, svs=False, filter_radius=3):
         if not hasattr(self, "djcm"): 
-            from arvc.engine.models.predictors.DJCM.DJCM import DJCM
+            from arvc.rvc.models.predictors.DJCM.DJCM import DJCM
             
             self.djcm = DJCM(
                 os.path.join(
@@ -794,7 +794,7 @@ class Generator:
     
     def get_f0_swift(self, x, p_len, filter_radius=3):
         if not hasattr(self, "swift"): 
-            from arvc.engine.models.predictors.SWIFT.SWIFT import SWIFT
+            from arvc.rvc.models.predictors.SWIFT.SWIFT import SWIFT
 
             self.swift = SWIFT(
                 os.path.join(
@@ -811,7 +811,7 @@ class Generator:
 
     def get_f0_pesto(self, x, p_len):
         if not hasattr(self, "pesto"):
-            from arvc.engine.models.predictors.PESTO.PESTO import PESTO
+            from arvc.rvc.models.predictors.PESTO.PESTO import PESTO
 
             self.pesto = PESTO(
                 os.path.join(

@@ -6,7 +6,7 @@ import gradio as gr
 
 from arvc.services.inference.tts import TTS
 from arvc.services.system.process import process_input
-from arvc.engine.inference.inference import convert_tts
+from arvc.rvc.inference.inference import convert_tts
 from arvc.services.system.utils import google_translate
 from arvc.services.inference.presets import save_presets, load_presets
 from arvc.ui.feedback import visible, change_f0_choices, unlock_f0, hoplength_show, change_models_choices, get_index, index_strength_show, change_embedders_mode, change_tts_voice_choices, shutil_move, change_preset_choices

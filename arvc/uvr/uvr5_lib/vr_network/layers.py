@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from arvc.engine.uvr.uvr5_lib import spec_utils
+from arvc.uvr.uvr5_lib import spec_utils
 
 class Conv2DBNActiv(nn.Module):
     def __init__(self, nin, nout, ksize=3, stride=1, pad=1, dilation=1, activ=nn.ReLU):

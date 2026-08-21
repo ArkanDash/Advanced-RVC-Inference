@@ -168,7 +168,7 @@ def spectrogram_torch(
 
     if str(y.device).startswith(("ocl", "privateuseone")):
         if stft is None:
-            from arvc.engine.models.backends.utils import STFT
+            from arvc.rvc.models.backends.utils import STFT
 
             stft = STFT(
                 filter_length=n_fft,

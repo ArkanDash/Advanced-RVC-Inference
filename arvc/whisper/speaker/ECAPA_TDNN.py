@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from arvc.engine.models.weight_norm import weight_norm as apply_weight_norm, remove_weight_norm as apply_remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm as apply_weight_norm, remove_weight_norm as apply_remove_weight_norm
 
 def length_to_mask(length, max_len=None, dtype=None, device=None):
     assert len(length.shape) == 1

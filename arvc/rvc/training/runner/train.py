@@ -33,12 +33,12 @@ from torch.utils.tensorboard import SummaryWriter
 from time import time as ttime
 from torch.nn.parallel import DistributedDataParallel as DDP
 
-from arvc.engine.models.utils import clear_gpu_cache
-from arvc.engine.models.backends import directml, opencl, zluda
+from arvc.rvc.models.utils import clear_gpu_cache
+from arvc.rvc.models.backends import directml, opencl, zluda
 
 # XPU backend — may not exist in all installations; graceful fallback
 try:
-    from arvc.engine.models.backends import xpu
+    from arvc.rvc.models.backends import xpu
 except ImportError:
     xpu = None
 
@@ -59,18 +59,18 @@ class _SafeTranslations(dict):
 
 translations = _SafeTranslations(_raw_translations)
 
-from arvc.engine.models.algorithms import commons
-from arvc.engine.training.runner import losses
+from arvc.rvc.models.algorithms import commons
+from arvc.rvc.training.runner import losses
 
-from arvc.engine.training.runner.extract_model import extract_model
+from arvc.rvc.training.runner.extract_model import extract_model
 
-from arvc.engine.training.runner.mel_processing import (
+from arvc.rvc.training.runner.mel_processing import (
     MultiScaleMelSpectrogramLoss, 
     mel_spectrogram_torch,
     spec_to_mel_torch
 )
 
-from arvc.engine.training.runner.utils import (
+from arvc.rvc.training.runner.utils import (
     HParams,
     summarize,
     load_checkpoint,
@@ -80,7 +80,7 @@ from arvc.engine.training.runner.utils import (
     plot_spectrogram_to_numpy,
     mel_spectrogram_similarity,
 )
-from arvc.engine.models.weight_norm import configure_weight_norm, use_new_pytorch
+from arvc.rvc.models.weight_norm import configure_weight_norm, use_new_pytorch
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
@@ -660,7 +660,7 @@ def run(
         log_dir=eval_dir
     ) if rank == 0 else None
 
-    from arvc.engine.training.runner.data_utils import (
+    from arvc.rvc.training.runner.data_utils import (
         DistributedBucketSampler,
         TextAudioCollate,
         TextAudioLoader
@@ -772,7 +772,7 @@ def run(
         chk_path = (last_g if last_g else (pretrainG if pretrainG not in ["", "None"] else None))
 
         if chk_path:
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             ckpt = safe_torch_load(chk_path)
             spk_dim = ckpt["model"]["emb_g.weight"].shape[0]
             del ckpt
@@ -781,13 +781,13 @@ def run(
 
     config.model.spk_embed_dim = spk_dim
 
-    from arvc.engine.models.algorithms.synthesizers import Synthesizer
-    from arvc.engine.models.algorithms.discriminators import MultiPeriodDiscriminator
+    from arvc.rvc.models.algorithms.synthesizers import Synthesizer
+    from arvc.rvc.models.algorithms.discriminators import MultiPeriodDiscriminator
 
     # SVC architecture support (Vietnamese-RVC feature)
     _has_svc = False
     try:
-        from arvc.engine.models.algorithms.synthesizers import SynthesizerSVC
+        from arvc.rvc.models.algorithms.synthesizers import SynthesizerSVC
         _has_svc = True
     except ImportError:
         pass
@@ -858,14 +858,14 @@ def run(
             )
 
     try:
-        from arvc.engine.models.optimizers import get_optimizer_class, get_optimizer_info
+        from arvc.rvc.models.optimizers import get_optimizer_class, get_optimizer_info
     except ImportError:
         _use_registry = False
 
     # Vietnamese-RVC style InverseSqrt scheduler import for AdaBeliefV2
     get_inverse_sqrt_scheduler = None
     try:
-        from arvc.engine.models.optimizers.adabeliefv2 import AdaBeliefV2 as _AdaBeliefV2, get_inverse_sqrt_scheduler as _get_inv_sqrt
+        from arvc.rvc.models.optimizers.adabeliefv2 import AdaBeliefV2 as _AdaBeliefV2, get_inverse_sqrt_scheduler as _get_inv_sqrt
         get_inverse_sqrt_scheduler = _get_inv_sqrt
     except ImportError:
         pass
@@ -927,16 +927,16 @@ def run(
     else:
         # Vietnamese-RVC fallback optimizer selection
         if optimizer_choice == "AnyPrecisionAdamW" and getattr(main_config, 'brain', False):
-            from arvc.engine.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
+            from arvc.rvc.models.optimizers.anyprecision_optimizer import AnyPrecisionAdamW
             optimizer_optim = AnyPrecisionAdamW
         elif optimizer_choice == "RAdam":
             from torch.optim import RAdam
             optimizer_optim = RAdam
         elif optimizer_choice == "AdaBelief":
-            from arvc.engine.models.optimizers.adabelief import AdaBelief
+            from arvc.rvc.models.optimizers.adabelief import AdaBelief
             optimizer_optim = AdaBelief
         elif optimizer_choice == "AdaBeliefV2":
-            from arvc.engine.models.optimizers.adabeliefv2 import AdaBeliefV2
+            from arvc.rvc.models.optimizers.adabeliefv2 import AdaBeliefV2
             optimizer_optim = AdaBeliefV2
         else:
             from torch.optim import AdamW
@@ -1169,7 +1169,7 @@ def run(
             if pretrainG not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
 
-                from arvc.engine.models.safe_load import safe_torch_load
+                from arvc.rvc.models.safe_load import safe_torch_load
                 ckptG = safe_torch_load(pretrainG)["model"]
 
                 # SVC architecture: ensure emb_g.weight is present
@@ -1188,7 +1188,7 @@ def run(
             if pretrainD not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="D", pretrain=pretrainD))
 
-                from arvc.engine.models.safe_load import safe_torch_load
+                from arvc.rvc.models.safe_load import safe_torch_load
                 ckptD = safe_torch_load(pretrainD)["model"]
 
                 # Match Vietnamese-RVC: strict loading with pretrain_strict config

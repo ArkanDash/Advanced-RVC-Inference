@@ -2,7 +2,7 @@ import torch
 
 import torch.nn.utils.parametrize as parametrize
 
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 from .commons import fused_add_tanh_sigmoid_multiply
 
 class WaveNet(torch.nn.Module):

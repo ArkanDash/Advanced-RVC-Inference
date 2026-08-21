@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from arvc.engine.models.predictors.FCPE.attentions import SelfAttention
-from arvc.engine.models.predictors.FCPE.utils import calc_same_padding, Transpose, GLU, Swish
+from arvc.rvc.models.predictors.FCPE.attentions import SelfAttention
+from arvc.rvc.models.predictors.FCPE.utils import calc_same_padding, Transpose, GLU, Swish
 
 class ConformerConvModule_LEGACY(nn.Module):
     def __init__(self, dim, causal=False, expansion_factor=2, kernel_size=31, dropout=0.0):

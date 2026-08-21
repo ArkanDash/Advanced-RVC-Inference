@@ -4,9 +4,9 @@ import sys
 import torch.nn as nn
 
 
-from arvc.engine.models.predictors.DJCM.decoder import PE_Decoder
-from arvc.engine.models.predictors.DJCM.utils import init_bn, WINDOW_LENGTH
-from arvc.engine.models.predictors.DJCM.encoder import ResEncoderBlock, Encoder
+from arvc.rvc.models.predictors.DJCM.decoder import PE_Decoder
+from arvc.rvc.models.predictors.DJCM.utils import init_bn, WINDOW_LENGTH
+from arvc.rvc.models.predictors.DJCM.encoder import ResEncoderBlock, Encoder
 
 class LatentBlocks(nn.Module):
     def __init__(self, n_blocks, latent_layers):

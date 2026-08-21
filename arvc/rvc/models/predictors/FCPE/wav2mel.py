@@ -5,7 +5,7 @@ import torch
 from torchaudio.transforms import Resample
 
 
-from arvc.engine.models.predictors.FCPE.stft import STFT
+from arvc.rvc.models.predictors.FCPE.stft import STFT
 
 class Wav2Mel:
     def __init__(self, device=None, dtype=torch.float32):

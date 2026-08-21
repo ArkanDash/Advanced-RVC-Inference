@@ -2,7 +2,7 @@ import librosa
 
 import numpy as np
 
-from arvc.engine.models.safe_load import safe_onnxruntime_import
+from arvc.rvc.models.safe_load import safe_onnxruntime_import
 
 # Lazy/safe onnxruntime import — survives CUDA runtime mismatch.
 onnxruntime = safe_onnxruntime_import()

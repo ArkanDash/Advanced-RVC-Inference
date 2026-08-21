@@ -7,9 +7,9 @@ import numpy as np
 from scipy.signal import medfilt
 
 
-from arvc.engine.models.predictors.DJCM.model import DJCMM
-from arvc.engine.models.predictors.DJCM.spec import Spectrogram
-from arvc.engine.models.predictors.DJCM.utils import WINDOW_LENGTH, SAMPLE_RATE, N_CLASS
+from arvc.rvc.models.predictors.DJCM.model import DJCMM
+from arvc.rvc.models.predictors.DJCM.spec import Spectrogram
+from arvc.rvc.models.predictors.DJCM.utils import WINDOW_LENGTH, SAMPLE_RATE, N_CLASS
 
 class DJCM:
     def __init__(self, model_path, device = "cpu", is_half = False, onnx = False, providers = ["CPUExecutionProvider"], batch_size = 1, segment_len = 5.12, kernel_size = 3):
@@ -24,7 +24,7 @@ class DJCM:
             self.model = ort.InferenceSession(model_path, sess_options=sess_options, providers=providers)
         else:
             model = DJCMM(1, 1, 1)
-            from arvc.engine.models.safe_load import safe_torch_load
+            from arvc.rvc.models.safe_load import safe_torch_load
             model.load_state_dict(safe_torch_load(model_path))
             model = model.to(device).eval()
             self.model = model.half() if is_half else model.float()

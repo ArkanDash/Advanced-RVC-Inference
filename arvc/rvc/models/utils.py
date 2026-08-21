@@ -83,7 +83,7 @@ def _get_directml():
     global _directml
     if _directml is None:
         try:
-            from arvc.engine.models.backends import directml
+            from arvc.rvc.models.backends import directml
             _directml = directml
         except ImportError:
             pass
@@ -93,7 +93,7 @@ def _get_opencl():
     global _opencl
     if _opencl is None:
         try:
-            from arvc.engine.models.backends import opencl
+            from arvc.rvc.models.backends import opencl
             _opencl = opencl
         except ImportError:
             pass
@@ -255,7 +255,7 @@ def load_audio(file, sample_rate=16000, formant_shifting=False, formant_qfrency=
         if sr != sample_rate: audio = librosa.resample(audio, orig_sr=sr, target_sr=sample_rate, res_type="soxr_vhq")
 
         if formant_shifting:
-            from arvc.engine.models.algorithms.stftpitchshift import StftPitchShift
+            from arvc.rvc.models.algorithms.stftpitchshift import StftPitchShift
 
             pitchshifter = StftPitchShift(1024, 32, sample_rate)
             audio = pitchshifter.shiftpitch(audio, factors=1, quefrency=formant_qfrency * 1e-3, distortion=formant_timbre)
@@ -291,16 +291,16 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
 
     try:
         if embedders_mode == "fairseq":
-            from arvc.engine.models.embedders.fairseq import load_model
+            from arvc.rvc.models.embedders.fairseq import load_model
             hubert_model = load_model(embedder_model_path)
         elif embedders_mode == "onnx":
-            from arvc.engine.models.embedders.onnx import HubertModelONNX
+            from arvc.rvc.models.embedders.onnx import HubertModelONNX
             hubert_model = HubertModelONNX(embedder_model_path, config.providers, config.device)
         elif embedders_mode == "transformers":
-            from arvc.engine.models.embedders.transformers import HubertModelWithFinalProj
+            from arvc.rvc.models.embedders.transformers import HubertModelWithFinalProj
             hubert_model = HubertModelWithFinalProj.from_pretrained(embedder_model_path)
         elif embedders_mode == "whisper":
-            from arvc.engine.models.embedders.ppg import WhisperModel
+            from arvc.rvc.models.embedders.ppg import WhisperModel
             hubert_model = WhisperModel(embedder_model_path, config.device)
         else: raise ValueError(translations["option_not_valid"])
     except Exception as e:
@@ -309,7 +309,7 @@ def load_embedders_model(embedder_model, embedders_mode="fairseq"):
     return hubert_model
 
 def cut(audio, sr, db_thresh=-60, min_interval=250):
-    from arvc.engine.training.preprocess.slicer2 import Slicer2
+    from arvc.rvc.training.preprocess.slicer2 import Slicer2
 
     slicer = Slicer2(sr=sr, threshold=db_thresh, min_interval=min_interval)
     return slicer.slice2(audio)
@@ -453,8 +453,8 @@ def load_model(model_path, weights_only=True, log_severity_level=3):
 
     if model_path.endswith(".pth"):
         # SECURITY: never allow weights_only=False, even if the caller asks.
-        from arvc.engine.models.safe_load import safe_torch_load
+        from arvc.rvc.models.safe_load import safe_torch_load
         return safe_torch_load(model_path, map_location="cpu", weights_only=True)
     else:
-        from arvc.engine.models.onnx.wrapper import ONNXRVC
+        from arvc.rvc.models.onnx.wrapper import ONNXRVC
         return ONNXRVC(model_path, config.providers, log_severity_level=log_severity_level)

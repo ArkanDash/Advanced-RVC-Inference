@@ -1,8 +1,8 @@
 import torch
 
-from arvc.engine.models.algorithms.residuals import ResidualCouplingBlock
-from arvc.engine.models.algorithms.encoders import TextEncoder, PosteriorEncoder, TextEncoderSVC
-from arvc.engine.models.algorithms.commons import slice_segments, rand_slice_segments, sequence_mask
+from arvc.rvc.models.algorithms.residuals import ResidualCouplingBlock
+from arvc.rvc.models.algorithms.encoders import TextEncoder, PosteriorEncoder, TextEncoderSVC
+from arvc.rvc.models.algorithms.commons import slice_segments, rand_slice_segments, sequence_mask
 
 class Synthesizer(torch.nn.Module):
     def __init__(self, spec_channels, segment_size, inter_channels, hidden_channels, filter_channels, n_heads, n_layers, kernel_size, p_dropout, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, spk_embed_dim, gin_channels, sr, use_f0, text_enc_hidden_dim=768, vocoder="Default", randomized=True, checkpointing=False, onnx=False, energy=False, **kwargs):
@@ -30,7 +30,7 @@ class Synthesizer(torch.nn.Module):
 
         if use_f0:
             if vocoder == "RefineGAN": 
-                from arvc.engine.models.generators.refinegan import RefineGANGenerator
+                from arvc.rvc.models.generators.refinegan import RefineGANGenerator
                 self.dec = RefineGANGenerator(
                     sample_rate=sr,
                     upsample_rates=upsample_rates,
@@ -38,7 +38,7 @@ class Synthesizer(torch.nn.Module):
                     checkpointing=checkpointing
                 )
             elif vocoder == "BigVGAN":
-                from arvc.engine.models.generators.bigvgan import BigVGANGenerator
+                from arvc.rvc.models.generators.bigvgan import BigVGANGenerator
                 self.dec = BigVGANGenerator(
                     in_channel=inter_channels,
                     upsample_initial_channel=upsample_initial_channel,
@@ -51,15 +51,15 @@ class Synthesizer(torch.nn.Module):
                     harmonic_num=0, 
                 )
             elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
-                from arvc.engine.models.generators.mrf_hifigan import HiFiGANMRFGenerator
+                from arvc.rvc.models.generators.mrf_hifigan import HiFiGANMRFGenerator
                 self.dec = HiFiGANMRFGenerator(in_channel=inter_channels, upsample_initial_channel=upsample_initial_channel, upsample_rates=upsample_rates, upsample_kernel_sizes=upsample_kernel_sizes, resblock_kernel_sizes=resblock_kernel_sizes, resblock_dilations=resblock_dilation_sizes, gin_channels=gin_channels, sample_rate=sr, harmonic_num=8, checkpointing=checkpointing)
             else:
                 # Default: HiFi-GAN NSF (matches VRVC)
-                from arvc.engine.models.generators.nsf_hifigan import HiFiGANNRFGenerator
+                from arvc.rvc.models.generators.nsf_hifigan import HiFiGANNRFGenerator
                 self.dec = HiFiGANNRFGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels, sr=sr, checkpointing=checkpointing)
         else: 
             # No pitch guidance: plain HiFi-GAN (matches VRVC)
-            from arvc.engine.models.generators.hifigan import HiFiGANGenerator
+            from arvc.rvc.models.generators.hifigan import HiFiGANGenerator
             self.dec = HiFiGANGenerator(inter_channels, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
 
         self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)
@@ -178,7 +178,7 @@ class SynthesizerSVC(torch.nn.Module):
         )
 
         if vocoder == "RefineGAN": 
-            from arvc.engine.models.generators.refinegan import RefineGANGenerator
+            from arvc.rvc.models.generators.refinegan import RefineGANGenerator
             self.dec = RefineGANGenerator(
                 sample_rate=sr, 
                 upsample_rates=upsample_rates, 
@@ -186,7 +186,7 @@ class SynthesizerSVC(torch.nn.Module):
                 checkpointing=checkpointing
             )
         elif vocoder == "BigVGAN":
-            from arvc.engine.models.generators.bigvgan import BigVGANGenerator
+            from arvc.rvc.models.generators.bigvgan import BigVGANGenerator
             self.dec = BigVGANGenerator(
                 in_channel=inter_channels,
                 upsample_initial_channel=upsample_initial_channel,
@@ -199,7 +199,7 @@ class SynthesizerSVC(torch.nn.Module):
                 harmonic_num=0, 
             )
         elif vocoder in ["MRF-HiFi-GAN", "MRF HiFi-GAN"]: 
-            from arvc.engine.models.generators.mrf_hifigan import HiFiGANMRFGenerator
+            from arvc.rvc.models.generators.mrf_hifigan import HiFiGANMRFGenerator
             self.dec = HiFiGANMRFGenerator(
                 in_channel=inter_channels, 
                 upsample_initial_channel=upsample_initial_channel, 
@@ -214,7 +214,7 @@ class SynthesizerSVC(torch.nn.Module):
             )
         else:
             # Default: HiFi-GAN NSF (matches VRVC)
-            from arvc.engine.models.generators.nsf_hifigan import HiFiGANNRFGenerator
+            from arvc.rvc.models.generators.nsf_hifigan import HiFiGANNRFGenerator
             self.dec = HiFiGANNRFGenerator(
                 inter_channels, 
                 resblock_kernel_sizes, 

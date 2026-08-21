@@ -9,7 +9,7 @@ from scipy import signal
 
 
 from arvc.utils.variables import translations
-from arvc.engine.models.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index
+from arvc.rvc.models.utils import extract_features, change_rms, clear_gpu_cache, load_faiss_index
 
 bh, ah = signal.butter(N=5, Wn=48, btype="high", fs=16000)
 
@@ -139,7 +139,7 @@ class Pipeline:
 
         if pitch_guidance:
             if not hasattr(self, "f0_generator"): 
-                from arvc.engine.models.predictors.Generator import Generator
+                from arvc.rvc.models.predictors.Generator import Generator
                 self.f0_generator = Generator(self.sample_rate, hop_length, self.f0_min, self.f0_max, alpha, self.is_half, self.device, f0_onnx, del_onnx)
 
             pitch, pitchf = self.f0_generator.calculator(self.x_pad, f0_method, audio_pad, f0_up_key, p_len, filter_radius, f0_autotune, f0_autotune_strength, manual_f0=inp_f0, proposal_pitch=proposal_pitch, proposal_pitch_threshold=proposal_pitch_threshold)
@@ -150,7 +150,7 @@ class Pipeline:
 
         if energy_use:
             if not hasattr(self, "rms_extract"): 
-                from arvc.engine.training.extract.rms import RMSEnergyExtractor
+                from arvc.rvc.training.extract.rms import RMSEnergyExtractor
                 self.rms_extract = RMSEnergyExtractor(frame_length=2048, hop_length=self.window, center=True, pad_mode = "reflect").to(self.device).eval()
 
             energy = self.rms_extract(torch.from_numpy(audio_pad).to(self.device).unsqueeze(0))[:p_len].to(self.device).float()

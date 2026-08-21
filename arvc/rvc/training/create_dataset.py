@@ -19,7 +19,7 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from arvc.utils.variables import config, logger, translations
-from arvc.engine.uvr.separate_music import _separate, vr_models
+from arvc.uvr.separate_music import _separate, vr_models
 
 # BUG FIX #34: Original used relative paths (`"dataset_temp"` and
 # `os.path.join("arvc", "assets", "dataset")`) which are resolved against
@@ -231,7 +231,7 @@ def create_dataset(
         # Initialize TorchGate here using the target sample_rate
         tg = None
         if clean_dataset: 
-            from arvc.engine.inference.noisereduce import TorchGate
+            from arvc.rvc.inference.noisereduce import TorchGate
             tg = TorchGate(sample_rate, prop_decrease=clean_strength).to(config.device)
         
         for audio in audio_path:

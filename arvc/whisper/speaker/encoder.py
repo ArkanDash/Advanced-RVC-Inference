@@ -6,8 +6,8 @@ import itertools
 import collections
 
 
-from arvc.engine.speaker.speechbrain import if_main_process, ddp_barrier
-from arvc.engine.speaker.features import register_checkpoint_hooks, mark_as_saver, mark_as_loader
+from arvc.whisper.speaker.speechbrain import if_main_process, ddp_barrier
+from arvc.whisper.speaker.features import register_checkpoint_hooks, mark_as_saver, mark_as_loader
 
 @register_checkpoint_hooks
 class CategoricalEncoder:

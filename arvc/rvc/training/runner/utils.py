@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 
 from arvc.utils.variables import config, translations
-from arvc.engine.models.weight_norm import convert_old_to_new, convert_new_to_old
+from arvc.rvc.models.weight_norm import convert_old_to_new, convert_new_to_old
 
 MATPLOTLIB_FLAG = False
 
@@ -44,7 +44,7 @@ def replace_keys_in_dict(d, old_key_part, new_key_part):
 def load_checkpoint(logger, checkpoint_path, model, optimizer=None, load_opt=1):
     assert os.path.isfile(checkpoint_path), translations["not_found_checkpoint"].format(checkpoint_path=checkpoint_path)
 
-    from arvc.engine.models.safe_load import safe_torch_load
+    from arvc.rvc.models.safe_load import safe_torch_load
     checkpoint_dict = convert_old_to_new(
         safe_torch_load(checkpoint_path)
     )

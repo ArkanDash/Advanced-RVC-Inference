@@ -9,7 +9,7 @@ from functools import cached_property
 from torch.nn.utils.rnn import pad_sequence
 
 
-from arvc.engine.speaker.speechbrain import EncoderClassifier
+from arvc.whisper.speaker.speechbrain import EncoderClassifier
 
 class SpeechBrainPretrainedSpeakerEmbedding:
     def __init__(self, embedding, device = None):

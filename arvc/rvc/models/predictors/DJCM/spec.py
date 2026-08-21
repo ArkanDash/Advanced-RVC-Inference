@@ -21,7 +21,7 @@ class Spectrogram(nn.Module):
 
         if str(audio.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from arvc.engine.models.backends.utils import STFT
+                from arvc.rvc.models.backends.utils import STFT
                 self.stft = STFT(filter_length=self.n_fft, hop_length=self.hop_length, win_length=self.win_length).to(audio.device)
             magnitude = self.stft.transform(audio, 1e-9)
         else:

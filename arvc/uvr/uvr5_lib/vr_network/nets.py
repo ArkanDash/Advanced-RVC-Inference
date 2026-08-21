@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-from arvc.engine.uvr.uvr5_lib.vr_network import layers
+from arvc.uvr.uvr5_lib.vr_network import layers
 
 class BaseASPPNet(nn.Module):
     def __init__(self, nn_architecture, nin, ch, dilations=(4, 8, 16)):

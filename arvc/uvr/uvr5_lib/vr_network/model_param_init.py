@@ -27,7 +27,7 @@ class ModelParameters(object):
             # SECURITY PATCH: was `pickle.load(f)` — arbitrary code execution
             # via malicious .bin. UVR5 .bin configs are plain dicts of params
             # and are safe to load via the restricted unpickler.
-            from arvc.engine.models.safe_load import safe_pickle_load
+            from arvc.rvc.models.safe_load import safe_pickle_load
             with open(config_path, "rb") as f:
                 data = safe_pickle_load(f)
                 self.param = data[key_in_bin]

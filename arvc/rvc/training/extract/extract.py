@@ -12,12 +12,12 @@ if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
 from arvc.utils import strtobool
-from arvc.engine.models.utils import check_assets
-from arvc.engine.training.extract.rms import run_rms_extraction
-from arvc.engine.training.extract.feature import run_pitch_extraction
+from arvc.rvc.models.utils import check_assets
+from arvc.rvc.training.extract.rms import run_rms_extraction
+from arvc.rvc.training.extract.feature import run_pitch_extraction
 from arvc.utils.variables import config, logger, translations, configs
-from arvc.engine.training.extract.embedding import run_embedding_extraction
-from arvc.engine.training.extract.preparing_files import generate_config, generate_filelist
+from arvc.rvc.training.extract.embedding import run_embedding_extraction
+from arvc.rvc.training.extract.preparing_files import generate_config, generate_filelist
 
 if not getattr(config, 'debug_mode', False):
     warnings.filterwarnings("ignore")

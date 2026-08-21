@@ -45,7 +45,7 @@ class STFT:
 
         if str(y.device).startswith(("ocl", "privateuseone")):
             if not hasattr(self, "stft"): 
-                from arvc.engine.models.backends.utils import STFT as _STFT
+                from arvc.rvc.models.backends.utils import STFT as _STFT
                 self.stft = _STFT(filter_length=n_fft, hop_length=hop_length_new, win_length=win_size_new).to(y.device)
             spec = self.stft.transform(pad, 1e-9)
         else:

@@ -12,9 +12,9 @@ import torch.nn as nn
 
 sys.path.append(os.getcwd())
 
-from arvc.engine.models.utils import load_audio
+from arvc.rvc.models.utils import load_audio
 from arvc.utils.variables import logger, translations
-from arvc.engine.training.extract.setup_path import setup_paths
+from arvc.rvc.training.extract.setup_path import setup_paths
 
 class RMSEnergyExtractor(nn.Module):
     def __init__(self, frame_length=2048, hop_length=512, center=True, pad_mode = "reflect"):

@@ -305,7 +305,7 @@ class Config:
     def is_zluda(self) -> bool:
         """Check if running under ZLUDA (AMD GPU via CUDA compatibility layer)."""
         try:
-            from arvc.engine.models.backends import zluda
+            from arvc.rvc.models.backends import zluda
             return zluda.is_available()
         except Exception:
             return False
@@ -343,7 +343,7 @@ class Config:
 
             # Check for other accelerators
             try:
-                from arvc.engine.models.backends import directml, opencl
+                from arvc.rvc.models.backends import directml, opencl
 
                 if directml.is_available():
                     return "privateuseone:0"
@@ -458,7 +458,7 @@ if config.device in ["cpu", "mps", "ocl:0", "privateuseone:0"] and configs.get("
 # Initialize weight_norm mode from config
 # Default: new-style (PyTorch 2.0+ parametrizations). Set new_pytorch_weight_norm: false for old-style (RVC fork compatible).
 try:
-    from arvc.engine.models.weight_norm import configure_weight_norm
+    from arvc.rvc.models.weight_norm import configure_weight_norm
     configure_weight_norm(new_pytorch=configs.get("new_pytorch_weight_norm", True))
 except Exception:
     pass

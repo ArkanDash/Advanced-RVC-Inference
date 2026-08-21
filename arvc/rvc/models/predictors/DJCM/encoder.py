@@ -4,7 +4,7 @@ import sys
 import torch.nn as nn
 
 
-from arvc.engine.models.predictors.DJCM.utils import ResConvBlock
+from arvc.rvc.models.predictors.DJCM.utils import ResConvBlock
 
 class ResEncoderBlock(nn.Module):
     def __init__(self, in_channels, out_channels, n_blocks, kernel_size):

@@ -163,7 +163,7 @@ def spectral_subtract_denoise(audio, sr, noise_seconds=0.4, alpha=1.0, n_fft=102
     global stft
 
     if stft is None and device.startswith(("ocl", "privateuseone")):
-        from arvc.engine.models.backends.utils import STFT
+        from arvc.rvc.models.backends.utils import STFT
         stft = STFT(filter_length=n_fft, hop_length=hop_length, win_length=None, window="hann").to(device)
     elif not device.startswith(("ocl", "privateuseone")):
         stft = None

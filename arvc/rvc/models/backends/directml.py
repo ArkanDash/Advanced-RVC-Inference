@@ -5,7 +5,7 @@ import torch
 import subprocess
 
 
-from arvc.engine.models.backends.utils import GRU
+from arvc.rvc.models.backends.utils import GRU
 
 try:
     import torch_directml
@@ -21,7 +21,7 @@ def _get_fairseq():
     """Lazily import fairseq module when needed."""
     global _fairseq
     if _fairseq is None:
-        from arvc.engine.models.embedders import fairseq
+        from arvc.rvc.models.embedders import fairseq
         _fairseq = fairseq
     return _fairseq
 

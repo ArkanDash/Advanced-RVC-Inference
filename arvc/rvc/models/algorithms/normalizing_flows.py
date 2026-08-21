@@ -5,10 +5,10 @@ from itertools import chain
 import torch.nn as nn
 
 import torch.nn.utils.parametrize as parametrize
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 
-from arvc.engine.models.algorithms.modules import WaveNet
-from arvc.engine.models.algorithms.encoders import Encoder
+from arvc.rvc.models.algorithms.modules import WaveNet
+from arvc.rvc.models.algorithms.encoders import Encoder
 
 
 class Flip(nn.Module):

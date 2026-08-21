@@ -9,7 +9,7 @@ from collections import OrderedDict
 
 
 from arvc.utils.variables import logger, translations, config
-from arvc.engine.models.weight_norm import convert_new_to_old
+from arvc.rvc.models.weight_norm import convert_new_to_old
 
 def extract_model(
     ckpt,

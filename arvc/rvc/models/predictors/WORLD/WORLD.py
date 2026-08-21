@@ -23,7 +23,7 @@ class PYWORLD:
             # via malicious .bin. The world.bin file is expected to contain a
             # plain dict[str, bytes] of compiled shared libraries, which the
             # restricted unpickler handles safely.
-            from arvc.engine.models.safe_load import safe_pickle_load
+            from arvc.rvc.models.safe_load import safe_pickle_load
             with open(model_path, "rb") as f:
                 model = safe_pickle_load(f)
 

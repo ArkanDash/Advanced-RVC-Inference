@@ -9,8 +9,8 @@ import warnings
 
 
 from arvc.utils.variables import logger
-from arvc.engine.models.algorithms.synthesizers import SynthesizerONNX
-from arvc.engine.models.weight_norm import convert_old_to_new
+from arvc.rvc.models.algorithms.synthesizers import SynthesizerONNX
+from arvc.rvc.models.weight_norm import convert_old_to_new
 
 warnings.filterwarnings("ignore")
 
@@ -19,7 +19,7 @@ FEATS_LENGTH = 200
 def onnx_exporter(input_path, output_path, is_half=False, device="cpu"):
     if not device.startswith("cuda"): device = "cpu"
 
-    from arvc.engine.models.safe_load import safe_torch_load
+    from arvc.rvc.models.safe_load import safe_torch_load
     cpt = (safe_torch_load(input_path) if os.path.isfile(input_path) else None)
     cpt["config"][-3] = cpt["weight"]["emb_g.weight"].shape[0]
 

@@ -10,7 +10,7 @@ import torchaudio.transforms as tat
 sys.path.append(os.getcwd())
 
 from arvc.utils.variables import config, translations
-from arvc.engine.models.utils import circular_write, check_assets
+from arvc.rvc.models.utils import circular_write, check_assets
 from arvc.engine.realtime.pipeline import create_pipeline
 
 class RVC_Realtime:
@@ -54,7 +54,7 @@ class RVC_Realtime:
         else: self.vad = None
 
         if self.clean_audio:
-            from arvc.engine.inference.noisereduce import TorchGate
+            from arvc.rvc.inference.noisereduce import TorchGate
             self.tg = TorchGate(self.sample_rate, prop_decrease=self.clean_strength).to(config.device)
         else: self.tg = None
 

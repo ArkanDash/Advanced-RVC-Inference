@@ -7,12 +7,12 @@ import numpy as np
 import torch.nn.functional as F
 import torch.nn.utils.parametrize as parametrize
 
-from arvc.engine.models.weight_norm import weight_norm, remove_weight_norm
+from arvc.rvc.models.weight_norm import weight_norm, remove_weight_norm
 from torch.utils.checkpoint import checkpoint
 
 
-from arvc.engine.models.algorithms.commons import init_weights
-from arvc.engine.models.algorithms.residuals import ResBlock, LRELU_SLOPE
+from arvc.rvc.models.algorithms.commons import init_weights
+from arvc.rvc.models.algorithms.residuals import ResBlock, LRELU_SLOPE
 
 class SineGen(torch.nn.Module):
     def __init__(self, samp_rate, harmonic_num=0, sine_amp=0.1, noise_std=0.003, voiced_threshold=0, flag_for_pulse=False):
