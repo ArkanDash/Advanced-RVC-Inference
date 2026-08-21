@@ -4,7 +4,7 @@ import sys
 import gradio as gr
 
 
-from arvc.services.realtime import realtime_start, realtime_stop
+from arvc.engine.realtime import realtime_start, realtime_stop
 from arvc.utils.variables import translations, configs, model_name, index_path, method_f0, embedders_mode, embedders_model
 from arvc.utils.feedback import change_models_choices, get_index, index_strength_show, unlock_f0, hoplength_show, change_embedders_mode, visible, audio_device, change_audio_device_choices, update_audio_device
 

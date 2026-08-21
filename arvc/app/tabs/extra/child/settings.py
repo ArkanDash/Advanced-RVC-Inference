@@ -5,8 +5,8 @@ import gradio as gr
 
 
 from arvc.utils.feedback import change_fp
-from arvc.services.system.utils import stop_pid
-from arvc.services.system.restart import change_language, change_theme
+from arvc.utils.utils import stop_pid
+from arvc.utils.restart import change_language, change_theme
 from arvc.utils.variables import translations, theme, configs, language, config
 
 def settings_tab(app):

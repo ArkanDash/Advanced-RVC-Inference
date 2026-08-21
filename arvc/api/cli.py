@@ -681,7 +681,7 @@ def cmd_download(args):
     logger.info("Downloading from: %s", args.link)
 
     try:
-        from arvc.services.downloads import download_model
+        from arvc.downloader import download_model
 
         result = download_model(url=args.link, model=args.name)
         if result:

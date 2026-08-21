@@ -17,13 +17,13 @@ from arvc.utils.feedback import (
     change_download_choices, change_download_pretrained_choices,
     replace_url, replace_modelname,
 )
-from arvc.services.downloads import (
+from arvc.downloader import (
     download_url,
     download_model,
     download_pretrained_model,
     search_models,
 )
-from arvc.services.system.process import fetch_pretrained_data, update_sample_rate_dropdown
+from arvc.utils.process import fetch_pretrained_data, update_sample_rate_dropdown
 
 
 def download_tab():

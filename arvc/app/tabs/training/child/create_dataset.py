@@ -4,7 +4,7 @@ import sys
 import gradio as gr
 
 
-from arvc.services.training import create_dataset
+from arvc.rvc.training import create_dataset
 from arvc.utils.feedback import visible, valueFalse_interactive, create_dataset_change
 from arvc.utils.variables import translations, sample_rate_choice, uvr_model, reverb_models, denoise_models, vr_models, mdx_models
 

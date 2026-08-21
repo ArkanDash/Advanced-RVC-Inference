@@ -5,7 +5,7 @@ import gradio as gr
 
 
 from arvc.utils.feedback import visible, shutil_move
-from arvc.services.system.model_utils import onnx_export
+from arvc.utils.model_utils import onnx_export
 from arvc.utils.variables import translations, configs
 
 def convert_model_tab():

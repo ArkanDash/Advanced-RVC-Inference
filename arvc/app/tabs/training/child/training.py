@@ -5,9 +5,9 @@ import gradio as gr
 
 sys.path.append(os.getcwd())
 
-from arvc.services.system.process import zip_file
+from arvc.utils.process import zip_file
 
-from arvc.services.training import (
+from arvc.rvc.training import (
     extract, 
     training, 
     preprocess, 

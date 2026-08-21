@@ -5,7 +5,7 @@ import gradio as gr
 
 
 from arvc.utils.feedback import visible, shutil_move
-from arvc.services.system.model_utils import fushion_model
+from arvc.utils.model_utils import fushion_model
 from arvc.utils.variables import translations, configs
 
 def fushion_tab():

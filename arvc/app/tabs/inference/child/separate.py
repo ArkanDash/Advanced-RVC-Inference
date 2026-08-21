@@ -4,8 +4,8 @@ import sys
 import gradio as gr
 
 
-from arvc.services.downloads import download_url
-from arvc.services.inference.separate import separate_music
+from arvc.downloader import download_url
+from arvc.rvc.inference.separate import separate_music
 from arvc.utils.feedback import visible, valueFalse_interactive, change_audios_choices, shutil_move, separate_change
 from arvc.utils.variables import translations, uvr_model, karaoke_models, reverb_models, vr_models, denoise_models, mdx_models, paths_for_files, sample_rate_choice, configs, file_types, export_format_choices
 
