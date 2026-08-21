@@ -366,37 +366,20 @@ The use of the converted voice for the following purposes is **strictly prohibit
 
 This project builds upon the work of many open-source projects and contributors.
 
-### Core RVC Foundation
-| Project | Author |
-|---------|--------|
-| [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project |
-| [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh Anh |
 
-### Training Improvements
-| Project | Author |
-|---------|--------|
-| [PolTrain](https://github.com/Politrees/PolTrain) | Politrees |
-| [Applio](https://github.com/IAHispano/Applio) | IAHispano |
-| [Codename RVC Fork v4](https://github.com/CodenameRVC/Codename-RVC-Fork-v4) | CodenameRVC |
 
-### Audio & Models
-| Project | Author |
-|---------|--------|
-| [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke |
-| [whisper](https://github.com/openai/whisper) | OpenAI |
-| [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia |
+* [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project |
+* [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh |
+* [PolTrain](https://github.com/Politrees/PolTrain) | Politrees |
+* [Applio](https://github.com/IAHispano/Applio) | IAHispano |
+* [Codename RVC Fork 4](https://github.com/codename0og/codename-RVC-Fork-4) | Codename;0 |
+* [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) * Nomad Karaoke |
+* [whisper](https://github.com/openai/whisper) | OpenAI |
+* [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia |
+* [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid |
+* [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers |
 
-### Hardware & Platform Support
-| Project | Author |
-|---------|--------|
-| [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid |
-| [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers |
 
-### Collaborators
-| Collaborator | Role |
-|-------------|------|
-| [ArkanDash](https://github.com/ArkanDash) | Creator & Maintainer |
-| [BF667](https://github.com/BF667) | Collaborator |
 
 ---
 
