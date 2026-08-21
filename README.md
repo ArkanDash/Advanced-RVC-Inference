@@ -10,11 +10,6 @@
 
 </div>
 
-> [!NOTE]
-> **v2.2.2** is a **package tidy-up release** — `arvc/utils/` and `arvc/services/` were reorganized into cleaner domain subpackages. **No behavior changes.** Old imports keep working thanks to re-export shims. See the [Changelog](#changelog) below for the migration cheat-sheet.
-
-> [!NOTE]
-> **v2.2.1** fixes a critical training bug where predictor (RMVPE/FCPE) and embedder (HuBERT) models were **not downloading automatically** during training, causing "model not found" errors. Also includes improved data validation and corrupted file handling. See the [Changelog](#changelog) below for details.
 
 > [!NOTE]
 > If you want to use old version switch to v1 branch.
