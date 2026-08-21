@@ -25,7 +25,7 @@ except ImportError:
 from arvc.utils.variables import logger, config, configs, translations, python, file_types
 
 from arvc.utils.feedback import gr_info, gr_warning, gr_error
-from arvc.ui.feedback import process_output, replace_export_format
+from arvc.utils.feedback import process_output, replace_export_format
 
 
 

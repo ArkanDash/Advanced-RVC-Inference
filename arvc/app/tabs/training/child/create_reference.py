@@ -5,7 +5,7 @@ import gradio as gr
 
 
 from arvc.services.training import create_reference
-from arvc.ui.feedback import visible, change_audios_choices, unlock_f0, shutil_move, change_embedders_mode
+from arvc.utils.feedback import visible, change_audios_choices, unlock_f0, shutil_move, change_embedders_mode
 from arvc.utils.variables import translations, paths_for_files, method_f0, hybrid_f0_method, file_types, configs, embedders_model, embedders_mode
 
 def create_reference_tab():

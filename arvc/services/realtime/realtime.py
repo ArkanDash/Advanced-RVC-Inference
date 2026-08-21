@@ -6,7 +6,7 @@ sys.path.append(os.getcwd())
 
 from arvc.utils.variables import translations, configs
 from arvc.utils.feedback import gr_info, gr_warning
-from arvc.ui.feedback import audio_device
+from arvc.utils.feedback import audio_device
 
 running, callbacks, audio_manager = False, None, None
 

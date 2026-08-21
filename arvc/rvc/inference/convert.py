@@ -33,7 +33,7 @@ def strtobool(val):
 
 warnings.filterwarnings("ignore")
 
-from arvc.ui.feedback import replace_export_format
+from arvc.utils.feedback import replace_export_format
 from arvc.rvc.inference.pipeline import Pipeline
 from arvc.utils.variables import config, logger, translations
 from arvc.rvc.inference.audio_processing import preprocess, postprocess

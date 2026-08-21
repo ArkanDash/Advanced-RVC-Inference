@@ -84,7 +84,7 @@ from arvc.rvc.models.weight_norm import configure_weight_norm, use_new_pytorch
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
-from arvc.utils.downloaders.huggingface import HF_download_file
+from arvc.downloader.huggingface import HF_download_file
 
 if not getattr(main_config, 'debug_mode', False):
     warnings.filterwarnings("ignore")

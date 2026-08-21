@@ -5,7 +5,7 @@ import gradio as gr
 
 
 from arvc.services.inference.csrt import create_srt
-from arvc.ui.feedback import shutil_move, change_audios_choices
+from arvc.utils.feedback import shutil_move, change_audios_choices
 from arvc.utils.variables import translations, file_types, configs, paths_for_files
 
 def create_srt_tab():

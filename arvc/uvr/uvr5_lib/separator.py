@@ -23,7 +23,7 @@ sys.path.append(now_dir)
 
 from arvc.rvc.models.utils import clear_gpu_cache
 from arvc.rvc.models.backends import directml, opencl
-from arvc.utils.downloaders.huggingface import HF_download_file
+from arvc.downloader.huggingface import HF_download_file
 from arvc.utils.variables import config, translations
 
 warnings.filterwarnings("ignore")

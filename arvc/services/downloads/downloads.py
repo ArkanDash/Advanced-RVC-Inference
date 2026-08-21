@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 sys.path.append(os.getcwd())
 
-from arvc.utils.downloaders import huggingface, gdown, meganz, mediafire, pixeldrain
+from arvc.downloader import huggingface, gdown, meganz, mediafire, pixeldrain
 from arvc.services.system.process import move_files_from_directory, fetch_pretrained_data, extract_name_model
 from arvc.utils.feedback import gr_info, gr_warning, gr_error, process_output, replace_url, replace_modelname
 

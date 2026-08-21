@@ -11,7 +11,7 @@ import sys
 import gradio as gr
 
 from arvc.utils.variables import translations, configs, model_options, model_name
-from arvc.ui.feedback import (
+from arvc.utils.feedback import (
     gr_info, gr_warning, gr_error,
     change_models_choices, change_pretrained_choices,
     change_download_choices, change_download_pretrained_choices,

@@ -4,7 +4,7 @@ import sys
 import gradio as gr
 
 
-from arvc.ui.feedback import change_fp
+from arvc.utils.feedback import change_fp
 from arvc.services.system.utils import stop_pid
 from arvc.services.system.restart import change_language, change_theme
 from arvc.utils.variables import translations, theme, configs, language, config

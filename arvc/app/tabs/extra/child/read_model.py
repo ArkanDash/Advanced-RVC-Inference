@@ -4,7 +4,7 @@ import sys
 import gradio as gr
 
 
-from arvc.ui.feedback import shutil_move
+from arvc.utils.feedback import shutil_move
 from arvc.services.system.model_utils import model_info
 from arvc.utils.variables import translations, configs
 

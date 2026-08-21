@@ -5,7 +5,7 @@ import gradio as gr
 
 
 from arvc.services.inference.f0_extract import f0_extract
-from arvc.ui.feedback import change_audios_choices, unlock_f0, shutil_move
+from arvc.utils.feedback import change_audios_choices, unlock_f0, shutil_move
 from arvc.utils.variables import translations, paths_for_files, method_f0, configs, file_types
 
 def f0_extract_tab():
