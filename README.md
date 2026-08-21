@@ -33,21 +33,21 @@
 - **End-to-End Training** — Dataset creation → preprocessing → feature extraction → training → model export
 - **🔧 Auto Model Download** — Predictor (RMVPE/FCPE) and embedder (HuBERT) models download automatically before training starts — no more "model not found" errors!
 - **4 Vocoders** — HiFi-GAN NSF (Default), BigVGAN, MRF-HiFi-GAN, RefineGAN
-- **5 Optimizers** — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2
-- **Training Quality Improvements** — Multi-scale mel spectrogram loss (8 scales), scaled v3 discriminator loss, proper feature loss gradient flow, cuDNN benchmark
+- **7 Optimizers** — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, **Ranger2020**, **Prodigy**
+- **Enhanced Loss Functions** — Multi-scale STFT loss, phase loss, envelope loss, KL-divergence loss (from Codename RVC Fork v4)
+- **Training Enhancements** — LR warmup, KL annealing, gradient clip scheduling, decoder freezing (from Codename RVC Fork v4)
 - **Robust Data Loading** — Safe numpy loading with NaN/Inf handling, corrupted file recovery, increased sequence length limits (900→1800)
 - **Advanced Options** — Gradient accumulation, torch.compile(), 8-bit Adam, cosine annealing LR, overtraining detection
 - **Architecture Support** — RVC and SVC (from Vietnamese-RVC)
 - **Embedder Mix** — Layer-wise embedding mixing with configurable ratios (from Vietnamese-RVC)
-- **🚀 3× Faster Training** — `--fast_train` flag bundles TF32 matmul + cuDNN benchmark + torch.compile + expandable_segments allocator. Vocal-quality-safe (no loss/numerics changes). See [Training Boost](docs/TRAINING_BOOST.md).
+- **🚀 3× Faster Training** — `--fast_train` flag bundles TF32 matmul + cuDNN benchmark + torch.compile + expandable_segments allocator. Vocal-quality-safe (no loss/numerics changes).
 - **🚀 bf16 Auto-Mode** — `--bf16_adamw` flag (Applio-parity shortcut) forces AnyPrecisionAdamW + bf16 autocast. Recommended on Ampere+ GPUs (A100/H100/RTX 30xx+/40xx+).
-- **🎯 Applio-Parity Accuracy** — `per_preprocess=3.0s` (was 3.7s) yields ~26% more training chunks on small datasets. `--chunk_len`/`--overlap_len` now apply to Automatic cut mode. Saved `.pth` embeds `embedder_model` + `dataset_length` + `overtrain_info` provenance fields.
 
 ### 🔒 Security Hardening
-- **Safe Deserialization** — All `torch.load()` calls route through `safe_torch_load` (forces `weights_only=True`). Restricted `pickle.Unpickler` whitelist blocks every known RCE gadget. See [Security Patches](docs/SECURITY_PATCHES.md).
-- **Path Traversal Guards** — `validate_path_within()` wired into 20+ `os.path.join` sites in inference + training. Blocks `../../etc/cron.d/evil` style escapes from GUI/CLI inputs.
-- **Hardened Downloaders** — All 5 downloaders (HuggingFace, Google Drive, Mega, MediaFire, PixelDrain) enforce: 8 GB size cap, extension whitelist, filename sanitization, `timeout=300s` on every network call. Fixed `tempfile.mktemp` TOCTOU race in `gdown.py`.
-- **No Silent Failures** — Bare `except:` clauses in checkpoint-load (was silently restarting training from epoch 1) and ONNX export replaced with typed exceptions. MEGA nonce migrated from `random.randint` → `secrets.randbits(32)`.
+- **Safe Deserialization** — All `torch.load()` calls route through `safe_torch_load` (forces `weights_only=True`). Restricted `pickle.Unpickler` whitelist blocks every known RCE gadget.
+- **Path Traversal Guards** — `validate_path_within()` wired into 20+ `os.path.join` sites in inference + training.
+- **Hardened Downloaders** — All downloaders enforce: 8 GB size cap, extension whitelist, filename sanitization, `timeout=300s`.
+- **No Silent Failures** — Bare `except:` clauses replaced with typed exceptions.
 
 ### Platform & Integration
 - **CLI** — Full command-line interface via `rvc-cli`
@@ -60,22 +60,16 @@
 
 ## Supported Vocoders
 
-Advanced RVC Inference supports the same vocoders as [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC):
-
 | Vocoder | Description | Pitch Required |
 |---------|-------------|----------------|
-| **Default** (HiFi-GAN NSF) | HiFi-GAN with Neural Sine Filter. Adds harmonic sine wave injection for improved pitch accuracy. **Recommended for best compatibility.** | Yes |
-| **BigVGAN** | Snake activations with Anti-Aliasing (SnakeBeta + AMP blocks). State-of-the-art audio quality. | Yes |
-| **MRF-HiFi-GAN** | HiFi-GAN with Multi-Receptive Field fusion. Richer feature extraction with MRF blocks. | Yes |
-| **RefineGAN** | U-Net based vocoder with parallel residual blocks and anti-aliased resampling. High-fidelity spectral detail. | Yes |
-
-When training without pitch guidance (`pitch_guidance=False`), a plain HiFi-GAN generator (no NSF) is used automatically regardless of the selected vocoder.
+| **Default** (HiFi-GAN NSF) | HiFi-GAN with Neural Sine Filter. **Recommended for best compatibility.** | Yes |
+| **BigVGAN** | Snake activations with Anti-Aliasing. State-of-the-art audio quality. | Yes |
+| **MRF-HiFi-GAN** | HiFi-GAN with Multi-Receptive Field fusion. Richer feature extraction. | Yes |
+| **RefineGAN** | U-Net based vocoder with parallel residual blocks. High-fidelity spectral detail. | Yes |
 
 ---
 
 ## Supported Optimizers
-
-Advanced RVC Inference provides **5 carefully selected optimizers** for model training, covering the most effective choices for RVC/audio model training:
 
 | Optimizer | Category | Rating | Best For |
 |-----------|----------|--------|----------|
@@ -84,8 +78,10 @@ Advanced RVC Inference provides **5 carefully selected optimizers** for model tr
 | **AnyPrecisionAdamW** | Mixed-Precision | ⭐⭐⭐⭐ | Bfloat16 training, long runs with Kahan summation |
 | **AdaBelief** | Belief-Based | ⭐⭐⭐ | Better conditioned adaptive learning rates |
 | **AdaBeliefV2** | Belief-Based | ⭐⭐⭐ | Stable deep training with AMSGrad + InverseSqrt scheduler |
+| **Ranger2020** 🆕 | Advanced | ⭐⭐⭐⭐⭐ | RAdam + Lookahead + Gradient Centralization |
+| **Prodigy** 🆕 | D-Adaptation | ⭐⭐⭐⭐⭐ | Automatic LR tuning (lr=1.0 works!) |
 
-See the [Optimizer Reference Guide](docs/optimizer.md) for detailed descriptions, hyperparameters, and recommendations.
+🆕 *Newly added from Codename RVC Fork v4*
 
 ---
 
@@ -154,30 +150,15 @@ rvc-cli uvr -i song.mp3
 rvc-cli --help
 ```
 
-#### Fast Training (v2.2.0+)
+#### Fast Training
 
 ```bash
-# ~3× faster training, vocal-quality-safe (no loss/numerics changed)
+# ~3× faster training, vocal-quality-safe
 rvc-cli train my_model --fast_train true --epochs 200 --batch_size 4
 
-# Additional ~1.5–2× speedup on Ampere+ GPUs (A100/H100/RTX 30xx+/40xx+)
-# Skip on Colab T4 (Turing) — bf16 is emulated there.
+# Additional ~1.5–2× speedup on Ampere+ GPUs
 rvc-cli train my_model --fast_train true --bf16_adamw true --epochs 200 --batch_size 8
-
-# 10-minute dataset recipe (max accuracy)
-rvc-cli preprocess my_model --sample_rate 48000 \
-    --cut_method Automatic --chunk_len 3.0 --overlap_len 0.5 \
-    --process_effects --normalization post
-rvc-cli extract my_model --sample_rate 48000 --f0_method rmvpe
-rvc-cli create-index my_model --version v2 --algorithm Auto
-rvc-cli train my_model --fast_train true --bf16_adamw true \
-    --epochs 300 --batch_size 4 --multiscale_loss --cosine_lr \
-    --overtrain_detect --overtrain_threshold 50
 ```
-
-See [`docs/TRAINING_BOOST.md`](docs/TRAINING_BOOST.md) for the full optimization
-breakdown and [`docs/SECURITY_PATCHES.md`](docs/SECURITY_PATCHES.md) for the
-complete security audit trail.
 
 ### 4. Google Colab
 
@@ -191,68 +172,179 @@ complete security audit trail.
 ## Project Structure
 
 ```
-arvc/
-├── api/                    # CLI entry points (rvc-cli → arvc.api.cli:main)
-├── app/                    # Gradio web UI (tabs, pages, layouts)
-│   └── tabs/               #   inference, training, downloads, realtime, extra
-├── engine/                 # Core logic (no UI dependency)
-│   ├── inference/          #   Voice conversion pipeline, TTS, noisereduce
-│   ├── training/           #   preprocess, extract, train, export
-│   │   ├── preprocess/     #     Audio slicing & normalization
-│   │   ├── extract/        #     Embedding & F0 extraction
-│   │   └── runner/         #     Training loop, losses, data loading
-│   ├── uvr/                #   Audio separation (UVR5)
-│   ├── realtime/           #   Live mic conversion
-│   ├── speaker/            #   Speaker diarization & embedding
-│   └── models/             #   Model loading, generators, optimizers, embedders
-│       ├── algorithms/     #     VITS-style primitives (synthesizers, discriminators, …)
-│       ├── generators/     #     HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
-│       ├── optimizers/     #     AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, PolOpt
-│       ├── embedders/      #     Hubert, ContentVec, PPG, transformers
-│       ├── predictors/     #     F0 predictors (RMVPE, Crepe, FCPE, PESTO, PENN, DJCM, SWIFT, WORLD)
-│       ├── backends/       #     CUDA, DirectML, OpenCL, XPU, ZLUDA
-│       └── onnx/           #     ONNX export & wrapper
-├── services/               # Business logic layer (bridges UI ↔ engine)
-│   ├── inference/          #   csrt, f0_extract, presets, separate, tts
-│   ├── training/           #   training orchestration
-│   ├── realtime/           #   realtime server + client
-│   ├── system/             #   process, restart, model_utils, utils
-│   └── downloads/          #   download orchestration
-├── ui/                     # UI helpers (feedback, dropdown updates, formatting)
-├── utils/                  # Shared utilities
-│   ├── variables.py        #   Global paths, Config singleton, logger, translations
-│   ├── feedback.py         #   Headless-safe logger (gr_info, gr_warning, gr_error)
-│   └── downloaders/        #   File-host backends (gdown, huggingface, mediafire, meganz, pixeldrain)
-├── configs/                # Configuration files (training configs, model templates)
-│   ├── config.py           #   Runtime Config singleton (device, providers, paths)
-│   ├── v1/                 #   V1 model configs (32k, 40k, 48k)
-│   ├── v2/                 #   V2 model configs (24k, 32k, 40k, 48k)
-│   ├── ringformer_v2/      #   RingFormer V2 configs
-│   └── pcph_gan/           #   PCPH-GAN configs
-├── datasets/               # Training datasets (organized per model)
-├── assets/                 # Runtime assets
-│   ├── models/             #   Pretrained models, embedders, predictors, UVR5
-│   │   ├── pretrained_v1/  #     V1 pretrained G/D weights
-│   │   ├── pretrained_v2/  #     V2 pretrained G/D weights
-│   │   ├── pretrained_custom/ #  Custom pretrained weights
-│   │   ├── embedders/      #     Hubert/ContentVec models
-│   │   ├── predictors/     #     F0 predictor models
-│   │   ├── speaker_diarization/ # Speaker-diarization model + assets
-│   │   └── uvr5/           #     UVR5 separation models
-│   ├── logs/               #   Training logs, checkpoints, weights, indexes, feature caches
-│   ├── audios/             #   Audio files (input, output, TTS, UVR results)
-│   ├── f0/                 #   F0 cache files
-│   ├── binary/             #   Binary resources (e.g., ZLUDA helpers)
-│   ├── languages/          #   44 translation JSON files
-│   ├── presets/            #   Inference presets
-│   └── zluda/              #   ZLUDA launcher (Windows AMD GPUs)
-└── _version.py             # Version management
+arvc/                           # Main Package
+│
+├── api/                         # CLI entry points (rvc-cli → arvc.api.cli:main)
+│   ├── cli.py                   #   Main CLI interface
+│   └── cli_complete.py          #   Shell completion
+│
+├── app/                         # Gradio Web UI
+│   ├── gui.py                   #   Main application entry
+│   └── tabs/                    #   UI Tabs
+│       ├── inference/           #     Voice conversion, TTS, separation
+│       ├── training/            #     Dataset creation, reference, training
+│       ├── downloads/           #     Model downloader tab
+│       ├── realtime/            #     Real-time voice conversion
+│       └── extra/               #     Settings, SRT, model tools
+│
+├── rvc/                         # 🎯 RVC Core Module
+│   ├── inference/               #   Voice conversion pipeline
+│   │   ├── inference.py         #     Main inference logic
+│   │   ├── convert.py           #     Model conversion & export
+│   │   ├── pipeline.py          #     Inference pipeline
+│   │   ├── create_reference.py  #     Reference audio creation
+│   │   ├── noisereduce.py       #     Audio denoising (TorchGate)
+│   │   ├── audio_processing.py  #     Audio preprocessing/postprocessing
+│   │   ├── csrt.py              #     SRT subtitle generation
+│   │   ├── f0_extract.py        #     F0 extraction utility
+│   │   ├── presets.py           #     Inference presets management
+│   │   ├── separate.py          #     Audio separation wrapper
+│   │   └── tts.py               #     Text-to-Speech integration
+│   │
+│   ├── training/                #   Training Pipeline
+│   │   ├── runner/              #     Core training loop
+│   │   │   ├── train.py         #       Main training script
+│   │   │   ├── losses.py        #       Loss functions (enhanced!)
+│   │   │   ├── data_utils.py    #       Data loading & augmentation
+│   │   │   ├── enhancements.py  #       Training enhancements (NEW!)
+│   │   │   ├── mel_processing.py#       Mel spectrogram processing
+│   │   │   ├── extract_model.py #       Model extraction utilities
+│   │   │   └── utils.py         #       Training helpers
+│   │   ├── extract/             #     Feature extraction
+│   │   │   ├── extract.py       #       Embedding & F0 extraction
+│   │   │   ├── embedding.py     #       Speaker embedding extraction
+│   │   │   ├── feature.py       #       Feature processing
+│   │   │   ├── preparing_files.py#      File preparation
+│   │   │   ├── rms.py           #       RMS energy extraction
+│   │   │   └── setup_path.py    #       Path configuration
+│   │   ├── preprocess/          #     Audio preprocessing
+│   │   │   ├── preprocess.py    #       Main preprocessing
+│   │   │   └── slicer2.py       #       Audio slicing
+│   │   ├── create_dataset.py    #     Dataset creation
+│   │   └── create_index.py      #     FAISS index creation
+│   │
+│   ├── models/                  #   Neural Network Models
+│   │   ├── algorithms/          #     Core algorithms
+│   │   │   ├── synthesizers.py  #       Synthesizer (VITS-style)
+│   │   │   ├── discriminators.py#       Multi-period/multi-scale discriminators
+│   │   │   ├── encoders.py      #       Text encoders
+│   │   │   ├── encoders_vits2.py#       VITS2 encoders
+│   │   │   ├── modules.py       #       Common modules
+│   │   │   ├── normalizing_flows.py #   Normalizing flows
+│   │   │   ├── stftpitchshift.py#       STFT pitch shifting
+│   │   │   └── wavenet.py       #       WaveNet vocoder
+│   │   ├── generators/          #     Vocoder architectures
+│   │   │   ├── hifigan.py       #       HiFi-GAN NSF (default)
+│   │   │   ├── bigvgan.py       #       BigVGAN
+│   │   │   ├── mrf_hifigan.py   #       MRF-HiFi-GAN
+│   │   │   ├── nsf_hifigan.py   #       NSF HiFi-GAN
+│   │   │   └── refinegan.py     #       RefineGAN
+│   │   ├── optimizers/          #     Training optimizers
+│   │   │   ├── adabelief.py     #       AdaBelief
+│   │   │   ├── ranger2020.py    #       Ranger2020 (NEW!)
+│   │   │   ├── prodigy.py       #       Prodigy D-Adapt (NEW!)
+│   │   │   └── polopt.py        #       PolOpt hybrid
+│   │   ├── predictors/          #     F0/Pitch extractors
+│   │   │   ├── RMVPE/           #       RMVPE predictor
+│   │   │   ├── FCPE/            #       FCPE predictor
+│   │   │   ├── CREPE/           #       CREPE predictor
+│   │   │   ├── PESTO/           #       PESTO predictor
+│   │   │   ├── WORLD/           #       WORLD/Harvest predictor
+│   │   │   ├── PENN/            #       PENN predictor
+│   │   │   ├── SWIFT/           #       SWIFT predictor
+│   │   │   └── DJCM/            #       DJCM predictor
+│   │   ├── embedders/           #     Speaker embedders
+│   │   │   ├── fairseq.py       #       HuBERT/ContentVec
+│   │   │   ├── onnx.py          #       ONNX embedders
+│   │   │   ├── ppg.py           #       PPG embedder
+│   │   │   └── transformers.py  #       Wav2Vec2 embedder
+│   │   ├── backends/            #     Hardware backends
+│   │   │   ├── directml.py      #       DirectX/DirectML
+│   │   │   ├── opencl.py        #       OpenCL
+│   │   │   ├── zluda.py         #       ZLUDA (AMD)
+│   │   │   └── utils.py         #       Backend utilities
+│   │   └── onnx/                #     ONNX export
+│   │       ├── onnx_export.py   #       Export utilities
+│   │       └── wrapper.py       #       ONNX runtime wrapper
+│   │
+│   └── __init__.py
+│
+├── uvr/                         # 🎵 Ultimate Vocal Remover
+│   ├── separate_music.py        #   High-level separation API
+│   └── uvr5_lib/                #   UVR5 library
+│       ├── separator.py         #     Base separator class
+│       ├── spec_utils.py        #     Spectrogram utilities
+│       └── uvr/                 #     Separators
+│           ├── mdx_separator.py #       MDX-Net separator
+│           └── vr_separator.py  #       VR separator
+│
+├── whisper/                     # 🎤 Whisper / Speaker Diarization
+│   └── speaker/                 #   Speaker recognition
+│       ├── ECAPA_TDNN.py        #     ECAPA-TDNN model
+│       ├── speechbrain.py       #     SpeechBrain integration
+│       ├── encoder.py           #     Speaker encoder
+│       ├── whisper.py           #     Whisper transcription
+│       ├── segment.py           #     Audio segmentation
+│       └── embedding.py         #     Embedding extraction
+│
+├── tts/                         # 🔊 Text-to-Speech
+│   └── tts.py                   #   TTS interface
+│
+├── downloader/                  # ⬇️ Downloaders
+│   ├── huggingface.py           #   HuggingFace download
+│   ├── gdown.py                 #   Google Drive download
+│   ├── meganz.py                #   Mega.nz download
+│   ├── mediafire.py             #   MediaFire download
+│   ├── pixeldrain.py            #   PixelDrain download
+│   └── downloads.py             #   Download orchestration
+│
+├── engine/                      # Real-time Processing
+│   └── realtime/                #   Live voice conversion
+│       ├── realtime.py          #     RVC_Realtime main class
+│       ├── pipeline.py          #     Realtime pipeline
+│       ├── callbacks.py         #     Audio callbacks
+│       ├── audio.py             #     Audio device handling
+│       └── vad_utils.py         #     VAD (Voice Activity Detection)
+│
+├── utils/                       # 🛠️ Shared Utilities
+│   ├── variables.py             #   Global config, paths, translations
+│   ├── feedback.py              #   Logger (gr_info, gr_warning, gr_error)
+│   ├── process.py               #   System process handling
+│   ├── model_utils.py           #   Model utilities (export, info, fusion)
+│   ├── restart.py               #   Restart utilities
+│   └── utils.py                 #   Helper functions
+│
+├── configs/                     # Configuration Files
+│   ├── config.py                #   Runtime Config singleton
+│   ├── v1/                      #   V1 model configs (32k, 40k, 48k)
+│   ├── v2/                      #   V2 model configs (24k, 32k, 40k, 48k)
+│   ├── ringformer_v2/           #   RingFormer V2 configs
+│   └── pcph_gan/                #   PCPH-GAN configs
+│
+├── assets/                      # Runtime Assets
+│   ├── models/                  #   Pretrained models
+│   │   ├── pretrained_v1/       #     V1 pretrained weights
+│   │   ├── pretrained_v2/       #     V2 pretrained weights
+│   │   ├── pretrained_custom/   #     Custom pretrained weights
+│   │   ├── predictors/          #     F0 predictor models
+│   │   └── speaker_diarization/ #     Speaker diarization models
+│   ├── logs/                    #   Training logs & checkpoints
+│   ├── audios/                  #   Audio files
+│   ├── languages/               #   44 translation JSON files
+│   └── presets/                 #   Inference presets
+│
+├── datasets/                    # Training Datasets
+│
+├── __init__.py                  # Package initialization
+├── __main__.py                  # Entry point (python -m arvc)
+└── _version.py                  # Version management
 ```
 
 **Key rules**:
-- `engine/` should never import from `app/` or `services/`. Keep the core independent.
-- `services/` may import from `engine/` and `utils/`, but NOT from `app/` or `ui/`.
-- See [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) for the full deep-dive (dependency graph, where-to-add-new-code table, backward-compat notes).
+- `rvc/` is the core module — all RVC-specific code lives here
+- `engine/realtime/` handles real-time voice conversion only
+- `app/` contains the GUI and imports from `rvc/`, `uvr/`, etc.
+- No circular dependencies between top-level modules
 
 ---
 
@@ -271,132 +363,65 @@ The use of the converted voice for the following purposes is **strictly prohibit
 
 ## Changelog
 
+### v2.3.0
+
+**📦 Major Restructuring — Clean Package Architecture**
+
+Complete project reorganization for cleaner, more maintainable codebase:
+
+- **New Modular Structure** — Code organized into focused modules: `rvc/`, `uvr/`, `whisper/`, `tts/`, `downloader/`, `engine/`
+- **Removed All Duplicates** — Deleted 31,000+ lines of duplicate code from legacy `engine/`, `Utils/`, `ui/`, `services/` folders
+- **New Optimizers** — Added Ranger2020 (RAdam + Lookahead + GC) and Prodigy (D-Adaptation) from Codename RVC Fork v4
+- **Enhanced Loss Functions** — Phase loss, envelope loss, KL-divergence loss, MultiScaleSTFTLoss
+- **Training Enhancements** — LR warmup scheduler, KL annealer, gradient clip scheduling, decoder freezing
+- **Clean Imports** — All paths updated to new structure (`arvc.rvc.*`, `arvc.uvr.*`, etc.)
+
+**Migration guide**:
+
+| Old path (deleted) | New path |
+|-------------------|----------|
+| `arvc.engine.inference.*` | `arvc.rvc.inference.*` |
+| `arvc.engine.models.*` | `arvc.rvc.models.*` |
+| `arvc.engine.training.*` | `arvc.rvc.training.*` |
+| `arvc.services.*` | Merged into respective modules |
+| `arvc.Utils.*` | `arvc.utils.*` |
+| `arvc.ui.*` | `arvc.utils.*` |
+
 ### v2.2.2
 
-**📦 Package Tidy-Up (no behavior changes — pure reorganization)**
+**📦 Package Tidy-Up**
 
-The `arvc/` package was reorganized for clarity. All moves are
-backward-compatible thanks to `__init__.py` re-export shims, but the *new*
-canonical paths are the ones to use going forward.
-
-- **`arvc/utils/` slimmed down** — 5 file-host downloaders (`gdown`,
-  `huggingface`, `mediafire`, `meganz`, `pixeldrain`) moved into a new
-  `arvc/utils/downloaders/` subpackage. `noisereduce.py` moved to
-  `arvc/engine/inference/noisereduce.py` (it's a torch-dependent audio
-  utility that belongs with the inference pipeline). `utils/__init__.py`
-  rewritten with lazy-import `__getattr__` so `import arvc` doesn't pull
-  in every downloader.
-- **`arvc/services/` grouped by domain** — the 12 flat service files are now
-  in 5 domain subpackages: `services/inference/` (csrt, f0_extract, presets,
-  separate, tts), `services/training/` (training), `services/realtime/`
-  (realtime, realtime_client), `services/system/` (process, restart,
-  model_utils, utils), `services/downloads/` (downloads). Each subpackage
-  `__init__.py` re-exports its modules' public names, so old imports like
-  `from arvc.services.training import X` keep working.
-- **New doc**: [`docs/PACKAGE_STRUCTURE.md`](docs/PACKAGE_STRUCTURE.md) —
-  the canonical reference for the package layout, dependency rules, and a
-  "where to add new code" lookup table.
-- **Updated docs**: README.md and CONTRIBUTING.md "Project Structure"
-  sections refreshed. `TRAINING_BUG_FIXES.md` file references updated to
-  new paths.
-
-**Migration cheat-sheet** (only needed if you imported these directly):
-
-| Old path | New canonical path |
-|----------|---------------------|
-| `arvc.utils.gdown` | `arvc.utils.downloaders.gdown` |
-| `arvc.utils.huggingface` | `arvc.utils.downloaders.huggingface` |
-| `arvc.utils.mediafire` | `arvc.utils.downloaders.mediafire` |
-| `arvc.utils.meganz` | `arvc.utils.downloaders.meganz` |
-| `arvc.utils.pixeldrain` | `arvc.utils.downloaders.pixeldrain` |
-| `arvc.utils.noisereduce` | `arvc.engine.inference.noisereduce` |
-| `arvc.services.csrt` | `arvc.services.inference.csrt` |
-| `arvc.services.f0_extract` | `arvc.services.inference.f0_extract` |
-| `arvc.services.presets` | `arvc.services.inference.presets` |
-| `arvc.services.separate` | `arvc.services.inference.separate` |
-| `arvc.services.tts` | `arvc.services.inference.tts` |
-| `arvc.services.training` | `arvc.services.training.training` (or `arvc.services.training` — re-exported) |
-| `arvc.services.realtime` | `arvc.services.realtime.realtime` (or `arvc.services.realtime` — re-exported) |
-| `arvc.services.realtime_client` | `arvc.services.realtime.realtime_client` |
-| `arvc.services.process` | `arvc.services.system.process` |
-| `arvc.services.restart` | `arvc.services.system.restart` |
-| `arvc.services.model_utils` | `arvc.services.system.model_utils` |
-| `arvc.services.utils` | `arvc.services.system.utils` |
-| `arvc.services.downloads` | `arvc.services.downloads.downloads` (or `arvc.services.downloads` — re-exported) |
+- Reorganized package structure for clarity
+- Added domain-based service grouping
+- Updated documentation
 
 ### v2.2.1
 
 **🔧 Critical Bug Fix: Predictor & Embedder Auto-Download**
-- **Fixed:** Training process now automatically downloads required predictor models (RMVPE, FCPE, etc.) and embedder models (HuBERT, ContentVec) **before** training starts
-- **Root Cause:** Previous code only downloaded pretrained G/D weights but skipped F0 predictors and content embedders, causing silent failures when:
-  - Extraction step was skipped or interrupted
-  - Models were deleted from cache
-  - Fresh installation without prior extraction run
-- **Files Changed:**
-  - `arvc/services/training.py` — Added `check_assets()` call at training start to ensure all models are available
-  - `arvc/engine/models/utils.py` — Added `os.makedirs()` in `download_embedder()` and `download_predictor()` to prevent FileNotFoundError when directories don't exist
-
-**🛡️ Data Validation & Robustness Improvements**
-- **Safe Numpy Loading:** New `safe_load_numpy()` function handles corrupted `.npy` files gracefully:
-  - Detects and replaces NaN/Inf values with zeros
-  - Returns fallback tensors instead of crashing on corrupted files
-  - Prevents silent data corruption from propagating through training
-- **Pitch Data Validation:** 
-  - Pitch values clamped to valid range [0, 255] for embedding safety
-  - F0 values clamped to reasonable vocal range [0, 1100] Hz
-  - Energy values sanitized to prevent gradient explosions
-- **Audio Validation:** Checks for NaN/Inf/silent audio during loading
-- **Spectrogram Cache Validation:** Corrupted cached spectrograms are regenerated automatically
-- **Increased Sequence Length Limit:** MAX_SEQUENCE_LENGTH doubled from 900→1800 for better long-context voice learning
-
-**Enhanced Feature Extraction**
-- Improved F0 estimation accuracy with better post-processing parameters
-- Added proper feature normalization before model input
-- Better alignment handling when phone/spec lengths mismatch
+- Fixed: Training now auto-downloads predictor/embedder models before starting
+- Safe numpy loading with NaN/Inf handling
+- Increased sequence length limit (900→1800)
 
 ### v2.2.0
 
-**🔒 Security Hardening (defense-in-depth — no numerics changed)**
-- Routed 16 `torch.load()` calls through `safe_torch_load` (forces `weights_only=True`) across all predictors (PESTO, PENN, RMVPE, CREPE, DJCM, FCPE), training (train.py ×3, data_utils, utils), whisper, onnx_export, vr_separator, fairseq
-- Restricted `pickle.Unpickler` whitelist (primitive + numpy types only) — blocks every known pickle RCE gadget (`os.system`, `subprocess.Popen`, `builtins.eval`)
-- Wired `validate_path_within()` into 20+ `os.path.join` sites in `inference.py` and `services/training.py` — blocks `../../etc/cron.d/evil` path traversal from GUI/CLI inputs
-- All 5 downloaders (HuggingFace, Google Drive, Mega, MediaFire, PixelDrain) now enforce: 8 GB size cap, extension whitelist, filename sanitization, `timeout=300s` on every network call
-- Fixed `tempfile.mktemp` → `mkstemp` TOCTOU race in `gdown.py`
-- MEGA nonce migrated from `random.randint` → `secrets.randbits(32)`
-- Bare `except:` clauses in checkpoint-load (was silently restarting training from epoch 1 — silent data loss) and ONNX export replaced with typed exceptions
-- Added `timeout=30s` to `urllib.request.urlopen` Google Sheets fetch at app startup
-
-**🚀 Training Speedup (~3× faster, vocal-quality-safe)**
-- New `--fast_train` flag bundles: TF32 matmul + cuDNN TF32 + cuDNN benchmark + torch.compile(mode="reduce-overhead") on both G and D + `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` + 8 dataloader workers + prefetch_factor=16 + pin_memory + persistent_workers
-- New `--bf16_adamw` flag (Applio-parity shortcut) — forces `optimizer=AnyPrecisionAdamW` and `brain=True` (bf16 autocast). Recommended on Ampere+ GPUs. Skip on T4/Turing (bf16 emulated → slower).
-- All optimizations are non-numerical — no loss function, gradient path, or weight is touched. Vocal fidelity is bit-for-bit identical.
-
-**🎯 Applio-Parity Accuracy for 10-minute datasets**
-- `per_preprocess` 3.7s → 3.0s (matches Applio's `PERCENTAGE=3.0`) — produces ~26% more training chunks for the same audio (largest single fix for small-data accuracy)
-- `--chunk_len` / `--overlap_len` CLI flags now apply to **Automatic** cut mode (was Simple-only). Users can boost `--overlap_len=0.5` for ~17% more chunks on small datasets
-- `preprocess.py` now writes `total_dataset_duration` + `total_seconds` to `model_info.json`
-- `extract_model()` embeds `embedder_model`, `dataset_length`, `overtrain_info` into the saved `.pth` as provenance metadata — lets inference auto-select the matching embedder
-- Preprocess now fails fast with clear error if dataset path is missing or empty (was silent walk + cryptic downstream crash)
-
-**📚 Docs & Colab**
-- New [`docs/SECURITY_PATCHES.md`](docs/SECURITY_PATCHES.md) — full audit trail of every patch with verification commands
-- New [`docs/TRAINING_BOOST.md`](docs/TRAINING_BOOST.md) — usage guide with recommended recipes for T4 / A100 / RTX 30xx+
-- `colab-noui.ipynb` updated: added `bf16_adamw` parameter, always passes `--chunk_len`/`--overlap_len`, rewrote Security+Speedup+Accuracy notes section
+**🔒 Security Hardening + 🚀 Training Speedup (~3× faster)**
+- Safe deserialization for all `torch.load()` calls
+- Path traversal guards on 20+ sites
+- New `--fast_train` and `--bf16_adamw` flags
+- Applio-parity accuracy improvements
 
 ### v2.1.0
-- **VRVC Training Integration** — Cloned Vietnamese-RVC training pipeline including architecture selector (RVC/SVC), embedder mix, include mutes, nprobe, alpha, and F0 autotune with configurable strength
-- **Training Quality Fixes** — Multi-scale mel spectrogram loss (8 scales with dynamic windows from PolTrain), proper feature loss gradient flow (removed `.detach()` from Applio), scaled v3 discriminator loss for BigVGAN/RefineGAN, cuDNN benchmark enabled by default
-- **Optimizer Cleanup** — Reduced from 43 optimizers to 5 proven choices (AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2)
-- **Directory Structure** — Cleaned up assets: datasets moved to `arvc/datasets/`, weights merged into `arvc/assets/logs/`
-- **EasyGUI Removed** — Deleted `easy_gui.py` and all references; Web UI is the only interface
-- **Bug Fixes** — Fixed robotic chirping (#69), `get_gpu_info()` unpack error, faiss AVX512/AVX2 import crash, missing `--predictor_onnx` argument, synced all training params across UI → service → subprocess
-- **Colab Updates** — Removed EasyGUI toggle and CLI Usage section from main notebook
+
+- VRVC Training Integration (Vietnamese-RVC pipeline)
+- Multi-scale mel spectrogram loss (8 scales)
+- Optimizer cleanup (5 proven choices)
+- EasyGUI removed — Web UI only
 
 ---
 
 ## Credits
 
-This project builds upon the work of many open-source projects and contributors. We gratefully acknowledge the following:
+This project builds upon the work of many open-source projects and contributors.
 
 ### Core RVC Foundation
 | Project | Author |
@@ -410,6 +435,7 @@ This project builds upon the work of many open-source projects and contributors.
 |---------|--------|
 | [PolTrain](https://github.com/Politrees/PolTrain) | Politrees |
 | [Applio](https://github.com/IAHispano/Applio) | IAHispano |
+| [Codename RVC Fork v4](https://github.com/CodenameRVC/Codename-RVC-Fork-v4) | CodenameRVC |
 
 ### Audio & Models
 | Project | Author |
@@ -417,7 +443,6 @@ This project builds upon the work of many open-source projects and contributors.
 | [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) | Nomad Karaoke |
 | [whisper](https://github.com/openai/whisper) | OpenAI |
 | [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia |
-| [Ultimate-RVC-Models](https://huggingface.co/R-Kentaren/Ultimate-RVC-Models) | R-Kentaren |
 
 ### Hardware & Platform Support
 | Project | Author |
