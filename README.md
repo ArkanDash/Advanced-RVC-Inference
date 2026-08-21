@@ -368,19 +368,16 @@ This project builds upon the work of many open-source projects and contributors.
 
 
 
-* [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI) | RVC Project |
-* [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) | Phạm Huỳnh |
-* [PolTrain](https://github.com/Politrees/PolTrain) | Politrees |
-* [Applio](https://github.com/IAHispano/Applio) | IAHispano |
-* [Codename RVC Fork 4](https://github.com/codename0og/codename-RVC-Fork-4) | Codename;0 |
-* [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) * Nomad Karaoke |
-* [whisper](https://github.com/openai/whisper) | OpenAI |
-* [BigVGAN](https://github.com/NVIDIA/BigVGAN) | Nvidia |
-* [ZLUDA](https://github.com/vlsid/ZLUDA) | vlsid |
-* [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) | Tim Dettmers |
-
-
-
+* [RVC](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
+* [Vietnamese-RVC](https://github.com/PhamHuynhAnh16/Vietnamese-RVC) 
+* [PolTrain](https://github.com/Politrees/PolTrain) 
+* [Applio](https://github.com/IAHispano/Applio) 
+* [Codename RVC Fork 4](https://github.com/codename0og/codename-RVC-Fork-4) (Private)
+* [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator) 
+* [whisper](https://github.com/openai/whisper) 
+* [BigVGAN](https://github.com/NVIDIA/BigVGAN) 
+* [ZLUDA](https://github.com/vlsid/ZLUDA) 
+* [bitsandbytes](https://github.com/TimDettmers/bitsandbytes) 
 ---
 
 ## License
