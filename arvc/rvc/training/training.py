@@ -450,10 +450,23 @@ def training(
                 configs["pretrained_v1_path"]
             )
 
-            download_version = codecs.decode(
-                f"uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebwrpg/erfbyir/znva/cergenvarq_", 
-                "rot13"
-            ) + f"{rvc_version}/"
+            # Primary source: the project's own HuggingFace storage bucket — it
+            # hosts the vocoder-prefixed pretrained assets (e.g.
+            # RefineGAN_f0G32k.pth) that the legacy Vietnamese-RVC repo lacks
+            # (fixes issue #73 — requesting "RefineGAN_f0G32k.pth" from the old
+            # repo returned 404 and training silently fell back to the wrong
+            # default checkpoints). The Vietnamese-RVC repo stays as a fallback
+            # source for the standard pretrained files.
+            download_urls = [
+                configs.get(
+                    f"pretrained_{rvc_version}_url",
+                    f"https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_{rvc_version}/"
+                ),
+                codecs.decode(
+                    f"uggcf://uhttvatsnpr.pb/NauC/Ivrganzrfr-EIP-Cebjrpg/erfbyir/znva/cergenvarq_", 
+                    "rot13"
+                ) + f"{rvc_version}/",
+            ]
 
             pretrained_selector = {
                 True: {
@@ -494,37 +507,33 @@ def training(
                 )
             )
 
+            def _download_pretrained_first_ok(file_name, dest_path):
+                """Try each mirror in turn; return True once the file lands on disk."""
+                for src_url in download_urls:
+                    try:
+                        huggingface.HF_download_file(
+                            src_url + file_name,
+                            dest_path
+                        )
+                        if os.path.exists(dest_path) and os.path.getsize(dest_path) > 0:
+                            return True
+                    except Exception as download_err:
+                        logger.warning(f"Pretrained download failed from {src_url}{file_name}: {download_err}")
+                        continue
+                return False
+
             try:
                 if not os.path.exists(pretrained_G):
                     gr_info(translations["download_pretrained"].format(dg="G", rvc_version=rvc_version))
-                    huggingface.HF_download_file(
-                        "".join(
-                            [
-                                download_version, 
-                                pg2
-                            ]
-                        ),
-                        os.path.join(
-                            pretrain_dir,
-                            pg2
-                        )
-                    )
-                        
+                    if not _download_pretrained_first_ok(pg2, os.path.join(pretrain_dir, pg2)):
+                        raise RuntimeError(f"could not download {pg2} from any known source")
+
                 if not os.path.exists(pretrained_D):
                     gr_info(translations["download_pretrained"].format(dg="D", rvc_version=rvc_version))
-                    huggingface.HF_download_file(
-                        "".join(
-                            [
-                                download_version, 
-                                pd2
-                            ]
-                        ), 
-                        os.path.join(
-                            pretrain_dir,
-                            pd2
-                        )
-                    )
-            except:
+                    if not _download_pretrained_first_ok(pd2, os.path.join(pretrain_dir, pd2)):
+                        raise RuntimeError(f"could not download {pd2} from any known source")
+            except Exception as download_err:
+                logger.warning(f"Pretrained download failed ({download_err}); training will fall back to the auto-downloaded defaults.")
                 gr_warning(translations["not_use_pretrain_error_download"])
                 pretrained_G = pretrained_D = None
         else:

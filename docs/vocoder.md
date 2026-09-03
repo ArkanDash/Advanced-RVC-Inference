@@ -85,7 +85,7 @@ MRF-HiFi-GAN replaces the standard residual blocks with Multi-Receptive Field (M
 - **Source:** `models/generators/refinegan.py`
 - **Class:** `RefineGANGenerator`
 
-RefineGAN uses a U-Net architecture with skip connections, a significant departure from the purely feedforward design of HiFi-GAN. The harmonic downsampling path processes F0 through sine generation, pre-convolution, and progressive downsampling using torchaudio's resample function. The upsampling path uses ParallelResBlocks with three parallel branches (kernel sizes 3, 7, 11) combined through AdaIN noise injection. Skip connections from the encoder to decoder preserve fine spectral details that might otherwise be lost during the compression-expansion process. During training, RefineGAN uses the v3 discriminator for improved adversarial signal.
+RefineGAN uses a U-Net architecture with skip connections, a significant departure from the purely feedforward design of HiFi-GAN. The harmonic downsampling path processes F0 through sine generation, pre-convolution, and progressive downsampling using torchaudio's resample function. The upsampling path uses ParallelResBlocks with three parallel branches (kernel sizes 3, 7, 11) combined through AdaIN noise injection. Skip connections from the encoder to decoder preserve fine spectral details that might otherwise be lost during the compression-expansion process. During training, RefineGAN uses the v2 discriminator, matching the structure of the RefineGAN pretrained discriminator assets published in the project's model bucket.
 
 **Key Features:**
 - U-Net architecture with skip connections
@@ -93,7 +93,7 @@ RefineGAN uses a U-Net architecture with skip connections, a significant departu
 - AdaIN noise injection
 - Anti-aliased harmonic downsampling
 - Progressive refinement through skip connections
-- Uses v3 discriminator during training
+- Uses v2 discriminator during training (matches the published RefineGAN pretrained D assets)
 - Uses fp32 at inference (fp16 disabled for stability)
 
 **Recommended for:** High-fidelity audio where spectral detail preservation is important. Good for singing and complex vocal passages where fine-grained detail matters.

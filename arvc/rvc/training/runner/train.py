@@ -80,7 +80,7 @@ from arvc.rvc.training.runner.utils import (
     plot_spectrogram_to_numpy,
     mel_spectrogram_similarity,
 )
-from arvc.rvc.models.weight_norm import configure_weight_norm, use_new_pytorch
+from arvc.rvc.models.weight_norm import configure_weight_norm, use_new_pytorch, convert_old_to_new
 
 from arvc.utils.variables import config as main_config
 from arvc.utils.variables import configs as main_configs
@@ -289,8 +289,19 @@ if newpytorch:
 else:
     if __name__ == "__main__": print(f"[Advanced-RVC] PyTorch weight format: OLD (weight_norm, RVC fork compatible)")
 
-# Discriminator version: use v3 discriminator for BigVGAN and RefineGAN (matches VRVC)
-disc_version = version if vocoder not in ["RefineGAN", "BigVGAN"] else "v3"
+# Discriminator version selection:
+# - RefineGAN uses the v2 discriminator (S + MPD periods 2,3,5,7,11,17,23,37) to
+#   match the RefineGAN_f0D*.pth pretrained assets shipped in the project's
+#   HuggingFace bucket (verified: their state_dict is v2-structured).
+# - BigVGAN keeps the v3 discriminator (S + MPD + multi-resolution) per VRVC;
+#   no pretrained D exists for it, so it always trains D from scratch.
+# - Every other vocoder follows the selected RVC version.
+if vocoder == "RefineGAN":
+    disc_version = "v2"
+elif vocoder == "BigVGAN":
+    disc_version = "v3"
+else:
+    disc_version = version
 
 # is_half logic — matches Vietnamese-RVC exactly
 is_half = main_config.is_half
@@ -1087,39 +1098,80 @@ def run(
             pretrained_save_dir = os.path.join(main_configs.get(f"pretrained_{version}_path", os.path.join(os.path.dirname(__file__), "../../assets/models", f"pretrained_{version}")))
             os.makedirs(pretrained_save_dir, exist_ok=True)
 
-            pretrained_selector = {
-                True: {  # pitch_guidance (f0 models)
-                    24000: ("f0G24k.pth", "f0D24k.pth"),
-                    32000: ("f0G32k.pth", "f0D32k.pth"),
-                    40000: ("f0G40k.pth", "f0D40k.pth"),
-                    44100: ("f0G40k.pth", "f0D40k.pth"),  # reuse 40k pretrained
-                    48000: ("f0G48k.pth", "f0D48k.pth"),
-                },
-                False: {  # no pitch guidance (base models)
+            # Vocoder-aware pretrained selection (fixes issue #73).
+            # The standard RVC pretrained files (f0G32k.pth / f0D32k.pth …) ship a
+            # HiFi-GAN (NSF) decoder and can NOT be loaded into models built with an
+            # alternative vocoder — that mismatch used to abort training with
+            # "Pretrained model parameters such as sample rate or architecture do not
+            # match the selected model.". The project bucket therefore also hosts
+            # vocoder-prefixed assets (e.g. RefineGAN_f0G32k.pth) which must be used
+            # instead. When no compatible asset exists for the selected vocoder,
+            # training starts from scratch instead of downloading unusable files.
+            if not pitch_guidance:
+                # Without pitch guidance the model always uses the plain HiFi-GAN
+                # decoder, so the standard (non-f0) pretrained files are correct
+                # regardless of the vocoder.
+                pretrained_selector = {
                     24000: ("G24k.pth", "D24k.pth"),
                     32000: ("G32k.pth", "D32k.pth"),
                     40000: ("G40k.pth", "D40k.pth"),
                     44100: ("G40k.pth", "D40k.pth"),  # reuse 40k pretrained
                     48000: ("G48k.pth", "D48k.pth"),
                 }
-            }
+                _voc_pretrained_ok = True
+            elif vocoder == "RefineGAN":
+                # RefineGAN assets are only published for v2. Note the file names
+                # keep the "f0" marker (they are f0/pitch-guidance models).
+                pretrained_selector = {
+                    32000: ("RefineGAN_f0G32k.pth", "RefineGAN_f0D32k.pth"),
+                    40000: ("RefineGAN_f0G40k.pth", "RefineGAN_f0D40k.pth"),
+                    44100: ("RefineGAN_f0G40k.pth", "RefineGAN_f0D40k.pth"),  # reuse 40k pretrained
+                    48000: ("RefineGAN_f0G48k.pth", "RefineGAN_f0D48k.pth"),
+                }
+                if version != "v2":
+                    logger.warning(
+                        f"RefineGAN pretrained models are only published for v2 (selected: {version}); "
+                        "training will start from scratch unless custom pretrained paths are provided."
+                    )
+                    _voc_pretrained_ok = False
+                else:
+                    _voc_pretrained_ok = True
+            elif vocoder in ("BigVGAN", "MRF-HiFi-GAN", "MRF HiFi-GAN"):
+                logger.warning(
+                    f"No pretrained models are published for the {vocoder} vocoder; "
+                    "training will start from scratch unless custom pretrained paths are provided."
+                )
+                pretrained_selector = {}
+                _voc_pretrained_ok = False
+            else:
+                pretrained_selector = {
+                    24000: ("f0G24k.pth", "f0D24k.pth"),
+                    32000: ("f0G32k.pth", "f0D32k.pth"),
+                    40000: ("f0G40k.pth", "f0D40k.pth"),
+                    44100: ("f0G40k.pth", "f0D40k.pth"),  # reuse 40k pretrained
+                    48000: ("f0G48k.pth", "f0D48k.pth"),
+                }
+                _voc_pretrained_ok = True
 
             sr = config.data.sample_rate
 
-            # 24k pretrained models do not exist in any known repo.
-            # Fallback to 32k pretrained for 24k training.
-            sr_for_pretrained = sr
-            if sr == 24000:
-                logger.warning("24k pretrained models are not available; falling back to 32k pretrained.")
-                sr_for_pretrained = 32000
+            if _voc_pretrained_ok and pretrained_selector:
+                # 24k pretrained models do not exist in any known repo.
+                # Fallback to 32k pretrained for 24k training.
+                sr_for_pretrained = sr
+                if sr == 24000:
+                    logger.warning("24k pretrained models are not available; falling back to 32k pretrained.")
+                    sr_for_pretrained = 32000
 
-            g_file, d_file = pretrained_selector.get(pitch_guidance, pretrained_selector[True]).get(
-                sr_for_pretrained,
-                pretrained_selector[pitch_guidance][40000]
-            )
+                g_file, d_file = pretrained_selector.get(
+                    sr_for_pretrained,
+                    pretrained_selector[40000]
+                )
+            else:
+                g_file, d_file = "", ""
 
-            g_local = os.path.join(pretrained_save_dir, g_file)
-            d_local = os.path.join(pretrained_save_dir, d_file)
+            g_local = os.path.join(pretrained_save_dir, g_file) if g_file else ""
+            d_local = os.path.join(pretrained_save_dir, d_file) if d_file else ""
 
             def _train_download_pretrained(file_name, file_path, url_sources):
                 """Try downloading from multiple URL sources, return True on success."""
@@ -1165,6 +1217,85 @@ def run(
             else:
                 logger.warning("Failed to download any pretrained models; training from scratch")
 
+        def _load_pretrained_state(net, ckpt_state, label):
+            """Load a pretrained state_dict with strict-first, then a transparent
+            soft-merge fallback (fixes issue #73).
+
+            1. Keys are converted from the legacy ``.weight_g/.weight_v`` format to
+               the PyTorch 2.x parametrization format when needed — every shipped
+               RVC checkpoint uses the legacy format, while models built with
+               ``newpytorch=True`` (the default) expect parametrization keys.
+               Skipping this conversion made even fully compatible checkpoints
+               fail with "Pretrained model parameters … do not match".
+            2. Strict loading is attempted first. If it fails (e.g. a pretrained
+               vocoder asset whose decoder differs slightly from the current
+               implementation), the error is logged in detail — listing exactly
+               which tensors are missing / unexpected / shape-mismatched — and
+               only the *compatible* subset is loaded so every shared component
+               (encoders, flow, speaker embedding, …) still warm-starts training.
+               Incompatible tensors keep their initialization; nothing is silently
+               corrupted. (``strict=False`` alone is not enough: PyTorch still
+               raises on shape mismatches, so the incompatible tensors must be
+               filtered out explicitly.)
+            """
+            net_module = net.module if hasattr(net, "module") else net
+            net_sd = net_module.state_dict()
+            # On-disk RVC checkpoints always use the legacy .weight_g/.weight_v
+            # format; only convert when the model was built with the PyTorch 2.x
+            # parametrization weight_norm (newpytorch=True).
+            ckpt_sd = convert_old_to_new(ckpt_state) if use_new_pytorch() else ckpt_state
+
+            try:
+                net_module.load_state_dict(ckpt_sd, strict=True)
+                if rank == 0: logger.info(f"Pretrained {label}: loaded {len(ckpt_sd)} tensors (strict).")
+                return
+            except RuntimeError as strict_err:
+                model_keys = set(net_sd.keys())
+                ckpt_keys = set(ckpt_sd.keys())
+                missing = sorted(k for k in model_keys - ckpt_keys)
+                unexpected = sorted(k for k in ckpt_keys - model_keys)
+                shape_mismatch = sorted(
+                    k for k in model_keys & ckpt_keys if net_sd[k].shape != ckpt_sd[k].shape
+                )
+
+                def _group(keys):
+                    groups = {}
+                    for k in keys:
+                        head = k.split(".")[0]
+                        groups[head] = groups.get(head, 0) + 1
+                    return dict(sorted(groups.items()))
+
+                if rank == 0:
+                    logger.warning(
+                        f"Pretrained {label}: strict load failed ({strict_err}). "
+                        f"Falling back to partial loading — incompatible tensors keep their initialization."
+                    )
+                    logger.warning(f"Pretrained {label}: tensors kept from initialization (missing in checkpoint): "
+                                   f"{len(missing)} {(_group(missing) if missing else '')}")
+                    logger.warning(f"Pretrained {label}: tensors ignored (unexpected in checkpoint): "
+                                   f"{len(unexpected)} {(_group(unexpected) if unexpected else '')}")
+                    logger.warning(f"Pretrained {label}: tensors ignored (shape mismatch): "
+                                   f"{len(shape_mismatch)} {(_group(shape_mismatch) if shape_mismatch else '')}")
+                    if missing:
+                        logger.warning(f"Pretrained {label}: example missing keys: {missing[:5]}")
+                    if shape_mismatch:
+                        logger.warning(
+                            f"Pretrained {label}: example shape mismatches: "
+                            + "; ".join(f"{k}: model {tuple(net_sd[k].shape)} vs ckpt {tuple(ckpt_sd[k].shape)}" for k in shape_mismatch[:3])
+                        )
+                    matched = len(model_keys & ckpt_keys) - len(shape_mismatch)
+                    logger.warning(
+                        f"Pretrained {label}: {matched}/{len(model_keys)} model tensors loaded from the checkpoint."
+                    )
+
+                # strict=False still raises on shape mismatches, so load only the
+                # compatible subset explicitly.
+                compatible = {
+                    k: v for k, v in ckpt_sd.items()
+                    if k in model_keys and net_sd[k].shape == v.shape
+                }
+                net_module.load_state_dict(compatible, strict=False)
+
         try:
             if pretrainG not in check:
                 if rank == 0: logger.info(translations["import_pretrain"].format(dg="G", pretrain=pretrainG))
@@ -1176,13 +1307,11 @@ def run(
                 if architecture == "SVC" and "emb_g.weight" not in ckptG: 
                     ckptG["emb_g.weight"] = net_g.module.emb_g.weight if hasattr(net_g, "module") else net_g.emb_g.weight
 
-                # Match Vietnamese-RVC: strict loading with pretrain_strict config
-                # Soft-merge was silently replacing pretrained weights with random
-                # values for any key mismatch (e.g. weight_norm format), destroying
-                # the pretrained model quality. This caused training from a near-random
-                # initialization instead of a properly pretrained base.
-                strict = main_configs.get("pretrain_strict", True)
-                net_g.module.load_state_dict(ckptG, strict=strict) if hasattr(net_g, "module") else net_g.load_state_dict(ckptG, strict=strict)
+                if main_configs.get("pretrain_strict", True):
+                    _load_pretrained_state(net_g, ckptG, "G")
+                else:
+                    _g = convert_old_to_new(ckptG) if use_new_pytorch() else ckptG
+                    (net_g.module if hasattr(net_g, "module") else net_g).load_state_dict(_g, strict=False)
                 del ckptG
 
             if pretrainD not in check:
@@ -1191,13 +1320,18 @@ def run(
                 from arvc.rvc.models.safe_load import safe_torch_load
                 ckptD = safe_torch_load(pretrainD)["model"]
 
-                # Match Vietnamese-RVC: strict loading with pretrain_strict config
-                strict = main_configs.get("pretrain_strict", True)
-                net_d.module.load_state_dict(ckptD, strict=strict) if hasattr(net_d, "module") else net_d.load_state_dict(ckptD, strict=strict)
+                if main_configs.get("pretrain_strict", True):
+                    _load_pretrained_state(net_d, ckptD, "D")
+                else:
+                    _d = convert_old_to_new(ckptD) if use_new_pytorch() else ckptD
+                    (net_d.module if hasattr(net_d, "module") else net_d).load_state_dict(_d, strict=False)
                 del ckptD
         except Exception as e:
             logger.error(translations["checkpointing_err"])
-            logger.debug(e)
+            # Log the underlying exception at ERROR level — a bare translated
+            # message hid the actual cause (file missing, corrupt checkpoint,
+            # key mismatch …) and made issues impossible to diagnose.
+            logger.error(f"Underlying error while loading pretrained models: {type(e).__name__}: {e}")
             sys.exit(1)
 
     # Scheduler selection — Vietnamese-RVC style with AdaBelief / AdaBeliefV2 / PolOpt / CosineAnnealing
