@@ -8,6 +8,8 @@ import logging
 import numpy as np
 
 from pydub import AudioSegment
+from arvc.utils.downloader import huggingface
+from arvc.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 
 # ── Safe FAISS import ────────────────────────────────────────────────────
@@ -68,8 +70,6 @@ def _import_faiss():
 faiss = _import_faiss()
 
 
-from arvc.utils import huggingface
-from arvc.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 for l in ["httpx", "httpcore"]:
     logging.getLogger(l).setLevel(logging.ERROR)
