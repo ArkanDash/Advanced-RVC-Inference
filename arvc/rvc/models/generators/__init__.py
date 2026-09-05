@@ -10,7 +10,7 @@ from typing import Dict, List, Optional, Any
 
 VOCODER_REGISTRY: Dict[str, Dict[str, Any]] = {
     "Default": {
-        "module": "arvc.engine.models.generators.nsf_hifigan",
+        "module": "arvc.rvc.models.generators.nsf_hifigan",
         "class": "HiFiGANNRFGenerator",
         "display_name": "Default (HiFi-GAN NSF)",
         "rating": 100,
@@ -20,7 +20,7 @@ VOCODER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "is_default": True,
     },
     "BigVGAN": {
-        "module": "arvc.engine.models.generators.bigvgan",
+        "module": "arvc.rvc.models.generators.bigvgan",
         "class": "BigVGANGenerator",
         "display_name": "BigVGAN",
         "rating": 95,
@@ -30,7 +30,7 @@ VOCODER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "is_default": False,
     },
     "MRF-HiFi-GAN": {
-        "module": "arvc.engine.models.generators.mrf_hifigan",
+        "module": "arvc.rvc.models.generators.mrf_hifigan",
         "class": "HiFiGANMRFGenerator",
         "display_name": "MRF-HiFi-GAN",
         "rating": 90,
@@ -40,7 +40,7 @@ VOCODER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "is_default": False,
     },
     "RefineGAN": {
-        "module": "arvc.engine.models.generators.refinegan",
+        "module": "arvc.rvc.models.generators.refinegan",
         "class": "RefineGANGenerator",
         "display_name": "RefineGAN",
         "rating": 85,

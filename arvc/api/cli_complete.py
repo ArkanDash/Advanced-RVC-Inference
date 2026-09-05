@@ -18,7 +18,11 @@ sys.path.append(os.getcwd())
 try:
     argv = sys.argv[1]
 except IndexError:
-    argv = None
+    # Use an empty string rather than None so that the `in argv` checks in the
+    # top-level dispatch chain below are no-ops when this module is imported
+    # (rather than executed) — they would otherwise raise
+    # `TypeError: argument of type 'NoneType' is not iterable`.
+    argv = ""
 
 argv_is_allows = [
     "--audio_effects", "--convert", "--create_dataset", "--create_index",
@@ -29,21 +33,21 @@ argv_is_allows = [
     "--create_reference", "--help_create_reference",
 ]
 
-if argv not in argv_is_allows:
-    print("Invalid syntax! Use --help for more information")
-    sys.exit(1)
 
-
-# Map subcommands to the correct module paths
+# Map subcommands to the correct module paths.
+# NOTE: the legacy `arvc.engine.*` paths do not exist in this repository —
+# the actual implementations live under `arvc.rvc.*` (inference / training /
+# models) and `arvc.uvr.*` (music separation). These were fixed to point at
+# the real modules so subcommand dispatch works.
 _CMD_MAP = {
-    "--convert": "arvc.engine.inference.convert",
-    "--create_dataset": "arvc.engine.training.create_dataset",
-    "--create_index": "arvc.engine.training.create_index",
-    "--extract": "arvc.engine.training.extract.extract",
-    "--preprocess": "arvc.engine.training.preprocess.preprocess",
-    "--separator_music": "arvc.engine.uvr.separate_music",
-    "--train": "arvc.engine.training.runner.train",
-    "--create_reference": "arvc.engine.inference.create_reference",
+    "--convert": "arvc.rvc.inference.convert",
+    "--create_dataset": "arvc.rvc.training.create_dataset",
+    "--create_index": "arvc.rvc.training.create_index",
+    "--extract": "arvc.rvc.training.extract.extract",
+    "--preprocess": "arvc.rvc.training.preprocess.preprocess",
+    "--separator_music": "arvc.uvr.separate_music",
+    "--train": "arvc.rvc.training.runner.train",
+    "--create_reference": "arvc.rvc.inference.create_reference",
 }
 
 
@@ -331,6 +335,10 @@ elif argv_is_allows[16] in argv:
 
 if __name__ == "__main__":
     import torch.multiprocessing as mp
+
+    if argv not in argv_is_allows:
+        print("Invalid syntax! Use --help for more information")
+        sys.exit(1)
 
     if "--train" in argv:
         mp.set_start_method("spawn")

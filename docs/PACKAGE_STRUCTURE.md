@@ -389,7 +389,7 @@ scripts and downstream forks, the following shims are in place:
   every downloader / service module.
 
 If you maintain a fork that imported e.g. `arvc.utils.noisereduce` directly,
-update to `arvc.engine.inference.noisereduce`. The other moves are
+update to `arvc.rvc.inference.noisereduce`. The other moves are
 backward-compatible thanks to the re-export shims.
 
 ---
@@ -401,7 +401,7 @@ backward-compatible thanks to the re-export shims.
 - **`arvc/utils/`** slimmed down:
   - 5 file-host downloaders (`gdown`, `huggingface`, `mediafire`, `meganz`,
     `pixeldrain`) moved into a new `arvc/utils/downloaders/` subpackage.
-  - `noisereduce.py` moved to `arvc/engine/inference/noisereduce.py`
+  - `noisereduce.py` moved to `arvc/rvc/inference/noisereduce.py`
     (it is a torch-dependent audio utility, belongs with the inference
     pipeline).
   - `utils/__init__.py` rewritten with a lazy-import `__getattr__` so
