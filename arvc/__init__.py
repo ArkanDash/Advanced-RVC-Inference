@@ -9,20 +9,49 @@ try:
 except ImportError:
     __version__ = "2.0.0"
 
-# Define public API
+# Define public API — only symbols that actually exist are listed.
+# Public classes (RVCInference, RVCConfig, RVCModel, RVCTrainer, RVCRealtime)
+# are exposed via lazy __getattr__ so users can still do `from arvc import ...`
+# but importing them only triggers the load when actually accessed.
 __all__ = [
     "__version__",
-    "RVCInference",
-    "RVCConfig",
-    "RVCModel",
-    "RVCTrainer",
-    "RVCRealtime",
     "cli",
     "gui",
     "launch",
     "launch_cli",
     "launch_gui",
 ]
+
+# Lazy-imported classes that are referenced by name (so `from arvc import RVCInference`
+# still works) but are loaded only on first access.
+_LAZY_CLASSES = {
+    "RVCInference":  "arvc.rvc.inference.inference:VoiceConverter",
+    "RVCConfig":     "arvc.utils.variables:Config",
+    "RVCModel":       "arvc.rvc.models.utils",
+    "RVCTrainer":     "arvc.rvc.training.training",
+    "RVCRealtime":    "arvc.engine.realtime.realtime:RVC_Realtime",
+}
+
+
+def __getattr__(name):
+    """Lazily import public classes that aren't defined at module load time."""
+    if name in _LAZY_CLASSES:
+        target = _LAZY_CLASSES[name]
+        if ":" in target:
+            mod_path, attr_name = target.split(":", 1)
+        else:
+            mod_path, attr_name = target, name
+        try:
+            import importlib
+            mod = importlib.import_module(mod_path)
+            return getattr(mod, attr_name)
+        except (ImportError, AttributeError) as e:
+            raise AttributeError(
+                f"module 'arvc' has no attribute '{name}': "
+                f"lazy import from '{target}' failed ({type(e).__name__}: {e})"
+            ) from e
+    raise AttributeError(f"module 'arvc' has no attribute '{name}'")
+
 
 _LAZY_IMPORTS = {
     "torch": ("torch", "torch"),

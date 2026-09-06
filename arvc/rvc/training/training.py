@@ -9,7 +9,7 @@ import subprocess
 
 sys.path.append(os.getcwd())
 
-from arvc.utils import huggingface
+from arvc.downloader import huggingface
 from arvc.utils.feedback import gr_info, gr_warning
 from arvc.utils.variables import python, translations, configs, file_types, logger
 from arvc.rvc.models.safe_load import validate_path_within

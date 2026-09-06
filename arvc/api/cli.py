@@ -681,7 +681,7 @@ def cmd_download(args):
     logger.info("Downloading from: %s", args.link)
 
     try:
-        from arvc.downloader import download_model
+        from arvc.downloader.downloads import download_model
 
         result = download_model(url=args.link, model=args.name)
         if result:
@@ -1008,7 +1008,12 @@ def main():
     func = getattr(args, "func", None)
     if func:
         try:
-            return func(args)
+            result = func(args)
+            # Some commands (e.g. version, info) use lambdas that return
+            # (side_effect_output, exit_code) tuples — unwrap the exit code.
+            if isinstance(result, tuple) and len(result) == 2:
+                return result[1]
+            return result
         except KeyboardInterrupt:
             logger.info("Interrupted by user")
             return 130

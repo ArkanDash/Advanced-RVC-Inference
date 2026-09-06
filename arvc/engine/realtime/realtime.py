@@ -2,6 +2,8 @@ import os
 import sys
 import time
 
+import numpy as np
+
 sys.path.append(os.getcwd())
 
 from arvc.utils.variables import translations, configs
@@ -15,6 +17,180 @@ DEVICE_SAMPLE_RATE = 48000
 
 interactive_true = {"interactive": True, "__type__": "update"}
 interactive_false = {"interactive": False, "__type__": "update"}
+
+
+# ============================================================
+# VoiceChanger and RVC_Realtime — wrappers around the realtime
+# pipeline. These are imported by callbacks.py and
+# realtime_client.py.
+# ============================================================
+
+class RVC_Realtime:
+    """Holds a Pipeline instance for realtime inference.
+
+    Constructed with model + inference parameters and passed to
+    `VoiceChanger.initialize()` to set up the voice conversion
+    pipeline.
+    """
+
+    def __init__(
+        self,
+        model_path,
+        index_path=None,
+        f0_method="rmvpe",
+        f0_onnx=False,
+        embedder_model="hubert_base",
+        embedders_mode="fairseq",
+        sample_rate=16000,
+        hop_length=160,
+        silent_threshold=-90,
+        input_sample_rate=48000,
+        output_sample_rate=48000,
+        vad_enabled=False,
+        vad_sensitivity=3,
+        vad_frame_ms=30,
+        clean_audio=False,
+        clean_strength=0.7,
+    ):
+        self.model_path = model_path
+        self.index_path = index_path
+        self.f0_method = f0_method
+        self.f0_onnx = f0_onnx
+        self.embedder_model = embedder_model
+        self.embedders_mode = embedders_mode
+        self.sample_rate = sample_rate
+        self.hop_length = hop_length
+        self.silent_threshold = silent_threshold
+        self.input_sample_rate = input_sample_rate
+        self.output_sample_rate = output_sample_rate
+        self.vad_enabled = vad_enabled
+        self.vad_sensitivity = vad_sensitivity
+        self.vad_frame_ms = vad_frame_ms
+        self.clean_audio = clean_audio
+        self.clean_strength = clean_strength
+        # Pipeline is built lazily on first on_request to avoid
+        # importing heavy ML modules at construction time.
+        self.pipeline = None
+
+    def build_pipeline(self):
+        """Lazily build the realtime pipeline."""
+        if self.pipeline is None:
+            from arvc.engine.realtime.pipeline import create_pipeline
+            self.pipeline = create_pipeline(
+                model_path=self.model_path,
+                index_path=self.index_path,
+                f0_method=self.f0_method,
+                f0_onnx=self.f0_onnx,
+                embedder_model=self.embedder_model,
+                embedders_mode=self.embedders_mode,
+                sample_rate=self.sample_rate,
+                hop_length=self.hop_length,
+            )
+        return self.pipeline
+
+
+class VoiceChanger:
+    """Realtime voice changer.
+
+    Receives raw audio chunks from the audio backend, runs them
+    through the RVC pipeline, and returns converted audio.
+
+    Constructor args:
+        read_chunk_size:          number of samples per audio chunk
+        cross_fade_overlap_size:   cross-fade overlap (seconds)
+        input_sample_rate:         sample rate of incoming audio
+        extra_convert_size:        extra context padding (seconds)
+    """
+
+    def __init__(
+        self,
+        read_chunk_size=192,
+        cross_fade_overlap_size=0.1,
+        input_sample_rate=48000,
+        extra_convert_size=0.5,
+    ):
+        self.read_chunk_size = read_chunk_size
+        self.cross_fade_overlap_size = cross_fade_overlap_size
+        self.input_sample_rate = input_sample_rate
+        self.extra_convert_size = extra_convert_size
+        self.rvc = None
+
+    def initialize(self, rvc_model):
+        """Initialize with an `RVC_Realtime` instance."""
+        self.rvc = rvc_model
+
+    def on_request(
+        self,
+        received_data,
+        f0_up_key=0,
+        index_rate=0.5,
+        protect=0.5,
+        filter_radius=3,
+        rms_mix_rate=1,
+        f0_autotune=False,
+        f0_autotune_strength=1,
+        proposal_pitch=False,
+        proposal_pitch_threshold=255.0,
+    ):
+        """Process a single audio chunk.
+
+        Returns:
+            (audio, volume, perf) where:
+                audio  — converted audio (numpy float32, 1D)
+                volume — input volume (float)
+                perf   — [processing_time, total_time, ?] in ms
+        """
+        t_start = time.time()
+
+        # Compute input volume
+        vol = float(np.sqrt(np.square(received_data).mean(dtype=np.float32)))
+
+        # If no model is loaded, return the input unchanged
+        if self.rvc is None or self.rvc.model_path is None:
+            return received_data, vol, [0.0, 0.0, 0.0], None
+
+        try:
+            import torch
+            from arvc.utils.variables import config
+
+            pipeline = self.rvc.build_pipeline()
+
+            # Convert numpy to torch tensor
+            audio_tensor = torch.as_tensor(
+                received_data, dtype=torch.float32, device=config.device
+            )
+
+            with torch.no_grad():
+                out_audio = pipeline.execute(
+                    audio_tensor,
+                    f0_up_key=f0_up_key,
+                    index_rate=index_rate,
+                    audio_feats_len=audio_tensor.shape[0] // 2,
+                    protect=protect,
+                    filter_radius=filter_radius,
+                    rms_mix_rate=rms_mix_rate,
+                    f0_autotune=f0_autotune,
+                    f0_autotune_strength=f0_autotune_strength,
+                    proposal_pitch=proposal_pitch,
+                    proposal_pitch_threshold=proposal_pitch_threshold,
+                )
+
+            # Convert back to numpy float32 1D
+            if hasattr(out_audio, "cpu"):
+                out_audio = out_audio.cpu().numpy()
+            out_audio = np.asarray(out_audio, dtype=np.float32).reshape(-1)
+
+            t_end = time.time()
+            t_proc_ms = (t_end - t_start) * 1000.0
+            perf = [t_proc_ms, t_proc_ms, 0.0]
+            return out_audio, vol, perf
+
+        except Exception as e:
+            gr_warning(f"VoiceChanger.on_request failed: {e}")
+            t_end = time.time()
+            t_proc_ms = (t_end - t_start) * 1000.0
+            return np.zeros_like(received_data, dtype=np.float32), vol, [t_proc_ms, t_proc_ms, 0.0]
+
 
 def realtime_start(
     monitor,

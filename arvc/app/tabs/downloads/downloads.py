@@ -17,7 +17,7 @@ from arvc.utils.feedback import (
     change_download_choices, change_download_pretrained_choices,
     replace_url, replace_modelname,
 )
-from arvc.downloader import (
+from arvc.downloader.downloads import (
     download_url,
     download_model,
     download_pretrained_model,

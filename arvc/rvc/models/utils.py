@@ -8,7 +8,7 @@ import logging
 import numpy as np
 
 from pydub import AudioSegment
-from arvc.utils.downloader import huggingface
+from arvc.downloader import huggingface
 from arvc.utils.variables import translations, configs, config, logger, embedders_model, spin_model, whisper_model
 
 
