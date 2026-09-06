@@ -591,7 +591,7 @@ def cmd_train(args):
         cmd.extend(["--energy_use", "True" if args.energy else "False"])
         cmd.extend(["--overtraining_detector", "True" if args.overtrain_detect else "False"])
         if args.overtrain_detect:
-            cmd.extend(["--threshold", str(args.overtrain_threshold)])
+            cmd.extend(["--overtraining_threshold", str(args.overtrain_threshold)])
         if args.optimizer:
             cmd.extend(["--optimizer", args.optimizer])
         cmd.extend(["--multiscale_mel_loss", "True" if args.multiscale_loss else "False"])
@@ -602,10 +602,27 @@ def cmd_train(args):
         cmd.extend(["--use_cosine_annealing_lr", "True" if args.cosine_lr else "False"])
         if args.architecture != "RVC":
             cmd.extend(["--architecture", args.architecture])
+        # NOTE: train.py runner does NOT accept --embedders / --embedders_mode
+        # arguments (it only uses whatever embedder was baked into the
+        # pretrained checkpoint during the extract step). Embedder model and
+        # mode are passed to the EXTRACT step via `rvc-cli extract --embedder_model
+        # ...` and `rvc-cli extract --embedders_mode ...`. Sending them to
+        # `train.py` here caused argparse to error out with
+        # "unrecognized arguments: --embedders ...".
         if args.embedder_model and args.embedder_model != "hubert_base":
-            cmd.extend(["--embedders", args.embedder_model])
+            logger.info(
+                "Note: --embedder_model is set but train.py does not accept it. "
+                "Embedder is determined by the extract step (run `rvc-cli extract "
+                "--embedder_model %s ...` BEFORE training).",
+                args.embedder_model,
+            )
         if args.embedders_mode and args.embedders_mode != "fairseq":
-            cmd.extend(["--embedders_mode", args.embedders_mode])
+            logger.info(
+                "Note: --embedders_mode is set but train.py does not accept it. "
+                "Embedder mode is determined by the extract step (run `rvc-cli extract "
+                "--embedders_mode %s ...` BEFORE training).",
+                args.embedders_mode,
+            )
         cmd.extend(["--deterministic", "True" if args.deterministic else "False"])
         cmd.extend(["--benchmark", "True" if args.benchmark else "False"])
         cmd.extend(["--compile_model", "True" if args.compile_model else "False"])

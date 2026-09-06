@@ -2,7 +2,6 @@ import os
 import sys
 import time
 import torch
-import yt_dlp
 import shutil
 import librosa
 import argparse
@@ -20,6 +19,43 @@ if _project_root not in sys.path:
 
 from arvc.utils.variables import config, logger, translations
 from arvc.uvr.separate_music import _separate, vr_models
+
+
+# yt_dlp is an optional dependency used only when downloading training audio
+# from YouTube / streaming URLs. Importing it at module top-level means the
+# entire `arvc.rvc.training.create_dataset` module fails to import when
+# yt_dlp is not installed, which breaks `arvc.rvc.training.__init__` and
+# therefore breaks every UI tab that imports anything from `arvc.rvc.training`.
+#
+# Lazy-import yt_dlp inside the functions that actually need it so the module
+# stays importable even when yt_dlp is missing (e.g. on CPU-only CI machines,
+# Colab-no-UI mode, or environments where the user only wants to preprocess
+# local files).
+def _get_yt_dlp():
+    """Lazily import yt_dlp and return the YoutubeDL class.
+
+    Raises:
+        ImportError: with a helpful message if yt_dlp is not installed.
+    """
+    try:
+        import yt_dlp
+        return yt_dlp.YoutubeDL
+    except ImportError as e:
+        raise ImportError(
+            "yt_dlp is required to download training audio from YouTube or "
+            "other streaming sites. Install it with: pip install yt-dlp"
+        ) from e
+
+
+# Top-level alias for backwards compatibility with code that does
+# `from arvc.rvc.training.create_dataset import yt_dlp`.
+# This will raise ImportError only if actually accessed (Python's lazy
+# module-level __getattr__ for PEP 562).
+def __getattr__(name):
+    if name == "yt_dlp":
+        import yt_dlp
+        return yt_dlp
+    raise AttributeError(f"module 'arvc.rvc.training.create_dataset' has no attribute {name!r}")
 
 # BUG FIX #34: Original used relative paths (`"dataset_temp"` and
 # `os.path.join("arvc", "assets", "dataset")`) which are resolved against
@@ -338,8 +374,9 @@ def downloader(
 
         logger.info(f"{translations['starting_download']}: {url}...")
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.extract_info(url)  
+        YoutubeDL = _get_yt_dlp()
+        with YoutubeDL(ydl_opts) as ydl:
+            ydl.extract_info(url)
             logger.info(f"{translations['download_success']}: {url}")
 
     return os.path.join(dataset_temp, f"{name}" + ".wav")

@@ -20,7 +20,7 @@ Author: Advanced-RVC-Inference (enhanced from Codename RVC Fork v4)
 import math
 import torch
 from collections import deque
-from typing import Optional, Dict, List, Tuple, Callable
+from typing import Optional, Dict, List, Tuple, Callable, Any
 
 
 # ═══════════════════════════════════════════════════════════════
