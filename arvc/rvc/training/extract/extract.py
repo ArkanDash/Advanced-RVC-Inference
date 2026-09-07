@@ -73,29 +73,63 @@ def main():
 
     num_processes = max(1, num_processes)
 
-    # VRVC: XPU device support in device list
-    devices = ["cpu"] if gpus == "-" else [
-        (
-            f"cuda:{idx}"
-        ) if config.device.startswith("cuda") else (
-            f"xpu:{idx}" if config.device.startswith("xpu") else f"{'ocl' if config.device.startswith('ocl') else 'privateuseone'}:{idx}"
-        ) 
-        for idx in gpus.split("-")
-    ]
+    # ── Validate / build device list ─────────────────────────────────────────
+    # BUG FIX: The original code at this point did:
+    #
+    #     devices = ["cpu"] if gpus == "-" else [
+    #         (f"cuda:{idx}") if config.device.startswith("cuda") else ...
+    #         for idx in gpus.split("-")
+    #     ]
+    #
+    # which blindly constructed device strings like "cuda:0", "cuda:1" from
+    # the raw `--gpu` argument WITHOUT checking:
+    #   1. Whether CUDA is actually available (`torch.cuda.is_available()`)
+    #   2. Whether the requested index exists (`idx < torch.cuda.device_count()`)
+    #   3. Whether `config.device` (the auto-detected backend) actually matches
+    #      the user's request (e.g. user on CPU-only machine sending `--gpu 0`
+    #      was given `privateuseone:0`, which doesn't exist either).
+    #
+    # This caused the notorious:
+    #   "CUDA error: invalid device ordinal
+    #    GPU device may be out of range, do you have enough GPUs?"
+    #
+    # which silently killed the embedding-extraction subprocess and produced
+    # 0 output files, which then cascaded into "File matching failed" in
+    # preparing_files.py. Users saw the dataset had been preprocessed
+    # ("200 wavs") but training refused to start because the embedding step
+    # had silently failed.
+    #
+    # This fix:
+    #   - Forces `["cpu"]` whenever the auto-detected backend is CPU
+    #     (regardless of `--gpu`, because the embedder/predictor models are
+    #     loaded via `config.device` semantics elsewhere — mixing CPU backend
+    #     with a `cuda:N` device string here causes device-mismatch errors).
+    #   - For each requested GPU index, checks `torch.cuda.is_available()` and
+    #     `idx < torch.cuda.device_count()`. Invalid indices are dropped with
+    #     a clear warning. If ALL indices are invalid, falls back to CPU.
+    #   - For XPU / OCL / privateuseone backends, performs equivalent checks
+    #     (using `torch.xpu.device_count()` / DirectML availability).
+    #   - Logs the final device list at INFO so the user can see what was
+    #     actually used.
+    devices = _build_device_list(gpus, config.device)
+    logger.info(
+        f"Extraction will use {len(devices)} device(s): {devices} "
+        f"(requested --gpu={gpus!r}, auto-detected backend={config.device!r})"
+    )
 
     log_data = {
-        translations['modelname']: args.model_name, 
-        translations['export_process']: exp_dir, 
-        translations['f0_method']: f0_method, 
-        translations['pretrain_sr']: sample_rate, 
-        translations['cpu_core']: num_processes, 
-        "Gpu": gpus, 
-        translations['hop_length']: hop_length, 
-        translations['training_version']: version, 
-        translations['extract_f0']: pitch_guidance, 
-        translations['hubert_model']: embedder_model, 
-        translations.get("f0_onnx_mode", "F0 ONNX"): f0_onnx, 
-        translations.get("embed_mode", "Embedder mode"): embedders_mode, 
+        translations['modelname']: args.model_name,
+        translations['export_process']: exp_dir,
+        translations['f0_method']: f0_method,
+        translations['pretrain_sr']: sample_rate,
+        translations['cpu_core']: num_processes,
+        "Gpu": gpus,
+        translations['hop_length']: hop_length,
+        translations['training_version']: version,
+        translations['extract_f0']: pitch_guidance,
+        translations['hubert_model']: embedder_model,
+        translations.get("f0_onnx_mode", "F0 ONNX"): f0_onnx,
+        translations.get("embed_mode", "Embedder mode"): embedders_mode,
         translations.get("train&energy", "Energy"): rms_extract,
         translations.get("alpha_label", "Alpha"): alpha,
         translations.get("include_mutes", "Include mutes"): include_mutes,
@@ -111,7 +145,7 @@ def main():
     pid_path = os.path.join(exp_dir, "extract_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
-    
+
     success = False
     try:
         run_pitch_extraction(
@@ -136,6 +170,124 @@ def main():
     if os.path.exists(pid_path): os.remove(pid_path)
     if success:
         logger.info(f"{translations.get('extract_success', 'Extraction complete')} {args.model_name}.")
+
+
+def _build_device_list(gpus, auto_device):
+    """Build a list of valid device strings for the extract subprocess pool.
+
+    Args:
+        gpus:        Raw value of the `--gpu` CLI argument. Use "-" for CPU,
+                     or a hyphen-separated list of indices ("0", "0-1", "0-0-0").
+        auto_device:  The auto-detected device string from `config.device`
+                     (e.g. "cuda:0", "cpu", "mps", "privateuseone:0").
+
+    Returns:
+        List of device strings (e.g. ["cuda:0"], ["cpu"], ["cuda:0","cuda:1"]).
+        Invalid GPU indices are dropped. If all indices are invalid (or CUDA
+        is unavailable), falls back to ["cpu"] so extraction still runs.
+    """
+    # CPU requested explicitly
+    if gpus is None or gpus == "" or gpus == "-":
+        return ["cpu"]
+
+    # If the auto-detected backend is CPU/MPS (no CUDA/XPU/OCL), force CPU.
+    # Mixing `--gpu 0` (interpreted as CUDA) with a CPU/MPS backend causes
+    # device-mismatch errors in the embedder loader.
+    if auto_device == "cpu" or auto_device == "mps" or not auto_device:
+        if gpus not in ("-", "", None):
+            logger.warning(
+                f"--gpu={gpus!r} was requested but the active backend is "
+                f"{auto_device!r} (no CUDA/XPU/OCL detected). Falling back to CPU. "
+                f"Extract will run on CPU and be slower than GPU."
+            )
+        return ["cpu"]
+
+    # Determine backend prefix and device-count function based on auto_device
+    if auto_device.startswith("cuda"):
+        backend = "cuda"
+        try:
+            import torch as _torch
+            device_count_fn = _torch.cuda.device_count
+            is_available_fn = _torch.cuda.is_available
+        except Exception:
+            logger.warning(
+                "CUDA backend selected but torch.cuda unavailable. "
+                "Falling back to CPU."
+            )
+            return ["cpu"]
+    elif auto_device.startswith("xpu"):
+        backend = "xpu"
+        try:
+            import torch as _torch
+            device_count_fn = getattr(_torch.xpu, "device_count", lambda: 0)
+            is_available_fn = getattr(_torch.xpu, "is_available", lambda: False)
+        except Exception:
+            return ["cpu"]
+    elif auto_device.startswith("ocl") or auto_device.startswith("privateuseone"):
+        backend = "privateuseone"
+        # DirectML/OpenCL don't expose a stable device_count in torch; assume 1
+        device_count_fn = lambda: 1
+        is_available_fn = lambda: True
+    else:
+        # Unknown backend; fall back to CPU
+        logger.warning(
+            f"Unknown auto-detected backend {auto_device!r}. Falling back to CPU."
+        )
+        return ["cpu"]
+
+    # Validate CUDA/XPU availability
+    try:
+        if not is_available_fn():
+            logger.warning(
+                f"Backend {backend!r} reported as unavailable. "
+                f"Falling back to CPU for extraction."
+            )
+            return ["cpu"]
+    except Exception:
+        pass
+
+    # Parse the requested GPU indices
+    try:
+        indices = [int(s.strip()) for s in str(gpus).split("-") if s.strip() != ""]
+    except ValueError:
+        logger.warning(
+            f"Could not parse --gpu={gpus!r} as a list of integer indices. "
+            f"Falling back to CPU."
+        )
+        return ["cpu"]
+
+    if not indices:
+        return ["cpu"]
+
+    # Validate each index against device_count
+    try:
+        n_devices = device_count_fn()
+    except Exception:
+        n_devices = 0
+
+    valid_devices = []
+    invalid_indices = []
+    for idx in indices:
+        if 0 <= idx < n_devices:
+            valid_devices.append(f"{backend}:{idx}")
+        else:
+            invalid_indices.append(idx)
+
+    if invalid_indices:
+        logger.warning(
+            f"GPU index(es) {invalid_indices} are out of range for backend "
+            f"{backend!r} (only {n_devices} device(s) available: indices 0..{n_devices-1 if n_devices > 0 else 'none'}). "
+            f"Dropping invalid indices. Valid devices kept: {valid_devices}"
+        )
+
+    if not valid_devices:
+        logger.warning(
+            f"All requested GPU indices were invalid. Falling back to CPU "
+            f"for extraction (will be slower)."
+        )
+        return ["cpu"]
+
+    return valid_devices
 
 if __name__ == "__main__": 
     mp.set_start_method("spawn", force=True)
