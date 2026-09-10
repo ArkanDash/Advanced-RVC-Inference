@@ -4,7 +4,6 @@ wheel
 omegaconf>=2.0.6
 onnxruntime; sys_platform == 'darwin'
 onnxruntime-gpu; sys_platform != 'darwin'
-tensorboard
 
 # Core dependencies
 PyYAML>=6.0
