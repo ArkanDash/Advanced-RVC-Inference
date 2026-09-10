@@ -9,7 +9,7 @@ def tensorboard_tab():
     def launch_and_get_url():
         url = launch_tensorboard()
         if url and not url.startswith("Error"):
-            gr.Info(i18n("TensorBoard ready."))
+            gr.Info("TensorBoard ready.")
             iframe = f"""<iframe src="{url}" width="100%" height="800" frameborder="0" title="TensorBoard"></iframe>"""
             return (url, iframe)
         return url or "Failed to start", "<p>Failed to launch TensorBoard</p>"
@@ -19,7 +19,7 @@ def tensorboard_tab():
         with gr.Row():
             launch_btn = gr.Button("Launch TensorBoard", variant="primary") 
         tb_url = gr.Textbox(
-            label=i18n("TensorBoard URL"),
+            label="TensorBoard URL",
             value="",
             interactive=False,
             visible=False,
