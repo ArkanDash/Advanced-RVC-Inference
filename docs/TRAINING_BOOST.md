@@ -1,6 +1,6 @@
-# Training Boost — 3× Faster, Applio-Parity Accuracy
+# Training Boost — Applio-Parity Accuracy
 
-This document explains the two new training flags and the accuracy
+This document explains the training flag and the accuracy
 patches that bring Advanced-RVC-Inference to parity with Applio for
 small (10-minute) datasets.
 
@@ -52,45 +52,16 @@ directories don't exist yet (fresh install, deleted cache, etc.).
 ## TL;DR
 
 ```bash
-# ~3× faster training, vocal-quality-safe (no loss changes)
+# On Ampere+ GPUs (A100 / H100 / RTX 30xx+ / 40xx+) for a ~1.5–2× speedup.
+# On T4 (Colab free tier), skip this flag.
 python -m arvc.api.cli train my_model \
-    --fast_train true \
-    --epochs 200 --batch_size 4
-
-# Add this on Ampere+ GPUs (A100 / H100 / RTX 30xx+ / 40xx+) for an
-# additional ~1.5–2× speedup. On T4 (Colab free tier), skip this flag.
-python -m arvc.api.cli train my_model \
-    --fast_train true --bf16_adamw true \
+    --bf16_adamw true \
     --epochs 200 --batch_size 4
 ```
 
-Both flags are **non-numerical** optimizations — they only touch kernel
-selection, matmul precision, I/O pipelining, and dtype strategy. No loss
-function, gradient path, or model weight is altered. Vocal fidelity is
-bit-for-bit identical to upstream.
-
----
-
-## `--fast_train` — vocal-quality-safe ~3× speedup
-
-Enables the following bundle (all in
-[`arvc/engine/training/runner/train.py`](../arvc/engine/training/runner/train.py),
-lines 209–282):
-
-| # | Optimization | Speedup | Quality impact |
-|---|---|---|---|
-| 1 | **TF32 matmul + cuDNN TF32** (Ampere+ GPUs only). 10-bit mantissa vs FP32's 23-bit — well below the audible noise floor for vocal training. | 2–3× on matmul-heavy steps | None (TF32 is the de-facto standard for vocal training on RTX 30xx/40xx/A100/H100) |
-| 2 | **`torch.backends.cudnn.benchmark = True`** — picks the fastest conv kernel per input shape. Tiny warmup cost, big sustained speedup. | 1.1–1.3× | None |
-| 3 | **`torch.backends.cudnn.deterministic = False`** (unless `--deterministic` is also passed). Lets cuDNN pick non-deterministic but faster kernels. | 1.05–1.1× | None (training already non-deterministic by default) |
-| 4 | **`PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True,max_split_size_mb:512`** — avoids fragmentation on long runs, reduces OOM-induced CUDA cache resets that cost ~1–2s each. | variable (often 1.1–1.2× on multi-hour runs) | None |
-| 5 | **`torch.compile(mode="reduce-overhead")` on both G and D** — fuses kernels and uses CUDA graphs. Same math, ~1.3–2× faster. | 1.3–2× | None (torch.compile preserves numerics within float tolerance) |
-| 6 | **DataLoader:** `num_workers=min(8, cpu//2)`, `prefetch_factor=16`, `pin_memory=True`, `persistent_workers=True`. Better overlap of CPU data loading with GPU compute. | 1.1–1.4× (I/O-bound steps) | None |
-
-**Combined expected speedup on Ampere+ GPUs:** 2.5–3.5× vs default
-training, with bit-for-bit identical vocal fidelity.
-
-**On Colab T4 (Turing):** TF32 is not supported, but cuDNN benchmark +
-torch.compile + DataLoader tuning still give ~1.5–2× speedup.
+This flag only changes the optimizer choice (`AnyPrecisionAdamW`) and the
+autocast dtype strategy. No loss function, gradient path, or model weight
+is altered beyond the bf16 precision strategy.
 
 ---
 
@@ -103,8 +74,8 @@ Applio exposes a single `bf16_adamw` flag that simultaneously:
 2. Sets `brain=True` so the rest of `train.py` picks up bf16 autocast.
 
 This patch wires the same shortcut into Advanced-RVC-Inference. See
-`train.py` lines 135–142 (argument), 264–279 (fast_train bundle
-side-effect), 785–791 (optimizer override).
+the `--bf16_adamw` argument definition and the optimizer override in
+`arvc/rvc/training/runner/train.py`.
 
 ### Why bf16 is safe for vocal training (unlike fp16)
 
@@ -122,8 +93,8 @@ side-effect), 785–791 (optimizer override).
 |---|---|---|
 | NVIDIA A100 / H100 (Ampere / Hopper) | ~2× | **Use `--bf16_adamw`** |
 | RTX 30xx / 40xx (consumer Ampere / Ada) | ~1.5–2× | **Use `--bf16_adamw`** |
-| RTX 20xx (Turing) | Emulated (slower) | Do NOT use; plain `--fast_train` is faster |
-| Colab T4 (Turing) | Emulated (slower) | Do NOT use; plain `--fast_train` is faster |
+| RTX 20xx (Turing) | Emulated (slower) | Do NOT use |
+| Colab T4 (Turing) | Emulated (slower) | Do NOT use |
 | AMD via ZLUDA | Not supported | Do NOT use |
 
 ---
@@ -237,31 +208,28 @@ upstream ARVC had over Applio.
 
 ```bash
 python -m arvc.api.cli train my_model \
-    --fast_train true \
     --epochs 200 --batch_size 4 \
     --multiscale_loss --cosine_lr \
     --save_every 25 --gpu 0
 ```
 
-Expected: ~1.5–2× faster than default, identical vocal fidelity.
-
 ### Colab A100 / H100 (paid tier)
 
 ```bash
 python -m arvc.api.cli train my_model \
-    --fast_train true --bf16_adamw true \
+    --bf16_adamw true \
     --epochs 200 --batch_size 8 \
     --multiscale_loss --cosine_lr \
     --save_every 25 --gpu 0
 ```
 
-Expected: ~3–4× faster than default, identical vocal fidelity.
+Expected: ~1.5–2× faster than default on Ampere+.
 
 ### Local RTX 30xx / 40xx
 
 ```bash
 python -m arvc.api.cli train my_model \
-    --fast_train true --bf16_adamw true \
+    --bf16_adamw true \
     --epochs 300 --batch_size 6 \
     --multiscale_loss --cosine_lr --compile_model \
     --save_every 25 --gpu 0
@@ -282,7 +250,7 @@ python -m arvc.api.cli extract my_model --sample_rate 48000 --f0_method rmvpe
 python -m arvc.api.cli create-index my_model --version v2 --algorithm Auto
 
 python -m arvc.api.cli train my_model \
-    --fast_train true --bf16_adamw true \
+    --bf16_adamw true \
     --epochs 300 --batch_size 4 \
     --multiscale_loss --cosine_lr \
     --overtrain_detect --overtrain_threshold 50 \

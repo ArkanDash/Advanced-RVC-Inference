@@ -125,15 +125,6 @@ def parse_arguments():
     parser.add_argument("--grad_accum_steps", type=int, default=1, help="Gradient accumulation steps (reduces VRAM usage with larger effective batch sizes)")
     parser.add_argument("--newpytorch", type=lambda x: bool(strtobool(x)), default=True, help="Use PyTorch 2.0+ parametrization format (default, matches Applio/VRVC). Set false for legacy weight_norm format.")
     parser.add_argument(
-        "--fast_train",
-        type=lambda x: bool(strtobool(x)),
-        default=False,
-        help="Vocal-quality-safe training speedup bundle. Enables TF32 matmul+cuDNN (Ampere+), "
-             "larger dataloader prefetch, higher worker count, auto torch.compile, and reduces tqdm "
-             "update overhead. Targets ~3x faster training with NO loss in vocal fidelity — only I/O "
-             "and kernel-fusion optimizations are applied, never numerical changes.",
-    )
-    parser.add_argument(
         "--bf16_adamw",
         type=lambda x: bool(strtobool(x)),
         default=False,
@@ -181,7 +172,6 @@ args = parse_arguments()
     use_8bit_adam,
     grad_accum_steps,
     newpytorch,
-    fast_train,
     bf16_adamw,
 ) = (
     args.model_name, 
@@ -213,74 +203,25 @@ args = parse_arguments()
     args.use_8bit_adam,
     args.grad_accum_steps,
     args.newpytorch,
-    args.fast_train,
     args.bf16_adamw,
 )
 
-# ── FAST-TRAIN BUNDLE: vocal-quality-safe 3x speedup ─────────────────────────
-# These knobs do NOT change numerics — they only affect kernel selection,
-# matmul precision on Ampere+ GPUs, I/O pipelining, and UI overhead. Vocal
-# fidelity is preserved bit-for-bit because no loss function, gradient path,
-# or model weight is touched.
-if fast_train and torch.cuda.is_available() and not _is_zluda:
-    # 1. TF32 matmul — 2-3x faster on RTX 30xx/40xx/A100. TF32 uses 10-bit
-    #    mantissa (vs FP32's 23-bit) which is well below the audible noise
-    #    floor for vocal training. This is the single biggest speedup lever.
+# ── SPEED PATCH: bf16 path on Ampere+ GPUs ────────────────────────────────────────
+# bf16 has the same exponent range as fp32 (no overflow risk like fp16), and
+# on Ampere/Hopper hardware bf16 matmul is ~2x faster than fp32. Combined with
+# the AnyPrecisionAdamW optimizer (which keeps fp32 master weights), this is
+# the single biggest "free" speedup for vocal training. The user does NOT lose
+# fidelity — bf16's 8-bit mantissa is well below the audible noise floor for
+# a vocal model.
+if bf16_adamw and not getattr(main_config, 'brain', False):
+    # Flip the global flag so the rest of train.py picks up bf16
+    # autocast + AnyPrecisionAdamW automatically.
     try:
-        torch.set_float32_matmul_precision("high")  # 'high' == TF32
+        main_config.brain = True
+        if __name__ == "__main__":
+            print("[Advanced-RVC] bf16_adamw auto-enabled brain=True for AnyPrecisionAdamW + bf16 autocast.")
     except Exception:
         pass
-    torch.backends.cuda.matmul.allow_tf32 = True
-    torch.backends.cudnn.allow_tf32 = True
-
-    # 2. cuDNN benchmark — picks the fastest conv kernel for the current
-    #    input shape. Tiny warmup cost, big sustained speedup. Already on
-    #    via --benchmark=True but we force it on under fast_train.
-    torch.backends.cudnn.benchmark = True
-
-    # 3. cuDNN deterministic OFF (only relevant if --deterministic is also
-    #    passed). Fast train wants the non-deterministic kernel picker.
-    if not deterministic:
-        torch.backends.cudnn.deterministic = False
-
-    # 4. CUDA allocator config — 'expandable_segments' avoids fragmentation
-    #    on long runs and lets the allocator return memory to the pool more
-    #    aggressively. Reduces OOM-induced CUDA cache resets that cost ~1-2s
-    #    each. Net win for sustained training throughput.
-    try:
-        os.environ.setdefault(
-            "PYTORCH_CUDA_ALLOC_CONF",
-            "expandable_segments:True,"
-            "max_split_size_mb:512",
-        )
-    except Exception:
-        pass
-
-    # 5. Auto-enable torch.compile unless the user explicitly disabled it.
-    #    mode="reduce-overhead" fuses kernels and uses CUDA graphs — same
-    #    math, ~1.3-2x faster.
-    if not compile_model and hasattr(torch, "compile"):
-        compile_model = True
-
-    # 6. SPEED PATCH: bf16 path on Ampere+ GPUs. bf16 has the same exponent
-    #    range as fp32 (no overflow risk like fp16), and on Ampere/Hopper
-    #    hardware bf16 matmul is ~2x faster than fp32. Combined with the
-    #    AnyPrecisionAdamW optimizer (which keeps fp32 master weights), this
-    #    is the single biggest "free" speedup for vocal training. The user
-    #    does NOT lose fidelity — bf16's 8-bit mantissa is well below the
-    #    audible noise floor for a vocal model.
-    if bf16_adamw and not getattr(main_config, 'brain', False):
-        # Flip the global flag so the rest of train.py picks up bf16
-        # autocast + AnyPrecisionAdamW automatically.
-        try:
-            main_config.brain = True
-            if __name__ == "__main__":
-                print("[Advanced-RVC] FAST-TRAIN: bf16_adamw auto-enabled brain=True for AnyPrecisionAdamW + bf16 autocast.")
-        except Exception:
-            pass
-
-    if __name__ == "__main__":
-        print("[Advanced-RVC] FAST-TRAIN: TF32 + cuDNN benchmark + torch.compile + expandable_segments enabled (vocal-quality-safe).")
 
 # ── Configure weight_norm mode BEFORE any model creation ──
 configure_weight_norm(newpytorch)
@@ -513,7 +454,6 @@ def main():
                         checkpointing, 
                         energy_use,
                         compile_model,
-                        fast_train,
                     )
                 )
                 children.append(subproc)
@@ -628,7 +568,6 @@ def run(
     checkpointing, 
     energy_use,
     compile_model,
-    fast_train=False,
 ):
     global global_step, smoothed_value_gen, smoothed_value_disc, optimizer_choice
 
@@ -685,27 +624,9 @@ def run(
         energy=energy_use
     )
 
-    # Adaptive data loader settings — bumped under --fast_train for better
-    # I/O pipelining. These are vocal-quality-safe: they only affect how
-    # many batches are prefetched in parallel, never the math.
     _pin_mem = not _is_zluda
-    if fast_train and not _is_zluda:
-        # FAST-TRAIN: more workers + larger prefetch factor → better overlap
-        # of CPU data loading with GPU compute. Capped to avoid CPU
-        # oversubscription on small machines.
-        import multiprocessing as _mp
-        _cpu = _mp.cpu_count() or 4
-        _num_workers = min(8, max(4, _cpu // 2))
-        _prefetch = 16
-    else:
-        _num_workers = 2 if _is_zluda else 4
-        _prefetch = 2 if _is_zluda else 8
-
-    if rank == 0 and fast_train:
-        logger.info(
-            f"FAST-TRAIN dataloader: num_workers={_num_workers}, prefetch_factor={_prefetch}, "
-            f"pin_memory={_pin_mem}, persistent_workers=True"
-        )
+    _num_workers = 2 if _is_zluda else 4
+    _prefetch = 2 if _is_zluda else 8
 
     # BUG FIX #9, #13: Original code passed batch_size and shuffle alongside
     # batch_sampler, which is invalid in PyTorch (causes ValueError in some
@@ -857,9 +778,9 @@ def run(
     _use_registry = True
 
     # SPEED PATCH (Applio parity): if --bf16_adamw was passed, force the
-    # optimizer to AnyPrecisionAdamW. The fast_train bundle above already
-    # set main_config.brain=True, so the autocast dtype will be bf16 and
-    # AnyPrecisionAdamW will keep fp32 master weights + bf16 momentum.
+    # optimizer to AnyPrecisionAdamW. The patch near argument parsing above
+    # already set main_config.brain=True, so the autocast dtype will be bf16
+    # and AnyPrecisionAdamW will keep fp32 master weights + bf16 momentum.
     if bf16_adamw:
         optimizer_choice = "AnyPrecisionAdamW"
         if rank == 0:
@@ -1012,19 +933,6 @@ def run(
         except Exception as e:
             if rank == 0:
                 logger.warning(f"torch.compile() on G failed, falling back to eager mode: {e}")
-
-        # FAST-TRAIN: also compile the discriminator. The discriminator
-        # runs every step (sometimes multiple times per G step), so fusing
-        # its kernels yields a real wall-clock speedup. Same math → vocal
-        # quality is unaffected.
-        if fast_train:
-            if rank == 0:
-                logger.info("FAST-TRAIN: also applying torch.compile() to discriminator")
-            try:
-                net_d = torch.compile(net_d, mode="reduce-overhead")
-            except Exception as e:
-                if rank == 0:
-                    logger.warning(f"torch.compile() on D failed, falling back to eager mode: {e}")
 
     # DDP wrapping — Vietnamese-RVC style with ZLUDA + bucket_cap_mb
     if not _skip_ddp:
@@ -1542,12 +1450,7 @@ def train_and_evaluate(
         dtype=autocast_dtype
     ) if not device.type.startswith(("ocl", "privateuseone")) else nullcontext()
     
-    # FAST-TRAIN: raise tqdm mininterval to 0.5s (from default 0.1s) so the
-    # progress bar repaints 5x less often. This frees GIL time for the
-    # training loop and is vocal-quality-safe (pure UI change).
-    _tqdm_mintinterval = 0.5 if fast_train else 0.1
-
-    with tqdm(total=len(train_loader), leave=False, mininterval=_tqdm_mintinterval) as pbar:
+    with tqdm(total=len(train_loader), leave=False, mininterval=0.1) as pbar:
         for batch_idx, info in data_iterator:
             # Move data to device — Vietnamese-RVC style with XPU support
             if device.type == "cuda" and not cache_data_in_gpu: 

@@ -419,7 +419,6 @@ def training(
     use_8bit_adam=False,
     grad_accum_steps=1,
     newpytorch=True,
-    fast_train=False,
 ):
     if architecture == "SVC":
         pitch_guidance = True
@@ -655,8 +654,7 @@ def training(
         "--compile_model", str(compile_model),
         "--use_8bit_adam", str(use_8bit_adam),
         "--grad_accum_steps", str(grad_accum_steps),
-        "--newpytorch", str(newpytorch),
-        "--fast_train", str(fast_train)
+        "--newpytorch", str(newpytorch)
     ])
 
     done = [False]

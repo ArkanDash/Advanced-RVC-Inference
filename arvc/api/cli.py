@@ -629,7 +629,6 @@ def cmd_train(args):
         cmd.extend(["--use_8bit_adam", "True" if args.use_8bit_adam else "False"])
         if args.gradient_accumulation and args.gradient_accumulation > 1:
             cmd.extend(["--grad_accum_steps", str(args.gradient_accumulation)])
-        cmd.extend(["--fast_train", "True" if args.fast_train else "False"])
         cmd.extend(["--bf16_adamw", "True" if args.bf16_adamw else "False"])
 
         cmd.extend(["--newpytorch", "True"])
@@ -951,8 +950,6 @@ For the full CLI guide, see:
     p.add_argument("--compile_model", action="store_true", help="Use torch.compile() on generator")
     p.add_argument("--use_8bit_adam", action="store_true", help="Use 8-bit Adam optimizer (requires bitsandbytes)")
     p.add_argument("--gradient_accumulation", type=int, default=1, help="Gradient accumulation steps (default: 1)")
-    p.add_argument("--fast_train", action=BooleanOptionalAction, default=False,
-        help="Vocal-quality-safe ~3x training speedup: enables TF32 matmul+cuDNN, torch.compile on G+D, larger dataloader prefetch. Default: off.")
     p.add_argument("--bf16_adamw", action=BooleanOptionalAction, default=False,
         help="Applio-parity shortcut: use AnyPrecisionAdamW + bf16 autocast (brain=True). Recommended on Ampere+ GPUs (RTX 30xx/40xx/A100/H100). Implies --optimizer=AnyPrecisionAdamW.")
     p.set_defaults(func=cmd_train)

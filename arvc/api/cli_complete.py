@@ -284,7 +284,6 @@ elif argv_is_allows[15] in argv:
             - `--use_8bit_adam` (default: `False`): Use 8-bit Adam optimizer (requires bitsandbytes).
             - `--grad_accum_steps` (default: `1`): Gradient accumulation steps.
             - `--newpytorch` (default: `True`): Use PyTorch 2.0+ parametrization format.
-            - `--fast_train` (default: `False`): Vocal-quality-safe ~3x training speedup bundle. Enables TF32 matmul+cuDNN, torch.compile on G+D, larger dataloader prefetch. Does NOT change any loss / model / LR — vocal fidelity is bit-identical to `--fast_train false`.
 
         9. Reference set:
             - `--use_custom_reference` (default: `False`): Use custom reference set.

@@ -9,7 +9,7 @@ A comprehensive command-line interface for the Advanced RVC Inference framework.
 | [PACKAGE_STRUCTURE.md](PACKAGE_STRUCTURE.md) | Canonical reference for the `arvc/` package layout, dependency rules, and where to add new code |
 | [../TRAINING_BUG_FIXES.md](../TRAINING_BUG_FIXES.md) | Audit trail of all training pipeline bug fixes (30 fixes) |
 | [../TRAINING_FEATURES_BACKPORTS.md](../TRAINING_FEATURES_BACKPORTS.md) | Features backported from Vietnamese-RVC, Applio, and PolTrain |
-| [TRAINING_BOOST.md](TRAINING_BOOST.md) | `--fast_train` / `--bf16_adamw` usage guide with GPU-specific recipes |
+| [TRAINING_BOOST.md](TRAINING_BOOST.md) | `--bf16_adamw` usage guide with GPU-specific recipes |
 | [SECURITY_PATCHES.md](SECURITY_PATCHES.md) | Security hardening audit trail with verification commands |
 | [optimizer.md](optimizer.md) | Reference for the 5 supported training optimizers |
 | [vocoder.md](vocoder.md) | Reference for the 4 supported vocoders |

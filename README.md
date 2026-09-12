@@ -16,48 +16,6 @@
 
 ---
 
-## Features
-
-### Inference
-- **Voice Inference** — Single & batch conversion, TTS, pitch shifting, formant shifting, audio cleaning, Whisper transcription
-- **Real-Time Conversion** — Live mic voice conversion with VAD and low-latency processing
-- **30+ F0 Methods** — rmvpe, crepe, fcpe, harvest, hybrid, and many more
-- **F0 Autotune** — Automatic pitch correction with configurable strength
-- **Audio Cleaning** — Built-in denoising for cleaner output
-
-### Audio Processing
-- **Audio Separation** — Vocal/instrumental isolation (MDX-Net, Roformer, BS-Roformer), karaoke, reverb removal, denoising
-- **Auto Pretrained Download** — Automatically downloads pretrained models from HuggingFace
-
-### Training Pipeline
-- **End-to-End Training** — Dataset creation → preprocessing → feature extraction → training → model export
-- **🔧 Auto Model Download** — Predictor (RMVPE/FCPE) and embedder (HuBERT) models download automatically before training starts — no more "model not found" errors!
-- **4 Vocoders** — HiFi-GAN NSF (Default), BigVGAN, MRF-HiFi-GAN, RefineGAN
-- **7 Optimizers** — AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, **Ranger2020**, **Prodigy**
-- **Enhanced Loss Functions** — Multi-scale STFT loss, phase loss, envelope loss, KL-divergence loss (from Codename RVC Fork v4)
-- **Training Enhancements** — LR warmup, KL annealing, gradient clip scheduling, decoder freezing (from Codename RVC Fork v4)
-- **Robust Data Loading** — Safe numpy loading with NaN/Inf handling, corrupted file recovery, increased sequence length limits (900→1800)
-- **Advanced Options** — Gradient accumulation, torch.compile(), 8-bit Adam, cosine annealing LR, overtraining detection
-- **Architecture Support** — RVC and SVC (from Vietnamese-RVC)
-- **Embedder Mix** — Layer-wise embedding mixing with configurable ratios (from Vietnamese-RVC)
-- **🚀 3× Faster Training** — `--fast_train` flag bundles TF32 matmul + cuDNN benchmark + torch.compile + expandable_segments allocator. Vocal-quality-safe (no loss/numerics changes).
-- **🚀 bf16 Auto-Mode** — `--bf16_adamw` flag (Applio-parity shortcut) forces AnyPrecisionAdamW + bf16 autocast. Recommended on Ampere+ GPUs (A100/H100/RTX 30xx+/40xx+).
-
-### 🔒 Security Hardening
-- **Safe Deserialization** — All `torch.load()` calls route through `safe_torch_load` (forces `weights_only=True`). Restricted `pickle.Unpickler` whitelist blocks every known RCE gadget.
-- **Path Traversal Guards** — `validate_path_within()` wired into 20+ `os.path.join` sites in inference + training.
-- **Hardened Downloaders** — All downloaders enforce: 8 GB size cap, extension whitelist, filename sanitization, `timeout=300s`.
-- **No Silent Failures** — Bare `except:` clauses replaced with typed exceptions.
-
-### Platform & Integration
-- **CLI** — Full command-line interface via `rvc-cli`
-- **ZLUDA Support** — Full AMD GPU support via ZLUDA
-- **XPU Support** — Intel GPU support via XPU backend
-- **Push to Hub** — Upload trained models directly to HuggingFace Hub
-- **44 Languages** — Full UI translation support
-
----
-
 ## Supported Vocoders
 
 | Vocoder | Description | Pitch Required |
@@ -148,16 +106,6 @@ rvc-cli uvr -i song.mp3
 
 # Show all commands
 rvc-cli --help
-```
-
-#### Fast Training
-
-```bash
-# ~3× faster training, vocal-quality-safe
-rvc-cli train my_model --fast_train true --epochs 200 --batch_size 4
-
-# Additional ~1.5–2× speedup on Ampere+ GPUs
-rvc-cli train my_model --fast_train true --bf16_adamw true --epochs 200 --batch_size 8
 ```
 
 ### 4. Google Colab
