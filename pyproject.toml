@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "advanced-rvc-inference"
-version = "2.2.2"
+version = "2.2.3"
 description = "Advanced RVC Inference - A comprehensive tool for RVC (Retrieval-based Voice Conversion) inference, training, and more"
 requires-python = ">=3.10,<3.14"
 readme = "README.md"
@@ -108,7 +108,7 @@ dev = [
 ]
 
 [project.scripts]
-rvc-cli = "arvc.api.cli:main"
+rvc-cli = "arvc.app.api.cli:main"
 rvc-gui = "arvc.app.gui:launch"
 
 [project.urls]

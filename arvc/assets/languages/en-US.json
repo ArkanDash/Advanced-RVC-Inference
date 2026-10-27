@@ -804,5 +804,19 @@
     "audio_output": "Audio Output",
     "model_name_placeholder": "Leave empty to use original name",
     "d_model_url": "D Model URL",
-    "g_model_url": "G Model URL"
+    "g_model_url": "G Model URL",
+    "terminal": "Terminal",
+    "terminal_intro": "Live output from this ARVC session — training, downloads and inference workers all stream here.",
+    "terminal_live": "Live updates",
+    "terminal_clear": "Clear view",
+    "terminal_label": "Terminal",
+    "terminal_unavailable": "Terminal capture not started — `start_capture()` was never called for this process.",
+    "terminal_timer_unsupported": "Installed Gradio version does not support gr.Timer; terminal tab will not auto-refresh.",
+    "rmvpe_high_register": "RMVPE high-register correction",
+    "rmvpe_high_register_enable": "Enable RMVPE high-register correction",
+    "rmvpe_high_register_enable_info": "Fixes the octave errors rmvpe.pt makes above ~1040 Hz (flutes, high strings, whistle register) with a second pass on octave-down-resampled audio. Off by default; when disabled RMVPE behaves exactly as before.",
+    "rmvpe_high_register_mode": "Correction mode",
+    "rmvpe_high_register_mode_info": "true_pitch writes the real pitch, capped at the F0 ceiling. fold only repairs wrong-octave frames using half-pitch drives; use it with models trained on uncorrected labels to keep their timbre.",
+    "rmvpe_high_register_f0_ceil": "F0 ceiling (Hz)",
+    "rmvpe_high_register_f0_ceil_info": "Highest pitch written in true_pitch mode. Models trained on stock RMVPE labels cannot synthesize above ~1250 Hz; raise it only for models trained with the correction enabled."
 }

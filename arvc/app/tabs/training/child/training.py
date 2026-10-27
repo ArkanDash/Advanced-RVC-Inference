@@ -7,7 +7,7 @@ sys.path.append(os.getcwd())
 
 from arvc.utils.process import zip_file
 
-from arvc.rvc.training import (
+from arvc.engine.rvc.training import (
     extract, 
     training, 
     preprocess, 

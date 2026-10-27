@@ -55,7 +55,7 @@ arvc/
 
 ## 2. Subpackage reference
 
-### 2.1 `arvc/api/` — CLI entry points
+### 2.1 `arvc/app/api/` — CLI entry points
 
 Holds the command-line interface. Each module here is a thin argparse wrapper
 that dispatches into `arvc.services.*` or `arvc.engine.*`.
@@ -69,7 +69,7 @@ api/
 
 **Registered entry points** (in `pyproject.toml`):
 
-- `rvc-cli` → `arvc.api.cli:main`
+- `rvc-cli` → `arvc.app.api.cli:main`
 - `rvc-gui` → `arvc.app.gui:launch`
 
 ### 2.2 `arvc/app/` — Gradio web UI
@@ -354,7 +354,7 @@ Heavy classes (`RVCInference`, `RVCModel`, `RVCTrainer`, etc.) are listed in
 | You are adding… | Put it in… |
 |------------------|------------|
 | A new Gradio tab | `arvc/app/tabs/<domain>/<tab_name>.py` |
-| A new CLI subcommand | `arvc/api/cli.py` (or `cli_complete.py`) |
+| A new CLI subcommand | `arvc/app/api/cli.py` (or `cli_complete.py`) |
 | A new service (orchestration of multiple engine calls) | `arvc/services/<domain>/<service_name>.py` |
 | A new model architecture | `arvc/engine/models/algorithms/` (primitives) or `arvc/engine/models/generators/` (vocoders) |
 | A new F0 predictor | `arvc/engine/models/predictors/<NAME>/` (own subpackage) |
@@ -382,14 +382,14 @@ scripts and downstream forks, the following shims are in place:
   still works (it now resolves to the subpackage, which re-exports `X`
   from `training.py`).
 - **Top-level `cli`/`gui` aliases.** `arvc.cli` and `arvc.gui` are
-  module-like objects that forward to `arvc.api.cli:main` and
+  module-like objects that forward to `arvc.app.api.cli:main` and
   `arvc.app.gui:launch` respectively.
 - **Lazy submodule access.** `arvc.utils` and `arvc.services` use
   `__getattr__`-based lazy imports so that `import arvc` does not pull in
   every downloader / service module.
 
 If you maintain a fork that imported e.g. `arvc.utils.noisereduce` directly,
-update to `arvc.rvc.inference.noisereduce`. The other moves are
+update to `arvc.engine.rvc.inference.noisereduce`. The other moves are
 backward-compatible thanks to the re-export shims.
 
 ---
@@ -401,7 +401,7 @@ backward-compatible thanks to the re-export shims.
 - **`arvc/utils/`** slimmed down:
   - 5 file-host downloaders (`gdown`, `huggingface`, `mediafire`, `meganz`,
     `pixeldrain`) moved into a new `arvc/utils/downloaders/` subpackage.
-  - `noisereduce.py` moved to `arvc/rvc/inference/noisereduce.py`
+  - `noisereduce.py` moved to `arvc/engine/rvc/inference/noisereduce.py`
     (it is a torch-dependent audio utility, belongs with the inference
     pipeline).
   - `utils/__init__.py` rewritten with a lazy-import `__getattr__` so
@@ -416,3 +416,38 @@ backward-compatible thanks to the re-export shims.
     backward compatibility with `from arvc.services.X import Y` style imports.
 - **Docs.** New `docs/PACKAGE_STRUCTURE.md` (this file). README.md and
   CONTRIBUTING.md project-structure sections refreshed.
+
+### v2.2.3 — Engine layout + Applio feature port
+
+- **`arvc/api/`** → **`arvc/app/api/`** (CLI now lives under the app namespace,
+  matching the new `arvc.app` → `arvc.engine` dependency direction).
+- **`arvc/uvr/`** → **`arvc/engine/uvr/`**
+- **`arvc/whisper/`** → **`arvc/engine/whisper/`**
+- **`arvc/rvc/`** → **`arvc/engine/rvc/`** (inference, models, training).
+- All 445 `arvc.*` imports and ~30 path-style string references were
+  rewritten across 112 files to point at the new locations. No public API
+  surface changed — `from arvc import RVCInference / RVCTrainer / ...` still
+  works via the lazy `__getattr__` in `arvc/__init__.py`.
+- **Terminal-in-GUI** (ported from Applio):
+  - `arvc/utils/terminal.py` — tee-based `TerminalCapture` with
+    `start_capture()` / `get_capture()`. Mirrors stdout/stderr to a temp
+    log file the UI can poll without breaking real-console output.
+  - `arvc/app/tabs/terminal/terminal.py` — new Terminal tab mounted as a
+    top-level `gr.TabItem`, polling the capture every 500 ms while visible.
+- **RMVPE high-register correction** (ported from Applio):
+  - `arvc/engine/rvc/models/predictors/high_register.py` — half-speed
+    second pass + octave-class repair, with `true_pitch` and `fold` modes.
+  - `arvc/app/tabs/extra/child/rmvpe_high_register.py` — Settings tab
+    exposing `enabled` / `mode` / `f0_ceil`.
+  - Wired into `Generator.get_f0_rmvpe` behind an `enabled` guard so
+    inference is unaffected unless the user opts in.
+- **Applio dark theme + shell CSS** (ported from Applio):
+  - `arvc/assets/themes/Applio.py` — `Applio` Gradio theme class.
+  - `arvc/assets/themes/loadThemes.py` — built-in theme resolver that
+    prefers local themes (e.g. `Applio`) and falls back to
+    `gr.Theme.from_name` for external names like `NeoPy/Soft`.
+  - `arvc/assets/ui/shell.css` — dark shell CSS injected as `css=` on the
+    `gr.Blocks` when `configs["use_shell_css"]` is true (default).
+- **i18n.** New keys for the Terminal tab and high-register tab added to
+  `en-US.json`, `id-ID.json`, `vi-VN.json`. Other languages fall back to
+  English via `translations.get(key, fallback)`.

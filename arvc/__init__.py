@@ -25,10 +25,10 @@ __all__ = [
 # Lazy-imported classes that are referenced by name (so `from arvc import RVCInference`
 # still works) but are loaded only on first access.
 _LAZY_CLASSES = {
-    "RVCInference":  "arvc.rvc.inference.inference:VoiceConverter",
+    "RVCInference":  "arvc.engine.rvc.inference.inference:VoiceConverter",
     "RVCConfig":     "arvc.utils.variables:Config",
-    "RVCModel":       "arvc.rvc.models.utils",
-    "RVCTrainer":     "arvc.rvc.training.training",
+    "RVCModel":       "arvc.engine.rvc.models.utils",
+    "RVCTrainer":     "arvc.engine.rvc.training.training",
     "RVCRealtime":    "arvc.engine.realtime.realtime:RVC_Realtime",
 }
 
@@ -90,7 +90,7 @@ _setup_paths()
 # CLI and GUI entry points
 def launch_cli():
     """Launch the command-line interface."""
-    from arvc.api.cli import main as cli_main
+    from arvc.app.api.cli import main as cli_main
 
     cli_main()
 

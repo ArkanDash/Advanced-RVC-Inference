@@ -28,68 +28,73 @@ deep-dive; the summary below is the quick reference.
 
 ```
 arvc/
-├── api/                    # CLI entry points (rvc-cli → arvc.api.cli:main)
-├── app/                    # Gradio web UI (tabs, pages, layouts)
-│   └── tabs/               #   inference, training, downloads, realtime, extra
-├── engine/                 # Core logic (no UI dependency)
-│   ├── inference/          #   voice conversion pipeline, TTS, noisereduce
-│   ├── training/           #   preprocess, extract, train, export
-│   │   ├── preprocess/     #     audio slicing & normalization
-│   │   ├── extract/        #     embedding & F0 extraction
-│   │   └── runner/         #     training loop, losses, data loading
-│   ├── uvr/                #   audio separation (UVR5)
-│   ├── realtime/           #   live mic conversion
-│   ├── speaker/            #   speaker diarization & embedding
-│   └── models/             #   model loading, generators, optimizers, backends
-│       ├── algorithms/     #     VITS-style primitives
-│       ├── generators/     #     HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
-│       ├── optimizers/     #     AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, PolOpt
-│       ├── embedders/      #     Hubert, ContentVec, PPG, transformers
-│       ├── predictors/     #     F0 predictors (RMVPE, Crepe, FCPE, PESTO, PENN, DJCM, SWIFT, WORLD)
-│       ├── backends/       #     CUDA, DirectML, OpenCL, XPU, ZLUDA
-│       └── onnx/           #     ONNX export & wrapper
-├── services/               # Business logic layer (bridges UI ↔ engine)
-│   ├── inference/          #   csrt, f0_extract, presets, separate, tts
-│   ├── training/           #   training orchestration
-│   ├── realtime/           #   realtime server + client
-│   ├── system/             #   process, restart, model_utils, utils
-│   └── downloads/          #   download orchestration
-├── ui/                     # UI helpers (feedback, dropdown updates, formatting)
-├── utils/                  # Shared utilities
-│   ├── variables.py        #   Global paths, Config singleton, logger, translations
-│   ├── feedback.py         #   Headless-safe logger (gr_info, gr_warning, gr_error)
-│   └── downloaders/        #   File-host backends (gdown, huggingface, mediafire, meganz, pixeldrain)
-├── configs/                # Configuration files (training configs, model templates)
-│   ├── config.py           #   Runtime Config singleton
-│   ├── v1/, v2/            #   V1/V2 model JSONs
-│   ├── ringformer_v2/      #   RingFormer V2 configs
-│   └── pcph_gan/           #   PCPH-GAN configs
-├── datasets/               # Training datasets (organized per model)
-├── assets/                 # Runtime assets (models, audios, languages, presets, …)
-└── _version.py             # Version management
+├── app/                     # User-facing layer (Gradio UI + CLI entry points)
+│   ├── api/                 #   CLI entry points (rvc-cli → arvc.app.api.cli:main)
+│   ├── tabs/                #   inference, training, downloads, realtime, extra, terminal
+│   └── gui.py               #   Gradio launcher + theme/CSS wiring
+├── engine/                  # Core logic (no UI dependency)
+│   ├── rvc/                 #   voice conversion: inference, training, models
+│   │   ├── inference/       #     voice conversion pipeline, TTS, noisereduce
+│   │   ├── training/        #     preprocess, extract, train, export
+│   │   │   ├── preprocess/  #       audio slicing & normalization
+│   │   │   ├── extract/     #       embedding & F0 extraction
+│   │   │   └── runner/      #       training loop, losses, data loading
+│   │   └── models/          #     model loading, generators, optimizers, backends
+│   │       ├── algorithms/  #       VITS-style primitives
+│   │       ├── generators/  #       HiFi-GAN NSF, BigVGAN, MRF-HiFi-GAN, RefineGAN
+│   │       ├── optimizers/  #       AdamW, RAdam, AnyPrecisionAdamW, AdaBelief, AdaBeliefV2, PolOpt
+│   │       ├── embedders/   #       Hubert, ContentVec, PPG, transformers
+│   │       ├── predictors/  #       F0 predictors (RMVPE, Crepe, FCPE, PESTO, PENN, DJCM, SWIFT, WORLD) + high_register.py
+│   │       ├── backends/    #       CUDA, DirectML, OpenCL, XPU, ZLUDA
+│   │       └── onnx/        #       ONNX export & wrapper
+│   ├── uvr/                 #   audio separation (UVR5)
+│   ├── whisper/             #   speech-to-text + speaker diarization & embedding
+│   └── realtime/            #   live mic conversion
+├── utils/                   # Shared utilities
+│   ├── variables.py         #   Global paths, Config singleton, logger, translations
+│   ├── feedback.py          #   Headless-safe logger (gr_info, gr_warning, gr_error)
+│   └── terminal.py          #   Terminal-in-GUI capture (ported from Applio)
+├── downloader/              # File-host backends (gdown, huggingface, mediafire, meganz, pixeldrain)
+├── configs/                 # Configuration files (training configs, model templates)
+│   ├── config.py            #   Runtime Config singleton
+│   ├── config.json          #   User-facing settings (theme, language, fp16, rmvpe_high_register, …)
+│   ├── v1/, v2/             #   V1/V2 model JSONs
+│   ├── ringformer_v2/       #   RingFormer V2 configs
+│   └── pcph_gan/            #   PCPH-GAN configs
+├── assets/                  # Runtime assets
+│   ├── themes/              #   Built-in Gradio themes (Applio.py + loadThemes.py)
+│   ├── ui/                  #   shell.css — dark shell styling (ported from Applio)
+│   ├── languages/           #   i18n JSON files (en-US, id-ID, vi-VN, …)
+│   ├── models/              #   Pretrained, predictor, embedder, UVR5 weights
+│   ├── audios/              #   Sample / default audio inputs
+│   ├── presets/             #   Inference presets
+│   └── logs/                #   Training run logs (per-model)
+├── datasets/                # Training datasets (organized per model)
+└── _version.py              # Version management
 ```
 
 **Key rules** (enforced — violations will break headless mode):
-- `engine/` **MUST NEVER** import from `app/`, `services/`, `ui/`, or `api/`. It is the dependency-free core.
-- `services/` may import from `engine/` and `utils/`, but NOT from `app/` or `ui/`.
-- `app/` and `api/` may import from anywhere except `app/` siblings (each tab is independent).
-- `utils/` may import from `engine/` (for path resolution), but NOT from `services/`, `app/`, or `ui/`.
+- `engine/` **MUST NEVER** import from `app/`, `utils/feedback.py`, or any UI module. It is the dependency-free core.
+- `app/` (both `app/gui` and `app/api`) may import from anywhere except `app/` siblings (each tab is independent).
+- `utils/` may import from `engine/` (for path resolution) and `configs/`, but NOT from `app/`.
 
 ### Where to put new code — quick lookup
 
 | You are adding… | Put it in… |
 |------------------|------------|
 | A new Gradio tab | `arvc/app/tabs/<domain>/<tab_name>.py` |
-| A new CLI subcommand | `arvc/api/cli.py` |
-| A new service (orchestration) | `arvc/services/<domain>/<service_name>.py` |
-| A new vocoder / optimizer / embedder / predictor / backend | `arvc/engine/models/<type>/<name>.py` (+ register in `__init__.py`) |
-| A new file-host downloader | `arvc/utils/downloaders/<name>.py` (+ register in `__init__.py`) |
+| A new CLI subcommand | `arvc/app/api/cli.py` (or `arvc/app/api/cli_complete.py` for the legacy dispatcher) |
+| A new vocoder / optimizer / embedder / predictor / backend | `arvc/engine/rvc/models/<type>/<name>.py` (+ register in `__init__.py`) |
+| A new F0 predictor helper (e.g. high-register correction) | `arvc/engine/rvc/models/predictors/<name>.py` |
+| A new UVR5 separator variant | `arvc/engine/uvr/uvr5_lib/uvr/<variant>_separator.py` (+ register in `__init__.py`) |
+| A new file-host downloader | `arvc/downloader/<name>.py` (+ register in `__init__.py`) |
 | A new translation | `arvc/assets/languages/<locale>.json` (update `support_language` in `config.json`) |
 | A new model config | `arvc/configs/<version>/<sample_rate>.json` |
 | A new runtime config flag | `arvc/utils/variables.py` (Config class) + `config.json` schema |
-| A new audio-processing utility (torch-dependent) | `arvc/engine/inference/audio_processing.py` or a new module under `engine/inference/` |
+| A new audio-processing utility (torch-dependent) | `arvc/engine/rvc/inference/audio_processing.py` or a new module under `engine/rvc/inference/` |
 | A new headless-safe logging helper | `arvc/utils/feedback.py` |
-| A new Gradio-aware UI helper | `arvc/ui/feedback.py` |
+| A new built-in Gradio theme | `arvc/assets/themes/<Name>.py` (+ register in `arvc/assets/themes/loadThemes.py:BUILTIN_THEMES`) |
+| A new dark shell CSS rule | `arvc/assets/ui/shell.css` (gated by `configs["use_shell_css"]`) |
 
 ## Ways to Contribute
 

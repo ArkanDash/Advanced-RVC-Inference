@@ -54,7 +54,7 @@ directories don't exist yet (fresh install, deleted cache, etc.).
 ```bash
 # On Ampere+ GPUs (A100 / H100 / RTX 30xx+ / 40xx+) for a ~1.5–2× speedup.
 # On T4 (Colab free tier), skip this flag.
-python -m arvc.api.cli train my_model \
+python -m arvc.app.api.cli train my_model \
     --bf16_adamw true \
     --epochs 200 --batch_size 4
 ```
@@ -75,7 +75,7 @@ Applio exposes a single `bf16_adamw` flag that simultaneously:
 
 This patch wires the same shortcut into Advanced-RVC-Inference. See
 the `--bf16_adamw` argument definition and the optimizer override in
-`arvc/rvc/training/runner/train.py`.
+`arvc/engine/rvc/training/runner/train.py`.
 
 ### Why bf16 is safe for vocal training (unlike fp16)
 
@@ -207,7 +207,7 @@ upstream ARVC had over Applio.
 ### Colab T4 (free tier, Turing)
 
 ```bash
-python -m arvc.api.cli train my_model \
+python -m arvc.app.api.cli train my_model \
     --epochs 200 --batch_size 4 \
     --multiscale_loss --cosine_lr \
     --save_every 25 --gpu 0
@@ -216,7 +216,7 @@ python -m arvc.api.cli train my_model \
 ### Colab A100 / H100 (paid tier)
 
 ```bash
-python -m arvc.api.cli train my_model \
+python -m arvc.app.api.cli train my_model \
     --bf16_adamw true \
     --epochs 200 --batch_size 8 \
     --multiscale_loss --cosine_lr \
@@ -228,7 +228,7 @@ Expected: ~1.5–2× faster than default on Ampere+.
 ### Local RTX 30xx / 40xx
 
 ```bash
-python -m arvc.api.cli train my_model \
+python -m arvc.app.api.cli train my_model \
     --bf16_adamw true \
     --epochs 300 --batch_size 6 \
     --multiscale_loss --cosine_lr --compile_model \
@@ -239,17 +239,17 @@ python -m arvc.api.cli train my_model \
 
 ```bash
 # Preprocess with higher overlap to extract more chunks
-python -m arvc.api.cli preprocess my_model \
+python -m arvc.app.api.cli preprocess my_model \
     --sample_rate 48000 \
     --cut_method Automatic \
     --chunk_len 3.0 --overlap_len 0.5 \
     --process_effects --normalization post
 
-python -m arvc.api.cli extract my_model --sample_rate 48000 --f0_method rmvpe
+python -m arvc.app.api.cli extract my_model --sample_rate 48000 --f0_method rmvpe
 
-python -m arvc.api.cli create-index my_model --version v2 --algorithm Auto
+python -m arvc.app.api.cli create-index my_model --version v2 --algorithm Auto
 
-python -m arvc.api.cli train my_model \
+python -m arvc.app.api.cli train my_model \
     --bf16_adamw true \
     --epochs 300 --batch_size 4 \
     --multiscale_loss --cosine_lr \

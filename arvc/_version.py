@@ -1,6 +1,6 @@
 """Version management for Advanced RVC Inference."""
 
-__version__ = "2.2.2"
+__version__ = "2.2.3"
 __author__ = "ArkanDash"
 __email__ = "arkandash@example.com"
 __license__ = "MIT"

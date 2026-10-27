@@ -772,5 +772,19 @@
     "audio_output": "Đầu ra âm thanh",
     "model_name_placeholder": "Để trống để dùng tên gốc",
     "d_model_url": "URL mô hình D",
-    "g_model_url": "URL mô hình G"
+    "g_model_url": "URL mô hình G",
+    "terminal": "Terminal",
+    "terminal_intro": "Đầu ra trực tiếp từ phiên ARVC này — huấn luyện, tải xuống và worker suy diễn đều truyền tới đây.",
+    "terminal_live": "Cập nhật trực tiếp",
+    "terminal_clear": "Xoá khung hiển thị",
+    "terminal_label": "Terminal",
+    "terminal_unavailable": "Bắt luồng terminal chưa được khởi động — `start_capture()` chưa từng được gọi cho tiến trình này.",
+    "terminal_timer_unsupported": "Phiên bản Gradio đang cài đặt không hỗ trợ gr.Timer; tab terminal sẽ không tự làm mới.",
+    "rmvpe_high_register": "Sửa cao độ cao RMVPE",
+    "rmvpe_high_register_enable": "Bật sửa cao độ cao RMVPE",
+    "rmvpe_high_register_enable_info": "Khắc phục các lỗi quãng tám của rmvpe.pt phía trên ~1040 Hz (sáo, dây cao, giọng huýt sáo) bằng một lượt thứ hai trên audio đã lấy mẫu lại xuống một quãng tám. Mặc định tắt; khi tắt RMVPE hoạt động y hệt như trước.",
+    "rmvpe_high_register_mode": "Chế độ sửa",
+    "rmvpe_high_register_mode_info": "true_pitch ghi cao độ thực, giới hạn bởi trần F0. fold chỉ sửa các khung quãng tám sai bằng drive nửa cao độ; dùng với các model được train trên nhãn chưa sửa để giữ âm sắc.",
+    "rmvpe_high_register_f0_ceil": "Trần F0 (Hz)",
+    "rmvpe_high_register_f0_ceil_info": "Cao độ cao nhất được ghi trong chế độ true_pitch. Các model train trên nhãn RMVPE gốc không thể tổng hợp trên ~1250 Hz; chỉ tăng khi model được train với chế độ sửa đã bật."
 }

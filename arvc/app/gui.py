@@ -76,6 +76,14 @@ def launch(
     setup_environment()
     _setup_signal_handlers()
 
+    # Start terminal capture before any UI is built so all subsequent log
+    # output is mirrored to the Terminal tab.
+    try:
+        from arvc.utils.terminal import start_capture
+        start_capture()
+    except Exception as capture_err:  # noqa: BLE001
+        logger.warning(f"Terminal capture not started: {capture_err}")
+
     try:
         import gradio as gr
 
@@ -90,6 +98,33 @@ def launch(
             allow_disk,
         )
         from arvc.app.mainjs import js_code
+        from arvc.assets.themes.loadThemes import load_theme as _load_arvc_theme
+
+        # Resolve the active theme via the new loader so built-in names like
+        # "Applio" resolve to the local theme class; external names still
+        # fall through to gr.Theme.from_name().
+        resolved_theme = _load_arvc_theme(theme) or theme
+
+        # Load the dark shell CSS (Applio port) when the user opts in.
+        _shell_css = ""
+        if configs.get("use_shell_css", True):
+            try:
+                from pathlib import Path as _Path
+                _shell_path = _Path(__file__).resolve().parent.parent / "assets" / "ui" / "shell.css"
+                if _shell_path.is_file():
+                    _shell_css = _shell_path.read_text(encoding="utf-8")
+            except Exception as css_err:  # noqa: BLE001
+                logger.warning(f"Could not load shell.css: {css_err}")
+
+        # Pull the Terminal tab's inline CSS into the page CSS so it ships
+        # even when the Terminal tab is never mounted (e.g. client mode).
+        _terminal_css = ""
+        try:
+            from arvc.app.tabs.terminal.terminal import TERMINAL_CSS as _term_css
+            _terminal_css = _term_css
+        except Exception:  # noqa: BLE001
+            pass
+        _page_css = _shell_css + "\n" + _terminal_css
 
         # Check for client mode
         client_mode = "--client" in sys.argv
@@ -106,8 +141,10 @@ def launch(
 
         blocks_kwargs = dict(title="Advanced RVC Inference")
         if _use_blocks_theme:
-            blocks_kwargs["theme"] = theme
+            blocks_kwargs["theme"] = resolved_theme
             blocks_kwargs["js"] = js_code if client_mode else None
+            if _page_css:
+                blocks_kwargs["css"] = _page_css
 
         with gr.Blocks(**blocks_kwargs) as app:
             gr.HTML(
@@ -183,6 +220,19 @@ def launch(
                     logger.error(f"Failed to build extra tab: {tab_err}")
                     import traceback; logger.error(traceback.format_exc().strip())
 
+                # ---- Terminal tab (ported from Applio) ----
+                try:
+                    from arvc.app.tabs.terminal.terminal import terminal_tab as _terminal_tab
+                    with gr.TabItem(translations.get("terminal", "Terminal")):
+                        try:
+                            _terminal_tab()
+                        except Exception as term_err:
+                            logger.error(f"Failed to build terminal tab: {term_err}")
+                            import traceback; logger.error(traceback.format_exc().strip())
+                except Exception as import_err:
+                    logger.error(f"Failed to import terminal_tab: {import_err}")
+                    import traceback; logger.error(traceback.format_exc().strip())
+
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])
             with gr.Row():
@@ -252,9 +302,11 @@ def launch(
             allowed_paths=allowed_paths_list,
         )
         if not _use_blocks_theme:
-            launch_kwargs["theme"] = theme
+            launch_kwargs["theme"] = resolved_theme
             if client_mode:
                 launch_kwargs["js"] = js_code
+            if _page_css:
+                launch_kwargs["css"] = _page_css
 
         try:
             app.launch(**launch_kwargs)
@@ -285,9 +337,11 @@ def launch(
                     allowed_paths=allowed_paths_list,
                 )
                 if not _use_blocks_theme:
-                    retry_kwargs["theme"] = theme
+                    retry_kwargs["theme"] = resolved_theme
                     if client_mode:
                         retry_kwargs["js"] = js_code
+                    if _page_css:
+                        retry_kwargs["css"] = _page_css
 
                 app.launch(**retry_kwargs)
 
@@ -335,6 +389,13 @@ def create_app():
     """
     setup_environment()
 
+    # Start terminal capture for this embedded-process run as well.
+    try:
+        from arvc.utils.terminal import start_capture
+        start_capture()
+    except Exception:  # noqa: BLE001
+        pass
+
     try:
         import gradio as gr
         import packaging.version as pv
@@ -348,6 +409,26 @@ def create_app():
             allow_disk,
         )
         from arvc.app.mainjs import js_code
+        from arvc.assets.themes.loadThemes import load_theme as _load_arvc_theme
+
+        resolved_theme = _load_arvc_theme(theme) or theme
+
+        _shell_css = ""
+        if configs.get("use_shell_css", True):
+            try:
+                from pathlib import Path as _Path
+                _shell_path = _Path(__file__).resolve().parent.parent / "assets" / "ui" / "shell.css"
+                if _shell_path.is_file():
+                    _shell_css = _shell_path.read_text(encoding="utf-8")
+            except Exception:  # noqa: BLE001
+                pass
+        _terminal_css = ""
+        try:
+            from arvc.app.tabs.terminal.terminal import TERMINAL_CSS as _term_css
+            _terminal_css = _term_css
+        except Exception:  # noqa: BLE001
+            pass
+        _page_css = _shell_css + "\n" + _terminal_css
 
         client_mode = "--client" in sys.argv
         _gradio_ver = pv.parse(gr.__version__)
@@ -355,8 +436,10 @@ def create_app():
 
         blocks_kwargs = dict(title="Advanced RVC Inference")
         if _use_blocks_theme:
-            blocks_kwargs["theme"] = theme
+            blocks_kwargs["theme"] = resolved_theme
             blocks_kwargs["js"] = js_code if client_mode else None
+            if _page_css:
+                blocks_kwargs["css"] = _page_css
 
         with gr.Blocks(**blocks_kwargs) as app:
             gr.HTML("<h1 style='text-align: center;'>Advanced RVC Inference</h1>")
@@ -366,6 +449,10 @@ def create_app():
             from arvc.app.tabs.training.training import training_tab
             from arvc.app.tabs.downloads.downloads import download_tab
             from arvc.app.tabs.extra.extra import extra_tab
+            try:
+                from arvc.app.tabs.terminal.terminal import terminal_tab as _terminal_tab
+            except Exception:  # noqa: BLE001
+                _terminal_tab = None
 
             with gr.Tabs():
                 with gr.TabItem("Inference"):
@@ -384,6 +471,13 @@ def create_app():
                 
                 with gr.TabItem("Extra"):
                     extra_tab(app)
+
+                if _terminal_tab is not None:
+                    with gr.TabItem(translations.get("terminal", "Terminal")):
+                        try:
+                            _terminal_tab()
+                        except Exception as term_err:  # noqa: BLE001
+                            logger.warning(f"Terminal tab build failed: {term_err}")
 
             with gr.Row():
                 gr.Markdown(translations["terms_of_use"])

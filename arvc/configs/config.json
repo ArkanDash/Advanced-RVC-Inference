@@ -94,7 +94,8 @@
         "BlueDancer/Alien_Diffusion",
         "naughtondale/monochrome",
         "Dagfinn1962/standard",
-        "default"
+        "default",
+        "Applio"
     ],
     "mdx_models": {
         "Main_340": "UVR-MDX-NET_Main_340.onnx",
@@ -576,14 +577,14 @@
     "server_name": "0.0.0.0",
     "app_show_error": true,
     "delete_exists_file": false,
-    "convert_path": "arvc/rvc/inference/convert.py",
-    "separate_path": "arvc/uvr/separate_music.py",
-    "create_dataset_path": "arvc/rvc/training/create_dataset.py",
-    "preprocess_path": "arvc/rvc/training/preprocess/preprocess.py",
-    "extract_path": "arvc/rvc/training/extract/extract.py",
-    "create_index_path": "arvc/rvc/training/create_index.py",
-    "train_path": "arvc/rvc/training/runner/train.py",
-    "create_reference_path": "arvc/rvc/inference/create_reference.py",
+    "convert_path": "arvc/engine/rvc/inference/convert.py",
+    "separate_path": "arvc/engine/uvr/separate_music.py",
+    "create_dataset_path": "arvc/engine/rvc/training/create_dataset.py",
+    "preprocess_path": "arvc/engine/rvc/training/preprocess/preprocess.py",
+    "extract_path": "arvc/engine/rvc/training/extract/extract.py",
+    "create_index_path": "arvc/engine/rvc/training/create_index.py",
+    "train_path": "arvc/engine/rvc/training/runner/train.py",
+    "create_reference_path": "arvc/engine/rvc/inference/create_reference.py",
     "csv_path": "arvc/assets/spreadsheet.csv",
     "weights_path": "arvc/assets/logs",
     "logs_path": "arvc/assets/logs",
@@ -616,5 +617,11 @@
     "pretrained_v1_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v1/",
     "pretrained_v2_fallback_url": "https://huggingface.co/buckets/R-Kentaren/Ultimate-RVC-Models/resolve/pretrained_v2/",
     "search_api_url": "https://voice-models.com/fetch_data.php",
-    "new_pytorch_weight_norm": true
+    "new_pytorch_weight_norm": true,
+    "use_shell_css": true,
+    "rmvpe_high_register": {
+        "enabled": false,
+        "mode": "true_pitch",
+        "f0_ceil": 1250
+    }
 }

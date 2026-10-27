@@ -23,8 +23,8 @@ from .utils import *          # noqa: F401, F403
 
 # ── strtobool shim ─────────────────────────────────────────────────────────
 # Multiple training modules do `from arvc.utils import strtobool` (see
-# arvc/rvc/training/runner/train.py, arvc/rvc/training/extract/extract.py,
-# arvc/rvc/training/preprocess/preprocess.py, arvc/uvr/separate_music.py).
+# arvc/engine/rvc/training/runner/train.py, arvc/engine/rvc/training/extract/extract.py,
+# arvc/engine/rvc/training/preprocess/preprocess.py, arvc/engine/uvr/separate_music.py).
 #
 # `distutils.util.strtobool` was the original source — but `distutils` was
 # removed in Python 3.12 (PEP 632). Rather than forcing every caller to

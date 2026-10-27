@@ -11,13 +11,22 @@ from arvc.app.tabs.extra.child.f0_extract import f0_extract_tab
 from arvc.app.tabs.extra.child.create_srt import create_srt_tab
 from arvc.app.tabs.extra.child.convert_model import convert_model_tab
 from arvc.app.tabs.extra.child.settings import settings_tab
+from arvc.app.tabs.extra.child.rmvpe_high_register import rmvpe_high_register_tab
 
 def extra_tab(app):
     with gr.TabItem(translations["extra"], visible=configs.get("extra_tab", True)):
         with gr.TabItem(translations["settings"], visible=configs.get("settings_tab", True)):
             gr.Markdown(translations["settings_markdown"])
             settings_tab(app)
-            
+            # RMVPE high-register correction (ported from Applio)
+            try:
+                rmvpe_high_register_tab()
+            except Exception as exc:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "rmvpe_high_register tab failed: %s", exc
+                )
+
         with gr.TabItem(translations["fushion"], visible=configs.get("fusion_tab", True)):
             gr.Markdown(translations["fushion_markdown"])
             fushion_tab()

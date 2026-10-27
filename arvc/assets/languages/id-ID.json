@@ -771,5 +771,19 @@
     "audio_output": "Output audio",
     "model_name_placeholder": "Kosongkan untuk menggunakan nama asli",
     "d_model_url": "URL model D",
-    "g_model_url": "URL model G"
+    "g_model_url": "URL model G",
+    "terminal": "Terminal",
+    "terminal_intro": "Output langsung dari sesi ARVC ini — training, unduhan, dan worker inferensi semuanya mengalir ke sini.",
+    "terminal_live": "Pembaruan langsung",
+    "terminal_clear": "Bersihkan tampilan",
+    "terminal_label": "Terminal",
+    "terminal_unavailable": "Penangkap terminal tidak dimulai — `start_capture()` tidak pernah dipanggil untuk proses ini.",
+    "terminal_timer_unsupported": "Versi Gradio yang terinstal tidak mendukung gr.Timer; tab terminal tidak akan otomatis diperbarui.",
+    "rmvpe_high_register": "Koreksi register tinggi RMVPE",
+    "rmvpe_high_register_enable": "Aktifkan koreksi register tinggi RMVPE",
+    "rmvpe_high_register_enable_info": "Memperbaiki kesalahan oktaf rmvpe.pt di atas ~1040 Hz (suling, senar tinggi, register peluit) dengan pass kedua pada audio yang diresample satu oktaf ke bawah. Defaultnya nonaktif; jika dinonaktifkan RMVPE berperilaku persis seperti sebelumnya.",
+    "rmvpe_high_register_mode": "Mode koreksi",
+    "rmvpe_high_register_mode_info": "true_pitch menulis pitch asli, dibatasi oleh langit-langit F0. fold hanya memperbaiki frame oktaf yang salah menggunakan drive setengah pitch; gunakan dengan model yang dilatih pada label yang tidak dikoreksi agar timbrenya tetap.",
+    "rmvpe_high_register_f0_ceil": "Langit-langit F0 (Hz)",
+    "rmvpe_high_register_f0_ceil_info": "Pitch tertinggi yang ditulis dalam mode true_pitch. Model yang dilatih pada label RMVPE stok tidak dapat mensintesis di atas ~1250 Hz; naikkan hanya untuk model yang dilatih dengan koreksi diaktifkan."
 }
