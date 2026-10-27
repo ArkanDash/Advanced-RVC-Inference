@@ -16,32 +16,6 @@
 
 ---
 
-## Supported Vocoders
-
-| Vocoder | Description | Pitch Required |
-|---------|-------------|----------------|
-| **Default** (HiFi-GAN NSF) | HiFi-GAN with Neural Sine Filter. **Recommended for best compatibility.** | Yes |
-| **BigVGAN** | Snake activations with Anti-Aliasing. State-of-the-art audio quality. | Yes |
-| **MRF-HiFi-GAN** | HiFi-GAN with Multi-Receptive Field fusion. Richer feature extraction. | Yes |
-| **RefineGAN** | U-Net based vocoder with parallel residual blocks. High-fidelity spectral detail. | Yes |
-
----
-
-## Supported Optimizers
-
-| Optimizer | Category | Rating | Best For |
-|-----------|----------|--------|----------|
-| **AdamW** | PyTorch Built-in | ⭐⭐⭐⭐⭐ | General-purpose, most reliable (default) |
-| **RAdam** | PyTorch Built-in | ⭐⭐⭐⭐ | Warmup-free training, short training runs |
-| **AnyPrecisionAdamW** | Mixed-Precision | ⭐⭐⭐⭐ | Bfloat16 training, long runs with Kahan summation |
-| **AdaBelief** | Belief-Based | ⭐⭐⭐ | Better conditioned adaptive learning rates |
-| **AdaBeliefV2** | Belief-Based | ⭐⭐⭐ | Stable deep training with AMSGrad + InverseSqrt scheduler |
-| **Ranger2020** 🆕 | Advanced | ⭐⭐⭐⭐⭐ | RAdam + Lookahead + Gradient Centralization |
-| **Prodigy** 🆕 | D-Adaptation | ⭐⭐⭐⭐⭐ | Automatic LR tuning (lr=1.0 works!) |
-
-🆕 *Newly added from Codename RVC Fork v4*
-
----
 
 ## Getting Started
 
