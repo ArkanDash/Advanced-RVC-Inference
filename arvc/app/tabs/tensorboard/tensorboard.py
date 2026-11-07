@@ -1,8 +1,5 @@
 import gradio as gr
-from assets.i18n.i18n import I18nAuto
 from arvc.app.tabs.tensorboard.launch_tensorboard import launch_tensorboard
-
-i18n = I18nAuto()
 
 
 def tensorboard_tab():

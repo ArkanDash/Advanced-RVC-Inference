@@ -239,6 +239,7 @@ def spectrogram_to_wave(spec, hop_length=1024, mp={}, band=0, is_v51_model=True)
 def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None, is_v51_model=False):
     bands_n = len(mp.param["band"])
     offset = 0
+    wave = None  # guards UnboundLocalError when a resample raises in an earlier band
 
     for d in range(1, bands_n + 1):
         bp = mp.param["band"][str(d)]
@@ -256,7 +257,8 @@ def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None, is_v
                 if is_v51_model: spec_s *= get_hp_filter_mask(spec_s.shape[1], bp["hpf_start"], bp["hpf_stop"] - 1)
                 else: spec_s = fft_hp_filter(spec_s, bp["hpf_start"], bp["hpf_stop"] - 1)
 
-            wave = spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model) if bands_n == 1 else np.add(wave, spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model))
+            band_wave = spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model)
+            wave = band_wave if (bands_n == 1 or wave is None) else np.add(wave, band_wave)
         else:
             sr = mp.param["band"][str(d + 1)]["sr"]
             if d == 1: 
@@ -264,7 +266,8 @@ def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None, is_v
                 else: spec_s = fft_lp_filter(spec_s, bp["lpf_start"], bp["lpf_stop"])
 
                 try:
-                    wave = librosa.resample(spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model), orig_sr=bp["sr"], target_sr=sr, res_type="soxr_vhq")
+                    band_wave = spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model)
+                    wave = librosa.resample(np.add(wave, band_wave) if wave is not None else band_wave, orig_sr=bp["sr"], target_sr=sr, res_type="soxr_vhq")
                 except ValueError as e:
                     logger.error(f"{translations['resample_error']}: {e}")
                     logger.error(f"{translations['shapes']} Spec_s: {spec_s.shape}, SR: {sr}, {translations['wav_resolution']}: {wav_resolution}")
@@ -277,7 +280,8 @@ def cmb_spectrogram_to_wave(spec_m, mp, extra_bins_h=None, extra_bins=None, is_v
                     spec_s = fft_lp_filter(spec_s, bp["lpf_start"], bp["lpf_stop"])
 
                 try:
-                    wave = librosa.resample(np.add(wave, spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model)), orig_sr=bp["sr"], target_sr=sr, res_type="soxr_vhq")
+                    band_wave = spectrogram_to_wave(spec_s, bp["hl"], mp, d, is_v51_model)
+                    wave = librosa.resample(np.add(wave, band_wave) if wave is not None else band_wave, orig_sr=bp["sr"], target_sr=sr, res_type="soxr_vhq")
                 except ValueError as e:
                     logger.error(f"{translations['resample_error']}: {e}")
                     logger.error(f"{translations['shapes']} Spec_s: {spec_s.shape}, SR: {sr}, {translations['wav_resolution']}: {wav_resolution}")

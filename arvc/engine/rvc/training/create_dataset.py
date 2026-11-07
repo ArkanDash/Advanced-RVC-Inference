@@ -11,7 +11,18 @@ import numpy as np
 import soundfile as sf
 
 from urllib.parse import urlparse
-from distutils.util import strtobool
+
+try:
+    from distutils.util import strtobool  # available on Python < 3.12
+except ImportError:  # distutils was removed in Python 3.12
+    def strtobool(val):
+        """distutils.util.strtobool replacement (Python 3.12+ compatible)."""
+        val = str(val).strip().lower()
+        if val in ("y", "yes", "t", "true", "on", "1"):
+            return 1
+        if val in ("n", "no", "f", "false", "off", "0"):
+            return 0
+        raise ValueError(f"invalid truth value {val!r}")
 # ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
 _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 if _project_root not in sys.path:

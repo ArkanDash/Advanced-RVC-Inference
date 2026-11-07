@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 
 
-from arvc.engine.rvc.models.predictors.RMVPE.deepunet import DeepUnet
+from arvc.engine.rvc.models.predictors.RMVPE.deepunet import DeepUnet, HPADeepUnet
 
 N_MELS, N_CLASS = 128, 360
 
