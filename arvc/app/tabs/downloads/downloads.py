@@ -5,10 +5,19 @@ Provides UI for downloading RVC voice models, pretrained models,
 and audio from URLs.
 """
 
+import os
+
 import gradio as gr
 
 from arvc.utils.variables import translations, configs, model_options, model_name
 from arvc.utils.feedback import gr_warning, shutil_move
+from arvc.uploader.huggingface import (
+    list_local_training_models,
+    list_model_files,
+    hf_upload_training,
+    hf_list_repo_files,
+    hf_load_training,
+)
 from arvc.downloader.downloads import (
     download_url,
     download_model,
@@ -324,4 +333,158 @@ def download_tab():
                 fn=download_url,
                 inputs=[audio_url],
                 outputs=[audio_output_path, audio_player, audio_status],
+            )
+
+        # ── HuggingFace Hub (Upload & Load Training Results) ──
+        with gr.TabItem(translations.get("hf_hub_tab", "HuggingFace Hub")):
+            gr.Markdown(f"## {translations.get('hf_hub_markdown', 'Upload & Load Training Results')}")
+
+            with gr.Row():
+                hf_token = gr.Textbox(
+                    label=translations.get("hf_token", "HuggingFace Token"),
+                    info=translations.get(
+                        "hf_token_info",
+                        "Access token with write permission. Leave empty to use the locally logged-in account (huggingface-cli login).",
+                    ),
+                    type="password",
+                    interactive=True,
+                )
+
+            # ── Upload panel ──
+            with gr.TabItem(translations.get("hf_upload", "Upload")):
+                gr.Markdown(
+                    f"### {translations.get('hf_upload_markdown', 'Upload training results to HuggingFace')}\n"
+                    f"{translations.get('hf_upload_structure_info', 'Files are uploaded under a folder named after the model: [Model Name] -> training files.')}"
+                )
+                with gr.Row():
+                    hf_model_select = gr.Dropdown(
+                        choices=list_local_training_models(),
+                        label=translations.get("hf_select_model", "Select Trained Model"),
+                        interactive=True,
+                    )
+                    hf_scan_button = gr.Button(
+                        translations.get("hf_scan_files", "Scan Files"),
+                        variant="secondary",
+                    )
+
+                hf_files_select = gr.Dropdown(
+                    choices=[],
+                    multiselect=True,
+                    label=translations.get("hf_files", "Training Files"),
+                    info=translations.get(
+                        "hf_files_info",
+                        "Click 'Scan Files' to list the model's training files, then pick what to upload.",
+                    ),
+                    interactive=True,
+                )
+
+                with gr.Row():
+                    hf_repo_upload = gr.Textbox(
+                        label=translations.get("hf_repo", "HuggingFace Repository"),
+                        placeholder="username/my-model",
+                        info=translations.get(
+                            "hf_repo_info",
+                            "Leave empty to upload to <your-username>/<model-name>.",
+                        ),
+                        interactive=True,
+                    )
+                    hf_private = gr.Checkbox(
+                        label=translations.get("hf_private", "Private repository"),
+                        value=False,
+                        interactive=True,
+                    )
+
+                hf_upload_button = gr.Button(
+                    translations.get("hf_upload", "Upload"),
+                    variant="primary",
+                )
+                hf_upload_status = gr.Textbox(
+                    label=translations.get("status", "Status"),
+                    interactive=False,
+                )
+
+            # ── Load panel ──
+            with gr.TabItem(translations.get("hf_load", "Load")):
+                gr.Markdown(
+                    f"### {translations.get('hf_load_markdown', 'Load training results from HuggingFace')}\n"
+                    f"{translations.get('hf_load_structure_info', 'Files are restored into your local logs folder under the model name, ready to use or resume training.')}"
+                )
+                with gr.Row():
+                    hf_repo_load = gr.Textbox(
+                        label=translations.get("hf_repo", "HuggingFace Repository"),
+                        placeholder="username/my-model",
+                        interactive=True,
+                    )
+                    hf_list_button = gr.Button(
+                        translations.get("hf_list_files", "List Repository Files"),
+                        variant="secondary",
+                    )
+
+                hf_repo_files = gr.Dropdown(
+                    choices=[],
+                    multiselect=True,
+                    label=translations.get("hf_files", "Training Files"),
+                    info=translations.get(
+                        "hf_files_info",
+                        "Click 'List Repository Files' to browse the repository, then pick what to load.",
+                    ),
+                    interactive=True,
+                )
+
+                hf_dest_model = gr.Textbox(
+                    label=translations.get("hf_dest_model", "Destination Model Name"),
+                    placeholder="my-model",
+                    info=translations.get(
+                        "hf_dest_model_info",
+                        "Local folder name for the loaded files. Defaults to the repository name.",
+                    ),
+                    interactive=True,
+                )
+
+                hf_load_button = gr.Button(
+                    translations.get("hf_load", "Load"),
+                    variant="primary",
+                )
+                hf_load_status = gr.Textbox(
+                    label=translations.get("status", "Status"),
+                    interactive=False,
+                )
+
+            # Event handlers
+            def refresh_model_files(model):
+                """List a local model's training files and preselect all of them."""
+                files = list_model_files(model) if model else []
+                return gr.update(choices=files, value=files)
+
+            def refresh_repo_files(repo, token):
+                """List a repository's files and preselect all downloadable ones."""
+                files, err = hf_list_repo_files(repo, token)
+                if err is not None:
+                    return gr.update(choices=[], value=[]), gr.update()
+                downloadable = [f for f in files if os.path.basename(f) != "README.md" and not f.startswith(".")]
+                dest = repo.strip().strip("/").split("/")[-1] if repo and "/" in repo.strip().strip("/") else ""
+                return gr.update(choices=downloadable, value=downloadable), gr.update(value=dest)
+
+            hf_scan_button.click(
+                fn=refresh_model_files,
+                inputs=[hf_model_select],
+                outputs=[hf_files_select],
+            )
+
+            hf_upload_button.click(
+                fn=hf_upload_training,
+                inputs=[hf_model_select, hf_files_select, hf_token, hf_repo_upload, hf_private],
+                outputs=[hf_upload_status],
+            )
+
+            hf_list_button.click(
+                fn=refresh_repo_files,
+                inputs=[hf_repo_load, hf_token],
+                outputs=[hf_repo_files, hf_dest_model],
+            )
+
+            hf_load_button.click(
+                fn=hf_load_training,
+                inputs=[hf_repo_load, hf_token, hf_dest_model, hf_repo_files],
+                outputs=[hf_load_status],
             )
