@@ -1,22 +1,3 @@
-"""Session output capture shared by Gradio and its spawned workers.
-
-Ported from Applio (IAHispano/Applio) `rvc/lib/terminal.py`, adapted for the
-`arvc` package layout. The capture replaces stdout/stderr with a tee that
-keeps the original streams going (so `python -m arvc` still prints to a real
-console) while mirroring everything to a temp log file. The Gradio "Terminal"
-tab polls that file and shows the live session output.
-
-Usage
------
-    from arvc.utils.terminal import start_capture, get_capture
-
-    start_capture()        # call once at process start
-    capture = get_capture()  # may return None if start_capture() was never called
-    text = capture.read()    # read the latest ~128 KB of output
-
-The capture is process-local: each `python -m arvc` process has its own
-session log, so multiple workers don't clobber each other.
-"""
 
 from __future__ import annotations
 
