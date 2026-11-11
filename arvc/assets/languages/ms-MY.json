@@ -29,8 +29,6 @@
     "provide_pretrain": "Sila sediakan URL model terlatih terlebih dahulu {dg}.",
     "sr_not_same": "Kadar persampelan kedua-dua model tidak sama.",
     "architectures_not_same": "Tidak dapat menggabungkan model. Seni bina tidak sama.",
-    "fushion_model": "pelakuran model",
-    "model_fushion_info": "Model {name} dicantumkan daripada {pth_1} dan {pth_2} dengan nisbah {ratio}.",
     "not_found_create_time": "Masa penciptaan tidak dijumpai.",
     "format_not_valid": "Format tidak sah.",
     "read_info": "Model yang dilatih pada aplikasi berbeza mungkin menghasilkan maklumat berbeza atau mungkin tidak boleh dibaca!",
@@ -331,9 +329,6 @@
     "model_ratio": "Nisbah model",
     "model_ratio_info": "Pelarasan ke satu sisi akan menjadikan model lebih serupa dengan sisi tersebut",
     "output_model_path": "Laluan output model",
-    "fushion": "Pelakuran Model",
-    "fushion_markdown": "## Lakurkan Dua Model",
-    "fushion_markdown_2": "Gabungkan dua model suara menjadi satu model",
     "read_model": "Baca Maklumat",
     "read_model_markdown": "## Baca Maklumat Model",
     "read_model_markdown_2": "Ambil maklumat yang direkodkan dalam model",
@@ -804,5 +799,10 @@
     "audio_output": "Output audio",
     "model_name_placeholder": "Kosongkan untuk gunakan nama asal",
     "d_model_url": "URL model D",
-    "g_model_url": "URL model G"
+    "g_model_url": "URL model G",
+    "fusion": "Pelakuran Model",
+    "fusion_markdown": "## Lakurkan Dua Model",
+    "fusion_markdown_2": "Gabungkan dua model suara menjadi satu model",
+    "fusion_model": "pelakuran model",
+    "model_fusion_info": "Model {name} dicantumkan daripada {pth_1} dan {pth_2} dengan nisbah {ratio}."
 }

@@ -29,8 +29,6 @@
     "provide_pretrain": "براہ کرم پری ٹرینڈ ماڈل URL {dg} فراہم کریں۔",
     "sr_not_same": "دونوں ماڈلز کے نمبل ریٹ ایک جیسے نہیں ہیں۔",
     "architectures_not_same": "ماڈلز کو ضم نہیں کیا جا سکتا۔ آرکیٹیکچر ایک جیسے نہیں ہیں۔",
-    "fushion_model": "ماڈل فیوزن",
-    "model_fushion_info": "ماڈل {name} {pth_1} اور {pth_2} سے {ratio} کے تناسب سے فیوز کیا گیا ہے۔",
     "not_found_create_time": "بنانے کا وقت نہیں ملا۔",
     "format_not_valid": "غلط فارمیٹ۔",
     "read_info": "مختلف ایپلیکیشنز پر تربیت یافتہ ماڈلز مختلف معلومات دے سکتے ہیں یا پڑھنے کے قابل نہیں ہو سکتے!",
@@ -331,9 +329,6 @@
     "model_ratio": "ماڈل ریٹیو",
     "model_ratio_info": "ایک طرف ایڈجسٹ کرنے سے ماڈل اس طرف زیادہ ملدا جلدا ہو گا",
     "output_model_path": "ماڈل آؤٹ پٹ پاتھ",
-    "fushion": "ماڈل فیوزن",
-    "fushion_markdown": "## دو ماڈلز فیوز کریں",
-    "fushion_markdown_2": "دو وائس ماڈلز کو ایک ماڈل میں ضم کریں",
     "read_model": "معلومات پڑھیں",
     "read_model_markdown": "## ماڈل کی معلومات پڑھیں",
     "read_model_markdown_2": "ماڈل کے اندر ریکارڈ شدہ معلومات حاصل کریں",
@@ -804,5 +799,10 @@
     "audio_output": "آڈیو آؤٹ پٹ",
     "model_name_placeholder": "اصلی نام استعمال کرنے کے لیے خالی چھوڑیں",
     "d_model_url": "D ماڈل URL",
-    "g_model_url": "G ماڈل URL"
+    "g_model_url": "G ماڈل URL",
+    "fusion": "ماڈل فیوزن",
+    "fusion_markdown": "## دو ماڈلز فیوز کریں",
+    "fusion_markdown_2": "دو وائس ماڈلز کو ایک ماڈل میں ضم کریں",
+    "fusion_model": "ماڈل فیوزن",
+    "model_fusion_info": "ماڈل {name} {pth_1} اور {pth_2} سے {ratio} کے تناسب سے فیوز کیا گیا ہے۔"
 }

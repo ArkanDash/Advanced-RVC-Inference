@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import logging
@@ -24,7 +23,7 @@ def launch_tensorboard():
 
     return f"{translations['tensorboard_url']}: {url}"
 
-if __name__ == "__arvc__": 
+if __name__ == "__main__": 
     launch_tensorboard()
 
     while 1:

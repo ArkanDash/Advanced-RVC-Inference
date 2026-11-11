@@ -16,7 +16,7 @@ def settings_tab(app):
         toggle_button = gr.Button(translations["change_light_dark"], variant="secondary", scale=2)
     with gr.Row():
         with gr.Column():
-            language_dropdown = gr.Dropdown(label=translations["lang"], interactive=True, info=translations["lang_restart"], choices=configs.get("support_language", "vi-VN"), value=language)
+            language_dropdown = gr.Dropdown(label=translations["lang"], interactive=True, info=translations["lang_restart"], choices=configs.get("support_language", ["en-US"]), value=language)
             change_lang = gr.Button(translations["change_lang"], variant="primary", scale=2)
         with gr.Column():
             theme_dropdown = gr.Dropdown(label=translations["theme"], interactive=True, info=translations["theme_restart"], choices=configs.get("themes", theme), value=theme, allow_custom_value=True)

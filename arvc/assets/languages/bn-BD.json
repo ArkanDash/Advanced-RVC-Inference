@@ -29,8 +29,6 @@
     "provide_pretrain": "একটি প্রি-ট্রেইনড মডেল URL {dg} প্রদান করুন।",
     "sr_not_same": "দুটি মডেলের স্যাম্পল রেট একই নয়।",
     "architectures_not_same": "মডেল মার্জ করা যাবে না। আর্কিটেকচারগুলো একই নয়।",
-    "fushion_model": "মডেল ফিউশন",
-    "model_fushion_info": "মডেল {name} {pth_1} এবং {pth_2} থেকে {ratio} অনুপাতে ফিউজ করা হয়েছে।",
     "not_found_create_time": "তৈরির সময় পাওয়া যায়নি।",
     "format_not_valid": "অবৈধ ফরম্যাট।",
     "read_info": "ভিন্ন অ্যাপ্লিকেশনে প্রশিক্ষিত মডেলগুলো ভিন্ন তথ্য দিতে পারে বা পড়া যাবে না!",
@@ -331,9 +329,6 @@
     "model_ratio": "মডেল অনুপাত",
     "model_ratio_info": "এক দিকে সামঞ্জস্য করলে মডেল সেই দিকের মতো হবে",
     "output_model_path": "মডেল আউটপুট পথ",
-    "fushion": "মডেল ফিউশন",
-    "fushion_markdown": "## দুটি মডেল ফিউশন",
-    "fushion_markdown_2": "দুটি কণ্ঠস্বর মডেলকে একটি মডেলে একত্রিত করুন",
     "read_model": "তথ্য পড়ুন",
     "read_model_markdown": "## মডেল তথ্য পড়ুন",
     "read_model_markdown_2": "মডেলের মধ্যে রেকর্ড করা তথ্য পুনরুদ্ধার করুন",
@@ -804,5 +799,10 @@
     "audio_output": "অডিও আউটপুট",
     "model_name_placeholder": "মূল নাম ব্যবহারের জন্য খালি রাখুন",
     "d_model_url": "D মডেল URL",
-    "g_model_url": "G মডেল URL"
+    "g_model_url": "G মডেল URL",
+    "fusion": "মডেল ফিউশন",
+    "fusion_markdown": "## দুটি মডেল ফিউশন",
+    "fusion_markdown_2": "দুটি কণ্ঠস্বর মডেলকে একটি মডেলে একত্রিত করুন",
+    "fusion_model": "মডেল ফিউশন",
+    "model_fusion_info": "মডেল {name} {pth_1} এবং {pth_2} থেকে {ratio} অনুপাতে ফিউজ করা হয়েছে।"
 }

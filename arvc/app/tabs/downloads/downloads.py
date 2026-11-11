@@ -5,29 +5,40 @@ Provides UI for downloading RVC voice models, pretrained models,
 and audio from URLs.
 """
 
-import os
-import sys
-
 import gradio as gr
 
 from arvc.utils.variables import translations, configs, model_options, model_name
-from arvc.utils.feedback import (
-    gr_info, gr_warning, gr_error,
-    change_models_choices, change_pretrained_choices,
-    change_download_choices, change_download_pretrained_choices,
-    replace_url, replace_modelname,
-)
+from arvc.utils.feedback import gr_warning, shutil_move
 from arvc.downloader.downloads import (
     download_url,
     download_model,
     download_pretrained_model,
     search_models,
 )
-from arvc.utils.process import fetch_pretrained_data, update_sample_rate_dropdown
+from arvc.utils.process import update_sample_rate_dropdown
 
 
 def download_tab():
     """Create the Downloads tab UI."""
+
+    def change_download_mode(option):
+        """Show only the download section matching the selected option."""
+        return [
+            gr.update(visible=option == translations.get("download_url", "Download from URL")),
+            gr.update(visible=option == translations.get("download_from_csv", "Download from CSV")),
+            gr.update(visible=option == translations.get("search_models", "Search Models")),
+            gr.update(visible=False),
+            gr.update(visible=option == translations.get("upload", "Upload")),
+        ]
+
+    def change_pretrained_mode(option):
+        """Show only the pretrained download section matching the selected option."""
+        return [
+            gr.update(visible=option == translations.get("download_url", "Download from URL")),
+            gr.update(visible=option == translations.get("list_model", "List Model")),
+            gr.update(visible=option == translations.get("upload", "Upload")),
+        ]
+
     with gr.TabItem(translations["downloads"], visible=configs.get("downloads_tab", True)):
         # ── Download Voice Models ──
         with gr.TabItem(translations.get("download_model", "Download Model")):
@@ -74,7 +85,6 @@ def download_tab():
                     translations.get("download", "Download"),
                     variant="primary",
                 )
-
             # Search section
             with gr.Row(visible=False) as search_row:
                 search_model_name = gr.Textbox(
@@ -109,9 +119,21 @@ def download_tab():
                 interactive=False,
             )
 
+            def upload_model_files_handler(files):
+                """Move uploaded model files into the weights directory."""
+                if not files:
+                    return None
+                moved = []
+                for f in files:
+                    try:
+                        moved.append(shutil_move(f.name, configs["weights_path"]))
+                    except Exception as e:
+                        gr_warning(f"Could not move {f.name}: {e}")
+                return "\n".join(moved) if moved else None
+
             # ── Event Handlers ──
             download_select.change(
-                fn=change_download_choices,
+                fn=change_download_mode,
                 inputs=[download_select],
                 outputs=[
                     url_row,
@@ -120,6 +142,18 @@ def download_tab():
                     search_result_row,
                     upload_row,
                 ],
+            )
+
+            download_csv_button.click(
+                fn=lambda selection: download_model(url=model_options.get(selection, ""), model=selection) if selection else None,
+                inputs=[download_csv_model],
+                outputs=[download_status],
+            )
+
+            upload_model_files.upload(
+                fn=upload_model_files_handler,
+                inputs=[upload_model_files],
+                outputs=[download_status],
             )
 
             download_url_button.click(
@@ -202,16 +236,26 @@ def download_tab():
                 interactive=False,
             )
 
+            def upload_pretrained_files_handler(files):
+                """Move uploaded pretrained model files into the pretrained directory."""
+                if not files:
+                    return None
+                moved = []
+                for f in files:
+                    try:
+                        moved.append(shutil_move(f.name, configs["pretrained_custom_path"]))
+                    except Exception as e:
+                        gr_warning(f"Could not move {f.name}: {e}")
+                return "\n".join(moved) if moved else None
+
             # Event handlers
             pretrained_select.change(
-                fn=change_download_pretrained_choices,
+                fn=change_pretrained_mode,
                 inputs=[pretrained_select],
                 outputs=[
                     pretrained_url_row,
                     pretrained_list_row,
                     pretrained_upload_row,
-                    pretrained_list_model,
-                    pretrained_sample_rate,
                 ],
             )
 
@@ -220,6 +264,12 @@ def download_tab():
                 fn=update_sample_rate_dropdown,
                 inputs=[pretrained_list_model],
                 outputs=[pretrained_sample_rate],
+            )
+
+            pretrained_upload_files.upload(
+                fn=upload_pretrained_files_handler,
+                inputs=[pretrained_upload_files],
+                outputs=[pretrained_status],
             )
 
             pretrained_url_button.click(

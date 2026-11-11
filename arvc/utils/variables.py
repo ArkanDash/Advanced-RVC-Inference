@@ -693,12 +693,12 @@ file_types = list(audio_extensions)
 export_format_choices = [ext[1:] for ext in audio_extensions]
 
 # Language and theme
-language = configs.get("language", "vi-VN")
+language = configs.get("language", "en-US")
 theme = configs.get("theme", "NeoPy/Soft")
 
 # TTS voices
-edgetts = configs.get("edge_tts", ["vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"])
-google_tts_voice = configs.get("google_tts_voice", ["vi", "en"])
+edgetts = configs.get("edge_tts", ["en-US-AriaNeural", "en-US-GuyNeural"])
+google_tts_voice = configs.get("google_tts_voice", ["en"])
 
 # VR models — ensure they are always dicts even if config is corrupted
 _vr = configs.get("vr_models", {})

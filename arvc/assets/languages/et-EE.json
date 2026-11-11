@@ -29,8 +29,6 @@
     "provide_pretrain": "Palun esitage eeltreenitud mudeli URL {dg}.",
     "sr_not_same": "Kahe mudeli diskreedi sagedused ei ole samad.",
     "architectures_not_same": "Mudeleid ei saa liita. Arhitektuurid ei ole samad.",
-    "fushion_model": "mudelite liitmine",
-    "model_fushion_info": "Mudel {name} on loodud {pth_1} ja {pth_2} liitmisel suhtega {ratio}.",
     "not_found_create_time": "Loomise aega ei leitud.",
     "format_not_valid": "Kehtetu vorming.",
     "read_info": "Erinevates rakendustes treenitud mudelid võivad anda erinevat teavet või ei pruugi olla loetavad!",
@@ -331,9 +329,6 @@
     "model_ratio": "Mudeli suhe",
     "model_ratio_info": "Ühele poole kaldumine muudab mudeli sellega sarnasemaks",
     "output_model_path": "Mudeli väljundi tee",
-    "fushion": "Mudelite liitmine",
-    "fushion_markdown": "## Liida kaks mudelit",
-    "fushion_markdown_2": "Liitke kaks hääle mudelit üheks mudeliks",
     "read_model": "Loe teavet",
     "read_model_markdown": "## Loa mudeli teavet",
     "read_model_markdown_2": "Hankige mudelisse salvestatud teave",
@@ -804,5 +799,10 @@
     "audio_output": "Heli väljund",
     "model_name_placeholder": "Jäta tühjaks algse nime kasutamiseks",
     "d_model_url": "D-mudeli URL",
-    "g_model_url": "G-mudeli URL"
+    "g_model_url": "G-mudeli URL",
+    "fusion": "Mudelite liitmine",
+    "fusion_markdown": "## Liida kaks mudelit",
+    "fusion_markdown_2": "Liitke kaks hääle mudelit üheks mudeliks",
+    "fusion_model": "mudelite liitmine",
+    "model_fusion_info": "Mudel {name} on loodud {pth_1} ja {pth_2} liitmisel suhtega {ratio}."
 }

@@ -184,7 +184,7 @@ def launch(
                 extra_tab = None
 
             with gr.Tabs():
-                with gr.TabItem("Inference"):
+                with gr.TabItem(translations.get("inference", "Inference")):
                     try:
                         if inference_tab: inference_tab()
                     except Exception as tab_err:
@@ -202,7 +202,7 @@ def launch(
                             logger.error(f"Failed to build realtime tab: {tab_err}")
                             import traceback; logger.error(traceback.format_exc().strip())
                 
-                with gr.TabItem("Models"):
+                with gr.TabItem(translations.get("downloads", "Models")):
                     try:
                         if download_tab: download_tab()
                     except Exception as tab_err:
@@ -455,7 +455,7 @@ def create_app():
                 _terminal_tab = None
 
             with gr.Tabs():
-                with gr.TabItem("Inference"):
+                with gr.TabItem(translations.get("inference", "Inference")):
                     inference_tab()
                     if client_mode:
                         from arvc.app.tabs.realtime.realtime_client import (
@@ -465,7 +465,7 @@ def create_app():
                     else:
                         realtime_tab()
 
-                with gr.TabItem("Models"):
+                with gr.TabItem(translations.get("downloads", "Models")):
                     download_tab()
                     training_tab()
                 

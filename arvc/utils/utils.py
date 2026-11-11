@@ -9,7 +9,7 @@ from typing import Optional, List
 sys.path.append(os.getcwd())
 
 from arvc.utils.feedback import gr_info, gr_warning
-from arvc.utils.variables import translations, configs
+from arvc.utils.variables import ASSETS_PATH, translations, configs
 
 def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = False) -> None:
     """
@@ -23,7 +23,7 @@ def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = Fals
     try:
         # Determine the PID file path
         if model_name is None:
-            pid_file_path = os.path.join("assets", f"{pid_file}.txt")
+            pid_file_path = os.path.join(str(ASSETS_PATH), f"{pid_file}.txt")
         else:
             pid_file_path = os.path.join(configs["logs_path"], model_name, f"{pid_file}.txt")
 
@@ -80,14 +80,14 @@ def stop_pid(pid_file: str, model_name: Optional[str] = None, train: bool = Fals
         import logging
         logging.error(f"Error in stop_pid: {str(e)}")
 
-def google_translate(text: str, source: str = 'auto', target: str = 'vi') -> str:
+def google_translate(text: str, source: str = 'auto', target: str = 'en') -> str:
     """
     Translate text using Google Translate API.
     
     Args:
         text: Text to translate
         source: Source language code (default: 'auto' for auto-detection)
-        target: Target language code (default: 'vi' for Vietnamese)
+        target: Target language code (default: 'en' for English)
         
     Returns:
         Translated text or original text if translation fails

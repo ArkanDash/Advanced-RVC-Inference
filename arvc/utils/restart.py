@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import platform
 import subprocess
 
 sys.path.append(os.getcwd())
@@ -19,7 +18,9 @@ def restart_app(app):
         pass
 
     app.close()
-    subprocess.run([python, os.path.join("arvc", "app", "gui.py")] + [arg for arg in sys.argv[1:] if arg != "--open"])
+    # Re-launch the GUI via the package module so it works regardless of the
+    # current working directory and when installed as a package.
+    subprocess.run([python, "-m", "arvc.app.gui"] + [arg for arg in sys.argv[1:] if arg != "--open"])
 
 def change_language(lang, app):
     try:

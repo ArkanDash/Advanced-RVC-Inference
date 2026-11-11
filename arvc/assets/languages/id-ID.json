@@ -29,8 +29,6 @@
     "provide_pretrain": "Harap berikan url model pra-latih {dg}.",
     "sr_not_same": "Laju sampel kedua model tidak sama.",
     "architectures_not_same": "Tidak dapat menggabungkan model. Arsitekturnya tidak sama.",
-    "fushion_model": "fusi model",
-    "model_fushion_info": "Model {name} difusi dari {pth_1} dan {pth_2} dengan rasio {ratio}.",
     "not_found_create_time": "Waktu pembuatan tidak ditemukan.",
     "format_not_valid": "Format tidak valid.",
     "read_info": "Model yang dilatih pada aplikasi berbeda dapat menghasilkan informasi yang berbeda atau mungkin tidak dapat dibaca!",
@@ -331,9 +329,6 @@
     "model_ratio": "Rasio model",
     "model_ratio_info": "Penyesuaian ke satu sisi akan membuat model lebih mirip dengan sisi tersebut",
     "output_model_path": "Jalur output model",
-    "fushion": "Fusi Model",
-    "fushion_markdown": "## Fusi Dua Model",
-    "fushion_markdown_2": "Gabungkan dua model suara menjadi satu model",
     "read_model": "Baca Informasi",
     "read_model_markdown": "## Baca Informasi Model",
     "read_model_markdown_2": "Ambil informasi yang tercatat dalam model",
@@ -785,5 +780,10 @@
     "rmvpe_high_register_mode": "Mode koreksi",
     "rmvpe_high_register_mode_info": "true_pitch menulis pitch asli, dibatasi oleh langit-langit F0. fold hanya memperbaiki frame oktaf yang salah menggunakan drive setengah pitch; gunakan dengan model yang dilatih pada label yang tidak dikoreksi agar timbrenya tetap.",
     "rmvpe_high_register_f0_ceil": "Langit-langit F0 (Hz)",
-    "rmvpe_high_register_f0_ceil_info": "Pitch tertinggi yang ditulis dalam mode true_pitch. Model yang dilatih pada label RMVPE stok tidak dapat mensintesis di atas ~1250 Hz; naikkan hanya untuk model yang dilatih dengan koreksi diaktifkan."
+    "rmvpe_high_register_f0_ceil_info": "Pitch tertinggi yang ditulis dalam mode true_pitch. Model yang dilatih pada label RMVPE stok tidak dapat mensintesis di atas ~1250 Hz; naikkan hanya untuk model yang dilatih dengan koreksi diaktifkan.",
+    "fusion": "Fusi Model",
+    "fusion_markdown": "## Fusi Dua Model",
+    "fusion_markdown_2": "Gabungkan dua model suara menjadi satu model",
+    "fusion_model": "fusi model",
+    "model_fusion_info": "Model {name} difusi dari {pth_1} dan {pth_2} dengan rasio {ratio}."
 }

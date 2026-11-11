@@ -29,8 +29,6 @@
     "provide_pretrain": "يرجى توفير رابط نموذج مُدرب مسبقاً {dg}.",
     "sr_not_same": "معدلات العينات للنموذجين غير متطابقة.",
     "architectures_not_same": "لا يمكن دمج النماذج. البنيات غير متطابقة.",
-    "fushion_model": "دمج النماذج",
-    "model_fushion_info": "تم دمج النموذج {name} من {pth_1} و {pth_2} بنسبة {ratio}.",
     "not_found_create_time": "لم يتم العثور على وقت الإنشاء.",
     "format_not_valid": "تنسيق غير صالح.",
     "read_info": "النماذج المدربة على تطبيقات مختلفة قد تعطي معلومات مختلفة أو قد لا تكون قابلة للقراءة!",
@@ -331,9 +329,6 @@
     "model_ratio": "نسبة النموذج",
     "model_ratio_info": "التعديل نحو جانب سيجعل النموذج أشبه بذلك الجانب",
     "output_model_path": "مسار إخراج النموذج",
-    "fushion": "دمج النماذج",
-    "fushion_markdown": "## دمج نموذجين",
-    "fushion_markdown_2": "دمج نموذجين صوتيين في نموذج واحد",
     "read_model": "قراءة المعلومات",
     "read_model_markdown": "## قراءة معلومات النموذج",
     "read_model_markdown_2": "استرداد المعلومات المسجلة داخل النموذج",
@@ -804,5 +799,10 @@
     "audio_output": "مخرجات الصوت",
     "model_name_placeholder": "اتركه فارغًا للاستخدام الاسم الأصلي",
     "d_model_url": "رابط نموذج D",
-    "g_model_url": "رابط نموذج G"
+    "g_model_url": "رابط نموذج G",
+    "fusion": "دمج النماذج",
+    "fusion_markdown": "## دمج نموذجين",
+    "fusion_markdown_2": "دمج نموذجين صوتيين في نموذج واحد",
+    "fusion_model": "دمج النماذج",
+    "model_fusion_info": "تم دمج النموذج {name} من {pth_1} و {pth_2} بنسبة {ratio}."
 }

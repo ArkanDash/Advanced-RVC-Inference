@@ -29,8 +29,6 @@
     "provide_pretrain": "אנא ספק כתובת URL של מודל מאומן מראש {dg}.",
     "sr_not_same": "קצבי הדגימה של שני המודלים אינם זהים.",
     "architectures_not_same": "לא ניתן למזג מודלים. הארכיטקטורות אינן זהות.",
-    "fushion_model": "מיזוג מודלים",
-    "model_fushion_info": "המודל {name} ממוזג מ-{pth_1} ו-{pth_2} ביחס של {ratio}.",
     "not_found_create_time": "זמן היצירה לא נמצא.",
     "format_not_valid": "פורמט לא תקין.",
     "read_info": "מודלים שאומנו באפליקציות שונות עשויים לייצר מידע שונה או שעלולים להיות בלתי קריאים!",
@@ -331,9 +329,6 @@
     "model_ratio": "יחס מודל",
     "model_ratio_info": "התאמה לכיוון אחד תגרום למודל להיות דומה יותר לאותו הצד",
     "output_model_path": "נתיב פלט מודל",
-    "fushion": "מיזוג מודלים",
-    "fushion_markdown": "## מיזוג שני מודלים",
-    "fushion_markdown_2": "שלב שני מודלי קול למודל אחד",
     "read_model": "קרא מידע",
     "read_model_markdown": "## קרא מידע מודל",
     "read_model_markdown_2": "אחזר מידע מוקלט בתוך המודל",
@@ -804,5 +799,10 @@
     "audio_output": "פלט אודיו",
     "model_name_placeholder": "השאר ריק לשימוש בשם המקורי",
     "d_model_url": "כתובת מודל D",
-    "g_model_url": "כתובת מודל G"
+    "g_model_url": "כתובת מודל G",
+    "fusion": "מיזוג מודלים",
+    "fusion_markdown": "## מיזוג שני מודלים",
+    "fusion_markdown_2": "שלב שני מודלי קול למודל אחד",
+    "fusion_model": "מיזוג מודלים",
+    "model_fusion_info": "המודל {name} ממוזג מ-{pth_1} ו-{pth_2} ביחס של {ratio}."
 }

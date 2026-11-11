@@ -13,7 +13,7 @@ if _project_root not in sys.path:
 from arvc.utils import strtobool
 
 from arvc.engine.uvr.uvr5_lib.separator import Separator
-from arvc.utils.variables import config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models
+from arvc.utils.variables import ASSETS_PATH, config, logger, translations, vr_models, mdx_models, karaoke_models, reverb_models, denoise_models
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -97,7 +97,7 @@ def separate(
     separate_reverb=False
 ):
     start_time = time.time()
-    pid_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "separate_pid.txt")
+    pid_path = os.path.join(str(ASSETS_PATH), "separate_pid.txt")
 
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))

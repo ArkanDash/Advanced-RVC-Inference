@@ -1,20 +1,17 @@
-import os
-import sys
-
 import gradio as gr
 
 
 from arvc.utils.feedback import visible, shutil_move
-from arvc.utils.model_utils import fushion_model
+from arvc.utils.model_utils import fusion_model
 from arvc.utils.variables import translations, configs
 
-def fushion_tab():
+def fusion_tab():
     with gr.Row():
-        gr.Markdown(translations["fushion_markdown_2"])
+        gr.Markdown(translations["fusion_markdown_2"])
     with gr.Row():
         name_to_save = gr.Textbox(label=translations["modelname"], placeholder="Model.pth", value="", max_lines=1, interactive=True)
     with gr.Row():
-        fushion_button = gr.Button(translations["fushion"], variant="primary", scale=4)
+        fusion_button = gr.Button(translations["fusion"], variant="primary", scale=4)
     with gr.Column():
         with gr.Row():
             model_a = gr.File(label=f"{translations['model_name']} 1", file_types=[".pth", ".onnx"]) 
@@ -30,8 +27,8 @@ def fushion_tab():
         model_a.upload(fn=lambda model: shutil_move(model.name, configs["weights_path"]), inputs=[model_a], outputs=[model_path_a])
         model_b.upload(fn=lambda model: shutil_move(model.name, configs["weights_path"]), inputs=[model_b], outputs=[model_path_b])
     with gr.Row():
-        fushion_button.click(
-            fn=fushion_model,
+        fusion_button.click(
+            fn=fusion_model,
             inputs=[
                 name_to_save, 
                 model_path_a, 
@@ -39,6 +36,6 @@ def fushion_tab():
                 ratio
             ],
             outputs=[name_to_save, output_model],
-            api_name="fushion_model"
+            api_name="fusion_model"
         )
-        fushion_button.click(fn=lambda: visible(True), inputs=[], outputs=[output_model])  
+        fusion_button.click(fn=lambda: visible(True), inputs=[], outputs=[output_model])  

@@ -2,7 +2,9 @@ import logging
 import threading
 from tensorboard import program
 
-log_path = "logs"
+from arvc.utils.variables import config
+
+log_path = config.configs["logs_path"]
 _tb_url = None
 _tb_thread = None
 _tb_ready = threading.Event()
@@ -10,22 +12,6 @@ _tb_ready = threading.Event()
 
 def get_tb_url():
     return _tb_url
-
-
-def launch_tensorboard_pipeline():
-    logging.getLogger("root").setLevel(logging.WARNING)
-    logging.getLogger("tensorboard").setLevel(logging.WARNING)
-
-    tb = program.TensorBoard()
-    tb.configure(argv=[None, "--logdir", log_path, "--path_prefix", "/tensorboard"])
-    url = tb.launch()
-    pinned = "?pinnedCards=%5B%7B%22plugin%22%3A%22scalars%22%2C%22tag%22%3A%22loss%2Fg%2Ftotal%22%7D%2C%7B%22plugin%22%3A%22scalars%22%2C%22tag%22%3A%22loss%2Fd%2Ftotal%22%7D%2C%7B%22plugin%22%3A%22scalars%22%2C%22tag%22%3A%22loss%2Fg%2Fkl%22%7D%2C%7B%22plugin%22%3A%22scalars%22%2C%22tag%22%3A%22loss%2Fg%2Fmel%22%7D%5D"
-    print(f"TensorBoard running at: {url}{pinned}")
-
-    while True:
-        import time
-
-        time.sleep(600)
 
 
 def launch_tensorboard():

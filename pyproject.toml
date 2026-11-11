@@ -63,13 +63,13 @@ dependencies = [
     "pedalboard",
 
     # Data processing and calculation
-    "numpy>=1.25.2,<2.0.0",
+    "numpy>=1.25.2",
     "numba>=0.57.0",
     "scipy>=1.15.0",
     "matplotlib>=3.7.2",
 
     # Implementation and web framework
-    "gradio @ git+https://github.com/BF667-IDLE/gradio.git@main",
+    "gradio>=5.23.3",
     "requests>=2.32.3",
     "aiohttp",
     "pysrt",
@@ -80,6 +80,8 @@ dependencies = [
     "ffmpy==0.3.1",
     "ffmpeg-python>=0.2.0",
     "beautifulsoup4",
+    "huggingface_hub",
+    "wget",
 
     # Tensorboard and ONNX
     "tensorboard",
@@ -93,11 +95,19 @@ dependencies = [
     # Realtime and VAD
     "sounddevice>=0.5.2",
     "webrtcvad-wheels>=2.0.14",
+    "fastapi",
+    "uvicorn",
+
+    # Misc utilities
+    "rich",
 ]
 
 [project.optional-dependencies]
 gpu = [
     "onnxruntime-gpu; sys_platform != 'darwin'",
+]
+training = [
+    "bitsandbytes; platform_system != 'Darwin'",
 ]
 dev = [
     "pytest>=7.0.0",

@@ -29,8 +29,6 @@
     "provide_pretrain": "Lūdzu, norādiet iepriekšapmācītā modeļa URL {dg}.",
     "sr_not_same": "Abu modeļu diskretizācijas frekvences nav vienādas.",
     "architectures_not_same": "Nevar apvienot modeļus. Arhitektūras nav vienādas.",
-    "fushion_model": "modeļu apvienošana",
-    "model_fushion_info": "Modelis {name} ir apvienots no {pth_1} un {pth_2} ar attiecību {ratio}.",
     "not_found_create_time": "Izveides laiks nav atrasts.",
     "format_not_valid": "Nederīgs formāts.",
     "read_info": "Dažādās lietotnēs apmācīti modeļi var sniegt atšķirīgu informāciju vai var nebūt lasāmi!",
@@ -331,9 +329,6 @@
     "model_ratio": "Modeļa attiecība",
     "model_ratio_info": "Pielāgošanās uz vienu pusi padarīs modeli līdzīgāku tai pusei",
     "output_model_path": "Modeļa izvades ceļš",
-    "fushion": "Modeļu apvienošana",
-    "fushion_markdown": "## Apvienot divus modeļus",
-    "fushion_markdown_2": "Apvienot divus balss modeļus vienā modelī",
     "read_model": "Lasīt informāciju",
     "read_model_markdown": "## Lasīt modeļa informāciju",
     "read_model_markdown_2": "Iegūt ierakstīto informāciju modelī",
@@ -804,5 +799,10 @@
     "audio_output": "Audio izvade",
     "model_name_placeholder": "Atstājiet tukšu, lai izmantotu sākotnējo nosaukumu",
     "d_model_url": "D modeļa URL",
-    "g_model_url": "G modeļa URL"
+    "g_model_url": "G modeļa URL",
+    "fusion": "Modeļu apvienošana",
+    "fusion_markdown": "## Apvienot divus modeļus",
+    "fusion_markdown_2": "Apvienot divus balss modeļus vienā modelī",
+    "fusion_model": "modeļu apvienošana",
+    "model_fusion_info": "Modelis {name} ir apvienots no {pth_1} un {pth_2} ar attiecību {ratio}."
 }

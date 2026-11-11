@@ -29,8 +29,6 @@
     "provide_pretrain": "Prosimo, navedite URL naslov predizvedenega modela {dg}.",
     "sr_not_same": "Vzorčne frekvence obeh modelov niso enake.",
     "architectures_not_same": "Ni mogoče združiti modelov. Arhitekture niso enake.",
-    "fushion_model": "združevanje modelov",
-    "model_fushion_info": "Model {name} je združen iz {pth_1} in {pth_2} z razmerjem {ratio}.",
     "not_found_create_time": "Čas ustvarjanja ni bil najden.",
     "format_not_valid": "Neveljaven format.",
     "read_info": "Modeli, usposobljeni v različnih aplikacijah, lahko proizvedejo različne informacije ali morda niso bralni!",
@@ -331,9 +329,6 @@
     "model_ratio": "Razmerje modela",
     "model_ratio_info": "Prilagajanje na eno stran bo model naredilo bolj podoben tej strani",
     "output_model_path": "Izhodna pot modela",
-    "fushion": "Združevanje modelov",
-    "fushion_markdown": "## Združitev dveh modelov",
-    "fushion_markdown_2": "Združite dva glasovna modela v en model",
     "read_model": "Preberi informacije",
     "read_model_markdown": "## Preberi informacije o modelu",
     "read_model_markdown_2": "Pridobi zapisane informacije znotraj modela",
@@ -804,5 +799,10 @@
     "audio_output": "Zvočni izhod",
     "model_name_placeholder": "Pustite prazno za uporabo izvirnega imena",
     "d_model_url": "URL modela D",
-    "g_model_url": "URL modela G"
+    "g_model_url": "URL modela G",
+    "fusion": "Združevanje modelov",
+    "fusion_markdown": "## Združitev dveh modelov",
+    "fusion_markdown_2": "Združite dva glasovna modela v en model",
+    "fusion_model": "združevanje modelov",
+    "model_fusion_info": "Model {name} je združen iz {pth_1} in {pth_2} z razmerjem {ratio}."
 }

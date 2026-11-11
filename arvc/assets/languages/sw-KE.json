@@ -29,8 +29,6 @@
     "provide_pretrain": "Tafadhali toa URL ya modeli iliyo funzwa awali {dg}.",
     "sr_not_same": "Viwango vya sampuli za models mbili si sawa.",
     "architectures_not_same": "Haiwezi kuunganisha models. Miundo si sawa.",
-    "fushion_model": "muungano wa modeli",
-    "model_fushion_info": "Modeli {name} imetengenezwa kutoka {pth_1} na {pth_2} kwa uwiano wa {ratio}.",
     "not_found_create_time": "Wakati wa kuunda haujapatikana.",
     "format_not_valid": "Muundo batili.",
     "read_info": "Models zilizofunzwa kwenye programu tofauti zinaweza kutoa taarifa tofauti au hazisomiki!",
@@ -331,9 +329,6 @@
     "model_ratio": "Uwiano wa modeli",
     "model_ratio_info": "Kurekebisha upande mmoja utafanya modeli kufanana zaidi na upande huo",
     "output_model_path": "Njia ya pato la modeli",
-    "fushion": "Muungano wa Modeli",
-    "fushion_markdown": "## Unganisha Modeli Mbili",
-    "fushion_markdown_2": "Unganisha modeli mbili za sauti kuwa modeli moja",
     "read_model": "Soma Taarifa",
     "read_model_markdown": "## Soma Taarifa ya Modeli",
     "read_model_markdown_2": "Pata taarifa zilizohifadhiwa ndani ya modeli",
@@ -804,5 +799,10 @@
     "audio_output": "Matokeo ya sauti",
     "model_name_placeholder": "Acha wazi kutumia jina la asili",
     "d_model_url": "URL ya mfano wa D",
-    "g_model_url": "URL ya mfano wa G"
+    "g_model_url": "URL ya mfano wa G",
+    "fusion": "Muungano wa Modeli",
+    "fusion_markdown": "## Unganisha Modeli Mbili",
+    "fusion_markdown_2": "Unganisha modeli mbili za sauti kuwa modeli moja",
+    "fusion_model": "muungano wa modeli",
+    "model_fusion_info": "Modeli {name} imetengenezwa kutoka {pth_1} na {pth_2} kwa uwiano wa {ratio}."
 }

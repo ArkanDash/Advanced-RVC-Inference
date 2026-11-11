@@ -29,8 +29,6 @@
     "provide_pretrain": "Anna esikoulutetun mallin URL-osoite {dg}.",
     "sr_not_same": "Mallien näytteenottotaajuudet eivät ole samat.",
     "architectures_not_same": "Malleja ei voi yhdistää. Arkkitehtuurit eivät ole samat.",
-    "fushion_model": "mallifuusio",
-    "model_fushion_info": "Malli {name} on luotu fuusioimalla {pth_1} ja {pth_2} suhteella {ratio}.",
     "not_found_create_time": "Luontiaikaa ei löytynyt.",
     "format_not_valid": "Virheellinen muoto.",
     "read_info": "Eri sovelluksissa koulutetut mallit voivat tuottaa eri tietoja tai niitä ei ehkä voi lukea!",
@@ -331,9 +329,6 @@
     "model_ratio": "Mallin suhde",
     "model_ratio_info": "Säätäminen toiseen suuntaan tekee mallista enemmän kyseisen suunnan kaltaisen",
     "output_model_path": "Mallin tulostepolku",
-    "fushion": "Mallifuusio",
-    "fushion_markdown": "## Kahden mallin fuusio",
-    "fushion_markdown_2": "Yhdistä kaksi äänimallia yhdeksi malliksi",
     "read_model": "Lue tiedot",
     "read_model_markdown": "## Lue mallin tiedot",
     "read_model_markdown_2": "Nouda malliin tallennetut tiedot",
@@ -804,5 +799,10 @@
     "audio_output": "Äänilähtö",
     "model_name_placeholder": "Jätä tyhjäksi käyttääksesi alkuperäistä nimeä",
     "d_model_url": "D-mallin URL",
-    "g_model_url": "G-mallin URL"
+    "g_model_url": "G-mallin URL",
+    "fusion": "Mallifuusio",
+    "fusion_markdown": "## Kahden mallin fuusio",
+    "fusion_markdown_2": "Yhdistä kaksi äänimallia yhdeksi malliksi",
+    "fusion_model": "mallifuusio",
+    "model_fusion_info": "Malli {name} on luotu fuusioimalla {pth_1} ja {pth_2} suhteella {ratio}."
 }

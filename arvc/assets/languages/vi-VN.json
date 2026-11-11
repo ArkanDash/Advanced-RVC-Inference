@@ -29,8 +29,6 @@
     "provide_pretrain": "Vui lòng cung cấp đường dẫn mô hình huấn luyện trước {dg}.",
     "sr_not_same": "Tốc độ lấy mẫu của hai mô hình không giống nhau",
     "architectures_not_same": "Không thể hợp nhất các mô hình. Các kiến trúc mô hình không giống nhau.",
-    "fushion_model": "dung hợp mô hình",
-    "model_fushion_info": "Mô hình được {name} được dung hợp từ {pth_1} và {pth_2} với ratio {ratio}.",
     "not_found_create_time": "Không tìm thấy thời gian tạo.",
     "format_not_valid": "Định dạng không hợp lệ.",
     "read_info": "Các mô hình được huấn luyện trên các ứng dụng khác nhau có thể đem lại các thông tin khác nhau hoặc không thể đọc!",
@@ -332,9 +330,6 @@
     "model_ratio": "Tỉ lệ mô hình",
     "model_ratio_info": "Chỉnh hướng về bên nào sẽ làm cho mô hình giống với bên đó",
     "output_model_path": "Đầu ra mô hình",
-    "fushion": "Dung Hợp Mô Hình",
-    "fushion_markdown": "## Dung Hợp Hai Mô Hình Với Nhau",
-    "fushion_markdown_2": "Dung hợp hai mô hình giọng nói lại với nhau để tạo thành một mô hình duy nhất",
     "read_model": "Đọc Thông Tin",
     "read_model_markdown": "## Đọc Thông Tin Của Mô Hình",
     "read_model_markdown_2": "Đọc các thông tin được ghi trong mô hình",
@@ -786,5 +781,10 @@
     "rmvpe_high_register_mode": "Chế độ sửa",
     "rmvpe_high_register_mode_info": "true_pitch ghi cao độ thực, giới hạn bởi trần F0. fold chỉ sửa các khung quãng tám sai bằng drive nửa cao độ; dùng với các model được train trên nhãn chưa sửa để giữ âm sắc.",
     "rmvpe_high_register_f0_ceil": "Trần F0 (Hz)",
-    "rmvpe_high_register_f0_ceil_info": "Cao độ cao nhất được ghi trong chế độ true_pitch. Các model train trên nhãn RMVPE gốc không thể tổng hợp trên ~1250 Hz; chỉ tăng khi model được train với chế độ sửa đã bật."
+    "rmvpe_high_register_f0_ceil_info": "Cao độ cao nhất được ghi trong chế độ true_pitch. Các model train trên nhãn RMVPE gốc không thể tổng hợp trên ~1250 Hz; chỉ tăng khi model được train với chế độ sửa đã bật.",
+    "fusion": "Dung Hợp Mô Hình",
+    "fusion_markdown": "## Dung Hợp Hai Mô Hình Với Nhau",
+    "fusion_markdown_2": "Dung hợp hai mô hình giọng nói lại với nhau để tạo thành một mô hình duy nhất",
+    "fusion_model": "dung hợp mô hình",
+    "model_fusion_info": "Mô hình được {name} được dung hợp từ {pth_1} và {pth_2} với ratio {ratio}."
 }

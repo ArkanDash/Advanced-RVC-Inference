@@ -29,8 +29,6 @@
     "provide_pretrain": "Prašome pateikti išankstinio mokymo modelio URL {dg}.",
     "sr_not_same": "Abiejų modelių diskretizavimo dažniai nėra vienodi.",
     "architectures_not_same": "Negalima sujungti modelių. Architektūros nėra vienodos.",
-    "fushion_model": "modelių sujungimas",
-    "model_fushion_info": "Modelis {name} sujungtas iš {pth_1} ir {pth_2} su santykiu {ratio}.",
     "not_found_create_time": "Sukūrimo laikas nerastas.",
     "format_not_valid": "Neteisingas formatas.",
     "read_info": "Skirtingose programose išmokyti modeliai gali duoti skirtingą informaciją arba gali būti neskaityti!",
@@ -331,9 +329,6 @@
     "model_ratio": "Modelio santykis",
     "model_ratio_info": "Reguliavimas į vieną pusę padarys modelį labiau panašų į tą pusę",
     "output_model_path": "Modelio išvesties kelias",
-    "fushion": "Modelių sujungimas",
-    "fushion_markdown": "## Sujungti du modelius",
-    "fushion_markdown_2": "Sujungti du balso modelius į vieną modelį",
     "read_model": "Skaityti informaciją",
     "read_model_markdown": "## Skaityti modelio informaciją",
     "read_model_markdown_2": "Gauti įrašytą informaciją modelyje",
@@ -804,5 +799,10 @@
     "audio_output": "Garso išvestis",
     "model_name_placeholder": "Palikite tuščią, norėdami naudoti originalų pavadinimą",
     "d_model_url": "D modelio URL",
-    "g_model_url": "G modelio URL"
+    "g_model_url": "G modelio URL",
+    "fusion": "Modelių sujungimas",
+    "fusion_markdown": "## Sujungti du modelius",
+    "fusion_markdown_2": "Sujungti du balso modelius į vieną modelį",
+    "fusion_model": "modelių sujungimas",
+    "model_fusion_info": "Modelis {name} sujungtas iš {pth_1} ir {pth_2} su santykiu {ratio}."
 }

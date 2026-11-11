@@ -29,8 +29,6 @@
     "provide_pretrain": "Harap bêrikan url model pra-latih {dg}.",
     "sr_not_same": "Laju sampel kedoea model tidak sama.",
     "architectures_not_same": "Tidak dapa menggaboengkan model. Arsitektoernja tidak sama.",
-    "fushion_model": "fusi model",
-    "model_fushion_info": "Model {name} difoesi dari {pth_1} dan {pth_2} dengan rasio {ratio}.",
     "not_found_create_time": "Waktoe pembikinan tidak ditemoekan.",
     "format_not_valid": "Format tidak sah.",
     "read_info": "Model jang dilatih pada aplikasi berbeda dapa menghasilkan informasi jang berbeda atau mungkin tidak dapa dibaca!",
@@ -331,9 +329,6 @@
     "model_ratio": "Rasio model",
     "model_ratio_info": "Penjoesoewan ka satoe sisi akan membuat model lebih mirip dengan sisi terseboet",
     "output_model_path": "Djaloeer oetpoet model",
-    "fushion": "Fusi Model",
-    "fushion_markdown": "## Fusi Doea Model",
-    "fushion_markdown_2": "Gabungkan doea model soeara menjadi satoe model",
     "read_model": "Baca Informasi",
     "read_model_markdown": "## Baca Informasi Model",
     "read_model_markdown_2": "Ambil informasi jang tercatat dalam model",
@@ -771,5 +766,10 @@
     "audio_output": "Keluaran audio",
     "model_name_placeholder": "Kosongkan untuk menggunakan nama asli",
     "d_model_url": "URL model D",
-    "g_model_url": "URL model G"
+    "g_model_url": "URL model G",
+    "fusion": "Fusi Model",
+    "fusion_markdown": "## Fusi Doea Model",
+    "fusion_markdown_2": "Gabungkan doea model soeara menjadi satoe model",
+    "fusion_model": "fusi model",
+    "model_fusion_info": "Model {name} difoesi dari {pth_1} dan {pth_2} dengan rasio {ratio}."
 }

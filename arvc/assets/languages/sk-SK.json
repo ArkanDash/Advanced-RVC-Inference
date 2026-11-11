@@ -29,8 +29,6 @@
     "provide_pretrain": "Prosím, poskytnete URL predtrénovaného modelu {dg}.",
     "sr_not_same": "Vzorkovacie frekvencie oboch modelov nie sú rovnaké.",
     "architectures_not_same": "Nedá sa zlúčiť modely. Architektúry nie sú rovnaké.",
-    "fushion_model": "fúzia modelov",
-    "model_fushion_info": "Model {name} je vytvorený fúziou z {pth_1} a {pth_2} s pomerom {ratio}.",
     "not_found_create_time": "Čas vytvorenia nebol nájdený.",
     "format_not_valid": "Neplatný formát.",
     "read_info": "Modely trénované v rôznych aplikáciách môžu poskytnúť rôzne informácie alebo nemusia byť čitateľné!",
@@ -331,9 +329,6 @@
     "model_ratio": "Pomer modelu",
     "model_ratio_info": "Nastavenie smerom k jednej strane urobí model viac podobným tejto strane",
     "output_model_path": "Výstupná cesta modelu",
-    "fushion": "Fúzia modelov",
-    "fushion_markdown": "## Fúzia dvoch modelov",
-    "fushion_markdown_2": "Zlúčiť dva hlasové modely do jedného modelu",
     "read_model": "Čítať informácie",
     "read_model_markdown": "## Čítať informácie o modeli",
     "read_model_markdown_2": "Získať zaznamenané informácie v modeli",
@@ -804,5 +799,10 @@
     "audio_output": "Zvukový výstup",
     "model_name_placeholder": "Nechajte prázdne pre pôvodný názov",
     "d_model_url": "URL D modelu",
-    "g_model_url": "URL G modelu"
+    "g_model_url": "URL G modelu",
+    "fusion": "Fúzia modelov",
+    "fusion_markdown": "## Fúzia dvoch modelov",
+    "fusion_markdown_2": "Zlúčiť dva hlasové modely do jedného modelu",
+    "fusion_model": "fúzia modelov",
+    "model_fusion_info": "Model {name} je vytvorený fúziou z {pth_1} a {pth_2} s pomerom {ratio}."
 }

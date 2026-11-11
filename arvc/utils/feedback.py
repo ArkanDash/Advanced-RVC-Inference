@@ -14,6 +14,7 @@ Gradio 4.x and 5.x.
 
 import os
 import re
+import json
 import shutil
 import logging
 from pathlib import Path
@@ -223,23 +224,6 @@ def change_pretrained_choices():
     ]
 
 
-def change_download_choices(*args, **kwargs):
-    """Refresh download model dropdown (list of available model_options keys)."""
-    model_options = _get_var("model_options", {}) or {}
-    choices = list(model_options.keys()) if isinstance(model_options, dict) else []
-    return _update_dict(choices=choices, value=None)
-
-
-def change_download_pretrained_choices(*args, **kwargs):
-    """Refresh download pretrained dropdown based on selected RVC version."""
-    pretrainedD = _get_var("pretrainedD", [])
-    pretrainedG = _get_var("pretrainedG", [])
-    return [
-        _update_dict(choices=list(pretrainedD), value=None),
-        _update_dict(choices=list(pretrainedG), value=None),
-    ]
-
-
 def get_index(model_pth):
     """Return index file choices that match the selected model name.
 
@@ -348,9 +332,9 @@ def change_tts_voice_choices(use_google):
     """Return TTS voice choices based on whether Google TTS is selected."""
     try:
         if use_google:
-            google_tts_voice = _get_var("google_tts_voice", ["vi", "en"])
+            google_tts_voice = _get_var("google_tts_voice", ["en"])
             return _update_dict(choices=list(google_tts_voice), value=google_tts_voice[0] if google_tts_voice else None)
-        edgetts = _get_var("edgetts", ["vi-VN-HoaiMyNeural", "vi-VN-NamMinhNeural"])
+        edgetts = _get_var("edgetts", ["en-US-AriaNeural", "en-US-GuyNeural"])
         return _update_dict(choices=list(edgetts), value=edgetts[0] if edgetts else None)
     except Exception:
         return _update_dict(choices=[], value=None)
@@ -372,7 +356,23 @@ def create_dataset_change(*args, **kwargs):
 
 
 def change_fp(value):
-    """Toggle FP precision dropdown (placeholder)."""
+    """Persist the FP precision selection to config.json and return the update."""
+    fp16 = value == "fp16"
+    try:
+        from arvc.utils.variables import configs_json, config
+
+        # Update the in-memory config first
+        config.configs["fp16"] = fp16
+
+        # Then persist it so the setting survives restarts
+        with open(configs_json, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        data["fp16"] = fp16
+        with open(configs_json, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4)
+        gr_info(f"Precision set to {value}")
+    except Exception as e:
+        gr_warning(f"Could not save precision setting: {e}")
     return _update_dict(value=value)
 
 

@@ -107,7 +107,7 @@ class Config:
 
     def multi_language(self):
         try:
-            lang = self.configs.get("language", "vi-VN")
+            lang = self.configs.get("language", "en-US")
             lang_dir = self.configs.get("language_path", "")
             if lang_dir and os.path.isdir(lang_dir):
                 lang_files = [l for l in os.listdir(lang_dir) if l.endswith(".json")]
@@ -115,14 +115,14 @@ class Config:
                     raise FileNotFoundError("No language packages found")
 
             if not lang:
-                lang = "vi-VN"
+                lang = "en-US"
             if lang not in self.configs.get("support_language", [lang]):
                 import warnings
                 warnings.warn(f"Language '{lang}' not in supported list, using it anyway.")
 
             lang_path = os.path.join(self.configs.get("language_path", ""), f"{lang}.json")
             if not os.path.exists(lang_path):
-                lang_path = os.path.join(self.configs.get("language_path", ""), "vi-VN.json")
+                lang_path = os.path.join(self.configs.get("language_path", ""), "en-US.json")
 
             with open(lang_path, encoding="utf-8") as f:
                 translations = json.load(f)

@@ -29,8 +29,6 @@
     "provide_pretrain": "Mangyaring magbigay ng pre-trained model url {dg}.",
     "sr_not_same": "Hindi magkakapareho ang sample rate ng dalawang model.",
     "architectures_not_same": "Hindi ma-merge ang mga model. Hindi magkakapareho ang mga arkitektura.",
-    "fushion_model": "pag-fusion ng model",
-    "model_fushion_info": "Ang model na {name} ay pinagsama mula sa {pth_1} at {pth_2} na may ratio na {ratio}.",
     "not_found_create_time": "Hindi nahanap ang oras ng paglikha.",
     "format_not_valid": "Hindi wastong format.",
     "read_info": "Ang mga model na naituro sa ibang aplikasyon ay maaaring magbigay ng iba't ibang impormasyon o maaaring hindi mabasa!",
@@ -331,9 +329,6 @@
     "model_ratio": "Ratio ng model",
     "model_ratio_info": "Ang pag-aayos tungo sa isang gilid ay magiging mas katulad ng model sa gilid na iyon",
     "output_model_path": "Path ng model output",
-    "fushion": "Fusion ng Model",
-    "fushion_markdown": "## Pag-fusion ng Dalawang Model",
-    "fushion_markdown_2": "Pagsamahin ang dalawang voice model sa isang model",
     "read_model": "Basahin ang Impormasyon",
     "read_model_markdown": "## Basahin ang Impormasyon ng Model",
     "read_model_markdown_2": "Kunin ang naitala na impormasyon sa loob ng model",
@@ -804,5 +799,10 @@
     "audio_output": "Output ng audio",
     "model_name_placeholder": "Iwanang blanko para gamitin ang orihinal na pangalan",
     "d_model_url": "URL ng D modelo",
-    "g_model_url": "URL ng G modelo"
+    "g_model_url": "URL ng G modelo",
+    "fusion": "Fusion ng Model",
+    "fusion_markdown": "## Pag-fusion ng Dalawang Model",
+    "fusion_markdown_2": "Pagsamahin ang dalawang voice model sa isang model",
+    "fusion_model": "pag-fusion ng model",
+    "model_fusion_info": "Ang model na {name} ay pinagsama mula sa {pth_1} at {pth_2} na may ratio na {ratio}."
 }

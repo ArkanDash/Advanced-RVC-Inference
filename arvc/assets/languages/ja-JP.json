@@ -29,8 +29,6 @@
     "provide_pretrain": "事前学習済みモデルのURL {dg} を入力してください。",
     "sr_not_same": "2つのモデルのサンプルレートが同じではありません。",
     "architectures_not_same": "モデルをマージできません。アーキテクチャが同じではありません。",
-    "fushion_model": "モデル融合",
-    "model_fushion_info": "モデル{name}は{pth_1}と{pth_2}を比率{ratio}で融合したものです。",
     "not_found_create_time": "作成日時が見つかりません。",
     "format_not_valid": "無効な形式です。",
     "read_info": "異なるアプリケーションでトレーニングされたモデルは、異なる情報を生成したり読み取れない場合があります！",
@@ -331,9 +329,6 @@
     "model_ratio": "モデル比率",
     "model_ratio_info": "一方に調整するとモデルがその側に近づきます",
     "output_model_path": "モデル出力パス",
-    "fushion": "モデル融合",
-    "fushion_markdown": "## 2つのモデルを融合",
-    "fushion_markdown_2": "2つの音声モデルを1つのモデルに結合",
     "read_model": "情報を読み取る",
     "read_model_markdown": "## モデル情報を読み取る",
     "read_model_markdown_2": "モデルに記録されている情報を取得",
@@ -804,5 +799,10 @@
     "audio_output": "音声出力",
     "model_name_placeholder": "空欄で元の名前を使用",
     "d_model_url": "DモデルURL",
-    "g_model_url": "GモデルURL"
+    "g_model_url": "GモデルURL",
+    "fusion": "モデル融合",
+    "fusion_markdown": "## 2つのモデルを融合",
+    "fusion_markdown_2": "2つの音声モデルを1つのモデルに結合",
+    "fusion_model": "モデル融合",
+    "model_fusion_info": "モデル{name}は{pth_1}と{pth_2}を比率{ratio}で融合したものです。"
 }

@@ -29,8 +29,6 @@
     "provide_pretrain": "Ange en url för förtränad modell {dg}.",
     "sr_not_same": "Samplingsfrekvenserna för de två modellerna är inte desamma.",
     "architectures_not_same": "Kan inte slå ihop modeller. Arkitekturerna är inte desamma.",
-    "fushion_model": "modellfusion",
-    "model_fushion_info": "Modellen {name} är sammanslagen från {pth_1} och {pth_2} med en ratio på {ratio}.",
     "not_found_create_time": "Skapandetid hittades inte.",
     "format_not_valid": "Ogiltigt format.",
     "read_info": "Modeller tränade på olika applikationer kan ge olika information eller kanske inte är läsbara!",
@@ -331,9 +329,6 @@
     "model_ratio": "Modellratio",
     "model_ratio_info": "Justering mot ena sidan gör modellen mer lik den sidan",
     "output_model_path": "Modellutdatasökväg",
-    "fushion": "Modellfusion",
-    "fushion_markdown": "## Fusera Två Modeller",
-    "fushion_markdown_2": "Kombinera två röstmodeller till en modell",
     "read_model": "Läs Information",
     "read_model_markdown": "## Läs Modellinformation",
     "read_model_markdown_2": "Hämta inspelad information i modellen",
@@ -804,5 +799,10 @@
     "audio_output": "Ljudutgång",
     "model_name_placeholder": "Lämna tomt för att använda ursprungligt namn",
     "d_model_url": "D-modell-URL",
-    "g_model_url": "G-modell-URL"
+    "g_model_url": "G-modell-URL",
+    "fusion": "Modellfusion",
+    "fusion_markdown": "## Fusera Två Modeller",
+    "fusion_markdown_2": "Kombinera två röstmodeller till en modell",
+    "fusion_model": "modellfusion",
+    "model_fusion_info": "Modellen {name} är sammanslagen från {pth_1} och {pth_2} med en ratio på {ratio}."
 }

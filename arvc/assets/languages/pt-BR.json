@@ -29,8 +29,6 @@
     "provide_pretrain": "Por favor, forneça uma URL de modelo pré-treinado {dg}.",
     "sr_not_same": "As taxas de amostragem dos dois modelos não são iguais.",
     "architectures_not_same": "Não é possível mesclar os modelos. As arquiteturas não são iguais.",
-    "fushion_model": "fusão de modelos",
-    "model_fushion_info": "O modelo {name} foi fundido a partir de {pth_1} e {pth_2} com uma proporção de {ratio}.",
     "not_found_create_time": "Data de criação não encontrada.",
     "format_not_valid": "Formato inválido.",
     "read_info": "Modelos treinados em diferentes aplicativos podem gerar informações diferentes ou podem não ser legíveis!",
@@ -331,9 +329,6 @@
     "model_ratio": "Proporção do modelo",
     "model_ratio_info": "Ajustar para um lado fará o modelo se parecer mais com aquele lado",
     "output_model_path": "Caminho de saída do modelo",
-    "fushion": "Fusão de modelos",
-    "fushion_markdown": "## Fundir dois modelos",
-    "fushion_markdown_2": "Combine dois modelos de voz em um único modelo",
     "read_model": "Ler informações",
     "read_model_markdown": "## Ler informações do modelo",
     "read_model_markdown_2": "Recuperar informações registradas dentro do modelo",
@@ -804,5 +799,10 @@
     "audio_output": "Saída de áudio",
     "model_name_placeholder": "Deixe vazio para usar o nome original",
     "d_model_url": "URL do modelo D",
-    "g_model_url": "URL do modelo G"
+    "g_model_url": "URL do modelo G",
+    "fusion": "Fusão de modelos",
+    "fusion_markdown": "## Fundir dois modelos",
+    "fusion_markdown_2": "Combine dois modelos de voz em um único modelo",
+    "fusion_model": "fusão de modelos",
+    "model_fusion_info": "O modelo {name} foi fundido a partir de {pth_1} e {pth_2} com uma proporção de {ratio}."
 }

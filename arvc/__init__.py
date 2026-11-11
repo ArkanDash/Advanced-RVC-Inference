@@ -10,7 +10,7 @@ except ImportError:
     __version__ = "2.0.0"
 
 # Define public API — only symbols that actually exist are listed.
-# Public classes (RVCInference, RVCConfig, RVCModel, RVCTrainer, RVCRealtime)
+# Public classes (RVCInference, RVCConfig, RVCRealtime)
 # are exposed via lazy __getattr__ so users can still do `from arvc import ...`
 # but importing them only triggers the load when actually accessed.
 __all__ = [
@@ -25,11 +25,10 @@ __all__ = [
 # Lazy-imported classes that are referenced by name (so `from arvc import RVCInference`
 # still works) but are loaded only on first access.
 _LAZY_CLASSES = {
-    "RVCInference":  "arvc.engine.rvc.inference.inference:VoiceConverter",
+    # VoiceConverter lives in convert.py, not inference.py.
+    "RVCInference":  "arvc.engine.rvc.inference.convert:VoiceConverter",
     "RVCConfig":     "arvc.utils.variables:Config",
-    "RVCModel":       "arvc.engine.rvc.models.utils",
-    "RVCTrainer":     "arvc.engine.rvc.training.training",
-    "RVCRealtime":    "arvc.engine.realtime.realtime:RVC_Realtime",
+    "RVCRealtime":   "arvc.engine.realtime.realtime:RVC_Realtime",
 }
 
 
@@ -100,11 +99,6 @@ def launch_gui():
     from arvc.app.gui import launch as gui_launch
 
     gui_launch()
-
-
-def gui():
-    """Launch the Gradio web interface (alias for launch_gui())."""
-    launch_gui()
 
 
 def launch():

@@ -28,7 +28,7 @@ _project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
-from arvc.utils.variables import config, logger, translations
+from arvc.utils.variables import ASSETS_PATH, config, logger, translations
 from arvc.engine.uvr.separate_music import _separate, vr_models
 
 
@@ -207,7 +207,7 @@ def create_dataset(
     start_time = time.time()
     inputs_data = input_data.replace(", ", ",").split(",")
 
-    pid_path = os.path.join("arvc", "assets", "create_dataset_pid.txt")
+    pid_path = os.path.join(str(ASSETS_PATH), "create_dataset_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
 

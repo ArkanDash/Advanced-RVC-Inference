@@ -590,7 +590,7 @@ def training(
         model_status_msg = translations.get("download_predictor_success", "✅ All required models ready! Starting training...")
         yield ("", model_status_msg)
     except Exception as e:
-        model_status_msg = translations.get("download_predictor_error", f"⚠️ Model download warning: {e}. Training may fail if models are missing.")
+        model_status_msg = translations.get("download_predictor_error", "⚠️ Model download warning: {e}. Training may fail if models are missing.").format(e=e)
         yield ("", model_status_msg)
     
     

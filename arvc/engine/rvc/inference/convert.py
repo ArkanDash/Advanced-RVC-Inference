@@ -35,7 +35,7 @@ warnings.filterwarnings("ignore")
 
 from arvc.utils.feedback import replace_export_format
 from arvc.engine.rvc.inference.pipeline import Pipeline
-from arvc.utils.variables import config, logger, translations
+from arvc.utils.variables import ASSETS_PATH, config, logger, translations
 from arvc.engine.rvc.inference.audio_processing import preprocess, postprocess
 from arvc.engine.rvc.models.utils import check_assets, load_audio, load_embedders_model, cut, restore, clear_gpu_cache, load_model
 from arvc.engine.rvc.models.weight_norm import convert_old_to_new
@@ -166,7 +166,7 @@ def run_convert_script(
     cvt = VoiceConverter(pth_path, sid)
     start_time = time.time()
 
-    pid_path = os.path.join(os.getcwd(), "arvc", "assets", "convert_pid.txt")
+    pid_path = os.path.join(str(ASSETS_PATH), "convert_pid.txt")
     with open(pid_path, "w") as pid_file:
         pid_file.write(str(os.getpid()))
 

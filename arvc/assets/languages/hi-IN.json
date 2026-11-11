@@ -29,8 +29,6 @@
     "provide_pretrain": "कृपया एक पूर्व-प्रशिक्षित मॉडल URL {dg} प्रदान करें।",
     "sr_not_same": "दोनों मॉडल की सैंपल रेट समान नहीं है।",
     "architectures_not_same": "मॉडल मर्ज नहीं किए जा सकते। आर्किटेक्चर समान नहीं हैं।",
-    "fushion_model": "मॉडल फ्यूजन",
-    "model_fushion_info": "मॉडल {name} {pth_1} और {pth_2} से {ratio} अनुपात में फ्यूज किया गया है।",
     "not_found_create_time": "निर्माण समय नहीं मिला।",
     "format_not_valid": "अमान्य प्रारूप।",
     "read_info": "विभिन्न एप्लिकेशन पर प्रशिक्षित मॉडल अलग-अलग जानकारी दे सकते हैं या पठनीय नहीं हो सकते!",
@@ -331,9 +329,6 @@
     "model_ratio": "मॉडल अनुपात",
     "model_ratio_info": "एक तरफ़ समायोजित करने से मॉडल उस तरफ़ ज़्यादा जैसा होगा",
     "output_model_path": "मॉडल आउटपुट पथ",
-    "fushion": "मॉडल फ्यूजन",
-    "fushion_markdown": "## दो मॉडल फ्यूज करें",
-    "fushion_markdown_2": "दो वॉयस मॉडल को एक मॉडल में संयोजित करें",
     "read_model": "जानकारी पढ़ें",
     "read_model_markdown": "## मॉडल जानकारी पढ़ें",
     "read_model_markdown_2": "मॉडल के भीतर दर्ज जानकारी प्राप्त करें",
@@ -804,5 +799,10 @@
     "audio_output": "ऑडियो आउटपुट",
     "model_name_placeholder": "मूल नाम उपयोग करने के लिए खाली छोड़ें",
     "d_model_url": "D मॉडल URL",
-    "g_model_url": "G मॉडल URL"
+    "g_model_url": "G मॉडल URL",
+    "fusion": "मॉडल फ्यूजन",
+    "fusion_markdown": "## दो मॉडल फ्यूज करें",
+    "fusion_markdown_2": "दो वॉयस मॉडल को एक मॉडल में संयोजित करें",
+    "fusion_model": "मॉडल फ्यूजन",
+    "model_fusion_info": "मॉडल {name} {pth_1} और {pth_2} से {ratio} अनुपात में फ्यूज किया गया है।"
 }

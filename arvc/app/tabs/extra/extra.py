@@ -1,11 +1,8 @@
-import os
-import sys
-
 import gradio as gr
 
 
 from arvc.utils.variables import translations, configs
-from arvc.app.tabs.extra.child.fushion import fushion_tab
+from arvc.app.tabs.extra.child.fusion import fusion_tab
 from arvc.app.tabs.extra.child.read_model import read_model_tab
 from arvc.app.tabs.extra.child.f0_extract import f0_extract_tab
 from arvc.app.tabs.extra.child.create_srt import create_srt_tab
@@ -27,9 +24,9 @@ def extra_tab(app):
                     "rmvpe_high_register tab failed: %s", exc
                 )
 
-        with gr.TabItem(translations["fushion"], visible=configs.get("fusion_tab", True)):
-            gr.Markdown(translations["fushion_markdown"])
-            fushion_tab()
+        with gr.TabItem(translations["fusion"], visible=configs.get("fusion_tab", True)):
+            gr.Markdown(translations["fusion_markdown"])
+            fusion_tab()
 
         with gr.TabItem(translations["read_model"], visible=configs.get("read_tab", True)):
             gr.Markdown(translations["read_model_markdown"])

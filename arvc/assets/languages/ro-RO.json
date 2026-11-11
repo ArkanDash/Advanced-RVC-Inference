@@ -29,8 +29,6 @@
     "provide_pretrain": "Vă rugăm să furnizați un URL de model pre-antrenat {dg}.",
     "sr_not_same": "Ratale de eșantionare ale celor două modele nu sunt aceleași.",
     "architectures_not_same": "Nu se pot fuziona modelele. Arhitecturile nu sunt aceleași.",
-    "fushion_model": "fuziune de modele",
-    "model_fushion_info": "Modelul {name} este fuzionat din {pth_1} și {pth_2} cu un raport de {ratio}.",
     "not_found_create_time": "Timpul de creare nu a fost găsit.",
     "format_not_valid": "Format invalid.",
     "read_info": "Modelele antrenate pe aplicații diferite pot produce informații diferite sau pot fi necitibile!",
@@ -331,9 +329,6 @@
     "model_ratio": "Raportul modelului",
     "model_ratio_info": "Ajustarea într-o direcție va face modelul mai asemănător cu acea parte",
     "output_model_path": "Calea de ieșire a modelului",
-    "fushion": "Fuziune de modele",
-    "fushion_markdown": "## Fuziunea a două modele",
-    "fushion_markdown_2": "Combinați două modele vocale într-un singur model",
     "read_model": "Citiți informații",
     "read_model_markdown": "## Citiți informațiile modelului",
     "read_model_markdown_2": "Retrageți informațiile înregistrate în cadrul modelului",
@@ -804,5 +799,10 @@
     "audio_output": "Ieșire audio",
     "model_name_placeholder": "Lăsați gol pentru a folosi numele original",
     "d_model_url": "URL model D",
-    "g_model_url": "URL model G"
+    "g_model_url": "URL model G",
+    "fusion": "Fuziune de modele",
+    "fusion_markdown": "## Fuziunea a două modele",
+    "fusion_markdown_2": "Combinați două modele vocale într-un singur model",
+    "fusion_model": "fuziune de modele",
+    "model_fusion_info": "Modelul {name} este fuzionat din {pth_1} și {pth_2} cu un raport de {ratio}."
 }

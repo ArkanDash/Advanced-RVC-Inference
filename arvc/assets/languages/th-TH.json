@@ -29,8 +29,6 @@
     "provide_pretrain": "โปรดระบุ URL โมเดลที่ฝึกไว้ล่วงหน้า {dg}",
     "sr_not_same": "อัตราตัวอย่างของทั้งสองโมเดลไม่เหมือนกัน",
     "architectures_not_same": "ไม่สามารถผสานโมเดลได้ สถาปัตยกรรมไม่เหมือนกัน",
-    "fushion_model": "การผสานโมเดล",
-    "model_fushion_info": "โมเดล {name} ถูกผสานจาก {pth_1} และ {pth_2} ด้วยอัตราส่วน {ratio}",
     "not_found_create_time": "ไม่พบเวลาสร้าง",
     "format_not_valid": "รูปแบบไม่ถูกต้อง",
     "read_info": "โมเดลที่ฝึกบนแอปพลิเคชันต่างกันอาจให้ข้อมูลต่างกันหรือไม่สามารถอ่านได้!",
@@ -331,9 +329,6 @@
     "model_ratio": "อัตราส่วนโมเดล",
     "model_ratio_info": "การปรับไปทางใดทางหนึ่งจะทำให้โมเดลเหมือนทางนั้นมากขึ้น",
     "output_model_path": "พาธเอาต์พุตโมเดล",
-    "fushion": "การผสานโมเดล",
-    "fushion_markdown": "## ผสานสองโมเดล",
-    "fushion_markdown_2": "รวมโมเดลเสียงสองโมเดลเป็นโมเดลเดียว",
     "read_model": "อ่านข้อมูล",
     "read_model_markdown": "## อ่านข้อมูลโมเดล",
     "read_model_markdown_2": "ดึงข้อมูลที่บันทึกไว้ภายในโมเดล",
@@ -804,5 +799,10 @@
     "audio_output": "เอาต์พุตเสียง",
     "model_name_placeholder": "เว้นว่างไว้เพื่อใช้ชื่อเดิม",
     "d_model_url": "URL โมเดล D",
-    "g_model_url": "URL โมเดล G"
+    "g_model_url": "URL โมเดล G",
+    "fusion": "การผสานโมเดล",
+    "fusion_markdown": "## ผสานสองโมเดล",
+    "fusion_markdown_2": "รวมโมเดลเสียงสองโมเดลเป็นโมเดลเดียว",
+    "fusion_model": "การผสานโมเดล",
+    "model_fusion_info": "โมเดล {name} ถูกผสานจาก {pth_1} และ {pth_2} ด้วยอัตราส่วน {ratio}"
 }

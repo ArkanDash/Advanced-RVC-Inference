@@ -29,8 +29,6 @@
     "provide_pretrain": "Oppgi en forhåndstrent modell-URL {dg}.",
     "sr_not_same": "Samplingsfrekvensene til de to modellene er ikke like.",
     "architectures_not_same": "Kan ikke slå sammen modeller. Arkitekturene er ikke like.",
-    "fushion_model": "modellfusjon",
-    "model_fushion_info": "Modellen {name} er fusjonert fra {pth_1} og {pth_2} med en forholdstall på {ratio}.",
     "not_found_create_time": "Opprettingstid ikke funnet.",
     "format_not_valid": "Ugyldig format.",
     "read_info": "Modeller trent på forskjellige applikasjoner kan gi ulik informasjon eller kan være uleselige!",
@@ -331,9 +329,6 @@
     "model_ratio": "Modellforhold",
     "model_ratio_info": "Justering mot den ene siden vil gjøre modellen mer lik den aktuelle siden",
     "output_model_path": "Modell-utdatasti",
-    "fushion": "Modellfusjon",
-    "fushion_markdown": "## Fuser To Modeller",
-    "fushion_markdown_2": "Kombiner to stemmemodeller til én modell",
     "read_model": "Les Informasjon",
     "read_model_markdown": "## Les Modellinformasjon",
     "read_model_markdown_2": "Hent registrert informasjon inne i modellen",
@@ -804,5 +799,10 @@
     "audio_output": "Lydutgang",
     "model_name_placeholder": "La stå tomt for å bruke opprinnelig navn",
     "d_model_url": "D-modell-URL",
-    "g_model_url": "G-modell-URL"
+    "g_model_url": "G-modell-URL",
+    "fusion": "Modellfusjon",
+    "fusion_markdown": "## Fuser To Modeller",
+    "fusion_markdown_2": "Kombiner to stemmemodeller til én modell",
+    "fusion_model": "modellfusjon",
+    "model_fusion_info": "Modellen {name} er fusjonert fra {pth_1} og {pth_2} med en forholdstall på {ratio}."
 }

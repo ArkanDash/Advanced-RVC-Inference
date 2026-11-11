@@ -12,7 +12,7 @@ from arvc.utils.variables import config, logger, translations, configs
 # SECURITY PATCH: hardened checkpoint loading — never use weights_only=False.
 from arvc.engine.rvc.models.safe_load import safe_torch_load
 
-def fushion_model_pth(name, pth_1, pth_2, ratio):
+def fusion_model_pth(name, pth_1, pth_2, ratio):
     if not name.endswith(".pth"): name = name + ".pth"
 
     if not pth_1 or not os.path.exists(pth_1) or not pth_1.endswith(".pth"):
@@ -61,7 +61,7 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
             gr_warning(translations["architectures_not_same"])
             return [translations["architectures_not_same"], None]
          
-        gr_info(translations["start"].format(start=translations["fushion_model"]))
+        gr_info(translations["start"].format(start=translations["fusion_model"]))
 
         opt = OrderedDict()
         opt["weight"] = {}
@@ -76,7 +76,7 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
         opt["sr"] = cfg_sr
         opt["f0"] = cfg_f0
         opt["version"] = cfg_version
-        opt["infos"] = translations["model_fushion_info"].format(name=name, pth_1=pth_1, pth_2=pth_2, ratio=ratio)
+        opt["infos"] = translations["model_fusion_info"].format(name=name, pth_1=pth_1, pth_2=pth_2, ratio=ratio)
         opt["vocoder"] = vocoder
         opt["energy"] = rms_extract
 
@@ -91,12 +91,12 @@ def fushion_model_pth(name, pth_1, pth_2, ratio):
         gr_error(message=translations["error_occurred"].format(e=e))
         return [e, None]
 
-def fushion_model(name, path_1, path_2, ratio):
+def fusion_model(name, path_1, path_2, ratio):
     if not name:
         gr_warning(translations["provide_name_is_save"]) 
         return [translations["provide_name_is_save"], None]
 
-    if path_1.endswith(".pth") and path_2.endswith(".pth"): return fushion_model_pth(name, path_1, path_2, ratio)
+    if path_1.endswith(".pth") and path_2.endswith(".pth"): return fusion_model_pth(name, path_1, path_2, ratio)
     else:
         gr_warning(translations["format_not_valid"])
         return [None, None]

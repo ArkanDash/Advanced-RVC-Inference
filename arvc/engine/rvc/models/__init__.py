@@ -14,7 +14,6 @@ __all__ = [
     "predictors",
     "onnx",
     "optimizers",
-    "speaker",
 ]
 
 # Lazy imports for models modules
@@ -27,7 +26,6 @@ _LAZY_MODULES = {
     "predictors": ".predictors",
     "onnx": ".onnx",
     "optimizers": ".optimizers",
-    "speaker": ".speaker",
 }
 
 

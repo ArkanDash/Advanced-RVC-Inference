@@ -29,8 +29,6 @@
     "provide_pretrain": "请提供一个预训练模型网址 {dg}。",
     "sr_not_same": "两个模型的采样率不相同。",
     "architectures_not_same": "无法合并模型。架构不相同。",
-    "fushion_model": "模型融合",
-    "model_fushion_info": "模型 {name} 是从 {pth_1} 和 {pth_2} 以 {ratio} 的比例融合而成的。",
     "not_found_create_time": "未找到创建时间。",
     "format_not_valid": "格式无效。",
     "read_info": "在不同应用程序上训练的模型可能会产生不同的信息，或者可能无法读取！",
@@ -331,9 +329,6 @@
     "model_ratio": "模型比例",
     "model_ratio_info": "Adjusting towards one side will make the model more like that side",
     "output_model_path": "Model output path",
-    "fushion": "Model Fusion",
-    "fushion_markdown": "## Fushion Two Models",
-    "fushion_markdown_2": "Combine two voice models into a single model",
     "read_model": "Read Information",
     "read_model_markdown": "## Read Model Information",
     "read_model_markdown_2": "Retrieve recorded information within the model",
@@ -804,5 +799,10 @@
     "audio_output": "音频输出",
     "model_name_placeholder": "留空则使用原始名称",
     "d_model_url": "D模型链接",
-    "g_model_url": "G模型链接"
+    "g_model_url": "G模型链接",
+    "fusion": "Model Fusion",
+    "fusion_markdown": "## Fushion Two Models",
+    "fusion_markdown_2": "Combine two voice models into a single model",
+    "fusion_model": "模型融合",
+    "model_fusion_info": "模型 {name} 是从 {pth_1} 和 {pth_2} 以 {ratio} 的比例融合而成的。"
 }

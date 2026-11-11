@@ -29,8 +29,6 @@
     "provide_pretrain": "Geef een voorgetraind model-url op {dg}.",
     "sr_not_same": "De sample rates van de twee modellen zijn niet hetzelfde.",
     "architectures_not_same": "Kan modellen niet samenvoegen. De architecturen zijn niet hetzelfde.",
-    "fushion_model": "modelfusie",
-    "model_fushion_info": "Het model {name} is samengevoegd uit {pth_1} en {pth_2} met een verhouding van {ratio}.",
     "not_found_create_time": "Aanmaaktijd niet gevonden.",
     "format_not_valid": "Ongeldig formaat.",
     "read_info": "Modellen die op verschillende applicaties zijn getraind, kunnen verschillende informatie produceren of mogelijk niet leesbaar zijn!",
@@ -331,9 +329,6 @@
     "model_ratio": "Modelverhouding",
     "model_ratio_info": "Aanpassen naar één kant maakt het model meer op die kant lijken",
     "output_model_path": "Model-uitvoerpad",
-    "fushion": "Modelfusie",
-    "fushion_markdown": "## Twee Modellen Fuseren",
-    "fushion_markdown_2": "Combineer twee stemmodellen tot één model",
     "read_model": "Informatie Lezen",
     "read_model_markdown": "## Modelinformatie Lezen",
     "read_model_markdown_2": "Haal opgeslagen informatie uit het model op",
@@ -804,5 +799,10 @@
     "audio_output": "Audio-uitvoer",
     "model_name_placeholder": "Laat leeg om de originele naam te gebruiken",
     "d_model_url": "D-model-URL",
-    "g_model_url": "G-model-URL"
+    "g_model_url": "G-model-URL",
+    "fusion": "Modelfusie",
+    "fusion_markdown": "## Twee Modellen Fuseren",
+    "fusion_markdown_2": "Combineer twee stemmodellen tot één model",
+    "fusion_model": "modelfusie",
+    "model_fusion_info": "Het model {name} is samengevoegd uit {pth_1} en {pth_2} met een verhouding van {ratio}."
 }

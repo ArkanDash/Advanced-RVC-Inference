@@ -29,8 +29,6 @@
     "provide_pretrain": "Önceden eğitilmiş model url'si sağlayın {dg}.",
     "sr_not_same": "İki modelin örnekleme oranları aynı değil.",
     "architectures_not_same": "Modeller birleştirilemiyor. Mimariler aynı değil.",
-    "fushion_model": "model füzyonu",
-    "model_fushion_info": "{name} modeli, {pth_1} ve {pth_2} modellerinden {ratio} oranıyla birleştirildi.",
     "not_found_create_time": "Oluşturma zamanı bulunamadı.",
     "format_not_valid": "Geçersiz format.",
     "read_info": "Farklı uygulamalarda eğitilen modeller farklı bilgiler üretebilir veya okunamayabilir!",
@@ -331,9 +329,6 @@
     "model_ratio": "Model oranı",
     "model_ratio_info": "Bir tarafa kaydırma modeli o tarafa daha benzer yapar",
     "output_model_path": "Model çıkış yolu",
-    "fushion": "Model Füzyonu",
-    "fushion_markdown": "## İki Modeli Birleştir",
-    "fushion_markdown_2": "İki ses modelini tek bir modelde birleştir",
     "read_model": "Bilgiyi Oku",
     "read_model_markdown": "## Model Bilgisini Oku",
     "read_model_markdown_2": "Model içinde kaydedilmiş bilgiyi alın",
@@ -804,5 +799,10 @@
     "audio_output": "Ses çıkışı",
     "model_name_placeholder": "Orijinal adı kullanmak için boş bırakın",
     "d_model_url": "D Model URL'si",
-    "g_model_url": "G Model URL'si"
+    "g_model_url": "G Model URL'si",
+    "fusion": "Model Füzyonu",
+    "fusion_markdown": "## İki Modeli Birleştir",
+    "fusion_markdown_2": "İki ses modelini tek bir modelde birleştir",
+    "fusion_model": "model füzyonu",
+    "model_fusion_info": "{name} modeli, {pth_1} ve {pth_2} modellerinden {ratio} oranıyla birleştirildi."
 }

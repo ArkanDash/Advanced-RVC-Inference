@@ -29,8 +29,6 @@
     "provide_pretrain": "لطفاً URL مدل پیش‌آموزش‌دیده {dg} را ارائه دهید.",
     "sr_not_same": "نرخ نمونه‌برداری دو مدل یکسان نیست.",
     "architectures_not_same": "ادغام مدل‌ها امکان‌پذیر نیست. معماری‌ها یکسان نیستند.",
-    "fushion_model": "ادغام مدل",
-    "model_fushion_info": "مدل {name} از {pth_1} و {pth_2} با نسبت {ratio} ادغام شده است.",
     "not_found_create_time": "زمان ساخت یافت نشد.",
     "format_not_valid": "فرمت نامعتبر.",
     "read_info": "مدل‌های آموزش‌دیده در برنامه‌های مختلف ممکن است اطلاعات متفاوتی تولید کنند یا قابل خواندن نباشند!",
@@ -331,9 +329,6 @@
     "model_ratio": "نسبت مدل",
     "model_ratio_info": "تنظیم به سمت یک طرف باعث می‌شود مدل بیشتر شبیه آن طرف شود",
     "output_model_path": "مسیر خروجی مدل",
-    "fushion": "ادغام مدل",
-    "fushion_markdown": "## ادغام دو مدل",
-    "fushion_markdown_2": "ترکیب دو مدل صوتی در یک مدل واحد",
     "read_model": "خواندن اطلاعات",
     "read_model_markdown": "## خواندن اطلاعات مدل",
     "read_model_markdown_2": "بازیابی اطلاعات ثبت‌شده درون مدل",
@@ -804,5 +799,10 @@
     "audio_output": "خروجی صدا",
     "model_name_placeholder": "برای استفاده از نام اصلی خالی بگذارید",
     "d_model_url": "URL مدل D",
-    "g_model_url": "URL مدل G"
+    "g_model_url": "URL مدل G",
+    "fusion": "ادغام مدل",
+    "fusion_markdown": "## ادغام دو مدل",
+    "fusion_markdown_2": "ترکیب دو مدل صوتی در یک مدل واحد",
+    "fusion_model": "ادغام مدل",
+    "model_fusion_info": "مدل {name} از {pth_1} و {pth_2} با نسبت {ratio} ادغام شده است."
 }

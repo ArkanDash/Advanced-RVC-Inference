@@ -29,8 +29,6 @@
     "provide_pretrain": "사전 학습된 모델 URL {dg}을(를) 입력해 주세요.",
     "sr_not_same": "두 모델의 샘플레이트가 같지 않습니다.",
     "architectures_not_same": "모델을 병합할 수 없습니다. 아키텍처가 같지 않습니다.",
-    "fushion_model": "모델 융합",
-    "model_fushion_info": "모델 {name}은(는) {pth_1}과(와) {pth_2}를 비율 {ratio}로 융합한 것입니다.",
     "not_found_create_time": "생성 시간을 찾을 수 없습니다.",
     "format_not_valid": "잘못된 형식입니다.",
     "read_info": "다른 애플리케이션에서 학습된 모델은 다른 정보를 생성하거나 읽을 수 없을 수 있습니다!",
@@ -331,9 +329,6 @@
     "model_ratio": "모델 비율",
     "model_ratio_info": "한쪽으로 조정하면 모델이 그쪽에 더 가까워집니다",
     "output_model_path": "모델 출력 경로",
-    "fushion": "모델 융합",
-    "fushion_markdown": "## 두 모델 융합",
-    "fushion_markdown_2": "두 개의 음성 모델을 하나의 모델로 결합",
     "read_model": "정보 읽기",
     "read_model_markdown": "## 모델 정보 읽기",
     "read_model_markdown_2": "모델 내에 기록된 정보 검색",
@@ -804,5 +799,10 @@
     "audio_output": "오디오 출력",
     "model_name_placeholder": "비워두면 원래 이름 사용",
     "d_model_url": "D 모델 URL",
-    "g_model_url": "G 모델 URL"
+    "g_model_url": "G 모델 URL",
+    "fusion": "모델 융합",
+    "fusion_markdown": "## 두 모델 융합",
+    "fusion_markdown_2": "두 개의 음성 모델을 하나의 모델로 결합",
+    "fusion_model": "모델 융합",
+    "model_fusion_info": "모델 {name}은(는) {pth_1}과(와) {pth_2}를 비율 {ratio}로 융합한 것입니다."
 }
