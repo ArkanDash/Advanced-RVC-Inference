@@ -220,6 +220,31 @@ def launch(
                     logger.error(f"Failed to build extra tab: {tab_err}")
                     import traceback; logger.error(traceback.format_exc().strip())
 
+                # ---- Plugins & Report tabs (ported from Applio) ----
+                try:
+                    from arvc.app.tabs.plugins.plugins import plugins_tab as _plugins_tab
+                    with gr.TabItem(translations.get("plugins", "Plugins")):
+                        try:
+                            _plugins_tab(app)
+                        except Exception as plug_err:
+                            logger.error(f"Failed to build plugins tab: {plug_err}")
+                            import traceback; logger.error(traceback.format_exc().strip())
+                except Exception as import_err:
+                    logger.error(f"Failed to import plugins_tab: {import_err}")
+                    import traceback; logger.error(traceback.format_exc().strip())
+
+                try:
+                    from arvc.app.tabs.report.report import report_tab as _report_tab
+                    with gr.TabItem(translations.get("report", "Report")):
+                        try:
+                            _report_tab()
+                        except Exception as rep_err:
+                            logger.error(f"Failed to build report tab: {rep_err}")
+                            import traceback; logger.error(traceback.format_exc().strip())
+                except Exception as import_err:
+                    logger.error(f"Failed to import report_tab: {import_err}")
+                    import traceback; logger.error(traceback.format_exc().strip())
+
                 # ---- Terminal tab (ported from Applio) ----
                 try:
                     from arvc.app.tabs.terminal.terminal import terminal_tab as _terminal_tab
@@ -471,6 +496,27 @@ def create_app():
                 
                 with gr.TabItem("Extra"):
                     extra_tab(app)
+
+                # ---- Plugins & Report tabs (ported from Applio) ----
+                try:
+                    from arvc.app.tabs.plugins.plugins import plugins_tab as _plugins_tab
+                    with gr.TabItem(translations.get("plugins", "Plugins")):
+                        try:
+                            _plugins_tab(app)
+                        except Exception as plug_err:  # noqa: BLE001
+                            logger.warning(f"Plugins tab build failed: {plug_err}")
+                except Exception as import_err:  # noqa: BLE001
+                    logger.warning(f"Plugins tab import failed: {import_err}")
+
+                try:
+                    from arvc.app.tabs.report.report import report_tab as _report_tab
+                    with gr.TabItem(translations.get("report", "Report")):
+                        try:
+                            _report_tab()
+                        except Exception as rep_err:  # noqa: BLE001
+                            logger.warning(f"Report tab build failed: {rep_err}")
+                except Exception as import_err:  # noqa: BLE001
+                    logger.warning(f"Report tab import failed: {import_err}")
 
                 if _terminal_tab is not None:
                     with gr.TabItem(translations.get("terminal", "Terminal")):

@@ -91,7 +91,7 @@ app/
     │   ├── convert_model.py
     │   ├── create_srt.py
     │   ├── f0_extract.py
-    │   ├── fushion.py
+    │   ├── fusion.py
     │   ├── read_model.py
     │   └── settings.py
     ├── inference/inference.py
@@ -100,6 +100,8 @@ app/
     │   ├── convert_tts.py
     │   ├── convert_with_whisper.py
     │   └── separate.py
+    ├── plugins/plugins.py        # Plugin installer + plugin tabs (Applio parity)
+    ├── report/report.py          # Screen-recording bug report tab (Applio parity)
     ├── realtime/
     │   ├── realtime.py
     │   └── realtime_client.py

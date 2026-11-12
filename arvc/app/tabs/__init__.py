@@ -10,6 +10,8 @@ __all__ = [
     "training_tab",
     "downloads_tab",
     "extra_tab",
+    "plugins_tab",
+    "report_tab",
 ]
 
 
@@ -46,3 +48,17 @@ def extra_tab(app=None):
     from .extra.extra import extra_tab as tab
 
     return tab(app)
+
+
+def plugins_tab(app=None):
+    """Load and return the plugins tab (ported from Applio)."""
+    from .plugins.plugins import plugins_tab as tab
+
+    return tab(app)
+
+
+def report_tab():
+    """Load and return the report tab (ported from Applio)."""
+    from .report.report import report_tab as tab
+
+    return tab()
