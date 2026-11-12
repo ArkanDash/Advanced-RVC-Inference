@@ -283,11 +283,14 @@ def _build_device_list(gpus, auto_device):
         )
 
     if not valid_devices:
+        # All requested indices were invalid, but the auto-detected device is
+        # known-good (it passed the availability checks above) — prefer it
+        # over falling back to CPU, which would make extraction much slower.
         logger.warning(
-            f"All requested GPU indices were invalid. Falling back to CPU "
-            f"for extraction (will be slower)."
+            f"All requested GPU indices were invalid. "
+            f"Falling back to the auto-detected device {auto_device!r}."
         )
-        return ["cpu"]
+        return [auto_device]
 
     return valid_devices
 

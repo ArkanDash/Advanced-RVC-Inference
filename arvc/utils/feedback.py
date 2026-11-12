@@ -390,11 +390,27 @@ def get_gpu_info():
 
 
 def gpu_number_str():
-    """Return the number of available GPUs as a string."""
+    """Return the default GPU index list for training/extraction widgets.
+
+    BUG FIX: this used to return the *number* of GPUs (e.g. "1" on a
+    single-GPU machine), but the value is consumed as a list of GPU
+    *indices* (parsed as ``int(gpu) for gpu in value.split("-")`` in the
+    training/extract subprocesses). On a 1-GPU machine the old default
+    made every training job request the non-existent index 1 and fall
+    back to CPU:
+
+        WARNING GPU index(es) [1] are out of range for backend 'cuda'
+        (only 1 device(s) available: indices 0..0). Dropping invalid
+        indices. Valid devices kept: []
+
+    Return the correct index list instead: "0" for one GPU, "0-1" for
+    two, and "0" as a safe default when no GPU is present.
+    """
     try:
         import torch
         if torch.cuda.is_available():
-            return str(torch.cuda.device_count())
+            count = max(1, torch.cuda.device_count())
+            return "-".join(str(i) for i in range(count))
         return "0"
     except Exception:
         return "0"

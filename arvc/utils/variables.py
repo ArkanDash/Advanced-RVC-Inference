@@ -133,6 +133,15 @@ class Config:
         self.brain = self.configs.get("brain", False)
         self.debug_mode = self.configs.get("debug_mode", False)
 
+        # ── Resolve relative paths from config.json to absolute paths ──────
+        # The values in config.json are relative to the project root (e.g.
+        # "arvc/assets/logs"). Subprocesses (extract / preprocess / train /
+        # convert) may run with a working directory different from the
+        # project root, so every path must be resolved here — otherwise
+        # they raise FileNotFoundError like
+        #   [Errno 2] No such file or directory: 'arvc/assets/logs/<model>/sliced_audios_16k'
+        self._resolve_config_paths()
+
         self.json_config = self._load_version_configs()
         self.translations = self._load_translations()
 
@@ -210,6 +219,31 @@ class Config:
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Failed to load {path}: {e}")
             return {}
+
+    def _resolve_config_paths(self):
+        """Resolve every relative path in ``configs`` to an absolute path.
+
+        Relative values are interpreted against the project root (the parent
+        of the ``arvc`` package). Values that are already absolute are kept
+        as-is, so a config.json saved on another machine still works.
+        """
+        path_keys = [
+            "convert_path", "separate_path", "create_dataset_path", "preprocess_path",
+            "extract_path", "create_index_path", "train_path", "create_reference_path",
+            "csv_path", "weights_path", "logs_path", "datasets_path", "binary_path", "f0_path",
+            "language_path", "presets_path", "embedders_path", "predictors_path",
+            "pretrained_custom_path", "pretrained_v1_path", "pretrained_v2_path",
+            "speaker_diarization_path", "uvr5_path", "audios_path", "uvr_path",
+            "reference_path",
+        ]
+        project_root = str(PACKAGE_ROOT.parent)
+        for key in path_keys:
+            value = self.configs.get(key)
+            if not value:
+                continue
+            if os.path.isabs(str(value)):
+                continue
+            self.configs[key] = os.path.normpath(os.path.join(project_root, str(value)))
 
     def _load_version_configs(self) -> Dict[str, Any]:
         """Load version-specific configuration files."""
