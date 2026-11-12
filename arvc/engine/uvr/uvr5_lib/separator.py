@@ -15,14 +15,14 @@ from importlib import import_module
 # import chain: create_dataset.py → separate_music.py → separator.py.
 # Use lazy import so the rest of the module works even when onnxruntime
 # is broken — the ONNX code paths just become unavailable.
-from arvc.engine.rvc.models.safe_load import safe_onnxruntime_import
+from arvc.engine.rvc.lib.safe_load import safe_onnxruntime_import
 onnxruntime = safe_onnxruntime_import()
 
 now_dir = os.getcwd()
 sys.path.append(now_dir)
 
-from arvc.engine.rvc.models.utils import clear_gpu_cache
-from arvc.engine.rvc.models.backends import directml, opencl
+from arvc.engine.rvc.lib.utils import clear_gpu_cache
+from arvc.engine.rvc.lib.backends import directml, opencl
 from arvc.downloader.huggingface import HF_download_file
 from arvc.utils.variables import config, translations
 
@@ -193,7 +193,7 @@ class Separator:
         # SECURITY PATCH: was `yaml.load(..., Loader=yaml.FullLoader)` — FullLoader
         # is NOT safe against arbitrary Python object construction via custom tags.
         # Use safe_load which only allows primitive types.
-        from arvc.engine.rvc.models.safe_load import safe_yaml_load
+        from arvc.engine.rvc.lib.safe_load import safe_yaml_load
         with open(model_data_yaml_filepath, encoding="utf-8") as f:
             model_data = safe_yaml_load(f)
         return model_data

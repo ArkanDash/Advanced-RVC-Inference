@@ -180,7 +180,9 @@ The heart of the project. All actual ML work happens here.
 engine/
 ├── __init__.py
 │
-├── inference/                # Voice-conversion inference
+├── rvc/                      # RVC engine (infer / lib / modules / train)
+│
+├── infer/                    # Voice-conversion inference (RVC infer only)
 │   ├── __init__.py
 │   ├── audio_processing.py   # Audio I/O helpers (load, resample, format convert)
 │   ├── convert.py            # Top-level convert_audio / convert_selection
@@ -189,7 +191,7 @@ engine/
 │   ├── noisereduce.py        # TorchGate noise-reduction utility
 │   └── pipeline.py           # Pipeline orchestration (model load → infer → postprocess)
 │
-├── models/                   # All model definitions + loaders
+├── lib/                      # Core model library (definitions + loaders)
 │   ├── __init__.py
 │   ├── safe_load.py          # safe_torch_load + pickle.Unpickler whitelist
 │   ├── utils.py              # Model load/download/cache helpers
@@ -203,14 +205,16 @@ engine/
 │   │   └── generators/       # Generator-internal blocks
 │   ├── backends/             # Device backends
 │   │   ├── directml.py, opencl.py, zluda.py, utils.py
-│   ├── embedders/            # Content embedders
-│   │   ├── fairseq.py, onnx.py, ppg.py, transformers.py
 │   ├── generators/           # Vocoders
 │   │   ├── hifigan.py, bigvgan.py, mrf_hifigan.py, refinegan.py, nsf_hifigan.py
 │   ├── onnx/                 # ONNX export + wrapper
 │   │   ├── onnx_export.py, wrapper.py
-│   ├── optimizers/           # Custom optimizers
-│   │   ├── adabelief.py, adabeliefv2.py, anyprecision_optimizer.py, polopt.py
+│   └── optimizers/           # Custom optimizers
+│       ├── adabelief.py, adabeliefv2.py, anyprecision_optimizer.py, polopt.py
+│
+├── modules/                  # Pluggable neural modules
+│   ├── embedders/            # Content embedders
+│   │   ├── fairseq.py, onnx.py, ppg.py, transformers.py
 │   └── predictors/           # F0 predictors (each in its own subpackage)
 │       ├── Generator.py      # Top-level F0 generator facade
 │       ├── CREPE/, DJCM/, FCPE/, PENN/, PESTO/, RMVPE/, SWIFT/, WORLD/
@@ -228,7 +232,7 @@ engine/
 │   ├── audio.py, features.py, segment.py
 │   ├── parameter_transfer.py, speechbrain.py, whisper.py
 │
-├── training/                 # Training pipeline
+├── train/                    # Training pipeline
 │   ├── __init__.py
 │   ├── create_dataset.py     # Dataset prep orchestration
 │   ├── create_index.py       # FAISS index creation
@@ -389,7 +393,7 @@ scripts and downstream forks, the following shims are in place:
   every downloader / service module.
 
 If you maintain a fork that imported e.g. `arvc.utils.noisereduce` directly,
-update to `arvc.engine.rvc.inference.noisereduce`. The other moves are
+update to `arvc.engine.rvc.infer.noisereduce`. The other moves are
 backward-compatible thanks to the re-export shims.
 
 ---
@@ -401,7 +405,7 @@ backward-compatible thanks to the re-export shims.
 - **`arvc/utils/`** slimmed down:
   - 5 file-host downloaders (`gdown`, `huggingface`, `mediafire`, `meganz`,
     `pixeldrain`) moved into a new `arvc/utils/downloaders/` subpackage.
-  - `noisereduce.py` moved to `arvc/engine/rvc/inference/noisereduce.py`
+  - `noisereduce.py` moved to `arvc/engine/rvc/infer/noisereduce.py`
     (it is a torch-dependent audio utility, belongs with the inference
     pipeline).
   - `utils/__init__.py` rewritten with a lazy-import `__getattr__` so
@@ -435,7 +439,7 @@ backward-compatible thanks to the re-export shims.
   - `arvc/app/tabs/terminal/terminal.py` — new Terminal tab mounted as a
     top-level `gr.TabItem`, polling the capture every 500 ms while visible.
 - **RMVPE high-register correction** (ported from Applio):
-  - `arvc/engine/rvc/models/predictors/high_register.py` — half-speed
+  - `arvc/engine/rvc/modules/predictors/high_register.py` — half-speed
     second pass + octave-class repair, with `true_pitch` and `fold` modes.
   - `arvc/app/tabs/extra/child/rmvpe_high_register.py` — Settings tab
     exposing `enabled` / `mode` / `f0_ceil`.

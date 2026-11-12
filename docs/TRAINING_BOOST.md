@@ -75,7 +75,7 @@ Applio exposes a single `bf16_adamw` flag that simultaneously:
 
 This patch wires the same shortcut into Advanced-RVC-Inference. See
 the `--bf16_adamw` argument definition and the optimizer override in
-`arvc/engine/rvc/training/runner/train.py`.
+`arvc/engine/rvc/train/runner/train.py`.
 
 ### Why bf16 is safe for vocal training (unlike fp16)
 

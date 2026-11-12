@@ -10,7 +10,7 @@ import numpy as np
 
 # ROBUSTNESS PATCH: was `import onnxruntime as ort` at module level.
 # Use safe import so the module doesn't crash on onnxruntime CUDA mismatch.
-from arvc.engine.rvc.models.safe_load import safe_onnxruntime_import
+from arvc.engine.rvc.lib.safe_load import safe_onnxruntime_import
 ort = safe_onnxruntime_import()
 
 from tqdm import tqdm

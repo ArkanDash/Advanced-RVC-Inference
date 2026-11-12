@@ -26,7 +26,7 @@ __all__ = [
 # still works) but are loaded only on first access.
 _LAZY_CLASSES = {
     # VoiceConverter lives in convert.py, not inference.py.
-    "RVCInference":  "arvc.engine.rvc.inference.convert:VoiceConverter",
+    "RVCInference":  "arvc.engine.rvc.infer.convert:VoiceConverter",
     "RVCConfig":     "arvc.utils.variables:Config",
     "RVCRealtime":   "arvc.engine.realtime.realtime:RVC_Realtime",
 }

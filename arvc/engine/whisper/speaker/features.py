@@ -23,7 +23,7 @@ def hook_on_loading_state_dict_checkpoint(state_dict):
 def torch_patched_state_dict_load(path, device="cpu"):
     # SECURITY PATCH: was `torch.load(path, map_location=device, weights_only=False)`.
     # Use safe_torch_load which forces weights_only=True.
-    from arvc.engine.rvc.models.safe_load import safe_torch_load
+    from arvc.engine.rvc.lib.safe_load import safe_torch_load
     return hook_on_loading_state_dict_checkpoint(safe_torch_load(path, map_location=device))
 
 @main_process_only
@@ -61,7 +61,7 @@ def _cycliclrloader(obj, path, end_of_epoch):
 
     try:
         # SECURITY PATCH: was weights_only=False
-        from arvc.engine.rvc.models.safe_load import safe_torch_load
+        from arvc.engine.rvc.lib.safe_load import safe_torch_load
         obj.load_state_dict(safe_torch_load(path, map_location="cpu"), strict=True)
     except TypeError:
         obj.load_state_dict(safe_torch_load(path, map_location="cpu"))
@@ -524,6 +524,6 @@ class InputNormalization(torch.nn.Module):
     def _load(self, path, end_of_epoch=False):
         del end_of_epoch  
         # SECURITY PATCH: was weights_only=False
-        from arvc.engine.rvc.models.safe_load import safe_torch_load
+        from arvc.engine.rvc.lib.safe_load import safe_torch_load
         stats = safe_torch_load(path, map_location="cpu")
         self._load_statistics_dict(stats)

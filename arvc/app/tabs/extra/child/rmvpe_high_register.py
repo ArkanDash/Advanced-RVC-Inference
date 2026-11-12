@@ -5,7 +5,7 @@ adapted to ARVC's existing ``arvc.utils.variables.configs`` config store and
 ``arvc.utils.variables.translations`` i18n dict.
 
 The actual correction logic lives next to the RMVPE predictor — see
-``arvc/engine/rvc/models/predictors/high_register.py``. This module only
+``arvc/engine/rvc/modules/predictors/high_register.py``. This module only
 handles the UI + persistence of the three user-facing knobs (``enabled``,
 ``mode``, ``f0_ceil``).
 """
@@ -27,7 +27,7 @@ from arvc.utils.variables import (
 )
 
 # Keep in sync with HIGH_REGISTER_DEFAULTS in
-# arvc/engine/rvc/models/predictors/high_register.py
+# arvc/engine/rvc/modules/predictors/high_register.py
 DEFAULTS = {"enabled": False, "mode": "true_pitch", "f0_ceil": 1250}
 MODES = ["true_pitch", "fold"]
 F0_CEIL_RANGE = (1000, 2000)

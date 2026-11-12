@@ -40,14 +40,14 @@ argv_is_allows = [
 # models) and `arvc.engine.uvr.*` (music separation). These were fixed to point at
 # the real modules so subcommand dispatch works.
 _CMD_MAP = {
-    "--convert": "arvc.engine.rvc.inference.convert",
-    "--create_dataset": "arvc.engine.rvc.training.create_dataset",
-    "--create_index": "arvc.engine.rvc.training.create_index",
-    "--extract": "arvc.engine.rvc.training.extract.extract",
-    "--preprocess": "arvc.engine.rvc.training.preprocess.preprocess",
+    "--convert": "arvc.engine.rvc.infer.convert",
+    "--create_dataset": "arvc.engine.rvc.train.create_dataset",
+    "--create_index": "arvc.engine.rvc.train.create_index",
+    "--extract": "arvc.engine.rvc.train.extract.extract",
+    "--preprocess": "arvc.engine.rvc.train.preprocess.preprocess",
     "--separator_music": "arvc.engine.uvr.separate_music",
-    "--train": "arvc.engine.rvc.training.runner.train",
-    "--create_reference": "arvc.engine.rvc.inference.create_reference",
+    "--train": "arvc.engine.rvc.train.runner.train",
+    "--create_reference": "arvc.engine.rvc.infer.create_reference",
 }
 
 

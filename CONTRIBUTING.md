@@ -84,14 +84,14 @@ arvc/
 |------------------|------------|
 | A new Gradio tab | `arvc/app/tabs/<domain>/<tab_name>.py` |
 | A new CLI subcommand | `arvc/app/api/cli.py` (or `arvc/app/api/cli_complete.py` for the legacy dispatcher) |
-| A new vocoder / optimizer / embedder / predictor / backend | `arvc/engine/rvc/models/<type>/<name>.py` (+ register in `__init__.py`) |
-| A new F0 predictor helper (e.g. high-register correction) | `arvc/engine/rvc/models/predictors/<name>.py` |
+| A new vocoder / optimizer / embedder / predictor / backend | `arvc/engine/rvc/lib/<type>/<name>.py` (+ register in `__init__.py`) |
+| A new F0 predictor helper (e.g. high-register correction) | `arvc/engine/rvc/modules/predictors/<name>.py` |
 | A new UVR5 separator variant | `arvc/engine/uvr/uvr5_lib/uvr/<variant>_separator.py` (+ register in `__init__.py`) |
 | A new file-host downloader | `arvc/downloader/<name>.py` (+ register in `__init__.py`) |
 | A new translation | `arvc/assets/languages/<locale>.json` (update `support_language` in `config.json`) |
 | A new model config | `arvc/configs/<version>/<sample_rate>.json` |
 | A new runtime config flag | `arvc/utils/variables.py` (Config class) + `config.json` schema |
-| A new audio-processing utility (torch-dependent) | `arvc/engine/rvc/inference/audio_processing.py` or a new module under `engine/rvc/inference/` |
+| A new audio-processing utility (torch-dependent) | `arvc/engine/rvc/infer/audio_processing.py` or a new module under `engine/rvc/infer/` |
 | A new headless-safe logging helper | `arvc/utils/feedback.py` |
 | A new built-in Gradio theme | `arvc/assets/themes/<Name>.py` (+ register in `arvc/assets/themes/loadThemes.py:BUILTIN_THEMES`) |
 | A new dark shell CSS rule | `arvc/assets/ui/shell.css` (gated by `configs["use_shell_css"]`) |
