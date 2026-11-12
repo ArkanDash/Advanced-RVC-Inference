@@ -102,6 +102,7 @@
     "use_url": "YouTube link",
     "url_audio": "Link audio",
     "downloads": "Downloads",
+    "tensorboard": "Tensorboard",
     "clean_strength": "Audio cleaning strength",
     "clean_strength_info": "Strength of the audio cleaner for filtering vocals during export",
     "input_output": "Audio input, output",

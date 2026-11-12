@@ -22,5 +22,5 @@ def training_tab():
 
         with gr.TabItem(translations["training_model"], visible=configs.get("training_tab", True)):
             training_model_tab()
-        with gr.Tabitem("Tensorboard"):
+        with gr.TabItem(translations.get("tensorboard", "Tensorboard")):
             tensorboard_tab() 
