@@ -47,7 +47,9 @@ def generate_config(rvc_version, sample_rate, model_path, architecture="RVC"):
         # directory, NOT the package root. When run from a different CWD
         # (CLI vs Gradio UI vs Colab), the config template was not found.
         # Use the package root based on this file's location instead.
-        _package_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        _package_root = os.path.dirname(os.path.abspath(__file__))
+        while _package_root != os.path.dirname(_package_root) and not os.path.isdir(os.path.join(_package_root, "arvc")):
+            _package_root = os.path.dirname(_package_root)
         src_config_path = os.path.join(
             _package_root,
             "arvc",

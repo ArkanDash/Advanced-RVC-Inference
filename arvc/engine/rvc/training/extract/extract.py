@@ -7,7 +7,9 @@ import warnings
 import torch.multiprocessing as mp
 
 # FIX: Ensure project root is in sys.path BEFORE any arvc imports
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+_project_root = os.path.dirname(os.path.abspath(__file__))
+while _project_root != os.path.dirname(_project_root) and not os.path.isdir(os.path.join(_project_root, "arvc")):
+    _project_root = os.path.dirname(_project_root)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 

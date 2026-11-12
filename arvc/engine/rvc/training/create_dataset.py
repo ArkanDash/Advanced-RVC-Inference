@@ -24,7 +24,9 @@ except ImportError:  # distutils was removed in Python 3.12
             return 0
         raise ValueError(f"invalid truth value {val!r}")
 # ── FIX: Ensure project root is in sys.path BEFORE any arvc imports ──
-_project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+_project_root = os.path.dirname(os.path.abspath(__file__))
+while _project_root != os.path.dirname(_project_root) and not os.path.isdir(os.path.join(_project_root, "arvc")):
+    _project_root = os.path.dirname(_project_root)
 if _project_root not in sys.path:
     sys.path.insert(0, _project_root)
 
@@ -73,7 +75,7 @@ def __getattr__(name):
 # the current working directory, NOT the package root. When run from a
 # different CWD (CLI vs Gradio UI), files were saved to wrong locations.
 # Use absolute paths based on this file's location.
-_PACKAGE_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+_PACKAGE_ROOT = os.path.join(_project_root, "arvc")
 dataset_temp = os.path.join(_PACKAGE_ROOT, "assets", "dataset_temp")
 DATASET_DIR = os.path.join(_PACKAGE_ROOT, "assets", "dataset")
 
