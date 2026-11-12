@@ -141,6 +141,52 @@ footer:not(.applio-footer) { display: none !important; }
 .applio-page h2 { font-size: 19px; }
 .applio-page h3 { font-size: 16px; }
 .applio-page .prose p { color: var(--app-muted); font-size: 13px; }
+/* ---- Inline code (`backticks`) and fenced code blocks. Gradio's defaults
+   (light-mode `neutral_100` fill, dark-mode `neutral_800` fill with inherited
+   muted text) are unreadable against the dark shell: backticked words in
+   Markdown descriptions render as a dark chip with dark text. Force a
+   readable combination for both inline code and code blocks, including the
+   Prism token colors, regardless of which color-scheme class Gradio applies. */
+.md :not(pre) > code,
+.md pre,
+.md pre[class*="language-"],
+.applio-page .prose :not(pre) > code,
+.applio-page pre,
+.applio-page pre[class*="language-"] {
+  background: rgba(255, 255, 255, .1) !important;
+  color: var(--app-heading) !important;
+}
+.md :not(pre) > code,
+.applio-page .prose :not(pre) > code {
+  border: 1px solid var(--app-border) !important;
+  border-radius: 5px;
+  padding: 1px 5px;
+  font-size: .92em;
+}
+.md pre,
+.applio-page pre {
+  background: #101012 !important;
+  border: 1px solid var(--app-border) !important;
+  color: var(--app-text) !important;
+}
+.md pre code,
+.applio-page pre code {
+  background: transparent !important;
+  border: 0 !important;
+  color: inherit !important;
+}
+/* Prism token colors tuned for the dark surface (Gradio's light-mode set uses
+   hues like #07a/#690 that vanish on #101012). */
+.md .token.comment, .md .token.prolog, .md .token.doctype, .md .token.cdata { color: #7f848e !important; }
+.md .token.punctuation { color: #abb2bf !important; }
+.md .token.property, .md .token.tag, .md .token.boolean, .md .token.number,
+.md .token.constant, .md .token.symbol, .md .token.deleted { color: #e06c75 !important; }
+.md .token.selector, .md .token.attr-name, .md .token.string, .md .token.char,
+.md .token.builtin, .md .token.inserted { color: #98c379 !important; }
+.md .token.atrule, .md .token.attr-value, .md .token.keyword { color: #c678dd !important; }
+.md .token.function, .md .token.class-name { color: #61afef !important; }
+.md .token.regex, .md .token.important, .md .token.variable { color: #d19a66 !important; }
+.md .token.operator, .md .token.entity, .md .token.url { color: var(--app-text) !important; }
 .applio-page .block { box-shadow: none; }
 .applio-page .block.hide-container { padding: 0 !important; border: 0; background: transparent; flex: 0 0 auto !important; }
 .applio-page .block > .wrap > label, .applio-page .block-label { background: transparent; color: var(--app-text); }

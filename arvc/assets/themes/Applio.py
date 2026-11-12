@@ -218,6 +218,12 @@ class Applio(Base):
             checkbox_label_text_size="*text_md",
             checkbox_label_text_weight="400",
             checkbox_shadow="*input_shadow",
+            # Code blocks / inline `code`: Gradio's default fill is light
+            # (`*neutral_100`) which leaves backticked Markdown text
+            # unreadable inside the dark shell. Pin both modes to a dark
+            # fill; readable text colors are enforced by assets/ui/shell.css.
+            code_background_fill="#101012",
+            code_background_fill_dark="#101012",
             color_accent="*primary_500",
             color_accent_soft="*primary_50",
             color_accent_soft_dark="*neutral_700",
