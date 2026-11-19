@@ -957,30 +957,55 @@ def run(
         d_path = os.path.join(checkpoint_path, "D_latest.pth") if save_only_latest else latest_checkpoint_path(checkpoint_path, "D_*.pth")
         g_path = os.path.join(checkpoint_path, "G_latest.pth") if save_only_latest else latest_checkpoint_path(checkpoint_path, "G_*.pth")
 
+        # BUG FIX (NoneType crash): latest_checkpoint_path() returns None when
+        # the checkpoint directory has no saved epochs yet (fresh training run
+        # with save_only_latest=False). Passing that None to load_checkpoint()
+        # used to crash the process with:
+        #     TypeError: stat: path should be string, bytes, os.PathLike or
+        #                integer, not NoneType
+        # because the except clause below did not catch TypeError. Validate both
+        # paths up front and raise FileNotFoundError (an expected, caught
+        # exception type) so training cleanly falls back to epoch 1 / pretrained
+        # models whenever no resumable checkpoint pair exists.
+        for _ckpt in (d_path, g_path):
+            if _ckpt is None or not os.path.isfile(_ckpt):
+                raise FileNotFoundError(
+                    f"No resumable checkpoint found (D: {d_path}, G: {g_path}). "
+                    f"Falling back to training from scratch."
+                )
+
         _, _, _, epoch_str, scaler_dict = load_checkpoint(
-            logger, 
-            d_path, 
-            net_d, 
+            logger,
+            d_path,
+            net_d,
             optim_d
         )
 
         _, _, _, epoch_str, _ = load_checkpoint(
-            logger, 
-            g_path, 
-            net_g, 
+            logger,
+            g_path,
+            net_g,
             optim_g
         )
 
         if rank == 0: logger.info(translations["load_checkpoint"].format(d_path=d_path, g_path=g_path))
-        
+
         epoch_str += 1
         global_step = (epoch_str - 1) * len(train_loader)
-    except (FileNotFoundError, RuntimeError, OSError, KeyError, ValueError) as e:
+    except (FileNotFoundError, RuntimeError, OSError, KeyError, ValueError, AssertionError, TypeError, EOFError) as e:
         # SECURITY/RELIABILITY PATCH: was bare `except:` which silently swallowed
         # ALL errors (including KeyboardInterrupt/SystemExit) and restarted training
         # from epoch 1 — causing silent data loss on checkpoint corruption.
         # Now we only catch the expected "no checkpoint yet" errors and log them;
         # truly unexpected errors propagate so the user sees them.
+        #
+        # BUG FIX (NoneType crash): AssertionError (old assert on a missing
+        # checkpoint file), TypeError (os.path.isfile(None) when
+        # latest_checkpoint_path() returned None) and EOFError (truncated /
+        # corrupted checkpoint files via torch.load) all escaped this handler
+        # and killed the training worker. These types can only originate from
+        # the checkpoint-loading block above, so catching them here preserves
+        # the "unexpected errors propagate" contract while fixing the crash.
         check = ["", "None"]
         epoch_str, global_step = 1, 0
         if rank == 0:

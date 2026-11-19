@@ -42,7 +42,26 @@ def replace_keys_in_dict(d, old_key_part, new_key_part):
     return updated_dict
 
 def load_checkpoint(logger, checkpoint_path, model, optimizer=None, load_opt=1):
-    assert os.path.isfile(checkpoint_path), translations["not_found_checkpoint"].format(checkpoint_path=checkpoint_path)
+    # BUG FIX (NoneType crash): validate the checkpoint path BEFORE calling
+    # os.path.isfile().
+    #
+    # latest_checkpoint_path() returns None when the checkpoint directory has
+    # no saved epochs yet (fresh training run). Passing that None to
+    # os.path.isfile() used to raise:
+    #     TypeError: stat: path should be string, bytes, os.PathLike or
+    #                integer, not NoneType
+    # and a valid string pointing to a missing file used to raise
+    # AssertionError via the old `assert` statement. Neither TypeError nor
+    # AssertionError was caught by the "no resumable checkpoint" fallback in
+    # train.py (which only expects FileNotFoundError & friends), so the whole
+    # training process crashed instead of starting from epoch 1 / pretrained
+    # models.
+    # Both cases now consistently raise FileNotFoundError — the documented
+    # "no checkpoint" signal that callers already handle.
+    if not checkpoint_path or not os.path.isfile(checkpoint_path):
+        raise FileNotFoundError(
+            translations["not_found_checkpoint"].format(checkpoint_path=checkpoint_path)
+        )
 
     from arvc.engine.rvc.lib.safe_load import safe_torch_load
     checkpoint_dict = convert_old_to_new(
@@ -116,11 +135,17 @@ def summarize(
         writer.add_audio(k, v, global_step, audio_sample_rate)
 
 def latest_checkpoint_path(dir_path, regex="G_*.pth"):
+    # BUG FIX (wrong resume point): the previous sort key collected digits from
+    # the FULL absolute path, so digits in the log directory name polluted the
+    # ordering (e.g. "/logs/v2run/G_500.pth" sorted as int("2500")) and a
+    # digit-less path crashed with ValueError. Sort by the digits of the file
+    # NAME only; files without digits (e.g. "G_latest.pth") sort before any
+    # numbered checkpoint via the `or 0` fallback.
     checkpoints = sorted(
         glob.glob(
             os.path.join(dir_path, regex)
-        ), 
-        key=lambda f: int("".join(filter(str.isdigit, f)))
+        ),
+        key=lambda f: int("".join(filter(str.isdigit, os.path.basename(f))) or 0)
     )
     return checkpoints[-1] if checkpoints else None
 
